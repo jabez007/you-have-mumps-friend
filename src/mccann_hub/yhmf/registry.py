@@ -75,21 +75,35 @@ def _key_field(model: type[Model]) -> str:
     return key
 
 
-def _field_spec(model: type[Model], name: str, ancestors: tuple[type[Model], ...]) -> FieldSpec:
+def _field_metadata(model: type[Model], name: str) -> dict[str, Any]:
     field = model.model_fields[name]
-    annotation = scalar_type(field.annotation)
     extra = field.json_schema_extra
     metadata = extra.get("yhmf", {}) if isinstance(extra, dict) else {}
     if not isinstance(metadata, dict):
         raise SchemaError("Invalid mapper metadata")
+    return metadata
+
+
+def _child_spec(
+    annotation: Any,
+    name: str,
+    metadata: dict[str, Any],
+    ancestors: tuple[type[Model], ...],
+) -> FieldSpec:
+    child_model = get_args(annotation)[0]
+    if not isinstance(child_model, type) or not issubclass(child_model, Model):
+        raise SchemaError("Children requires a model type")
+    node = _node_spec(child_model, keyed=True, ancestors=ancestors)
+    if metadata.get("children_key") != node.key_field:
+        raise SchemaError("ChildField key must match the child's primary-key field")
+    return FieldSpec(name, "children", node)
+
+
+def _field_spec(model: type[Model], name: str, ancestors: tuple[type[Model], ...]) -> FieldSpec:
+    annotation = scalar_type(model.model_fields[name].annotation)
+    metadata = _field_metadata(model, name)
     if get_origin(annotation) is Children:
-        child_model = get_args(annotation)[0]
-        if not isinstance(child_model, type) or not issubclass(child_model, Model):
-            raise SchemaError("Children requires a model type")
-        node = _node_spec(child_model, keyed=True, ancestors=ancestors)
-        if metadata.get("children_key") != node.key_field:
-            raise SchemaError("ChildField key must match the child's primary-key field")
-        return FieldSpec(name, "children", node)
+        return _child_spec(annotation, name, metadata, ancestors)
     if "children_key" in metadata:
         raise SchemaError("ChildField requires a Children[Model] annotation")
     if isinstance(annotation, type) and issubclass(annotation, Model):
@@ -138,12 +152,17 @@ def _hierarchy(fields: tuple[FieldSpec, ...]) -> list[dict[str, Any]]:
     ]
 
 
-def _make_spec(model: type[Model]) -> ModelSpec:
-    model.model_rebuild()
+def _application_global(model: type[Model]) -> str:
     global_name = model.__global__
     if global_name is None or global_name in {"^YHMFSchema", "^YHMFIndex"}:
         raise SchemaError("Declare an application-owned __global__")
     Path(global_name)
+    return global_name
+
+
+def _make_spec(model: type[Model]) -> ModelSpec:
+    model.model_rebuild()
+    global_name = _application_global(model)
     node = _node_spec(model, keyed=True, ancestors=())
     key = _key_field(model)
     declaration = {
