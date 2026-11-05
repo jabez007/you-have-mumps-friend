@@ -111,7 +111,8 @@ bash scripts/test-native.sh -q
 ```
 
 The script creates and removes a dedicated temporary database. Native CI runs
-this suite with YottaDB r2.02 and Python 3.12 on Ubuntu 22.04. An unpacked binary
+this suite with Python 3.12 on YottaDB r2.02 with Ubuntu 22.04 and r2.06 with
+Ubuntu 24.04. An unpacked binary
 archive alone is insufficient because YottaDB requires a correctly installed
 `gtmsecshr` helper. Setting `YHMF_TEST_NATIVE=1` manually opts into tests against
 your current database; use only disposable data.

@@ -368,4 +368,5 @@ Validate the transaction restart behavior and process-level concurrency model be
 
 ---
 
-_Draft specification. All proposed APIs, global conventions, and milestones are design targets rather than implemented capabilities._
+_Draft specification. The README identifies implemented behavior. Later milestones
+and APIs beyond that behavior remain design targets._
