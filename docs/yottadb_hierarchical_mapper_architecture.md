@@ -248,7 +248,7 @@ Joins, full-text search, complex aggregates, and arbitrary SQL compatibility rem
 
 Python model declarations are the source of truth for intended schema.
 
-The framework will generate canonical schema snapshots identifying:
+The framework generates canonical schema snapshots identifying:
 
 - Stable model and field identities.
 - Storage locations and codecs.
@@ -256,11 +256,15 @@ The framework will generate canonical schema snapshots identifying:
 - Index definitions.
 - Schema and layout versions.
 
-The database will maintain its own record of the installed schema version.
+The database maintains its own record of the installed schema version.
 
-For v0.1, the framework will detect incompatible schemas and refuse unsafe access rather than silently migrate data.
+The framework detects incompatible schemas and refuses unsafe access. Schema
+changes require an explicit migration.
 
-A later migration engine will support schema comparisons, explicit migration generation, validation, data backfills, and index rebuilding.
+Schema comparisons and deterministic review plans are implemented. The initial
+executor supports root scalar literal-default backfills and new non-unique
+root equality indexes. It uses a maintenance gate and bounded checkpoints before
+atomic activation. Broader migration execution remains a later milestone.
 
 Production migrations must be reviewable, recoverable, and appropriately checkpointed.
 
@@ -280,7 +284,9 @@ The project will maintain golden storage fixtures and serialization contracts to
 
 ## 12. Operations and security
 
-The framework should eventually provide schema inspection, index validation, query explanations, and migration diagnostics.
+The framework provides schema inspection, bounded expected-index validation,
+query explanations, and migration status. Full reverse index audits and repair
+procedures remain later extensions.
 
 Diagnostic output must avoid exposing sensitive values by default.
 

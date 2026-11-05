@@ -219,8 +219,9 @@ Claims are scoped to a top-level global and declaration path.
 Record replacement validates existing entries, releases removed claims, and
 claims new values in one native transaction. Uniqueness is immediate per mapper
 write. Index-definition changes participate in schema fingerprints and require
-explicit migration for installed schemas. This version does not rebuild indexes
-automatically. Native key-size limits include the full indexed value token.
+explicit migration for installed schemas. The additive executor builds new
+non-unique root scalar indexes under maintenance; ordinary CRUD does not rebuild
+indexes automatically. Native key-size limits include the full indexed value token.
 
 ## Query execution
 

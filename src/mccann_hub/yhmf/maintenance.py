@@ -95,11 +95,14 @@ def load_status(store: Store, migration_id: str) -> MigrationStatus:
         raise MigrationError("Migration job does not exist")
     try:
         document = json.loads(raw)
-        if canonical_json(document) != raw or document.pop("format_version") != 1:
+        if canonical_json(document) != raw:
             raise ValueError("Invalid checkpoint encoding")
+        version = document.pop("format_version")
+        if type(version) is not int or version != 1:
+            raise ValueError("Unsupported checkpoint format")
         document["cursor"] = bytes.fromhex(document["cursor"])
         status = MigrationStatus(**document)
-    except (ValueError, TypeError, KeyError, AttributeError, RecursionError) as exc:
+    except (ValueError, TypeError, KeyError, AttributeError, RecursionError, MigrationError) as exc:
         raise StorageError("Malformed migration checkpoint") from exc
     if status.migration_id != migration_id:
         raise StorageError("Migration checkpoint identity does not match its location")

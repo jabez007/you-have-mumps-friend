@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
+import json
 from dataclasses import replace
 
 import pytest
 
 from mccann_hub.yhmf import Database, Field, Model, Path, Registry
+from mccann_hub.yhmf.codecs import canonical_json
 from mccann_hub.yhmf.errors import MaintenanceActive, MigrationError, StorageError
 from mccann_hub.yhmf.maintenance import (
     GATE,
@@ -83,6 +85,17 @@ def test_malformed_checkpoint_is_rejected(store, value):
     store.set(job_path(migration_id), value)
     with pytest.raises(StorageError):
         load_status(store, migration_id)
+
+
+@pytest.mark.parametrize("version", [True, 1.0])
+def test_checkpoint_format_version_requires_an_integer(store, version):
+    _, status = gated(store)
+    root = job_path(status.migration_id)
+    document = json.loads(store.get(root))
+    document["format_version"] = version
+    store.set(root, canonical_json(document))
+    with pytest.raises(StorageError):
+        load_status(store, status.migration_id)
 
 
 def test_barrier_without_owner_is_rejected(store):
