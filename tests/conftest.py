@@ -20,6 +20,8 @@ def store(request):
         Path("^YHMFTestWarehouse"),
         Path("^YHMFSchema"),
         Path("^YHMFRef"),
+        Path("^YHMFIndex"),
+        Path("^YHMFUnique"),
         Path("^YHMFTestOrder"),
     ]
     for root in roots:

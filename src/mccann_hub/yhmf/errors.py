@@ -32,3 +32,11 @@ class TransactionError(YHMFError):
 
 class ReferenceViolation(YHMFError):
     """A reference target is missing or a referenced record cannot be deleted."""
+
+
+class UniqueViolation(YHMFError):
+    """An indexed value is already claimed by another field occurrence."""
+
+
+class QueryError(YHMFError, ValueError):
+    """A query has no supported, bounded execution plan."""

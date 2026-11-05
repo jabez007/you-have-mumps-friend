@@ -367,8 +367,8 @@ Owned children currently persist through their parent aggregate. The parent
 controls their lifecycle; direct child CRUD is a later extension. The test suite
 includes native rollback, forced restart, and process concurrency qualification.
 The [storage contract](storage-format.md) is authoritative for concrete encodings.
-Enforced references and their reverse indexes are implemented. Equality and unique
-indexes, query planning, migrations, and Go interoperability remain later work.
+Enforced references, reverse indexes, and equality and unique indexes are
+implemented. Query planning, migrations, and Go interoperability remain later work.
 
 Begin with a storage-contract prototype rather than a full ORM.
 

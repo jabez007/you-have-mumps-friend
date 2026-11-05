@@ -44,8 +44,8 @@ The registry rejects overlapping globals, aliases, unsupported field types,
 and missing or ambiguous primary keys. Access checks an installed schema
 fingerprint, and incompatible declarations raise `SchemaMismatch` before writes.
 Changing a model name, field declaration, default, or constraint can change the
-fingerprint. There is no migration engine yet. `index` and `unique` flags fail
-explicitly until secondary indexes are implemented.
+fingerprint. There is no migration engine yet. Adding an index changes the
+declared schema; existing data requires an explicit migration and index rebuild.
 
 ## Store owned child records
 
@@ -124,6 +124,40 @@ Reverse entries and inbound counts change in the same native transaction as
 the record. Raw native writes can bypass these constraints, so applications
 must preserve the [storage contract](docs/storage-format.md) when writing globals
 outside the mapper. There is no automatic repair of damaged reverse entries.
+
+## Declare equality and unique indexes
+
+```python
+from mccann_hub.yhmf.errors import UniqueViolation
+
+class CatalogProduct(Model):
+    __global__ = "^CatalogProduct"
+    id: str = Field(primary_key=True)
+    sku: str | None = Field(default=None, unique=True)
+    price: Decimal = Field(default=Decimal("0"), index=True)
+
+db = Database(MemoryStore(), Registry(CatalogProduct))
+db.insert(CatalogProduct(id="P1", sku="SKU1", price=Decimal("12.50")))
+try:
+    db.insert(CatalogProduct(id="P2", sku="SKU1"))
+except UniqueViolation:
+    pass
+```
+
+`unique=True` also creates an equality index. Multiple `None` values are allowed
+in a unique field, and their equality entries remain queryable. Strings use exact,
+case-sensitive comparison. Numerically equal decimals and floating-point zero
+share index values; stored decimal precision remains unchanged.
+
+Index scalar or reference fields, including those inside embedded objects and
+owned children. Indexing an entire container is rejected. A nested unique field
+is unique across all occurrences at that declaration path under the registered
+top-level model, including children of different parents.
+
+Every insert, replacement, and deletion updates its indexes and uniqueness claims
+in the record's transaction. Constraints apply after each write. Changing or
+deleting an indexed value releases its old claim. Oversized native index keys
+raise errors before record writes; values are never truncated or hashed to fit.
 
 ## Run development checks
 

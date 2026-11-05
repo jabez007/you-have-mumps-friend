@@ -7,6 +7,8 @@ from pydantic import BaseModel, ConfigDict
 from pydantic import Field as PydanticField
 from pydantic_core import PydanticUndefined
 
+from .errors import SchemaError
+
 
 class Model(BaseModel):
     """A validated value object. Changes never perform storage operations."""
@@ -40,8 +42,17 @@ class Reference[T: Model](BaseModel):
     key: str | int
 
 
-def ChildField(default: Any = PydanticUndefined, *, key: str, **kwargs: Any) -> Any:
+def ChildField(
+    default: Any = PydanticUndefined,
+    *,
+    key: str,
+    index: bool = False,
+    unique: bool = False,
+    **kwargs: Any,
+) -> Any:
     """A parent-owned dictionary keyed by the child model's primary-key field."""
+    if index or unique:
+        raise SchemaError("Index a scalar or Reference field inside the child model")
     if "json_schema_extra" in kwargs:
         raise ValueError("json_schema_extra is reserved for mapper metadata")
     metadata: dict[str, Any] = {"yhmf": {"children_key": key}}
@@ -59,14 +70,16 @@ def Field(
     on_delete: str | None = None,
     **kwargs: Any,
 ) -> Any:
-    """Pydantic Field with mapper metadata. Indexes arrive after native CRUD."""
-    if index or unique:
-        raise NotImplementedError("Secondary indexes and uniqueness are not implemented yet")
+    """Pydantic Field with explicit persistence, index, and relationship metadata."""
     if on_delete is not None and on_delete != "restrict":
         raise NotImplementedError("Only on_delete='restrict' is implemented")
     if "json_schema_extra" in kwargs:
         raise ValueError("json_schema_extra is reserved for mapper metadata")
     metadata: dict[str, Any] = {"primary_key": primary_key}
+    if index or unique:
+        metadata["index"] = True
+    if unique:
+        metadata["unique"] = True
     if on_delete is not None:
         metadata["on_delete"] = on_delete
     return PydanticField(

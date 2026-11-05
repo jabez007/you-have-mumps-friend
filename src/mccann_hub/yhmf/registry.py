@@ -5,7 +5,7 @@ import hashlib
 import json
 import re
 import types
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from decimal import Decimal
 from typing import Any, Literal, Union, get_args, get_origin
 
@@ -34,6 +34,8 @@ class FieldSpec:
     node: "NodeSpec | None" = None
     target: type[Model] | None = None
     target_key: str | None = None
+    index: bool = False
+    unique: bool = False
 
 
 @dataclass(frozen=True)
@@ -104,7 +106,11 @@ def _child_spec(
 def _field_spec(model: type[Model], name: str, ancestors: tuple[type[Model], ...]) -> FieldSpec:
     annotation = scalar_type(model.model_fields[name].annotation)
     metadata = _field_metadata(model, name)
-    return _field_type_spec(annotation, name, metadata, ancestors)
+    spec = _field_type_spec(annotation, name, metadata, ancestors)
+    indexed, unique = bool(metadata.get("index")), bool(metadata.get("unique"))
+    if (indexed or unique) and spec.kind not in {"scalar", "reference"}:
+        raise SchemaError("Indexes require scalar or Reference fields")
+    return replace(spec, index=indexed or unique, unique=unique)
 
 
 def _field_type_spec(
@@ -179,7 +185,12 @@ def _hierarchy(fields: tuple[FieldSpec, ...]) -> list[dict[str, Any]]:
 
 def _application_global(model: type[Model]) -> str:
     global_name = model.__global__
-    if global_name is None or global_name in {"^YHMFSchema", "^YHMFIndex", "^YHMFRef"}:
+    if global_name is None or global_name in {
+        "^YHMFSchema",
+        "^YHMFIndex",
+        "^YHMFRef",
+        "^YHMFUnique",
+    }:
         raise SchemaError("Declare an application-owned __global__")
     Path(global_name)
     return global_name

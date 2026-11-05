@@ -145,12 +145,7 @@ def test_registry_requires_a_primary_key():
         Registry(NoKey)
 
 
-def test_future_index_flags_fail_explicitly():
-    with pytest.raises(NotImplementedError):
-        Field(unique=True)
-
-
-@pytest.mark.parametrize("name", ["^YHMFSchema", "^YHMFIndex", "^YHMFRef"])
+@pytest.mark.parametrize("name", ["^YHMFSchema", "^YHMFIndex", "^YHMFRef", "^YHMFUnique"])
 def test_reject_framework_owned_globals(name):
     class Reserved(Product):
         __global__ = name

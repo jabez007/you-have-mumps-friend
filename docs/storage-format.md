@@ -63,7 +63,8 @@ Nested model schema versions, relationship kinds, and child-key fields also
 participate through the snapshot's `hierarchy` entry. Scalar-only snapshots
 omit that entry.
 
-`^YHMFSchema`, `^YHMFIndex`, and `^YHMFRef` belong to the framework. The engine reserves
+`^YHMFSchema`, `^YHMFIndex`, `^YHMFUnique`, and `^YHMFRef` belong to the framework.
+The engine reserves
 `^%Y*`, which the path validator rejects. A registry assigns each application
 global to exactly one top-level model. Save replaces the entire record subtree;
 it does not merge raw nodes or silently overwrite unmanaged records.
@@ -123,6 +124,42 @@ Unreferenced targets can retain a count of zero. Deleting the target removes its
 reverse root. Missing or inconsistent entries cause errors when mapper operations
 encounter them. Raw writes can bypass enforcement; this version has no automatic
 repair or complete consistency scan.
+
+## Secondary indexes and unique claims
+
+Equality entries use this structure:
+
+```text
+^YHMFIndex(global,field_path,value_token,owner_key,location_sha256)=location_json
+^YHMFUnique(global,field_path,value_token)=owner_json
+```
+
+`global` omits the leading caret. `field_path` joins declared field names with
+periods, without child keys. Each entry's `owner_key` is the canonical top-level
+record key. `location_json` is the compact ASCII JSON array of physical relative
+subscripts, including canonical child keys. Its lowercase hexadecimal SHA-256
+is `location_sha256`. `owner_json` is the compact ASCII JSON array containing
+the encoded owner key and the decoded location array.
+
+`value_token` is `v:` followed by an ASCII JSON string containing the normalized
+typed value. Ordinary scalar and reference encodings remain unchanged except
+for numeric normalization. Decimal normalization strips trailing coefficient
+zeros and increases the exponent accordingly, without decimal-context rounding.
+Nonzero decimals use `d:` followed by the signed coefficient, `E`, and exponent.
+Every decimal zero maps to `d:0`; both floating-point zeros map to `f:0.0`.
+For example, `12.50` and `12.500` share token `v:"d:125E-1"`.
+String comparison uses exact code points without Unicode or case folding.
+
+Unique fields also have equality entries. Null values use the equality token
+`v:"n:"` and create no unique claim. Every non-null unique field occurrence owns
+its claim exclusively, even when multiple occurrences are under the same parent.
+Claims are scoped to a top-level global and declaration path.
+
+Record replacement validates existing entries, releases removed claims, and
+claims new values in one native transaction. Uniqueness is immediate per mapper
+write. Index-definition changes participate in schema fingerprints and require
+explicit migration for installed schemas. This version does not rebuild indexes
+automatically. Native key-size limits include the full indexed value token.
 
 ## Storage adapter
 

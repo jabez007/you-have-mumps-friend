@@ -4,7 +4,7 @@
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 
-from . import references
+from . import indexes, references
 from .codecs import Key
 from .errors import (
     AlreadyExists,
@@ -119,6 +119,7 @@ class Database:
         root = spec.path(getattr(validated, spec.key_field))
         nodes = record_nodes(spec, root, validated)
         new_links = references.links(self.registry, spec, root, validated)
+        new_entries = indexes.entries(spec, root, validated)
 
         def write(tx: Database) -> M:
             tx._check_schema(spec)
@@ -126,9 +127,11 @@ class Database:
             if insert and exists:
                 raise AlreadyExists("Insert cannot replace an existing record")
             old_links: frozenset[references.Link] = frozenset()
+            old_entries: frozenset[indexes.Entry] = frozenset()
             if exists:
                 previous = tx.get(type(record), getattr(validated, spec.key_field))
                 old_links = references.links(tx.registry, spec, root, previous)
+                old_entries = indexes.entries(spec, root, previous)
             with tx._writing():
                 tx._check_schema(spec, install=True)
                 tx.store.delete_tree(root)
@@ -136,6 +139,7 @@ class Database:
                     tx.store.set(path, value)
                 tx._check_reference_targets(new_links)
                 references.replace(tx.store, old_links, new_links)
+                indexes.replace(tx.store, old_entries, new_entries)
             return validated
 
         return self._run(write)
@@ -167,9 +171,11 @@ class Database:
             if exists:
                 record = tx.get(model, key)
                 old_links = references.links(tx.registry, spec, root, record)
+                old_entries = indexes.entries(spec, root, record)
                 with tx._writing():
                     references.replace(tx.store, old_links, frozenset())
                     references.restrict_delete(tx.store, root)
+                    indexes.replace(tx.store, old_entries, frozenset())
                     tx.store.delete_tree(root)
             return exists
 
