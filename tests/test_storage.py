@@ -39,6 +39,12 @@ def test_global_validation(name):
         Path(name)
 
 
+@pytest.mark.parametrize("name", ["^%Y", "^%YHMFSchema", "^%YAny"])
+def test_reject_engine_reserved_namespace(name):
+    with pytest.raises(StorageError):
+        Path(name)
+
+
 @pytest.mark.parametrize("subscripts", [(b"",), (b"\0",), (b"x",) * 32, (b"x" * 600,)])
 def test_path_limits(subscripts):
     with pytest.raises(StorageError):

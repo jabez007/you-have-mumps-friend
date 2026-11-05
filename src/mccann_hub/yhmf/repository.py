@@ -12,7 +12,7 @@ from .storage import MAX_VALUE_BYTES, Path, Store
 
 
 def _schema_path(spec: ModelSpec) -> Path:
-    return Path("^%YHMFSchema", (spec.global_name[1:].encode("ascii"),))
+    return Path("^YHMFSchema", (spec.global_name[1:].encode("ascii"),))
 
 
 class Database:

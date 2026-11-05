@@ -25,6 +25,8 @@ class Path:
     def __post_init__(self) -> None:
         if not _GLOBAL.fullmatch(self.global_name):
             raise StorageError("Invalid global name")
+        if self.global_name.startswith("^%Y"):
+            raise StorageError("The ^%Y namespace is reserved by YottaDB")
         if not isinstance(self.subscripts, tuple) or len(self.subscripts) > 31:
             raise StorageError("A path must have at most 31 subscripts in a tuple")
         if any(not isinstance(s, bytes) or not s or b"\0" in s for s in self.subscripts):

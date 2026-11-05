@@ -52,14 +52,15 @@ The reserved `%m` subtree contains raw ASCII metadata values for `layout`,
 The schema fingerprint is the lowercase hexadecimal SHA-256 of the canonical
 snapshot bytes. These metadata values do not use scalar type tags.
 
-`^%YHMFSchema("Product")` holds the installed fingerprint, with the snapshot at
+`^YHMFSchema("Product")` holds the installed fingerprint, with the snapshot at
 its `"snapshot"` child. The snapshot is compact, sorted-key, ASCII JSON containing
 the layout version, global, schema version, primary-key field, and Pydantic's
 validation JSON schema. Model titles and validation constraints participate in
 the fingerprint. This is conservative schema compatibility, not a migration plan.
 Schema installation and the first write occur in the same transaction.
 
-All `^%YHMF` globals belong to the framework. A registry assigns each application
+`^YHMFSchema` and `^YHMFIndex` belong to the framework. The engine reserves
+`^%Y*`, which the path validator rejects. A registry assigns each application
 global to exactly one top-level model. Save replaces the entire record subtree;
 it does not merge raw nodes or silently overwrite unmanaged records.
 

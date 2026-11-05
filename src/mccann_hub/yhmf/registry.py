@@ -64,7 +64,7 @@ def _key_field(model: type[Model]) -> str:
 def _make_spec(model: type[Model]) -> ModelSpec:
     model.model_rebuild()
     global_name = model.__global__
-    if global_name is None or global_name.startswith("^%YHMF"):
+    if global_name is None or global_name in {"^YHMFSchema", "^YHMFIndex"}:
         raise SchemaError("Declare an application-owned __global__")
     Path(global_name)
     if type(model.__schema_version__) is not int or model.__schema_version__ < 1:
