@@ -76,6 +76,12 @@ The engine reserves
 global to exactly one top-level model. Save replaces the entire record subtree;
 it does not merge raw nodes or silently overwrite unmanaged records.
 
+The inspection interface verifies the canonical bytes and their fingerprint
+before exposing installed metadata. An absent fingerprint with a snapshot, or
+an absent snapshot with a fingerprint, is incomplete metadata and causes an
+error. Inspection never rewrites either node. Unknown positive layout versions
+can be inspected; inspection alone does not claim compatibility with them.
+
 ## Owned trees
 
 An embedded object's field node has value `o:1`, and its declared fields are

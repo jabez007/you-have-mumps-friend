@@ -374,6 +374,10 @@ indexes can select those roots. Diagnostics audit expected secondary entries and
 claims by bounded record pages. A full reverse index audit, direct child queries,
 migrations, and Go interoperability remain later work.
 
+Read-only schema inspection now exposes installed and declared snapshots,
+including mismatched declarations, without changing schema or application data.
+Semantic comparisons and migration planning are the next v0.3 slice.
+
 Begin with a storage-contract prototype rather than a full ORM.
 
 Implement deterministic key encodings, native reads and writes, and golden fixture tests first. Then add the Pydantic model registry and explicit repository operations.

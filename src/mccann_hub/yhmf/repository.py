@@ -18,7 +18,7 @@ from .models import Model
 from .queries import IndexReport, Query, audit_indexes, scan
 from .records import metadata, record_nodes, record_values
 from .registry import ModelSpec, Registry
-from .schemas import schema_path
+from .schemas import SchemaInspection, inspect_schema, schema_path
 from .storage import MAX_VALUE_BYTES, Path, Store
 
 
@@ -199,3 +199,8 @@ class Database:
     ) -> IndexReport:
         """Check expected entries and claims for a bounded page of records."""
         return audit_indexes(self, model, limit=limit, after=after)
+
+    def inspect_schema(self, model: type[Model]) -> SchemaInspection:
+        """Inspect metadata atomically without requiring a matching installed schema."""
+        spec = self.registry.spec(model)
+        return self._run(lambda tx: inspect_schema(tx.store, spec))

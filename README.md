@@ -192,6 +192,42 @@ values. A full page returns `next_key`; the next page may be empty. This audit
 does not search all index entries for orphans or repair data. Indexed queries
 reject encountered orphan entries and entries whose values disagree with records.
 
+## Inspect installed schemas
+
+```python
+class CatalogV2(CatalogProduct):
+    __schema_version__ = 2
+    note: str | None = None
+
+next_db = Database(db.store, Registry(CatalogV2))
+inspection = next_db.inspect_schema(CatalogV2)
+assert inspection.status == "different"
+assert inspection.installed.schema_version == 1
+assert inspection.declared.schema_version == 2
+assert db.get(CatalogProduct, "P1").sku == "SKU1"
+```
+
+Inspection reads the installed snapshot even when regular access with the new
+declaration would raise `SchemaMismatch`. It runs in one transaction and does not
+install, activate, or repair a schema. It never constructs model instances or
+executes default factories.
+
+| Status | Meaning |
+| --- | --- |
+| `uninstalled` | No installed schema or application data exists. |
+| `unmanaged` | Application data exists without installed schema metadata. |
+| `matching` | Installed and declared fingerprints agree. |
+| `different` | Valid installed metadata differs from the declaration. |
+
+`has_data` reports whether any node exists in the application global; it does
+not count records. Incomplete metadata, invalid canonical JSON, a mismatched
+global, or a bad snapshot fingerprint raises `StorageError`.
+
+`SchemaSnapshot` exposes immutable canonical bytes and derived metadata. Its
+normal representation excludes schema contents. `snapshot.to_dict()` explicitly
+returns the full schema, including declared defaults, as a fresh dictionary.
+Inspection does not validate records or index contents.
+
 ## Run development checks
 
 Install [uv](https://docs.astral.sh/uv/), then run:
