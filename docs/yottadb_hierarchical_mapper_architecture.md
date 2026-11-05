@@ -350,6 +350,14 @@ Before finalizing the public API, several questions need focused prototypes:
 
 ## 17. Immediate implementation direction
 
+The repository now implements the storage contract and v0.1 model operations
+described in the [README](../README.md). The public API is `mccann_hub.yhmf`.
+Owned children currently persist through their parent aggregate. The parent
+controls their lifecycle; direct child CRUD is a later extension. The test suite
+includes native rollback, forced restart, and process concurrency qualification.
+The [storage contract](storage-format.md) is authoritative for concrete encodings.
+References, indexes, migrations, and Go interoperability remain later milestones.
+
 Begin with a storage-contract prototype rather than a full ORM.
 
 Implement deterministic key encodings, native reads and writes, and golden fixture tests first. Then add the Pydantic model registry and explicit repository operations.

@@ -114,6 +114,12 @@ archive alone is insufficient because YottaDB requires a correctly installed
 `gtmsecshr` helper. Setting `YHMF_TEST_NATIVE=1` manually opts into tests against
 your current database; use only disposable data.
 
+Native qualification covers forced transaction restarts, rollback of schema
+installation, and four independent processes committing 160 updates to one
+record. Concurrent reads assert that both fields agree throughout those updates.
+These tests establish correctness for the tested environment, not throughput
+or compatibility with other engine releases.
+
 YDBPython uses process-based concurrency. Callbacks passed to `atomic()` can
 execute repeatedly after transaction conflicts, so keep external side effects
 outside the callback.
