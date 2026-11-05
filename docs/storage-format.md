@@ -40,6 +40,29 @@ The [golden scalar fixtures](../tests/fixtures/scalars.json) contain literal
 encoded values for readers in other languages. Float rendering still requires
 cross-language qualification before a Go writer can claim compatibility.
 
+## Records and installed schemas
+
+Each record stores its declared fields under their ASCII names. Defaults are
+persisted, including null and empty strings. Missing declared fields are corrupt
+data; reads do not reconstruct them from defaults. The primary key is stored as
+a typed scalar as well as in the path, and reads verify that they agree.
+
+The reserved `%m` subtree contains raw ASCII metadata values for `layout`,
+`schema`, `type`, and `fingerprint`. For a top-level `^Product`, `type` is `Product`.
+The schema fingerprint is the lowercase hexadecimal SHA-256 of the canonical
+snapshot bytes. These metadata values do not use scalar type tags.
+
+`^%YHMFSchema("Product")` holds the installed fingerprint, with the snapshot at
+its `"snapshot"` child. The snapshot is compact, sorted-key, ASCII JSON containing
+the layout version, global, schema version, primary-key field, and Pydantic's
+validation JSON schema. Model titles and validation constraints participate in
+the fingerprint. This is conservative schema compatibility, not a migration plan.
+Schema installation and the first write occur in the same transaction.
+
+All `^%YHMF` globals belong to the framework. A registry assigns each application
+global to exactly one top-level model. Save replaces the entire record subtree;
+it does not merge raw nodes or silently overwrite unmanaged records.
+
 ## Storage adapter
 
 `Store` supplies `get`, `set`, `delete_tree`, bounded `children`, and callback

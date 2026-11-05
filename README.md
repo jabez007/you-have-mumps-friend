@@ -5,8 +5,44 @@ The distribution is `mccann-hub-yhmf`, imported as `mccann_hub.yhmf`.
 Python 3.12 or later is required. This is an early prototype under GPL-3.0-or-later.
 
 The [architecture](docs/yottadb_hierarchical_mapper_architecture.md) describes
-the intended milestones. The first implementation supplies a versioned storage
-contract, scalar codecs, and native and in-memory storage adapters.
+the intended milestones. The prototype supplies a versioned storage contract,
+scalar models, explicit CRUD, and native and in-memory storage adapters.
+
+## Persist a model
+
+```python
+from decimal import Decimal
+from mccann_hub.yhmf import Database, Field, MemoryStore, Model, Registry
+
+class Product(Model):
+    __global__ = "^Product"
+    id: str = Field(primary_key=True)
+    quantity: Decimal = Field(default=Decimal("0"), ge=0)
+
+db = Database(MemoryStore(), Registry(Product))
+db.insert(Product(id="P42", quantity=Decimal("12.50")))
+product = db.get(Product, "P42")
+product.quantity -= Decimal("2")
+db.save(product)
+assert db.get(Product, "P42").quantity == Decimal("10.50")
+```
+
+Use `NativeStore()` with a configured YottaDB environment for durable storage.
+`MemoryStore()` lasts only as long as the Python process. `insert` rejects existing
+keys; `save` replaces a record or inserts it. `get` raises `NotFound` when absent,
+and `delete` returns whether a record existed. Keys must match their declared type.
+
+`db.atomic(callback)` passes a transaction handle to the callback. The handle
+expires when the callback returns. Each restart creates a fresh handle and
+reconstructs records from storage. All standalone operations also use transactions.
+Nested `atomic` callbacks are rejected.
+
+The registry rejects overlapping globals, aliases, unsupported field types,
+and missing or ambiguous primary keys. Access checks an installed schema
+fingerprint, and incompatible declarations raise `SchemaMismatch` before writes.
+Changing a model name, field declaration, default, or constraint can change the
+fingerprint. There is no migration engine yet. `index` and `unique` flags fail
+explicitly until secondary indexes are implemented.
 
 ## Run development checks
 

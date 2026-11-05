@@ -1,24 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-import os
-
 import pytest
 
-from mccann_hub.yhmf import MemoryStore, NativeStore, Path
+from mccann_hub.yhmf import Path
 from mccann_hub.yhmf.errors import StorageError
-
-
-@pytest.fixture(params=["memory", pytest.param("native", marks=pytest.mark.native)])
-def store(request):
-    if request.param == "native":
-        if os.environ.get("YHMF_TEST_NATIVE") != "1":
-            pytest.skip("Set YHMF_TEST_NATIVE=1 with a disposable YottaDB database")
-        result = NativeStore()
-    else:
-        result = MemoryStore()
-    root = Path("^YHMFTestStorage")
-    result.delete_tree(root)
-    yield result
-    result.delete_tree(root)
 
 
 def test_read_write_traverse_and_delete(store):
