@@ -2,36 +2,17 @@
 """Explicit CRUD with atomic schema checks and retry-local transaction handles."""
 
 from collections.abc import Callable
-from typing import Any, cast
 
-from .codecs import LAYOUT_VERSION, Key, Scalar, decode_scalar, encode_scalar
+from .codecs import Key
 from .errors import AlreadyExists, NotFound, SchemaMismatch, StorageError, TransactionError
 from .models import Model
+from .records import metadata, record_nodes, record_values
 from .registry import ModelSpec, Registry
 from .storage import MAX_VALUE_BYTES, Path, Store
 
 
 def _schema_path(spec: ModelSpec) -> Path:
     return Path("^%YHMFSchema", (spec.global_name[1:].encode("ascii"),))
-
-
-def _metadata(spec: ModelSpec) -> dict[bytes, bytes]:
-    return {
-        b"layout": str(LAYOUT_VERSION).encode("ascii"),
-        b"schema": str(spec.model.__schema_version__).encode("ascii"),
-        b"type": spec.global_name[1:].encode("ascii"),
-        b"fingerprint": spec.fingerprint,
-    }
-
-
-def _record_nodes(spec: ModelSpec, root: Path, record: Model) -> dict[Path, bytes]:
-    nodes = {root.child(b"%m", name): value for name, value in _metadata(spec).items()}
-    for name in spec.fields:
-        value = cast(Scalar, getattr(record, name))
-        nodes[root.child(name.encode("ascii"))] = encode_scalar(value)
-    if any(len(value) > MAX_VALUE_BYTES for value in nodes.values()):
-        raise StorageError("Record contains a value exceeding the node limit")
-    return nodes
 
 
 class Database:
@@ -85,7 +66,7 @@ class Database:
             if self.store.get(root) is not None or self.store.children(root, limit=1):
                 raise StorageError("Unmanaged or incomplete record at the requested path")
             return False
-        for name, value in _metadata(spec).items():
+        for name, value in metadata(spec).items():
             if self.store.get(root.child(b"%m", name)) != value:
                 raise SchemaMismatch("Record metadata differs from the registered schema")
         if self.store.get(_schema_path(spec)) != spec.fingerprint:
@@ -101,13 +82,7 @@ class Database:
             tx._check_schema(spec)
             if not tx._exists(spec, root):
                 raise NotFound("Record does not exist")
-            values: dict[str, Any] = {}
-            for name in spec.fields:
-                stored = tx.store.get(root.child(name.encode("ascii")))
-                if stored is None:
-                    raise StorageError("A declared field is missing from storage")
-                values[name] = decode_scalar(stored)
-            result = model.model_validate(values)
+            result = model.model_validate(record_values(spec, root, tx.store))
             if getattr(result, spec.key_field) != key:
                 raise StorageError("Stored primary key does not match its path")
             return result
@@ -118,7 +93,7 @@ class Database:
         spec = self.registry.spec(type(record))
         validated = type(record).model_validate(record.model_dump(mode="python", round_trip=True))
         root = spec.path(getattr(validated, spec.key_field))
-        nodes = _record_nodes(spec, root, validated)
+        nodes = record_nodes(spec, root, validated)
 
         def write(tx: Database) -> M:
             tx._check_schema(spec)
