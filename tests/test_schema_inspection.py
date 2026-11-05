@@ -15,28 +15,8 @@ class Product(Model):
     name: str
 
 
-class ReadOnlyStore:
-    def __init__(self, store):
-        self.store = store
-
-    def get(self, path):
-        return self.store.get(path)
-
-    def children(self, path, *, limit, after=b""):
-        return self.store.children(path, limit=limit, after=after)
-
-    def atomic(self, callback):
-        return self.store.atomic(callback)
-
-    def set(self, path, value):
-        raise AssertionError("Read-only operation attempted to write")
-
-    def delete_tree(self, path):
-        raise AssertionError("Read-only operation attempted to delete")
-
-
-def test_inspection_does_not_install_an_absent_schema(store):
-    db = Database(ReadOnlyStore(store), Registry(Product))
+def test_inspection_does_not_install_an_absent_schema(store, read_only_store):
+    db = Database(read_only_store, Registry(Product))
     inspection = db.inspect_schema(Product)
     assert inspection.status == "uninstalled"
     assert inspection.installed is None and inspection.has_data is False
@@ -44,17 +24,19 @@ def test_inspection_does_not_install_an_absent_schema(store):
     assert store.get(Path("^YHMFSchema", (b"YHMFTestProduct",))) is None
 
 
-def test_inspection_exposes_the_exact_installed_snapshot(store):
+def test_inspection_exposes_the_exact_installed_snapshot(store, read_only_store):
     db = Database(store, Registry(Product))
     db.insert(Product(id="P1", name="Main"))
-    inspected = Database(ReadOnlyStore(store), db.registry).inspect_schema(Product)
+    inspected = Database(read_only_store, db.registry).inspect_schema(Product)
     spec = db.registry.spec(Product)
     assert inspected.status == "matching" and inspected.has_data
     assert inspected.installed.canonical == spec.snapshot
     assert inspected.installed.fingerprint == hashlib.sha256(spec.snapshot).hexdigest()
 
 
-def test_changed_declarations_can_inspect_without_advancing_installed_schema(store):
+def test_changed_declarations_can_inspect_without_advancing_installed_schema(
+    store, read_only_store
+):
     old_db = Database(store, Registry(Product))
     old_db.insert(Product(id="P1", name="Main"))
 
@@ -62,7 +44,7 @@ def test_changed_declarations_can_inspect_without_advancing_installed_schema(sto
         __schema_version__ = 2
         note: str | None = None
 
-    new_db = Database(ReadOnlyStore(store), Registry(Changed))
+    new_db = Database(read_only_store, Registry(Changed))
     inspection = new_db.inspect_schema(Changed)
     assert inspection.status == "different"
     assert inspection.installed.schema_version == 1
@@ -72,14 +54,14 @@ def test_changed_declarations_can_inspect_without_advancing_installed_schema(sto
         new_db.get(Changed, "P1")
 
 
-def test_unmanaged_data_is_distinguished_from_an_empty_global(store):
+def test_unmanaged_data_is_distinguished_from_an_empty_global(store, read_only_store):
     store.set(Path("^YHMFTestProduct", (b"raw",)), b"unmanaged")
-    db = Database(ReadOnlyStore(store), Registry(Product))
+    db = Database(read_only_store, Registry(Product))
     assert db.inspect_schema(Product).status == "unmanaged"
 
 
 @pytest.mark.parametrize("damage", ["missing_snapshot", "missing_fingerprint", "bad_fingerprint"])
-def test_incomplete_or_inconsistent_installed_metadata_is_rejected(store, damage):
+def test_incomplete_or_inconsistent_installed_metadata_is_rejected(store, read_only_store, damage):
     db = Database(store, Registry(Product))
     db.insert(Product(id="P1", name="Main"))
     root = Path("^YHMFSchema", (b"YHMFTestProduct",))
@@ -92,7 +74,7 @@ def test_incomplete_or_inconsistent_installed_metadata_is_rejected(store, damage
     else:
         store.set(root, b"0" * 64)
     with pytest.raises(StorageError):
-        Database(ReadOnlyStore(store), db.registry).inspect_schema(Product)
+        Database(read_only_store, db.registry).inspect_schema(Product)
 
 
 def test_snapshot_values_are_explicit_and_defensively_copied():
@@ -121,7 +103,7 @@ def test_snapshot_requires_canonical_json():
         SchemaSnapshot(spaced)
 
 
-def test_inspection_does_not_run_default_factories(store):
+def test_inspection_does_not_run_default_factories(read_only_store):
     calls = []
 
     def default():
@@ -131,13 +113,13 @@ def test_inspection_does_not_run_default_factories(store):
     class Defaults(Product):
         note: str = Field(default_factory=default)
 
-    db = Database(ReadOnlyStore(store), Registry(Defaults))
+    db = Database(read_only_store, Registry(Defaults))
     assert db.inspect_schema(Defaults).status == "uninstalled"
     assert calls == []
 
 
-def test_inspection_observes_transaction_handle_lifetime(store):
-    db = Database(ReadOnlyStore(store), Registry(Product))
+def test_inspection_observes_transaction_handle_lifetime(read_only_store):
+    db = Database(read_only_store, Registry(Product))
     tx = db.atomic(lambda handle: handle)
     with pytest.raises(TransactionError):
         tx.inspect_schema(Product)

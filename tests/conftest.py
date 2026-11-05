@@ -6,6 +6,31 @@ import pytest
 from mccann_hub.yhmf import MemoryStore, NativeStore, Path
 
 
+class ReadOnlyStore:
+    def __init__(self, store):
+        self.store = store
+
+    def get(self, path):
+        return self.store.get(path)
+
+    def children(self, path, *, limit, after=b""):
+        return self.store.children(path, limit=limit, after=after)
+
+    def atomic(self, callback):
+        return self.store.atomic(callback)
+
+    def set(self, path, value):
+        raise AssertionError("Read-only operation attempted to write")
+
+    def delete_tree(self, path):
+        raise AssertionError("Read-only operation attempted to delete")
+
+
+@pytest.fixture
+def read_only_store(store):
+    return ReadOnlyStore(store)
+
+
 @pytest.fixture(params=["memory", pytest.param("native", marks=pytest.mark.native)])
 def store(request):
     if request.param == "native":
