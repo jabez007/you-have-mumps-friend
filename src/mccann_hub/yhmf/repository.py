@@ -18,11 +18,8 @@ from .models import Model
 from .queries import IndexReport, Query, audit_indexes, scan
 from .records import metadata, record_nodes, record_values
 from .registry import ModelSpec, Registry
+from .schemas import schema_path
 from .storage import MAX_VALUE_BYTES, Path, Store
-
-
-def _schema_path(spec: ModelSpec) -> Path:
-    return Path("^YHMFSchema", (spec.global_name[1:].encode("ascii"),))
 
 
 class Database:
@@ -73,7 +70,7 @@ class Database:
         return operation(self) if self._transaction else self.atomic(operation)
 
     def _check_schema(self, spec: ModelSpec, *, install: bool = False) -> None:
-        root = _schema_path(spec)
+        root = schema_path(spec.global_name)
         current = self.store.get(root)
         if current is None:
             if install:
@@ -93,7 +90,7 @@ class Database:
         for name, value in metadata(spec).items():
             if self.store.get(root.child(b"%m", name)) != value:
                 raise SchemaMismatch("Record metadata differs from the registered schema")
-        if self.store.get(_schema_path(spec)) != spec.fingerprint:
+        if self.store.get(schema_path(spec.global_name)) != spec.fingerprint:
             raise SchemaMismatch("Record has no matching installed schema")
         return True
 

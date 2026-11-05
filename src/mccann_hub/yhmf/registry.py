@@ -2,7 +2,6 @@
 """Validated model declarations and canonical installed-schema identities."""
 
 import hashlib
-import json
 import re
 import types
 from dataclasses import dataclass, replace
@@ -12,6 +11,7 @@ from typing import Any, Literal, Union, get_args, get_origin
 from .codecs import LAYOUT_VERSION
 from .errors import SchemaError
 from .models import Children, Model, Reference
+from .schemas import canonical_json
 from .storage import Path
 
 _NAME = re.compile(r"[A-Za-z][A-Za-z0-9_]*\Z")
@@ -244,12 +244,7 @@ def _make_spec(model: type[Model]) -> ModelSpec:
     references = _reference_declarations(node.fields)
     if references:
         declaration["references"] = references
-    snapshot = json.dumps(
-        declaration,
-        sort_keys=True,
-        separators=(",", ":"),
-        ensure_ascii=True,
-    ).encode("ascii")
+    snapshot = canonical_json(declaration)
     return ModelSpec(
         model,
         global_name,
