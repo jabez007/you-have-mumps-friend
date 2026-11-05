@@ -8,12 +8,13 @@ from decimal import Decimal
 from pathlib import Path as FilePath
 
 from mccann_hub.yhmf import Database, NativeStore, Registry
-from mccann_hub.yhmf.errors import MaintenanceActive, SchemaMismatch
+from mccann_hub.yhmf.errors import MaintenanceActive, SchemaMismatch, UniqueViolation
 from mccann_hub.yhmf.maintenance import GATE, job_path
 from mccann_hub.yhmf.schemas import schema_path
 
 _models = runpy.run_path(str(FilePath(__file__).with_name("migration_models.py")))
 Product, ProductV2 = _models["Product"], _models["ProductV2"]
+_unique_models = runpy.run_path(str(FilePath(__file__).with_name("unique_migration_models.py")))
 
 
 class RendezvousStore(NativeStore):
@@ -36,19 +37,31 @@ class RendezvousStore(NativeStore):
         value = super().get(path)
         if path == self.guard:
             self.reads += 1
-            if self.waiting and self.operation != "crash":
+            if self.waiting and not self.operation.startswith("crash"):
                 self.rendezvous()
         return value
 
     def set(self, path, value):
         super().set(path, value)
-        if self.waiting and self.operation == "crash" and path.subscripts[-1] == b"note":
+        guards = {
+            "crash": path.global_name == Product.__global__ and path.subscripts[-1] == b"note",
+            "crash_claim": path.global_name == "^YHMFUnique",
+            "crash_reservation": path.global_name == "^YHMFMigration"
+            and len(path.subscripts) > 2
+            and path.subscripts[2] == b"unique",
+        }
+        if self.waiting and guards.get(self.operation, False):
             self.rendezvous()
 
 
-def run(operation, migration_id):
+def run(operation, migration_id, kind="additive"):
+    source, target = {
+        "additive": (Product, ProductV2),
+        "unique": (_unique_models["Product"], _unique_models["UniqueProduct"]),
+    }[kind]
     store = RendezvousStore(operation, migration_id)
-    db = Database(store, Registry(ProductV2))
+    db = Database(store, Registry(target))
+    error = None
     try:
         if operation == "write":
             Database(store, Registry(Product)).save(
@@ -65,19 +78,20 @@ def run(operation, migration_id):
 
             store.atomic(legacy)
         elif operation == "begin":
-            plan = db.plan_migration(ProductV2)
-            status = db.begin_migration(Product, ProductV2, plan=plan)
+            plan = db.plan_migration(target)
+            status = db.begin_migration(source, target, plan=plan)
             print(json.dumps(status.to_dict()), flush=True)
             return
         else:
-            status = db.advance_migration(migration_id, Product, ProductV2, batch_size=1)
+            status = db.advance_migration(migration_id, source, target, batch_size=1)
             print(json.dumps({**status.to_dict(), "reads": store.reads}), flush=True)
             return
         result = "committed"
-    except (MaintenanceActive, SchemaMismatch):
+    except (MaintenanceActive, SchemaMismatch, UniqueViolation) as exc:
         result = "restricted"
-    print(json.dumps({"result": result, "reads": store.reads}), flush=True)
+        error = type(exc).__name__
+    print(json.dumps({"result": result, "error": error, "reads": store.reads}), flush=True)
 
 
 if __name__ == "__main__":
-    run(sys.argv[1], sys.argv[2])
+    run(sys.argv[1], sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else "additive")

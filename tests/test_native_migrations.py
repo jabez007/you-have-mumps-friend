@@ -18,6 +18,8 @@ pytestmark = pytest.mark.native
 _WORKER = FilePath(__file__).with_name("native_migrations.py")
 _models = runpy.run_path(str(_WORKER))
 Product, ProductV2 = _models["Product"], _models["ProductV2"]
+_unique_models = _models["_unique_models"]
+UniqueSource, UniqueTarget = _unique_models["Product"], _unique_models["UniqueProduct"]
 
 
 @pytest.fixture
@@ -45,21 +47,21 @@ def db():
         store.delete_tree(root)
 
 
-def start(db):
-    return db.begin_migration(Product, ProductV2, plan=db.plan_migration(ProductV2))
+def start(db, source=Product, target=ProductV2):
+    return db.begin_migration(source, target, plan=db.plan_migration(target))
 
 
-def advance_to(db, status, phase):
+def advance_to(db, status, phase, source=Product, target=ProductV2):
     for _ in range(100):
         if status.phase == phase:
             return status
-        status = db.advance_migration(status.migration_id, Product, ProductV2, batch_size=1)
+        status = db.advance_migration(status.migration_id, source, target, batch_size=1)
     raise AssertionError("Migration did not reach its target phase")
 
 
-def worker(operation, migration_id="0" * 32):
+def worker(operation, migration_id="0" * 32, kind="additive"):
     return subprocess.Popen(
-        [sys.executable, str(_WORKER), operation, migration_id],
+        [sys.executable, str(_WORKER), operation, migration_id, kind],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -199,3 +201,129 @@ def test_inflight_native_writers_cannot_cross_the_maintenance_barrier(db, operat
     db.abort_migration(status.migration_id)
     old = Database(db.store, Registry(Product))
     assert old.get(Product, "P0").name == "Main"
+
+
+@pytest.fixture
+def unique_db(db):
+    # The existing fixture owns these disposable globals and their final cleanup.
+    for name in (Product.__global__, "^YHMFSchema", "^YHMFIndex", "^YHMFUnique", "^YHMFMigration"):
+        db.store.delete_tree(Path(name))
+    old = Database(db.store, Registry(UniqueSource))
+    for number in range(3):
+        old.insert(
+            UniqueSource(
+                id=f"P{number}", sku=f"SKU{number}", serial=f"S{number}", price=Decimal(number + 1)
+            )
+        )
+    return Database(db.store, Registry(UniqueTarget))
+
+
+def unique_start(db):
+    return start(db, UniqueSource, UniqueTarget)
+
+
+def unique_advance_to(db, status, phase):
+    return advance_to(db, status, phase, UniqueSource, UniqueTarget)
+
+
+@pytest.mark.parametrize("phase", ["validate", "backfill", "activate"])
+def test_unique_native_restart_commits_only_one_reservation_and_claim_set(
+    unique_db, monkeypatch, phase
+):
+    db = unique_db
+    status = unique_advance_to(db, unique_start(db), phase)
+    yottadb = importlib.import_module("yottadb")
+    original = db.store.set
+    checkpoints = []
+
+    def restart_once(path, value):
+        original(path, value)
+        if path == job_path(status.migration_id):
+            checkpoints.append(value)
+            if len(checkpoints) == 1:
+                raise yottadb.YDBTPRestart()
+
+    monkeypatch.setattr(db.store, "set", restart_once)
+    updated = db.advance_migration(status.migration_id, UniqueSource, UniqueTarget, batch_size=1)
+    assert len(checkpoints) == 2 and checkpoints[0] == checkpoints[1]
+    assert db.migration_status(status.migration_id) == updated
+    monkeypatch.setattr(db.store, "set", original)
+    assert unique_advance_to(db, updated, "complete").retagged == 3
+    assert db.check_indexes(UniqueTarget).issues == ()
+
+
+def unique_worker_race(migration_id):
+    processes = [worker("advance", migration_id, "unique") for _ in range(2)]
+    try:
+        for process in processes:
+            ready(process)
+        for process in processes:
+            process.stdin.write("go\n")
+            process.stdin.flush()
+        summaries = []
+        for process in processes:
+            stdout, stderr = process.communicate(timeout=20)
+            assert process.returncode == 0, stderr
+            summaries.append(json.loads(stdout))
+        return summaries
+    finally:
+        for process in processes:
+            stop(process)
+
+
+@pytest.mark.parametrize("duplicate", [False, True])
+def test_unique_preflight_workers_serialize_reservations_and_find_cross_batch_duplicates(
+    unique_db, duplicate
+):
+    db = unique_db
+    if duplicate:
+        old = Database(db.store, Registry(UniqueSource))
+        record = old.get(UniqueSource, "P1")
+        record.sku = "SKU0"
+        old.save(record)
+    status = unique_start(db)
+    summaries = unique_worker_race(status.migration_id)
+    current = db.migration_status(status.migration_id)
+    if duplicate:
+        assert sum(item.get("error") == "UniqueViolation" for item in summaries) == 1
+        assert current.validated == 1 and current.backfilled == 0
+        assert len(db.store.children(job_path(status.migration_id).child(b"unique"), limit=10)) == 2
+        db.abort_migration(status.migration_id)
+        assert old.get(UniqueSource, "P1").sku == "SKU0"
+    else:
+        assert sorted(item["validated"] for item in summaries) == [1, 2]
+        assert sum(item["reads"] for item in summaries) >= 3
+        assert current.validated == 2
+        assert unique_advance_to(db, current, "complete").retagged == 3
+
+
+@pytest.mark.parametrize(
+    "operation,phase", [("crash_reservation", "validate"), ("crash_claim", "backfill")]
+)
+def test_unique_worker_death_rolls_back_reservations_or_claims_before_resume(
+    unique_db, operation, phase
+):
+    db = unique_db
+    status = unique_advance_to(db, unique_start(db), phase)
+    process = worker(operation, status.migration_id, "unique")
+    try:
+        ready(process)
+        process.kill()
+        process.wait(timeout=5)
+    finally:
+        stop(process)
+    assert db.migration_status(status.migration_id) == status
+    if phase == "validate":
+        assert db.store.children(job_path(status.migration_id).child(b"unique"), limit=10) == ()
+    for field in (b"sku", b"price"):
+        assert db.store.children(Path("^YHMFUnique", (b"YHMFTestProduct", field)), limit=10) == ()
+    process = worker("resume", status.migration_id, "unique")
+    try:
+        stdout, stderr = process.communicate(timeout=20)
+        assert process.returncode == 0, stderr
+        assert json.loads(stdout)["phase"] == phase
+    finally:
+        stop(process)
+    current = db.migration_status(status.migration_id)
+    assert unique_advance_to(db, current, "complete").retagged == 3
+    assert db.check_indexes(UniqueTarget).issues == ()
