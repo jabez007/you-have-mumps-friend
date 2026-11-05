@@ -44,8 +44,9 @@ The registry rejects overlapping globals, aliases, unsupported field types,
 and missing or ambiguous primary keys. Access checks an installed schema
 fingerprint, and incompatible declarations raise `SchemaMismatch` before writes.
 Changing a model name, field declaration, default, or constraint can change the
-fingerprint. There is no migration engine yet. Adding an index changes the
-declared schema; existing data requires an explicit migration and index rebuild.
+fingerprint. Read-only migration planning is available; execution is not implemented.
+Adding an index changes the declared schema; existing data requires an explicit
+migration and index rebuild.
 
 ## Store owned child records
 
@@ -227,6 +228,69 @@ global, or a bad snapshot fingerprint raises `StorageError`.
 normal representation excludes schema contents. `snapshot.to_dict()` explicitly
 returns the full schema, including declared defaults, as a fresh dictionary.
 Inspection does not validate records or index contents.
+
+Compare snapshots independently of the database:
+
+```python
+from mccann_hub.yhmf import compare_schemas
+
+changes = compare_schemas(inspection.installed, inspection.declared)
+assert any(change.kind == "field_added" and change.path == ("note",) for change in changes)
+```
+
+Changes distinguish fields, storage types, validation, defaults, indexes,
+relationships, and version metadata. Paths contain declared field names;
+child keys are not part of these schema paths. Renames are reported as removals
+and additions. Identity changes, destructive changes, unknown layouts, and
+unsupported schema shapes require manual review. Comparison resolves local
+Pydantic definitions but never fetches external JSON schemas.
+
+Default values remain hidden in normal change representations. An added scalar
+field with a literal default can describe a backfill. Required fields without
+defaults and fields with default factories require manual values. Comparing
+snapshots does not run validators or default factories.
+
+## Review a migration plan
+
+```python
+plan = next_db.plan_migration(CatalogV2)
+assert not plan.requires_manual_review
+assert any(step.kind == "backfill_field" and step.path == ("note",) for step in plan.steps)
+assert plan.steps[-1].kind == "activate_schema"
+assert plan.to_dict()["execution_supported"] is False
+assert plan.to_json() == next_db.plan_migration(CatalogV2).to_json()
+```
+
+Plans describe changes from the installed fingerprint to the current declaration.
+They order backfills before index rebuilding and place schema activation after
+validation and record metadata updates. Unique indexes add a uniqueness check;
+reference changes add reverse-index rebuilding and validation. Matching schemas
+produce an empty plan. Empty globals produce an installation plan; unmanaged data
+requires manual review and is never adopted implicitly.
+
+`to_json()` returns deterministic, compact ASCII JSON without timestamps. The
+[plan fixture](tests/fixtures/add-field-migration-plan.json) defines the review
+format. Normal representations and serialization exclude literal default values.
+Use `to_dict(include_defaults=True)` or `to_json(include_defaults=True)` explicitly
+to review them. Default payloads are JSON Schema representations, not encoded
+native node values.
+
+Nested backfills use declared field paths and apply only to existing owners.
+They do not imply creating absent embedded objects or child records. Removing
+fields, changing storage types, moving identities, retargeting references, unknown
+formats, and unavailable default values require manual review. Existing default
+changes do not request replacement of already stored values.
+
+Plans are per top-level model. Identity and reference changes can require
+coordination with other models. Custom Python validators and changes to factory
+functions may not appear in JSON Schema; advance `__schema_version__` when that
+logic changes and review it separately.
+
+Planning performs schema inspection and a bounded data-presence check. It does
+not scan or validate records, run factories or validators, rebuild indexes, or
+write any database nodes. `requires_manual_review=False` does not certify data
+compatibility. Execution will require a maintenance gate, fingerprint
+revalidation, bounded checkpoints, and interruption/resume testing.
 
 ## Run development checks
 

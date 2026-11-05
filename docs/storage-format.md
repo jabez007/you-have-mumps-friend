@@ -82,6 +82,17 @@ an absent snapshot with a fingerprint, is incomplete metadata and causes an
 error. Inspection never rewrites either node. Unknown positive layout versions
 can be inspected; inspection alone does not claim compatibility with them.
 
+The comparison interface resolves local JSON Schema definitions and compares
+declared paths, scalar types, validation, defaults, ownership, references, and
+index flags. Unknown constructs are reported for manual review. Presentation-only
+changes still alter the stored fingerprint and require record metadata updates.
+
+Read-only migration plans use review format version 1. They contain source and
+target fingerprint summaries, sorted changes, and ordered proposed steps. They
+contain no record values and omit literal defaults unless explicitly requested.
+They neither introduce migration-state globals nor change the installed schema.
+This format is a review report, not an executable migration program.
+
 ## Owned trees
 
 An embedded object's field node has value `o:1`, and its declared fields are

@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Explicit hierarchical persistence for YottaDB."""
 
+from .migrations import MigrationPlan, MigrationStep
 from .models import ChildField, Children, Field, Model, Reference
 from .queries import IndexReport, QueryPlan
 from .registry import Registry
 from .repository import Database
+from .schema_diff import SchemaChange, compare_schemas
 from .schemas import SchemaInspection, SchemaSnapshot
 from .storage import MemoryStore, NativeStore, Path, Store
 
@@ -15,6 +17,8 @@ __all__ = [
     "Field",
     "IndexReport",
     "MemoryStore",
+    "MigrationPlan",
+    "MigrationStep",
     "Model",
     "NativeStore",
     "Path",
@@ -22,7 +26,9 @@ __all__ = [
     "Registry",
     "Reference",
     "SchemaInspection",
+    "SchemaChange",
     "SchemaSnapshot",
     "Store",
+    "compare_schemas",
 ]
-__version__ = "0.2.0a1"
+__version__ = "0.3.0a1"

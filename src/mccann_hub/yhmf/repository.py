@@ -14,6 +14,7 @@ from .errors import (
     StorageError,
     TransactionError,
 )
+from .migrations import MigrationPlan, build_plan
 from .models import Model
 from .queries import IndexReport, Query, audit_indexes, scan
 from .records import metadata, record_nodes, record_values
@@ -204,3 +205,7 @@ class Database:
         """Inspect metadata atomically without requiring a matching installed schema."""
         spec = self.registry.spec(model)
         return self._run(lambda tx: inspect_schema(tx.store, spec))
+
+    def plan_migration(self, model: type[Model]) -> MigrationPlan:
+        """Describe schema changes without scanning, validating, or modifying records."""
+        return build_plan(self.inspect_schema(model))
