@@ -6,6 +6,8 @@ import pytest
 
 from mccann_hub.yhmf import ChildField, Children, Database, Field, Model, Path, Reference, Registry
 from mccann_hub.yhmf.errors import SchemaMismatch, TransactionError
+from mccann_hub.yhmf.migrations import build_plan
+from mccann_hub.yhmf.schemas import SchemaInspection, SchemaSnapshot, canonical_json
 
 
 class Product(Model):
@@ -266,3 +268,16 @@ def test_add_field_plan_matches_the_review_format_fixture(store, read_only_store
     plan = Database(read_only_store, Registry(ProductV2)).plan_migration(ProductV2)
     fixture = FilePath(__file__).parent / "fixtures/add-field-migration-plan.json"
     assert plan.to_dict() == json.loads(fixture.read_text())
+
+
+@pytest.mark.parametrize("key,value", [("hierarchy", [None]), ("references", [{}])])
+def test_unknown_schema_metadata_stays_reportable_as_unsupported(key, value):
+    spec = Registry(Product).spec(Product)
+    source = SchemaSnapshot(spec.snapshot)
+    document = source.to_dict()
+    document[key] = value
+    target = SchemaSnapshot(canonical_json(document))
+    plan = build_plan(SchemaInspection(target, source, True))
+    assert plan.requires_manual_review
+    assert plan.to_dict()["execution_supported"] is False
+    assert json.loads(plan.to_json())["requires_manual_review"] is True

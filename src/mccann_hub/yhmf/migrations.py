@@ -107,7 +107,12 @@ class MigrationPlan:
     def execution_supported(self) -> bool:
         """Whether the plan fits the additive root-scalar executor's scope."""
         source = self.inspection.installed
-        if source is None or source.layout_version != LAYOUT_VERSION:
+        if (
+            source is None
+            or source.layout_version != LAYOUT_VERSION
+            or self.requires_manual_review
+            or self.destructive
+        ):
             return False
         document = self.inspection.declared.to_dict()
         nonscalar = {item["field"] for item in document.get("hierarchy", [])}
