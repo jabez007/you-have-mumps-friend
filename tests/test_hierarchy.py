@@ -164,3 +164,32 @@ def test_child_field_must_use_the_declared_primary_key():
 
     with pytest.raises(SchemaError, match="primary-key"):
         Registry(Bad)
+
+
+def test_child_annotation_requires_a_model():
+    class Bad(Warehouse):
+        bins: Children[int] = ChildField(key="id")
+
+    with pytest.raises(SchemaError, match="model"):
+        Registry(Bad)
+
+
+def test_optional_children_and_empty_embedded_objects(store):
+    class Empty(Model):
+        pass
+
+    class Sparse(Model):
+        __global__ = "^YHMFTestWarehouse"
+        id: int = Field(primary_key=True)
+        empty: Empty
+        bins: Children[Bin] | None = ChildField(default=None, key="code")
+
+    db = Database(store, Registry(Sparse))
+    db.insert(Sparse(id=7, empty=Empty()))
+    loaded = db.get(Sparse, 7)
+    assert loaded.empty == Empty()
+    assert loaded.bins is None
+    loaded.bins = {}
+    db.save(loaded)
+    assert db.get(Sparse, 7).bins == {}
+    assert db.store.get(Path("^YHMFTestWarehouse", (b"7", b"empty"))) == b"o:1"

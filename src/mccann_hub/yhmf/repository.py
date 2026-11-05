@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Explicit CRUD with atomic schema checks and retry-local transaction handles."""
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 
 from .codecs import Key
 from .errors import AlreadyExists, NotFound, SchemaMismatch, StorageError, TransactionError
@@ -23,10 +24,21 @@ class Database:
         self.registry = registry
         self._transaction = False
         self._active = True
+        self._rollback_only = False
 
     def _ensure_active(self) -> None:
         if not self._active:
             raise TransactionError("This transaction handle has expired")
+        if self._rollback_only:
+            raise TransactionError("Transaction must roll back after a failed write")
+
+    @contextmanager
+    def _writing(self) -> Iterator[None]:
+        try:
+            yield
+        except BaseException:
+            self._rollback_only = True
+            raise
 
     def atomic[T](self, callback: Callable[["Database"], T]) -> T:
         """Execute callback with a fresh handle on every native transaction attempt."""
@@ -38,7 +50,9 @@ class Database:
             tx = Database(self.store, self.registry)
             tx._transaction = True
             try:
-                return callback(tx)
+                result = callback(tx)
+                tx._ensure_active()
+                return result
             finally:
                 tx._active = False
 
@@ -101,10 +115,11 @@ class Database:
             exists = tx._exists(spec, root)
             if insert and exists:
                 raise AlreadyExists("Insert cannot replace an existing record")
-            tx._check_schema(spec, install=True)
-            tx.store.delete_tree(root)
-            for path, value in nodes.items():
-                tx.store.set(path, value)
+            with tx._writing():
+                tx._check_schema(spec, install=True)
+                tx.store.delete_tree(root)
+                for path, value in nodes.items():
+                    tx.store.set(path, value)
             return validated
 
         return self._run(write)
@@ -126,7 +141,8 @@ class Database:
             tx._check_schema(spec)
             exists = tx._exists(spec, root)
             if exists:
-                tx.store.delete_tree(root)
+                with tx._writing():
+                    tx.store.delete_tree(root)
             return exists
 
         return self._run(remove)

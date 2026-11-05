@@ -37,6 +37,8 @@ and `delete` returns whether a record existed. Keys must match their declared ty
 expires when the callback returns. Each restart creates a fresh handle and
 reconstructs records from storage. All standalone operations also use transactions.
 Nested `atomic` callbacks are rejected.
+If a backend write fails, the transaction must roll back even when the callback
+catches the exception. Later operations on that handle raise `TransactionError`.
 
 The registry rejects overlapping globals, aliases, unsupported field types,
 and missing or ambiguous primary keys. Access checks an installed schema

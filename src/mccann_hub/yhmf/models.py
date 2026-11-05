@@ -17,6 +17,8 @@ class Model(BaseModel):
         validate_assignment=True,
         revalidate_instances="always",
         allow_inf_nan=False,
+        validate_default=True,
+        hide_input_in_errors=True,
     )
     __global__: ClassVar[str | None] = None
     __schema_version__: ClassVar[int] = 1

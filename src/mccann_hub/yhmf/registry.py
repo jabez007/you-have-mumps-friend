@@ -84,6 +84,8 @@ def _field_spec(model: type[Model], name: str, ancestors: tuple[type[Model], ...
         raise SchemaError("Invalid mapper metadata")
     if get_origin(annotation) is Children:
         child_model = get_args(annotation)[0]
+        if not isinstance(child_model, type) or not issubclass(child_model, Model):
+            raise SchemaError("Children requires a model type")
         node = _node_spec(child_model, keyed=True, ancestors=ancestors)
         if metadata.get("children_key") != node.key_field:
             raise SchemaError("ChildField key must match the child's primary-key field")
