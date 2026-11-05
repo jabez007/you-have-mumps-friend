@@ -1,0 +1,13 @@
+[
+  {"kind": "null", "value": null, "encoded": "n:"},
+  {"kind": "bool", "value": false, "encoded": "b:0"},
+  {"kind": "bool", "value": true, "encoded": "b:1"},
+  {"kind": "int", "value": 0, "encoded": "i:0"},
+  {"kind": "int", "value": -42, "encoded": "i:-42"},
+  {"kind": "str", "value": "", "encoded": "s:"},
+  {"kind": "str", "value": "n:含む", "encoded": "s:n:含む"},
+  {"kind": "decimal", "value": "12.50", "encoded": "d:12.50"},
+  {"kind": "decimal", "value": "-0.00", "encoded": "d:-0.00"},
+  {"kind": "float", "value": 0.0, "encoded": "f:0.0"},
+  {"kind": "bytes", "value": "00ff", "encoded": "x:AP8="}
+]

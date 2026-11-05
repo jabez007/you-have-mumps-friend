@@ -1,0 +1,46 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mccann-hub-yhmf"
+version = "0.1.0a1"
+description = "Explicit hierarchical persistence for YottaDB"
+readme = "README.md"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+requires-python = ">=3.12"
+dependencies = ["pydantic>=2.12,<3"]
+
+[project.optional-dependencies]
+native = ["yottadb>=2.0,<3"]
+
+[project.urls]
+Source = "https://github.com/jabez007/you-have-mumps-friend"
+
+[dependency-groups]
+dev = ["pytest>=8,<9", "ruff>=0.14,<0.15", "mypy>=1.18,<2", "hypothesis>=6,<7"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mccann_hub"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--import-mode=importlib"
+markers = ["native: requires a configured, disposable YottaDB database"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "C90"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src"]
+
