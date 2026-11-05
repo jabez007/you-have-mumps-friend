@@ -120,8 +120,9 @@ Activation requires equal counters and publishes the target schema, completes
 the job, and removes the gate in one transaction. Before any backfill commits,
 abort can restore the source fingerprint and persist the `aborted` phase.
 
-The executor adds root scalar nodes and new equality entries or unique claims.
-It can promote existing root scalar equality indexes to unique indexes without
+The executor adds scalar nodes and new equality entries or unique claims at
+root fields and inside existing owned objects and children.
+It can promote existing scalar equality indexes to unique indexes without
 rewriting their equality entries. It rejects occupied backfill paths and nonempty new-index
 namespaces. Existing fields and index identities must remain byte-for-byte
 unchanged. Existing expected equality entries, uniqueness claims, reverse edges,
@@ -129,11 +130,23 @@ and reference target metadata are validated without rewriting them. Verification
 checks expected entries by record; it does not perform a full reverse index
 audit for unrelated orphan entries.
 
+Logical migration paths contain field names only. Index namespaces join those
+names with dots, including the full path for nested additions and promotions.
+Physical backfill paths also contain encoded child keys wherever ownership
+crosses a child collection. Only existing owners are visited; null embedded
+objects or collections remain null, and no new child identities are introduced.
+Presence and count markers, existing scalar bytes, reference edges, and index
+identities must remain unchanged. A parent and every affected descendant commit
+with that batch's checkpoint. Progress cursors and counters still identify
+top-level parents. Target trees must satisfy the existing record node budget
+and child limits before any backfill is committed.
+
 New uniqueness constraints use job-scoped validation reservations at
 `^YHMFMigration("jobs",job_id,"unique",digest)`. The digest is the lowercase
 hexadecimal SHA-256 of canonical JSON containing the application global without
 its caret, declaration path, and normalized value token as an array of strings.
-Each node contains canonical JSON with `index` holding that same array and `owner`
+Declaration paths use their full dotted form at every depth. Each node contains
+canonical JSON with `index` holding that same array and `owner`
 holding the decoded unique-claim owner array. The complete identity participates
 in comparisons, so a digest collision fails closed. Hashing bounds the scratch
 key length independently of the indexed value's length.
@@ -238,7 +251,7 @@ Record replacement validates existing entries, releases removed claims, and
 claims new values in one native transaction. Uniqueness is immediate per mapper
 write. Index-definition changes participate in schema fingerprints and require
 explicit migration for installed schemas. The additive executor builds new
-root scalar indexes and promotes equality indexes to unique under maintenance;
+scalar indexes and promotes equality indexes to unique under maintenance;
 ordinary CRUD does not rebuild
 indexes automatically. Native key-size limits include the full indexed value token.
 

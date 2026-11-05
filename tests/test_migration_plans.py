@@ -234,6 +234,7 @@ def test_nested_backfills_target_existing_owners_without_materializing_children(
     db = Database(store, Registry(Warehouse))
     db.insert(Warehouse(id=1, lots={"L1": Lot(code="L1")}))
     plan = Database(read_only_store, Registry(NewWarehouse)).plan_migration(NewWarehouse)
+    assert plan.execution_supported
     steps = plan.to_dict()["steps"]
     backfill = next(step for step in steps if step["kind"] == "backfill_field")
     assert backfill["path"] == ["lots", "note"] and backfill["scope"] == "existing_owners"

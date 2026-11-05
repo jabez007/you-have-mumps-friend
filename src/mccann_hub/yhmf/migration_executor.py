@@ -57,7 +57,7 @@ def _bind(registry: Registry, source: type[Model], target: type[Model]) -> _Bind
     plan = build_plan(inspection)
     if not plan.execution_supported:
         raise MigrationError(
-            "Migration supports root scalar defaults, index additions, and unique promotions"
+            "Migration supports scalar defaults, index additions, and unique promotions"
         )
     defaults = BackfillDefaults(new, plan)
     return _Binding(old, new, registry, plan, defaults)
@@ -79,7 +79,7 @@ def _check_new_indexes_empty(store: Store, binding: _Binding) -> None:
             continue
         path = Path(
             "^YHMFIndex",
-            (binding.target.global_name[1:].encode("ascii"), change.path[0].encode("ascii")),
+            (binding.target.global_name[1:].encode("ascii"), ".".join(change.path).encode("ascii")),
         )
         globals_to_check = (
             ("^YHMFIndex", "^YHMFUnique") if change.kind == "index_added" else ("^YHMFUnique",)

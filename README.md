@@ -297,10 +297,11 @@ record validation still happens under maintenance before any backfill.
 ## Execute an additive migration
 
 Keep the exact source model declaration available alongside the target. The
-executor accepts added root scalar fields with literal defaults, new root scalar
-indexes, and promotion of existing root equality indexes to unique indexes.
+executor accepts added scalar fields with literal defaults, new scalar indexes,
+and promotion of existing equality indexes to unique indexes. These operations
+apply to root fields and fields inside existing embedded objects and children.
 Existing values, owned trees, references, equality entries, and uniqueness claims
-are preserved. Nested backfills, index removals or uniqueness downgrades,
+are preserved. New owned containers, index removals or uniqueness downgrades,
 reference changes, field removals, and default factories remain unsupported.
 
 ```python
@@ -322,7 +323,7 @@ the results, then update record metadata. A final transaction publishes the
 target snapshot and fingerprint, marks the job complete, and releases maintenance.
 An empty page advances the phase; the cursor resets for the next pass.
 
-Adding `unique=True` to an existing root scalar field uses the same methods.
+Adding `unique=True` to an existing scalar field uses the same methods.
 Validation reserves every new non-null unique value under the migration job,
 using the same normalization as ordinary writes. Duplicates across batches raise
 `UniqueViolation` before application indexes or record metadata change. The failed
@@ -337,6 +338,27 @@ the active entries and claims before activation. Reservations contain normalized
 values and owner identities inside framework metadata. They remain with completed
 and aborted jobs, use space proportional to the new non-null unique values, and
 are absent from normal migration status output.
+
+Nested changes use dotted declaration paths such as `lots.note` and
+`lots.samples.reading`. Scalar defaults are added to every existing owner at that
+path. Optional embedded objects and nullable collections that are null remain
+null, and empty collections stay empty. The executor does not create children or
+embedded objects to apply a default. A default factory is rejected even when no
+owner currently exists.
+
+Each parent record and its complete owned tree remain one transaction unit.
+Batch limits and progress counters count parents, with the existing per-parent
+node and child limits also enforced against the target tree before backfill.
+Adding a field that would exceed those limits fails validation without changing
+application data. Owned schema version increases are supported alongside
+additive changes; decreases require manual review, as root version decreases do.
+
+Nested equality queries still return owning root records. After adding an
+indexed `note` to `Lot` and updating `Warehouse.lots` to use that declaration,
+`db.query(WarehouseV2).where(**{"lots.note": None}).all()` selects warehouses
+with matching lots. A nested unique constraint covers all occurrences at its
+declaration path, including different children under the same parent. The
+preflight checks those duplicates as well as duplicates across parent batches.
 
 The database-wide gate blocks ordinary operations from current mapper clients.
 Schema inspection, planning, and `migration_status(migration_id)` remain

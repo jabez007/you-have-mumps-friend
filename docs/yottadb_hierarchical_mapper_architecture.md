@@ -262,7 +262,7 @@ The framework detects incompatible schemas and refuses unsafe access. Schema
 changes require an explicit migration.
 
 Schema comparisons and deterministic review plans are implemented. The initial
-executor supports root scalar literal-default backfills, new root scalar indexes,
+executor supports scalar literal-default backfills in existing owned trees, new scalar indexes,
 and promotion of equality indexes to unique. Job-scoped reservations detect
 duplicate values across validation batches before application data changes.
 It uses a maintenance gate and bounded checkpoints before
@@ -387,14 +387,17 @@ including mismatched declarations, without changing schema or application data.
 Semantic snapshot comparisons and deterministic migration review plans are
 implemented, including nested fields, identity, relationships, and index
 definitions. Planning is read-only and does not inspect record values or prove
-data compatibility. An additive migration executor now supports root scalar
-literal defaults, root index additions, and promotion of equality indexes to
-unique. A database-wide
+data compatibility. An additive migration executor now supports scalar
+literal defaults, index additions, and promotion of equality indexes to unique
+at roots and inside existing embedded objects and child collections. Null owners
+remain null, and child identities and collection counts are preserved. Each
+parent tree commits atomically, and progress is checkpointed by parent. A database-wide
 maintenance gate, source fingerprint barrier, bounded transactional checkpoints,
 four validation/backfill/verification/metadata passes, and atomic activation
 keep partial results inaccessible. Failed batches resume from their preceding
-checkpoint. Abort is available only before the first backfill commits. Nested,
-destructive, reference, and uniqueness-downgrade migrations remain later work.
+checkpoint. Abort is available only before the first backfill commits. New owned
+containers, destructive, reference, and uniqueness-downgrade migrations remain
+later work.
 
 Begin with a storage-contract prototype rather than a full ORM.
 

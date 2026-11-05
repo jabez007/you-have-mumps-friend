@@ -25,16 +25,27 @@ _STEP_ORDER = {
 }
 
 
-def _supported_change(change: SchemaChange, nonscalar: set[str]) -> bool:
+def _owned_paths(
+    entries: list[dict[str, Any]], prefix: tuple[str, ...] = ()
+) -> set[tuple[str, ...]]:
+    result = set()
+    for entry in entries:
+        path = prefix + (entry["field"],)
+        result.add(path)
+        result.update(_owned_paths(entry.get("fields", []), path))
+    return result
+
+
+def _supported_change(change: SchemaChange, nonscalar: set[tuple[str, ...]]) -> bool:
     if change.destructive or change.requires_manual_review:
         return False
-    if change.kind in {"metadata_changed", "schema_version_changed"}:
+    if change.kind in {"metadata_changed", "schema_version_changed", "owned_version_changed"}:
         return True
-    if change.kind not in {"field_added", "index_added", "index_changed"} or len(change.path) != 1:
+    if change.kind not in {"field_added", "index_added", "index_changed"} or not change.path:
         return False
     if change.kind == "index_changed" and not change.unique:
         return False
-    if change.path[0] in nonscalar:
+    if change.path in nonscalar:
         return False
     return change.kind != "field_added" or change.default_json is not None
 
@@ -107,7 +118,7 @@ class MigrationPlan:
 
     @property
     def execution_supported(self) -> bool:
-        """Whether the plan fits the additive root-scalar executor's scope."""
+        """Whether the plan fits additive scalar changes in existing owned trees."""
         source = self.inspection.installed
         if (
             source is None
@@ -117,8 +128,8 @@ class MigrationPlan:
         ):
             return False
         document = self.inspection.declared.to_dict()
-        nonscalar = {item["field"] for item in document.get("hierarchy", [])}
-        nonscalar.update(item["path"][0] for item in document.get("references", []))
+        nonscalar = _owned_paths(document.get("hierarchy", []))
+        nonscalar.update(tuple(item["path"]) for item in document.get("references", []))
         return any(
             change.kind in {"field_added", "index_added", "index_changed"}
             for change in self.changes
