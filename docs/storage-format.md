@@ -63,7 +63,7 @@ Nested model schema versions, relationship kinds, and child-key fields also
 participate through the snapshot's `hierarchy` entry. Scalar-only snapshots
 omit that entry.
 
-`^YHMFSchema` and `^YHMFIndex` belong to the framework. The engine reserves
+`^YHMFSchema`, `^YHMFIndex`, and `^YHMFRef` belong to the framework. The engine reserves
 `^%Y*`, which the path validator rejects. A registry assigns each application
 global to exactly one top-level model. Save replaces the entire record subtree;
 it does not merge raw nodes or silently overwrite unmanaged records.
@@ -89,6 +89,40 @@ collection traversal and reject records that exceed the node budget.
 Owned models cannot declare independent globals, and ownership declarations
 cannot be recursive. Child access currently goes through the loaded parent
 aggregate. Updating a parent replaces its entire subtree in one transaction.
+
+## References and reverse entries
+
+A non-null reference is `r:` followed by the target's canonical encoded key.
+The target model comes from the declaration. For `Reference[Product]`, key
+`"P42"` persists as `r:s:P42`. Null references use `n:`. Both the target global
+and its primary-key field participate in the source's canonical schema snapshot,
+along with the fixed deletion policy `restrict`.
+
+Reverse entries use this layout:
+
+```text
+^YHMFRef("Product","s:P42")="1"
+^YHMFRef("Product","s:P42","Order",1,"<path-sha256>")="[\"lines\",\"s:L1\",\"product\"]"
+```
+
+The target root contains the number of incoming reference fields. Each leaf
+identifies the source global, source root key, and relative owned-field path.
+The path is a compact ASCII JSON array with `ensure_ascii` escaping. The digest
+is lowercase hexadecimal SHA-256 of those exact JSON bytes. Child keys retain
+their canonical key prefixes in the array. The hash keeps deep owned paths
+from consuming additional index subscripts. Native key-size limits still apply
+to the combined source and target identity.
+
+Every write atomically changes the source record, reverse entries, and incoming
+counts. A deletion reads the count node directly, which participates in native
+transaction conflict detection. It also checks whether reverse children exist.
+Any incoming reference prevents deletion. Deleting a source removes its outgoing
+entries first, so a self-reference alone does not prevent deleting that source.
+
+Unreferenced targets can retain a count of zero. Deleting the target removes its
+reverse root. Missing or inconsistent entries cause errors when mapper operations
+encounter them. Raw writes can bypass enforcement; this version has no automatic
+repair or complete consistency scan.
 
 ## Storage adapter
 

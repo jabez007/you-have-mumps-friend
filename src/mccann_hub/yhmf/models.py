@@ -27,6 +27,19 @@ class Model(BaseModel):
 type Children[T: Model] = dict[str | int, T]
 
 
+class Reference[T: Model](BaseModel):
+    """An immutable key for an independently persisted, declared target model."""
+
+    model_config = ConfigDict(
+        extra="forbid",
+        strict=True,
+        frozen=True,
+        revalidate_instances="always",
+        hide_input_in_errors=True,
+    )
+    key: str | int
+
+
 def ChildField(default: Any = PydanticUndefined, *, key: str, **kwargs: Any) -> Any:
     """A parent-owned dictionary keyed by the child model's primary-key field."""
     if "json_schema_extra" in kwargs:
@@ -43,15 +56,21 @@ def Field(
     primary_key: bool = False,
     index: bool = False,
     unique: bool = False,
+    on_delete: str | None = None,
     **kwargs: Any,
 ) -> Any:
     """Pydantic Field with mapper metadata. Indexes arrive after native CRUD."""
     if index or unique:
         raise NotImplementedError("Secondary indexes and uniqueness are not implemented yet")
+    if on_delete is not None and on_delete != "restrict":
+        raise NotImplementedError("Only on_delete='restrict' is implemented")
     if "json_schema_extra" in kwargs:
         raise ValueError("json_schema_extra is reserved for mapper metadata")
+    metadata: dict[str, Any] = {"primary_key": primary_key}
+    if on_delete is not None:
+        metadata["on_delete"] = on_delete
     return PydanticField(
         default,
-        json_schema_extra={"yhmf": {"primary_key": primary_key}},
+        json_schema_extra={"yhmf": metadata},
         **kwargs,
     )

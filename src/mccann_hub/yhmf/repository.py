@@ -4,8 +4,16 @@
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 
+from . import references
 from .codecs import Key
-from .errors import AlreadyExists, NotFound, SchemaMismatch, StorageError, TransactionError
+from .errors import (
+    AlreadyExists,
+    NotFound,
+    ReferenceViolation,
+    SchemaMismatch,
+    StorageError,
+    TransactionError,
+)
 from .models import Model
 from .records import metadata, record_nodes, record_values
 from .registry import ModelSpec, Registry
@@ -22,6 +30,7 @@ class Database:
     def __init__(self, store: Store, registry: Registry) -> None:
         self.store = store
         self.registry = registry
+        registry.validate_references()
         self._transaction = False
         self._active = True
         self._rollback_only = False
@@ -109,20 +118,35 @@ class Database:
         validated = type(record).model_validate(values)
         root = spec.path(getattr(validated, spec.key_field))
         nodes = record_nodes(spec, root, validated)
+        new_links = references.links(self.registry, spec, root, validated)
 
         def write(tx: Database) -> M:
             tx._check_schema(spec)
             exists = tx._exists(spec, root)
             if insert and exists:
                 raise AlreadyExists("Insert cannot replace an existing record")
+            old_links: frozenset[references.Link] = frozenset()
+            if exists:
+                previous = tx.get(type(record), getattr(validated, spec.key_field))
+                old_links = references.links(tx.registry, spec, root, previous)
             with tx._writing():
                 tx._check_schema(spec, install=True)
                 tx.store.delete_tree(root)
                 for path, value in nodes.items():
                     tx.store.set(path, value)
+                tx._check_reference_targets(new_links)
+                references.replace(tx.store, old_links, new_links)
             return validated
 
         return self._run(write)
+
+    def _check_reference_targets(self, links: frozenset[references.Link]) -> None:
+        targets = {(link.target_model, link.target) for link in links}
+        for model, path in targets:
+            spec = self.registry.spec(model)
+            self._check_schema(spec)
+            if not self._exists(spec, path):
+                raise ReferenceViolation("Reference target does not exist")
 
     def insert[M: Model](self, record: M) -> M:
         """Insert a new validated record, refusing to overwrite existing data."""
@@ -141,7 +165,11 @@ class Database:
             tx._check_schema(spec)
             exists = tx._exists(spec, root)
             if exists:
+                record = tx.get(model, key)
+                old_links = references.links(tx.registry, spec, root, record)
                 with tx._writing():
+                    references.replace(tx.store, old_links, frozenset())
+                    references.restrict_delete(tx.store, root)
                     tx.store.delete_tree(root)
             return exists
 

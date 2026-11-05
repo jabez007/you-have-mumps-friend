@@ -28,3 +28,7 @@ class AlreadyExists(YHMFError):
 
 class TransactionError(YHMFError):
     """A transaction handle expired or a nested callback was requested."""
+
+
+class ReferenceViolation(YHMFError):
+    """A reference target is missing or a referenced record cannot be deleted."""

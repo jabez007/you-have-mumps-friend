@@ -6,8 +6,8 @@ Python 3.12 or later is required. This is an early prototype under GPL-3.0-or-la
 
 The [architecture](docs/yottadb_hierarchical_mapper_architecture.md) describes
 the intended milestones. The prototype supplies a versioned storage contract,
-declarative models, embedded objects, keyed children, explicit CRUD, and native
-and in-memory storage adapters.
+declarative models, embedded objects, keyed children, enforced references,
+explicit CRUD, and native and in-memory storage adapters.
 
 ## Persist a model
 
@@ -77,11 +77,53 @@ models have no `__global__`; their parent controls persistence and deletion.
 `Children` is a dictionary, and each key must match the child's primary key.
 Changing the parent or dictionary key changes the child's physical identity.
 Edit the loaded aggregate and save its root inside `atomic` when coordinating
-updates. Direct child CRUD and references are not implemented yet.
+updates. Direct child CRUD is not implemented yet.
 
 Reads and writes reject collections larger than 1000 children and records larger
 than 10000 stored nodes. These prototype bounds include presence markers and
 record metadata. Native path limits also apply to deeply nested records.
+
+## Link independently persisted records
+
+```python
+from mccann_hub.yhmf import Reference
+from mccann_hub.yhmf.errors import ReferenceViolation
+
+class StockLot(Model):
+    __global__ = "^StockLot"
+    number: str = Field(primary_key=True)
+    product: Reference[Product] = Field(on_delete="restrict")
+
+db = Database(MemoryStore(), Registry(Product, StockLot))
+db.insert(Product(id="P42"))
+db.insert(StockLot(number="L-001", product=Reference[Product](key="P42")))
+try:
+    db.delete(Product, "P42")
+except ReferenceViolation:
+    pass
+assert db.get(Product, "P42").id == "P42"
+```
+
+Every reference target must be a registered top-level model. Non-null keys must
+match the target's primary-key type and resolve when the source is written.
+References also work inside embedded objects and owned children. An optional
+`Reference[Product] | None` permits `None`; once set, it still restricts deletion.
+Changing or removing a reference releases the previous target.
+
+The default deletion policy is `restrict`, even for optional references. It
+cannot be disabled. `set_null` and cross-record `cascade` raise
+`NotImplementedError`. Owned-child deletion continues to follow the parent.
+
+Create targets before sources inside `atomic`. Self-references are supported.
+For cycles across new records, create nullable links first and then connect
+them in the same transaction. Constraints apply after each mapper write.
+Reference identities persist as keys and do not resolve targets automatically
+when a source is read. Read a target with `db.get(Product, source.product.key)`.
+
+Reverse entries and inbound counts change in the same native transaction as
+the record. Raw native writes can bypass these constraints, so applications
+must preserve the [storage contract](docs/storage-format.md) when writing globals
+outside the mapper. There is no automatic repair of damaged reverse entries.
 
 ## Run development checks
 

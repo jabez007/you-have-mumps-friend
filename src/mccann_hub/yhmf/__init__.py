@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Explicit hierarchical persistence for YottaDB."""
 
-from .models import ChildField, Children, Field, Model
+from .models import ChildField, Children, Field, Model, Reference
 from .registry import Registry
 from .repository import Database
 from .storage import MemoryStore, NativeStore, Path, Store
@@ -16,6 +16,7 @@ __all__ = [
     "NativeStore",
     "Path",
     "Registry",
+    "Reference",
     "Store",
 ]
 __version__ = "0.1.0a1"

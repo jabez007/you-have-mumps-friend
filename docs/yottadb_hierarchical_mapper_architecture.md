@@ -109,6 +109,17 @@ Moving a child to a different parent therefore changes its physical identity. Ap
 
 Physical nesting should follow ownership, lifecycle, and access patterns rather than automatically mirroring every one-to-many relationship.
 
+References enforce target existence on each source write. The target must be a
+registered top-level model, and a non-null reference must have the target's key
+type. The default and currently supported deletion policy is `restrict`, including
+optional references. Removing the source or changing its reference releases the
+target. Explicit `set_null` and cross-record cascades are deferred. Owned children
+continue to follow the lifecycle of their physical parent.
+
+Source writes, reverse-reference entries, and incoming counts share one native
+transaction. The count provides a direct read for concurrent deletion checks.
+This guarantee covers mapper writes; raw writes must preserve the same contract.
+
 ## 6. Canonical global storage
 
 A proposed human-readable layout is:
@@ -356,7 +367,8 @@ Owned children currently persist through their parent aggregate. The parent
 controls their lifecycle; direct child CRUD is a later extension. The test suite
 includes native rollback, forced restart, and process concurrency qualification.
 The [storage contract](storage-format.md) is authoritative for concrete encodings.
-References, indexes, migrations, and Go interoperability remain later milestones.
+Enforced references and their reverse indexes are implemented. Equality and unique
+indexes, query planning, migrations, and Go interoperability remain later work.
 
 Begin with a storage-contract prototype rather than a full ORM.
 

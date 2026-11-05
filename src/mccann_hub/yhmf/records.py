@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Translate validated record values to native nodes and reconstruct stored fields."""
 
+from collections.abc import Iterator
 from typing import Any, cast
 
 from .codecs import (
@@ -54,6 +55,8 @@ class _Encoder:
             path = root.child(field.name.encode("ascii"))
             if field.kind == "scalar" or value is None:
                 self.put(path, encode_scalar(cast(Scalar, value)))
+            elif field.kind == "reference":
+                self.put(path, b"r:" + encode_key(value.key))
             elif field.kind == "embedded":
                 assert field.node is not None
                 self.put(path, b"o:1")
@@ -103,6 +106,16 @@ class _Reader:
             stored = self.get(path)
             if field.kind == "scalar" or stored == b"n:":
                 values[field.name] = decode_scalar(stored)
+            elif field.kind == "reference":
+                if not stored.startswith(b"r:"):
+                    raise StorageError("Invalid reference encoding")
+                assert field.target is not None
+                assert field.target_key is not None
+                annotation = field.target.model_fields[field.target_key].annotation
+                key = decode_key(stored[2:])
+                if type(key) is not annotation:
+                    raise StorageError("Reference key type does not match its target")
+                values[field.name] = {"key": key}
             elif field.kind == "embedded":
                 assert field.node is not None
                 if stored != b"o:1":
@@ -132,3 +145,21 @@ class _Reader:
 
 def record_values(spec: ModelSpec, root: Path, store: Store) -> dict[str, Any]:
     return _Reader(store).fields(spec.fields, root)
+
+
+def walk_values(
+    fields: tuple[FieldSpec, ...],
+    record: Model,
+    prefix: tuple[bytes, ...] = (),
+) -> Iterator[tuple[FieldSpec, tuple[bytes, ...], Any]]:
+    """Visit declared scalar and reference values with their complete owned paths."""
+    for field in fields:
+        value = getattr(record, field.name)
+        path = prefix + (field.name.encode("ascii"),)
+        if field.node is None:
+            yield field, path, value
+        elif value is not None and field.kind == "embedded":
+            yield from walk_values(field.node.fields, value, path)
+        elif value is not None:
+            for key, child in value.items():
+                yield from walk_values(field.node.fields, child, path + (encode_key(key),))

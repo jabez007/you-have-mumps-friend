@@ -11,7 +11,7 @@ from typing import Any, Literal, Union, get_args, get_origin
 
 from .codecs import LAYOUT_VERSION
 from .errors import SchemaError
-from .models import Children, Model
+from .models import Children, Model, Reference
 from .storage import Path
 
 _NAME = re.compile(r"[A-Za-z][A-Za-z0-9_]*\Z")
@@ -30,8 +30,10 @@ def scalar_type(annotation: Any) -> Any:
 @dataclass(frozen=True)
 class FieldSpec:
     name: str
-    kind: Literal["scalar", "embedded", "children"]
+    kind: Literal["scalar", "embedded", "children", "reference"]
     node: "NodeSpec | None" = None
+    target: type[Model] | None = None
+    target_key: str | None = None
 
 
 @dataclass(frozen=True)
@@ -106,11 +108,25 @@ def _field_spec(model: type[Model], name: str, ancestors: tuple[type[Model], ...
         return _child_spec(annotation, name, metadata, ancestors)
     if "children_key" in metadata:
         raise SchemaError("ChildField requires a Children[Model] annotation")
+    if isinstance(annotation, type) and issubclass(annotation, Reference):
+        target = _reference_target(annotation)
+        return FieldSpec(name, "reference", target=target, target_key=_key_field(target))
+    if metadata.get("on_delete"):
+        raise SchemaError("on_delete requires a Reference field")
     if isinstance(annotation, type) and issubclass(annotation, Model):
         return FieldSpec(name, "embedded", _node_spec(annotation, keyed=False, ancestors=ancestors))
     if annotation not in _SCALARS:
         raise SchemaError("Unsupported field type; use scalar, Model, or Children[Model]")
     return FieldSpec(name, "scalar")
+
+
+def _reference_target(annotation: type[Reference[Any]]) -> type[Model]:
+    args = annotation.__pydantic_generic_metadata__["args"]
+    if len(args) != 1 or not isinstance(args[0], type) or not issubclass(args[0], Model):
+        raise SchemaError("References require a concrete target Model")
+    target = args[0]
+    _application_global(target)
+    return target
 
 
 def _node_spec(
@@ -154,10 +170,40 @@ def _hierarchy(fields: tuple[FieldSpec, ...]) -> list[dict[str, Any]]:
 
 def _application_global(model: type[Model]) -> str:
     global_name = model.__global__
-    if global_name is None or global_name in {"^YHMFSchema", "^YHMFIndex"}:
+    if global_name is None or global_name in {"^YHMFSchema", "^YHMFIndex", "^YHMFRef"}:
         raise SchemaError("Declare an application-owned __global__")
     Path(global_name)
     return global_name
+
+
+def reference_fields(fields: tuple[FieldSpec, ...]) -> tuple[FieldSpec, ...]:
+    result = []
+    for field in fields:
+        if field.kind == "reference":
+            result.append(field)
+        elif field.node is not None:
+            result.extend(reference_fields(field.node.fields))
+    return tuple(result)
+
+
+def _reference_declarations(
+    fields: tuple[FieldSpec, ...], prefix: tuple[str, ...] = ()
+) -> list[Any]:
+    result = []
+    for field in fields:
+        path = prefix + (field.name,)
+        if field.target is not None:
+            result.append(
+                {
+                    "path": path,
+                    "global": _application_global(field.target),
+                    "key": field.target_key,
+                    "on_delete": "restrict",
+                }
+            )
+        elif field.node is not None:
+            result.extend(_reference_declarations(field.node.fields, path))
+    return result
 
 
 def _make_spec(model: type[Model]) -> ModelSpec:
@@ -175,6 +221,9 @@ def _make_spec(model: type[Model]) -> ModelSpec:
     hierarchy = _hierarchy(node.fields)
     if hierarchy:
         declaration["hierarchy"] = hierarchy
+    references = _reference_declarations(node.fields)
+    if references:
+        declaration["references"] = references
     snapshot = json.dumps(
         declaration,
         sort_keys=True,
@@ -199,6 +248,13 @@ class Registry:
         self._globals: dict[str, type[Model]] = {}
         for model in models:
             self.register(model)
+        self.validate_references()
+
+    def validate_references(self) -> None:
+        for spec in self._specs.values():
+            for field in reference_fields(spec.fields):
+                assert field.target is not None
+                self.spec(field.target)
 
     def register(self, model: type[Model]) -> ModelSpec:
         if model in self._specs:

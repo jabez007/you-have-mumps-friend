@@ -19,6 +19,8 @@ def store(request):
         Path("^YHMFTestProduct"),
         Path("^YHMFTestWarehouse"),
         Path("^YHMFSchema"),
+        Path("^YHMFRef"),
+        Path("^YHMFTestOrder"),
     ]
     for root in roots:
         result.delete_tree(root)
