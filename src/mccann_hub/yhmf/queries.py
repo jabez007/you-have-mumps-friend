@@ -4,6 +4,8 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal
 
+from pydantic import TypeAdapter
+
 from . import indexes
 from .codecs import Key, decode_key
 from .errors import NotFound, QueryError, StorageError
@@ -53,8 +55,10 @@ class Query[M: Model]:
         name, value = next(iter(equals.items()))
         spec = self._db.registry.spec(self._model)
         if name == spec.key_field:
-            spec.path(value)
-            return Query(self._db, self._model, field=name, value=value)
+            annotation = self._model.model_fields[name].rebuild_annotation()
+            validated = TypeAdapter(annotation).validate_python(value, strict=True)
+            spec.path(validated)
+            return Query(self._db, self._model, field=name, value=validated)
         definition = next((d for d in indexes.definitions(spec) if d.name == name), None)
         if definition is None:
             raise QueryError("Equality queries require a declared index; no scan is implied")

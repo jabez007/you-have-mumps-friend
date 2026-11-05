@@ -104,6 +104,16 @@ def test_index_queries_validate_declared_value_types(db):
         db.query(Product).where(category=42)
 
 
+def test_direct_key_queries_validate_declared_key_constraints(store):
+    class Positive(Model):
+        __global__ = "^YHMFTestProduct"
+        id: int = Field(primary_key=True, gt=0)
+
+    db = Database(store, Registry(Positive))
+    with pytest.raises(ValidationError):
+        db.query(Positive).where(id=-1)
+
+
 def test_decimal_queries_share_numeric_equality(db):
     db.insert(Product(id=1, price=Decimal("12.50")))
     db.insert(Product(id=2, price=Decimal("12.500")))
