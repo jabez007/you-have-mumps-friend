@@ -47,6 +47,7 @@ def store(request):
         Path("^YHMFRef"),
         Path("^YHMFIndex"),
         Path("^YHMFUnique"),
+        Path("^YHMFMigration"),
         Path("^YHMFTestOrder"),
     ]
     for root in roots:

@@ -71,7 +71,8 @@ Nested model schema versions, relationship kinds, and child-key fields also
 participate through the snapshot's `hierarchy` entry. Scalar-only snapshots
 omit that entry.
 
-`^YHMFSchema`, `^YHMFIndex`, `^YHMFUnique`, and `^YHMFRef` belong to the framework.
+`^YHMFSchema`, `^YHMFIndex`, `^YHMFUnique`, `^YHMFRef`, and `^YHMFMigration`
+belong to the framework.
 The engine reserves
 `^%Y*`, which the path validator rejects. A registry assigns each application
 global to exactly one top-level model. Save replaces the entire record subtree;
@@ -93,6 +94,22 @@ target fingerprint summaries, sorted changes, and ordered proposed steps. They
 contain no record values and omit literal defaults unless explicitly requested.
 They neither introduce migration-state globals nor change the installed schema.
 This format is a review report, not an executable migration program.
+
+The migration maintenance gate is `^YHMFMigration("gate")`, containing a
+32-character lowercase hexadecimal job identifier. Current mapper data
+operations read this gate inside their transaction and refuse access while it
+exists. Schema inspection and planning remain available. The migrating model's
+installed fingerprint is temporarily `migration:` followed by the identifier;
+its source snapshot stays installed for inspection. This barrier also makes
+older clients reject that model through their existing fingerprint checks.
+Older clients accessing other globals and raw YottaDB writers must be stopped
+by the operator.
+
+Committed migration checkpoints live at `^YHMFMigration("jobs",job_id)` as
+canonical JSON with format version 1, source and target fingerprints, a phase,
+four record counters, and a hexadecimal encoded-key cursor. Status diagnostics
+omit the cursor unless explicitly requested. Each checkpoint belongs to the
+same transaction as its batch's data changes.
 
 ## Owned trees
 

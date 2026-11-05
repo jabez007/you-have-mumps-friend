@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any, Literal, NoReturn, cast
 
 from .codecs import canonical_json as canonical_json
 from .errors import StorageError
+from .maintenance import inspected_fingerprint
 from .storage import MAX_VALUE_BYTES, Path, Store
 
 if TYPE_CHECKING:
@@ -81,6 +82,7 @@ class SchemaInspection:
     declared: SchemaSnapshot
     installed: SchemaSnapshot | None
     has_data: bool
+    migration_id: str | None = None
 
     @property
     def status(self) -> Literal["uninstalled", "unmanaged", "matching", "different"]:
@@ -94,7 +96,7 @@ class SchemaInspection:
 def inspect_schema(store: Store, spec: "ModelSpec") -> SchemaInspection:
     declared = SchemaSnapshot(spec.snapshot)
     root = schema_path(spec.global_name)
-    fingerprint = store.get(root)
+    fingerprint, migration_id = inspected_fingerprint(store, spec.global_name, store.get(root))
     data = store.get(root.child(b"snapshot"))
     installed = None
     if fingerprint is not None or data is not None:
@@ -107,4 +109,4 @@ def inspect_schema(store: Store, spec: "ModelSpec") -> SchemaInspection:
             raise StorageError("Installed schema fingerprint does not match its snapshot")
     record_root = Path(spec.global_name)
     has_data = store.get(record_root) is not None or bool(store.children(record_root, limit=1))
-    return SchemaInspection(declared, installed, has_data)
+    return SchemaInspection(declared, installed, has_data, migration_id)

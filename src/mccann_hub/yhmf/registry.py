@@ -190,6 +190,7 @@ def _application_global(model: type[Model]) -> str:
         "^YHMFIndex",
         "^YHMFRef",
         "^YHMFUnique",
+        "^YHMFMigration",
     }:
         raise SchemaError("Declare an application-owned __global__")
     Path(global_name)

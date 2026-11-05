@@ -14,6 +14,7 @@ from .errors import (
     StorageError,
     TransactionError,
 )
+from .maintenance import require_available
 from .migrations import MigrationPlan, build_plan
 from .models import Model
 from .queries import IndexReport, Query, audit_indexes, scan
@@ -71,6 +72,7 @@ class Database:
         return operation(self) if self._transaction else self.atomic(operation)
 
     def _check_schema(self, spec: ModelSpec, *, install: bool = False) -> None:
+        require_available(self.store)
         root = schema_path(spec.global_name)
         current = self.store.get(root)
         if current is None:

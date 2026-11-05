@@ -40,3 +40,11 @@ class UniqueViolation(YHMFError):
 
 class QueryError(YHMFError, ValueError):
     """A query has no supported, bounded execution plan."""
+
+
+class MigrationError(YHMFError):
+    """A migration cannot safely start, advance, or abort."""
+
+
+class MaintenanceActive(MigrationError):
+    """An active migration holds the database-wide mapper maintenance gate."""
