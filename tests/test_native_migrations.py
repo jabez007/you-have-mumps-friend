@@ -183,7 +183,7 @@ def test_process_death_during_backfill_leaves_the_previous_checkpoint_resumable(
 
 
 @pytest.mark.parametrize("operation", ["write", "legacy_write"])
-def test_inflight_native_writers_retry_into_the_maintenance_barrier(db, operation):
+def test_inflight_native_writers_cannot_cross_the_maintenance_barrier(db, operation):
     process = worker(operation)
     try:
         ready(process)
@@ -191,7 +191,11 @@ def test_inflight_native_writers_retry_into_the_maintenance_barrier(db, operatio
         summary = result(process)
     finally:
         stop(process)
-    assert summary["result"] == "restricted" and summary["reads"] >= 2
+    assert summary["result"] == "restricted" and summary["reads"] >= 1
+    if operation == "legacy_write":
+        # A legacy writer read the old fingerprint before acquisition, so its
+        # eventual rejection also proves the transaction retried that read.
+        assert summary["reads"] >= 2
     db.abort_migration(status.migration_id)
     old = Database(db.store, Registry(Product))
     assert old.get(Product, "P0").name == "Main"
