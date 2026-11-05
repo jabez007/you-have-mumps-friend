@@ -59,10 +59,36 @@ validation JSON schema. Model titles and validation constraints participate in
 the fingerprint. This is conservative schema compatibility, not a migration plan.
 Schema installation and the first write occur in the same transaction.
 
+Nested model schema versions, relationship kinds, and child-key fields also
+participate through the snapshot's `hierarchy` entry. Scalar-only snapshots
+omit that entry.
+
 `^YHMFSchema` and `^YHMFIndex` belong to the framework. The engine reserves
 `^%Y*`, which the path validator rejects. A registry assigns each application
 global to exactly one top-level model. Save replaces the entire record subtree;
 it does not merge raw nodes or silently overwrite unmanaged records.
+
+## Owned trees
+
+An embedded object's field node has value `o:1`, and its declared fields are
+children of that node. A null embedded object has value `n:` and no descendants.
+An empty embedded object remains present through its `o:1` marker.
+
+A child collection's field node has value `c:` plus its canonical decimal entry
+count. `c:0` represents an empty collection. Each child key follows the key
+encoding above. A child record's root has value `o:1`; its fields follow under
+that root. Reads check the collection count, presence markers, and each child's
+stored key against its physical path. The count is a consistency marker, not
+a concurrency lock.
+
+Each collection permits at most 1000 children. A whole record permits at most
+10000 nodes, including record metadata and presence markers. Writers construct
+and validate the full node plan before modifying storage. Readers bound every
+collection traversal and reject records that exceed the node budget.
+
+Owned models cannot declare independent globals, and ownership declarations
+cannot be recursive. Child access currently goes through the loaded parent
+aggregate. Updating a parent replaces its entire subtree in one transaction.
 
 ## Storage adapter
 

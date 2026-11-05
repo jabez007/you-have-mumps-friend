@@ -91,7 +91,8 @@ class Database:
 
     def _write[M: Model](self, record: M, *, insert: bool) -> M:
         spec = self.registry.spec(type(record))
-        validated = type(record).model_validate(record.model_dump(mode="python", round_trip=True))
+        values = {field.name: getattr(record, field.name) for field in spec.fields}
+        validated = type(record).model_validate(values)
         root = spec.path(getattr(validated, spec.key_field))
         nodes = record_nodes(spec, root, validated)
 

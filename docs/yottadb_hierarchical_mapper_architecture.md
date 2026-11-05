@@ -59,7 +59,7 @@ The following API is conceptual:
 
 ```python
 from decimal import Decimal
-from yhmf import Model, Field, Children, ChildField, Reference
+from mccann_hub.yhmf import Model, Field, Children, ChildField, Reference
 
 class Product(Model):
     __global__ = "^Product"

@@ -7,11 +7,11 @@ import re
 import types
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Any, Union, get_args, get_origin
+from typing import Any, Literal, Union, get_args, get_origin
 
 from .codecs import LAYOUT_VERSION
 from .errors import SchemaError
-from .models import Model
+from .models import Children, Model
 from .storage import Path
 
 _NAME = re.compile(r"[A-Za-z][A-Za-z0-9_]*\Z")
@@ -28,11 +28,25 @@ def scalar_type(annotation: Any) -> Any:
 
 
 @dataclass(frozen=True)
+class FieldSpec:
+    name: str
+    kind: Literal["scalar", "embedded", "children"]
+    node: "NodeSpec | None" = None
+
+
+@dataclass(frozen=True)
+class NodeSpec:
+    model: type[Model]
+    key_field: str | None
+    fields: tuple[FieldSpec, ...]
+
+
+@dataclass(frozen=True)
 class ModelSpec:
     model: type[Model]
     global_name: str
     key_field: str
-    fields: tuple[str, ...]
+    fields: tuple[FieldSpec, ...]
     snapshot: bytes
     fingerprint: bytes
 
@@ -61,35 +75,87 @@ def _key_field(model: type[Model]) -> str:
     return key
 
 
+def _field_spec(model: type[Model], name: str, ancestors: tuple[type[Model], ...]) -> FieldSpec:
+    field = model.model_fields[name]
+    annotation = scalar_type(field.annotation)
+    extra = field.json_schema_extra
+    metadata = extra.get("yhmf", {}) if isinstance(extra, dict) else {}
+    if not isinstance(metadata, dict):
+        raise SchemaError("Invalid mapper metadata")
+    if get_origin(annotation) is Children:
+        child_model = get_args(annotation)[0]
+        node = _node_spec(child_model, keyed=True, ancestors=ancestors)
+        if metadata.get("children_key") != node.key_field:
+            raise SchemaError("ChildField key must match the child's primary-key field")
+        return FieldSpec(name, "children", node)
+    if "children_key" in metadata:
+        raise SchemaError("ChildField requires a Children[Model] annotation")
+    if isinstance(annotation, type) and issubclass(annotation, Model):
+        return FieldSpec(name, "embedded", _node_spec(annotation, keyed=False, ancestors=ancestors))
+    if annotation not in _SCALARS:
+        raise SchemaError("Unsupported field type; use scalar, Model, or Children[Model]")
+    return FieldSpec(name, "scalar")
+
+
+def _node_spec(
+    model: type[Model],
+    *,
+    keyed: bool,
+    ancestors: tuple[type[Model], ...],
+) -> NodeSpec:
+    if model in ancestors:
+        raise SchemaError("Recursive ownership is not supported")
+    model.model_rebuild()
+    if ancestors and model.__global__ is not None:
+        raise SchemaError("Owned models cannot declare an independent global")
+    if type(model.__schema_version__) is not int or model.__schema_version__ < 1:
+        raise SchemaError("Schema versions must be positive integers")
+    if model.model_computed_fields:
+        raise SchemaError("Computed fields are not persisted")
+    for name, field in model.model_fields.items():
+        if not _NAME.fullmatch(name) or any(
+            (field.alias, field.validation_alias, field.serialization_alias)
+        ):
+            raise SchemaError("Fields must have plain names without aliases")
+    key = _key_field(model) if keyed else None
+    fields = tuple(_field_spec(model, name, ancestors + (model,)) for name in model.model_fields)
+    return NodeSpec(model, key, fields)
+
+
+def _hierarchy(fields: tuple[FieldSpec, ...]) -> list[dict[str, Any]]:
+    return [
+        {
+            "field": field.name,
+            "kind": field.kind,
+            "key": field.node.key_field,
+            "version": field.node.model.__schema_version__,
+            "fields": _hierarchy(field.node.fields),
+        }
+        for field in fields
+        if field.node is not None
+    ]
+
+
 def _make_spec(model: type[Model]) -> ModelSpec:
     model.model_rebuild()
     global_name = model.__global__
     if global_name is None or global_name in {"^YHMFSchema", "^YHMFIndex"}:
         raise SchemaError("Declare an application-owned __global__")
     Path(global_name)
-    if type(model.__schema_version__) is not int or model.__schema_version__ < 1:
-        raise SchemaError("Schema versions must be positive integers")
-    if model.model_computed_fields:
-        raise SchemaError("Computed fields are not persisted")
-    for name, field in model.model_fields.items():
-        if (
-            not _NAME.fullmatch(name)
-            or field.alias
-            or field.validation_alias
-            or field.serialization_alias
-        ):
-            raise SchemaError("Fields must have plain names without aliases")
-        if scalar_type(field.annotation) not in _SCALARS:
-            raise SchemaError("Only scalar fields are supported in this slice")
+    node = _node_spec(model, keyed=True, ancestors=())
     key = _key_field(model)
+    declaration = {
+        "layout": LAYOUT_VERSION,
+        "global": global_name,
+        "version": model.__schema_version__,
+        "key": key,
+        "declaration": model.model_json_schema(),
+    }
+    hierarchy = _hierarchy(node.fields)
+    if hierarchy:
+        declaration["hierarchy"] = hierarchy
     snapshot = json.dumps(
-        {
-            "layout": LAYOUT_VERSION,
-            "global": global_name,
-            "version": model.__schema_version__,
-            "key": key,
-            "declaration": model.model_json_schema(),
-        },
+        declaration,
         sort_keys=True,
         separators=(",", ":"),
         ensure_ascii=True,
@@ -98,7 +164,7 @@ def _make_spec(model: type[Model]) -> ModelSpec:
         model,
         global_name,
         key,
-        tuple(model.model_fields),
+        node.fields,
         snapshot,
         hashlib.sha256(snapshot).hexdigest().encode("ascii"),
     )

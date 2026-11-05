@@ -1,0 +1,17 @@
+[
+  {"subscripts": ["7", "%m", "layout"], "value": "1"},
+  {"subscripts": ["7", "%m", "schema"], "value": "1"},
+  {"subscripts": ["7", "%m", "type"], "value": "YHMFTestWarehouse"},
+  {"subscripts": ["7", "id"], "value": "i:7"},
+  {"subscripts": ["7", "name"], "value": "s:Main"},
+  {"subscripts": ["7", "address"], "value": "o:1"},
+  {"subscripts": ["7", "address", "city"], "value": "s:Chicago"},
+  {"subscripts": ["7", "address", "note"], "value": "n:"},
+  {"subscripts": ["7", "bins"], "value": "c:1"},
+  {"subscripts": ["7", "bins", "s:A01"], "value": "o:1"},
+  {"subscripts": ["7", "bins", "s:A01", "code"], "value": "s:A01"},
+  {"subscripts": ["7", "bins", "s:A01", "lots"], "value": "c:1"},
+  {"subscripts": ["7", "bins", "s:A01", "lots", "s:L-001"], "value": "o:1"},
+  {"subscripts": ["7", "bins", "s:A01", "lots", "s:L-001", "number"], "value": "s:L-001"},
+  {"subscripts": ["7", "bins", "s:A01", "lots", "s:L-001", "quantity"], "value": "d:12.50"}
+]

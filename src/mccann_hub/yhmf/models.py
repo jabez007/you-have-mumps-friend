@@ -22,6 +22,19 @@ class Model(BaseModel):
     __schema_version__: ClassVar[int] = 1
 
 
+type Children[T: Model] = dict[str | int, T]
+
+
+def ChildField(default: Any = PydanticUndefined, *, key: str, **kwargs: Any) -> Any:
+    """A parent-owned dictionary keyed by the child model's primary-key field."""
+    if "json_schema_extra" in kwargs:
+        raise ValueError("json_schema_extra is reserved for mapper metadata")
+    metadata: dict[str, Any] = {"yhmf": {"children_key": key}}
+    if default is PydanticUndefined:
+        return PydanticField(default_factory=dict, json_schema_extra=metadata, **kwargs)
+    return PydanticField(default, json_schema_extra=metadata, **kwargs)
+
+
 def Field(
     default: Any = PydanticUndefined,
     *,
