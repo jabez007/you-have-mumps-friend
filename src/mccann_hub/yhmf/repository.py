@@ -15,6 +15,7 @@ from .errors import (
     TransactionError,
 )
 from .models import Model
+from .queries import IndexReport, Query, audit_indexes, scan
 from .records import metadata, record_nodes, record_values
 from .registry import ModelSpec, Registry
 from .storage import MAX_VALUE_BYTES, Path, Store
@@ -180,3 +181,24 @@ class Database:
             return exists
 
         return self._run(remove)
+
+    def query[M: Model](self, model: type[M]) -> Query[M]:
+        self._ensure_active()
+        self.registry.spec(model)
+        return Query(self, model)
+
+    def scan[M: Model](
+        self, model: type[M], *, limit: int = 100, after: Key | None = None
+    ) -> list[M]:
+        """Explicitly enumerate a bounded page of root records in native key order."""
+        return scan(self, model, limit=limit, after=after)
+
+    def check_indexes(
+        self,
+        model: type[Model],
+        *,
+        limit: int = 100,
+        after: Key | None = None,
+    ) -> IndexReport:
+        """Check expected entries and claims for a bounded page of records."""
+        return audit_indexes(self, model, limit=limit, after=after)

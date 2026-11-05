@@ -1,0 +1,15 @@
+[
+  {"field": "amount", "value": "12.50", "token": "v:\"d:125E-1\""},
+  {"field": "amount", "value": "12.500", "token": "v:\"d:125E-1\""},
+  {"field": "amount", "value": "-12.50", "token": "v:\"d:-125E-1\""},
+  {"field": "amount", "value": "0.00", "token": "v:\"d:0\""},
+  {"field": "amount", "value": "-0.00", "token": "v:\"d:0\""},
+  {"field": "amount", "value": "1E+30", "token": "v:\"d:1E30\""},
+  {"field": "number", "value": -0.0, "token": "v:\"f:0.0\""},
+  {"field": "number", "value": 1.25, "token": "v:\"f:1.25\""},
+  {"field": "text", "value": null, "token": "v:\"n:\""},
+  {"field": "text", "value": "", "token": "v:\"s:\""},
+  {"field": "text", "value": "café", "token": "v:\"s:caf\\u00e9\""},
+  {"field": "text", "value": "a\u0000b", "token": "v:\"s:a\\u0000b\""},
+  {"field": "binary", "value": "00ff", "token": "v:\"x:AP8=\""}
+]

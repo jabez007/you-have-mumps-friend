@@ -5,7 +5,7 @@ import json
 import sys
 
 from mccann_hub.yhmf import Database, Field, Model, NativeStore, Path, Reference, Registry
-from mccann_hub.yhmf.errors import ReferenceViolation
+from mccann_hub.yhmf.errors import ReferenceViolation, UniqueViolation
 
 
 class Target(Model):
@@ -17,12 +17,15 @@ class Source(Model):
     __global__ = "^YHMFTestRefSource"
     id: int = Field(primary_key=True)
     target: Reference[Target]
+    token: str | None = Field(default=None, unique=True)
 
 
 class RendezvousStore(NativeStore):
-    def __init__(self, target_key):
+    def __init__(self, target_key, operation):
         super().__init__()
         self.guard = Path("^YHMFRef", (b"YHMFTestRefTarget", str(target_key).encode("ascii")))
+        if operation == "claim":
+            self.guard = Path("^YHMFUnique", (b"YHMFTestRefSource", b"token", b'v:"s:shared"'))
         self.waiting = True
 
     def get(self, path):
@@ -37,10 +40,15 @@ class RendezvousStore(NativeStore):
 
 
 def run(operation, target_key, source_key):
-    db = Database(RendezvousStore(target_key), Registry(Target, Source))
+    db = Database(RendezvousStore(target_key, operation), Registry(Target, Source))
+    error = None
     try:
         if operation == "create":
             db.insert(Source(id=source_key, target=Reference[Target](key=target_key)))
+        elif operation == "claim":
+            db.insert(
+                Source(id=source_key, target=Reference[Target](key=target_key), token="shared")
+            )
         elif operation == "delete_target":
             db.delete(Target, target_key)
         elif operation == "delete_source":
@@ -48,9 +56,10 @@ def run(operation, target_key, source_key):
         else:
             raise ValueError("Unknown race operation")
         result = "committed"
-    except ReferenceViolation:
+    except (ReferenceViolation, UniqueViolation) as exc:
         result = "restricted"
-    print(json.dumps({"operation": operation, "result": result}), flush=True)
+        error = type(exc).__name__
+    print(json.dumps({"operation": operation, "result": result, "error": error}), flush=True)
 
 
 if __name__ == "__main__":

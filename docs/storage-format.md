@@ -4,6 +4,13 @@ This reference defines the prototype's byte contract. The earlier architecture's
 unprefixed string values and keys were illustrative. This contract distinguishes
 types explicitly and never stores an entire record as an opaque blob.
 
+Canonical ASCII JSON has no trailing newline or whitespace outside strings.
+It uses the short JSON escapes for backspace, tab, newline, form feed, and carriage
+return. Other control and non-ASCII characters use lowercase `\uXXXX` escapes;
+supplementary characters use surrogate pairs. Quotation marks and backslashes
+are escaped; forward slashes and HTML characters are not. Object keys in schema
+snapshots are sorted. Arrays retain their declared order.
+
 ## Keys and paths
 
 Integer keys use canonical decimal ASCII, with at most 18 digits excluding the
@@ -149,6 +156,8 @@ Nonzero decimals use `d:` followed by the signed coefficient, `E`, and exponent.
 Every decimal zero maps to `d:0`; both floating-point zeros map to `f:0.0`.
 For example, `12.50` and `12.500` share token `v:"d:125E-1"`.
 String comparison uses exact code points without Unicode or case folding.
+The [index-value fixtures](../tests/fixtures/index-values.json) define literal
+tokens for decimals, negative zero, Unicode, NUL, null, empty strings, and bytes.
 
 Unique fields also have equality entries. Null values use the equality token
 `v:"n:"` and create no unique claim. Every non-null unique field occurrence owns
@@ -160,6 +169,20 @@ claims new values in one native transaction. Uniqueness is immediate per mapper
 write. Index-definition changes participate in schema fingerprints and require
 explicit migration for installed schemas. This version does not rebuild indexes
 automatically. Native key-size limits include the full indexed value token.
+
+## Query execution
+
+Equality queries read owner keys directly below an equality value root, so one
+owning root appears once even if multiple child occurrences match. Cursors are
+exclusive owner keys in native collation order. Direct-key queries access the
+record path directly and do not accept cursors. Query and explicit scan pages
+have a maximum of 1000 roots, and each page runs in one transaction.
+
+Index audits inspect the expected entries and claims for a bounded page of
+records. They report missing or inconsistent entries without including indexed
+values. They do not perform an exhaustive reverse scan or automatic repair.
+Query execution reports encountered orphan owners and stale value matches as
+storage errors. A missing index never causes an implicit global scan.
 
 ## Storage adapter
 

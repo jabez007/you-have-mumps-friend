@@ -30,6 +30,8 @@ def db():
         Path("^YHMFRef", (b"YHMFTestRefTarget",)),
         Path("^YHMFSchema", (b"YHMFTestRefTarget",)),
         Path("^YHMFSchema", (b"YHMFTestRefSource",)),
+        Path("^YHMFIndex", (b"YHMFTestRefSource",)),
+        Path("^YHMFUnique", (b"YHMFTestRefSource",)),
     ]
     for root in roots:
         store.delete_tree(root)
@@ -124,3 +126,21 @@ def test_reference_index_is_rebuilt_from_retried_state(db):
     assert len(attempts) == 2
     assert db.store.get(count_path) == b"1"
     assert db.get(Source, 1).target.key == 1
+
+
+def test_concurrent_unique_claims_commit_one_complete_record(db):
+    db.insert(Target(id=1))
+    db.insert(Source(id=0, target=Reference[Target](key=1), token="seed"))
+    db.delete(Source, 0)
+    results = _race(("claim", 1, 1), ("claim", 1, 2))
+    assert sorted(item["result"] for item in results) == ["committed", "restricted"]
+    loser = next(item for item in results if item["result"] == "restricted")
+    assert loser["error"] == "UniqueViolation"
+    for key, result in enumerate(results, start=1):
+        if result["result"] == "committed":
+            assert db.get(Source, key).token == "shared"
+        else:
+            with pytest.raises(NotFound):
+                db.get(Source, key)
+    assert db.store.get(Path("^YHMFRef", (b"YHMFTestRefTarget", b"1"))) == b"1"
+    assert db.check_indexes(Source).issues == ()

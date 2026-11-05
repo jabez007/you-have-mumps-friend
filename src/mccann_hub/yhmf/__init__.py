@@ -2,6 +2,7 @@
 """Explicit hierarchical persistence for YottaDB."""
 
 from .models import ChildField, Children, Field, Model, Reference
+from .queries import IndexReport, QueryPlan
 from .registry import Registry
 from .repository import Database
 from .storage import MemoryStore, NativeStore, Path, Store
@@ -11,12 +12,14 @@ __all__ = [
     "Children",
     "Database",
     "Field",
+    "IndexReport",
     "MemoryStore",
     "Model",
     "NativeStore",
     "Path",
+    "QueryPlan",
     "Registry",
     "Reference",
     "Store",
 ]
-__version__ = "0.1.0a1"
+__version__ = "0.2.0a1"

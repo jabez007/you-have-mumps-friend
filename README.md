@@ -7,7 +7,7 @@ Python 3.12 or later is required. This is an early prototype under GPL-3.0-or-la
 The [architecture](docs/yottadb_hierarchical_mapper_architecture.md) describes
 the intended milestones. The prototype supplies a versioned storage contract,
 declarative models, embedded objects, keyed children, enforced references,
-explicit CRUD, and native and in-memory storage adapters.
+explicit CRUD, and bounded indexed queries through native and in-memory adapters.
 
 ## Persist a model
 
@@ -159,6 +159,39 @@ in the record's transaction. Constraints apply after each write. Changing or
 deleting an indexed value releases its old claim. Oversized native index keys
 raise errors before record writes; values are never truncated or hashed to fit.
 
+## Query bounded results
+
+```python
+query = db.query(CatalogProduct).where(price=Decimal("12.5"))
+assert query.explain().strategy == "equality_index"
+assert [product.id for product in query.all(limit=25)] == ["P1"]
+assert query.all(limit=25, after="P1") == []
+assert db.query(CatalogProduct).where(id="P1").explain().strategy == "direct_key"
+assert db.check_indexes(CatalogProduct, limit=25).issues == ()
+```
+
+Queries accept one equality predicate on a declared index or the primary key.
+An unindexed or unknown field raises `QueryError`. There is no fallback scan.
+Filter values must satisfy the declared field type and constraints.
+
+`all` defaults to 100 root records and permits limits from 1 through 1000.
+Results use native primary-key order. Pass the last returned key as `after` to
+continue. Each page uses its own transaction; pages do not share a snapshot.
+`db.scan(ModelType, limit=25, after=last_key)` explicitly authorizes a bounded
+page of root records when enumeration is needed.
+
+For indexes inside owned trees, use dotted declaration paths such as
+`lines.product` as keyword names through a dictionary passed to `where`.
+Such queries return each matching owning root once, even when several children
+match. Queries over standalone child identities remain a later extension.
+
+`explain` reports a `direct_key` or `equality_index` plan without filter values.
+`check_indexes` checks expected secondary entries and unique claims for a bounded
+page of records. Its issues contain field names and error kinds, without indexed
+values. A full page returns `next_key`; the next page may be empty. This audit
+does not search all index entries for orphans or repair data. Indexed queries
+reject encountered orphan entries and entries whose values disagree with records.
+
 ## Run development checks
 
 Install [uv](https://docs.astral.sh/uv/), then run:
@@ -199,6 +232,8 @@ record. Concurrent reads assert that both fields agree throughout those updates.
 Reference race tests pause independent processes after reading the same incoming
 count, then release them together. They check reference creation against target
 deletion, concurrent addition and removal, and index state after native restarts.
+Unique-claim race tests force two processes to read the same unclaimed value,
+then verify that exactly one source and its reverse-reference updates commit.
 These tests establish correctness for the tested environment, not throughput
 or compatibility with other engine releases.
 
