@@ -79,7 +79,7 @@ def test_plan_serialization_is_deterministic_and_is_not_an_executor(store, read_
     first = db.plan_migration(ProductV2).to_json()
     assert first == db.plan_migration(ProductV2).to_json()
     document = json.loads(first)
-    assert document["format_version"] == 1 and document["execution_supported"] is False
+    assert document["format_version"] == 1 and document["execution_supported"] is True
     assert document["source"]["fingerprint"] != document["target"]["fingerprint"]
     assert "default" not in document["steps"][1]
     assert document["steps"][1]["default_source"] == "declared"

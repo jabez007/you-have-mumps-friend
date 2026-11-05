@@ -111,6 +111,23 @@ four record counters, and a hexadecimal encoded-key cursor. Status diagnostics
 omit the cursor unless explicitly requested. Each checkpoint belongs to the
 same transaction as its batch's data changes.
 
+Each job has `"source_snapshot"` and `"target_snapshot"` children containing
+the canonical schema bytes. The checkpoints progress through `validate`,
+`backfill`, `verify`, `retag`, `activate`, and `complete`. Each bounded pass stores
+its last encoded record key as hexadecimal and resets it at the next phase.
+The counters are `validated`, `backfilled`, `verified`, and `retagged`.
+Activation requires equal counters and publishes the target schema, completes
+the job, and removes the gate in one transaction. Before any backfill commits,
+abort can restore the source fingerprint and persist the `aborted` phase.
+
+The initial executor adds only root scalar nodes and their new non-unique
+equality entries. It rejects occupied backfill paths and nonempty new-index
+namespaces. Existing fields and index identities must remain byte-for-byte
+unchanged. Existing expected equality entries, uniqueness claims, reverse edges,
+and reference target metadata are validated without rewriting them. Verification
+checks expected entries by record; it does not perform a full reverse index
+audit for unrelated orphan entries.
+
 ## Owned trees
 
 An embedded object's field node has value `o:1`, and its declared fields are

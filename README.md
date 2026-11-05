@@ -44,7 +44,8 @@ The registry rejects overlapping globals, aliases, unsupported field types,
 and missing or ambiguous primary keys. Access checks an installed schema
 fingerprint, and incompatible declarations raise `SchemaMismatch` before writes.
 Changing a model name, field declaration, default, or constraint can change the
-fingerprint. Read-only migration planning is available; execution is not implemented.
+fingerprint. Read-only migration planning and a bounded additive migration executor
+are available.
 Adding an index changes the declared schema; existing data requires an explicit
 migration and index rebuild.
 
@@ -258,7 +259,7 @@ plan = next_db.plan_migration(CatalogV2)
 assert not plan.requires_manual_review
 assert any(step.kind == "backfill_field" and step.path == ("note",) for step in plan.steps)
 assert plan.steps[-1].kind == "activate_schema"
-assert plan.to_dict()["execution_supported"] is False
+assert plan.execution_supported
 assert plan.to_json() == next_db.plan_migration(CatalogV2).to_json()
 ```
 
@@ -290,8 +291,59 @@ logic changes and review it separately.
 Planning performs schema inspection and a bounded data-presence check. It does
 not scan or validate records, run factories or validators, rebuild indexes, or
 write any database nodes. `requires_manual_review=False` does not certify data
-compatibility. Execution will require a maintenance gate, fingerprint
-revalidation, bounded checkpoints, and interruption/resume testing.
+compatibility. `execution_supported` identifies the executor's structural subset;
+record validation still happens under maintenance before any backfill.
+
+## Execute an additive migration
+
+Keep the exact source model declaration available alongside the target. The
+executor accepts added root scalar fields with literal defaults and added root
+scalar, non-unique equality indexes. Existing values, owned trees, references,
+and uniqueness claims are preserved. Nested backfills, unique index additions,
+reference changes, removals, and default factories remain unsupported.
+
+```python
+plan = next_db.plan_migration(CatalogV2)
+# Review plan.changes, plan.steps, and any declared defaults before starting.
+assert plan.execution_supported
+status = next_db.begin_migration(Catalog, CatalogV2, plan=plan)
+migration_id = status.migration_id  # Retain this ID for recovery.
+while status.phase != "complete":
+    status = next_db.advance_migration(
+        migration_id, Catalog, CatalogV2, batch_size=25
+    )
+```
+
+Each call commits at most one batch or phase transition. Batch sizes range from
+1 to 100 records, with the existing per-record node and child limits. Four passes
+validate source records and target values, backfill fields and indexes, verify
+the results, then update record metadata. A final transaction publishes the
+target snapshot and fingerprint, marks the job complete, and releases maintenance.
+An empty page advances the phase; the cursor resets for the next pass.
+
+The database-wide gate blocks ordinary operations from current mapper clients.
+Schema inspection, planning, and `migration_status(migration_id)` remain
+available. Inspection reports the source snapshot and active migration ID until
+activation. The fingerprint barrier makes older clients reject the migrating
+model. Stop older clients accessing other models and all raw YottaDB writers
+before starting. Validators must be deterministic and free of external side
+effects because native transactions can retry them.
+
+To resume after interruption, reconstruct `Database` with the target registry,
+read `migration_status(migration_id)`, and continue advancing with the same
+source and target declarations. The executor verifies both saved snapshots on
+every active call. Data writes and their checkpoint commit together. A failed
+batch rolls back and leaves the gate held at its preceding checkpoint; it does
+not release partially migrated data to callers. Normal status output omits
+record keys; `status.to_dict(include_cursor=True)` explicitly exposes the encoded
+cursor.
+
+`abort_migration(migration_id)` restores source access before any backfill batch
+commits, including after a validation failure. Once a backfill commits, abort is
+refused: recovery requires resume or operator-managed restoration from backup.
+Do not remove the gate or fingerprint barrier manually. Migration lifecycle
+methods require standalone calls outside `db.atomic`; each manages its own
+transaction. Completed and aborted job metadata remains available for inspection.
 
 ## Run development checks
 

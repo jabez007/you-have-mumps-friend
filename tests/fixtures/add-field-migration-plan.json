@@ -1,6 +1,6 @@
 {
   "format_version": 1,
-  "execution_supported": false,
+  "execution_supported": true,
   "status": "different",
   "has_data": true,
   "requires_manual_review": false,

@@ -5,6 +5,7 @@ import json
 from dataclasses import dataclass, field
 from typing import Any
 
+from .codecs import LAYOUT_VERSION
 from .schema_diff import SchemaChange, compare_schemas
 from .schemas import SchemaInspection, SchemaSnapshot, canonical_json
 
@@ -22,6 +23,18 @@ _STEP_ORDER = {
     "activate_schema": 100,
     "install_schema": 100,
 }
+
+
+def _supported_change(change: SchemaChange, nonscalar: set[str]) -> bool:
+    if change.destructive or change.requires_manual_review or change.unique:
+        return False
+    if change.kind in {"metadata_changed", "schema_version_changed"}:
+        return True
+    if change.kind not in {"field_added", "index_added"} or len(change.path) != 1:
+        return False
+    if change.path[0] in nonscalar:
+        return False
+    return change.kind != "field_added" or change.default_json is not None
 
 
 @dataclass(frozen=True)
@@ -90,11 +103,24 @@ class MigrationPlan:
     def is_noop(self) -> bool:
         return not self.changes
 
+    @property
+    def execution_supported(self) -> bool:
+        """Whether the plan fits the additive root-scalar executor's scope."""
+        source = self.inspection.installed
+        if source is None or source.layout_version != LAYOUT_VERSION:
+            return False
+        document = self.inspection.declared.to_dict()
+        nonscalar = {item["field"] for item in document.get("hierarchy", [])}
+        nonscalar.update(item["path"][0] for item in document.get("references", []))
+        return any(
+            change.kind in {"field_added", "index_added"} for change in self.changes
+        ) and all(_supported_change(change, nonscalar) for change in self.changes)
+
     def to_dict(self, *, include_defaults: bool = False) -> dict[str, Any]:
         """Return a review document; literal defaults require an explicit opt-in."""
         return {
             "format_version": 1,
-            "execution_supported": False,
+            "execution_supported": self.execution_supported,
             "status": self.inspection.status,
             "has_data": self.inspection.has_data,
             "source": _snapshot_summary(self.inspection.installed),

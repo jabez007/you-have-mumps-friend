@@ -4,7 +4,7 @@
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 
-from . import indexes, references
+from . import indexes, migration_executor, references
 from .codecs import Key
 from .errors import (
     AlreadyExists,
@@ -14,7 +14,7 @@ from .errors import (
     StorageError,
     TransactionError,
 )
-from .maintenance import require_available
+from .maintenance import MigrationStatus, load_status, require_available
 from .migrations import MigrationPlan, build_plan
 from .models import Model
 from .queries import IndexReport, Query, audit_indexes, scan
@@ -211,3 +211,38 @@ class Database:
     def plan_migration(self, model: type[Model]) -> MigrationPlan:
         """Describe schema changes without scanning, validating, or modifying records."""
         return build_plan(self.inspect_schema(model))
+
+    def _migration_ready(self) -> None:
+        self._ensure_active()
+        if self._transaction:
+            raise TransactionError("Migration lifecycle operations require their own transactions")
+
+    def begin_migration(
+        self, source: type[Model], target: type[Model], *, plan: MigrationPlan
+    ) -> MigrationStatus:
+        """Claim maintenance after checking an explicitly reviewed plan and model bindings."""
+        self._migration_ready()
+        return migration_executor.begin(self.store, self.registry, source, target, plan)
+
+    def advance_migration(
+        self,
+        migration_id: str,
+        source: type[Model],
+        target: type[Model],
+        *,
+        batch_size: int = 25,
+    ) -> MigrationStatus:
+        """Commit at most one bounded batch or phase transition, resuming a saved job."""
+        self._migration_ready()
+        return migration_executor.advance(
+            self.store, self.registry, migration_id, source, target, batch_size=batch_size
+        )
+
+    def migration_status(self, migration_id: str) -> MigrationStatus:
+        """Read a durable checkpoint without requiring ordinary data access."""
+        return self._run(lambda tx: load_status(tx.store, migration_id))
+
+    def abort_migration(self, migration_id: str) -> MigrationStatus:
+        """Release maintenance only if no backfill batch has committed."""
+        self._migration_ready()
+        return migration_executor.abort(self.store, migration_id)

@@ -372,15 +372,20 @@ Enforced references, reverse indexes, equality and unique indexes, and bounded
 query plans are implemented. Queries currently target owning roots; nested-field
 indexes can select those roots. Diagnostics audit expected secondary entries and
 claims by bounded record pages. A full reverse index audit, direct child queries,
-migrations, and Go interoperability remain later work.
+broader migrations, and Go interoperability remain later work.
 
 Read-only schema inspection now exposes installed and declared snapshots,
 including mismatched declarations, without changing schema or application data.
 Semantic snapshot comparisons and deterministic migration review plans are
 implemented, including nested fields, identity, relationships, and index
 definitions. Planning is read-only and does not inspect record values or prove
-data compatibility. The next writable slice requires a maintenance gate,
-checkpointed execution, index rebuilding, and recovery tests before activation.
+data compatibility. An additive migration executor now supports root scalar
+literal defaults and non-unique root equality index additions. A database-wide
+maintenance gate, source fingerprint barrier, bounded transactional checkpoints,
+four validation/backfill/verification/metadata passes, and atomic activation
+keep partial results inaccessible. Failed batches resume from their preceding
+checkpoint. Abort is available only before the first backfill commits. Nested,
+destructive, reference, and unique-index migrations remain later work.
 
 Begin with a storage-contract prototype rather than a full ORM.
 
