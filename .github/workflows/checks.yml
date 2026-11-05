@@ -14,3 +14,26 @@ jobs:
       - run: uv run mypy
       - run: uv run pytest -m 'not native'
       - run: uv build
+  native:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.9.5"
+      - name: Install YottaDB r2.02 on the disposable runner
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends libelf-dev libicu-dev
+          curl --fail --location --retry 3 -o /tmp/yottadb.tgz \
+            https://github.com/YottaDB/YDB/releases/download/r2.02/yottadb_r202_x8664_ubuntu2204_pro.tgz
+          tar -xzf /tmp/yottadb.tgz -C /tmp
+          cd /tmp/yottadb_r202
+          sudo ./ydbinstall --installdir /opt/yottadb/r202 --utf8 \
+            --nocopyenv --nocopyexec --nopkg-config --preserveRemoveIPC
+      - run: uv sync --locked --extra native --python 3.12
+        env:
+          ydb_dist: /opt/yottadb/r202
+      - run: bash scripts/test-native.sh -q
+        env:
+          ydb_dist: /opt/yottadb/r202

@@ -2,11 +2,18 @@
 
 **Architectural Specification — Draft v0.1**
 
-**Date:** November 3, 2026  
-**Status:** Proposed  
-**License:** GPL-3.0-or-later  
-**Language:** Python first, Go interoperability planned  
+**Date:** November 3, 2026
+
+**Status:** Prototype in progress
+
+**License:** GPL-3.0-or-later
+
+**Language:** Python first, Go interoperability planned
 **Working name:** YottaDB Hierarchical Model Framework (YHMF)
+
+The distribution is `mccann-hub-yhmf`, imported under `mccann_hub.yhmf`.
+The [storage contract](storage-format.md) defines the prototype's concrete
+encodings. Examples below remain conceptual unless the README marks them implemented.
 
 ## 1. Vision
 

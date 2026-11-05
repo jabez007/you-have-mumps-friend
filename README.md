@@ -27,13 +27,19 @@ not prove native conflict handling or process concurrency.
 
 ## Run native storage tests
 
-Install and configure [YottaDB and YDBPython](https://docs.yottadb.com/MultiLangProgGuide/pythonprogram.html).
-The database must be disposable. These tests delete their `^YHMFTest*` globals.
+Install [YottaDB](https://docs.yottadb.com/AdminOpsGuide/installydb.html) and
+set `ydb_dist` to its installation directory. Then run:
 
 ```sh
 uv sync --extra native
-YHMF_TEST_NATIVE=1 uv run pytest
+bash scripts/test-native.sh -q
 ```
+
+The script creates and removes a dedicated temporary database. Native CI runs
+this suite with YottaDB r2.02 and Python 3.12 on Ubuntu 22.04. An unpacked binary
+archive alone is insufficient because YottaDB requires a correctly installed
+`gtmsecshr` helper. Setting `YHMF_TEST_NATIVE=1` manually opts into tests against
+your current database; use only disposable data.
 
 YDBPython uses process-based concurrency. Callbacks passed to `atomic()` can
 execute repeatedly after transaction conflicts, so keep external side effects
