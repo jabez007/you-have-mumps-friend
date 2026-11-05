@@ -132,6 +132,59 @@ def _validate_old(store: Store, old: frozenset[Entry]) -> None:
             raise StorageError("A unique index claim is missing or corrupt")
 
 
+@dataclass(frozen=True)
+class Extension:
+    """New equality entries and claims, preserving every existing identity."""
+
+    entries: frozenset[Entry]
+    claims: frozenset[Entry]
+
+
+def _extension(old: frozenset[Entry], new: frozenset[Entry]) -> Extension:
+    by_path = {entry.path: entry for entry in new}
+    for entry in old:
+        target = by_path.get(entry.path)
+        if target is None or (target.location, target.claim) != (entry.location, entry.claim):
+            raise StorageError("Index extension would change an existing equality identity")
+        if entry.claim_path is not None and entry.claim_path != target.claim_path:
+            raise StorageError("Index extension would remove an existing unique claim")
+    old_paths = {entry.path for entry in old}
+    old_claims = {entry.claim_path for entry in old}
+    return Extension(
+        frozenset(entry for entry in new if entry.path not in old_paths),
+        frozenset(entry for entry in new if entry.claim_path not in old_claims | {None}),
+    )
+
+
+def check_extension(
+    store: Store, old: frozenset[Entry], new: frozenset[Entry], *, built: bool
+) -> Extension:
+    """Validate an additive transition and its committed or not-yet-built nodes."""
+    extension = _extension(old, new)
+    _validate_old(store, old)
+    if built:
+        _validate_old(store, new)
+    else:
+        for entry in extension.entries:
+            if store.get(entry.path) is not None:
+                raise StorageError("An unexpected secondary index entry already exists")
+        for entry in extension.claims:
+            assert entry.claim_path is not None
+            if store.get(entry.claim_path) is not None:
+                raise UniqueViolation("An unexpected unique index claim already exists")
+    return extension
+
+
+def extend(store: Store, old: frozenset[Entry], new: frozenset[Entry]) -> None:
+    """Add equality entries or promote them to unique, inside the caller's transaction."""
+    extension = check_extension(store, old, new, built=False)
+    for entry in extension.claims:
+        assert entry.claim_path is not None
+        store.set(entry.claim_path, entry.claim)
+    for entry in extension.entries:
+        store.set(entry.path, entry.location)
+
+
 def replace(store: Store, old: frozenset[Entry], new: frozenset[Entry]) -> None:
     _validate_old(store, old)
     for entry in old - new:
