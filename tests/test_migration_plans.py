@@ -152,6 +152,7 @@ def test_unique_index_addition_requires_validation_before_rebuild(store, read_on
         name: str = Field(unique=True)
 
     plan = Database(read_only_store, Registry(Unique)).plan_migration(Unique)
+    assert plan.execution_supported
     kinds = [step.kind for step in plan.steps]
     assert kinds.index("validate_uniqueness") < kinds.index("rebuild_index")
     assert any(

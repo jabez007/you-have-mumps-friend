@@ -120,13 +120,31 @@ Activation requires equal counters and publishes the target schema, completes
 the job, and removes the gate in one transaction. Before any backfill commits,
 abort can restore the source fingerprint and persist the `aborted` phase.
 
-The initial executor adds only root scalar nodes and their new non-unique
-equality entries. It rejects occupied backfill paths and nonempty new-index
+The executor adds root scalar nodes and new equality entries or unique claims.
+It can promote existing root scalar equality indexes to unique indexes without
+rewriting their equality entries. It rejects occupied backfill paths and nonempty new-index
 namespaces. Existing fields and index identities must remain byte-for-byte
 unchanged. Existing expected equality entries, uniqueness claims, reverse edges,
 and reference target metadata are validated without rewriting them. Verification
 checks expected entries by record; it does not perform a full reverse index
 audit for unrelated orphan entries.
+
+New uniqueness constraints use job-scoped validation reservations at
+`^YHMFMigration("jobs",job_id,"unique",digest)`. The digest is the lowercase
+hexadecimal SHA-256 of canonical JSON containing the application global without
+its caret, declaration path, and normalized value token as an array of strings.
+Each node contains canonical JSON with `index` holding that same array and `owner`
+holding the decoded unique-claim owner array. The complete identity participates
+in comparisons, so a digest collision fails closed. Hashing bounds the scratch
+key length independently of the indexed value's length.
+
+Reservations commit with validation checkpoints and detect duplicates across
+batches. Nulls create no reservations or unique claims. Backfill, verification,
+and metadata updates require each reservation to match the expected value and
+owner. Reservations never participate in ordinary uniqueness checks and remain
+under the job after completion or abort. They contain normalized values and
+owner identities; normal status diagnostics expose neither. Promoting an index
+requires its new unique-claim namespace to be empty before maintenance begins.
 
 ## Owned trees
 
@@ -220,7 +238,8 @@ Record replacement validates existing entries, releases removed claims, and
 claims new values in one native transaction. Uniqueness is immediate per mapper
 write. Index-definition changes participate in schema fingerprints and require
 explicit migration for installed schemas. The additive executor builds new
-non-unique root scalar indexes under maintenance; ordinary CRUD does not rebuild
+root scalar indexes and promotes equality indexes to unique under maintenance;
+ordinary CRUD does not rebuild
 indexes automatically. Native key-size limits include the full indexed value token.
 
 ## Query execution

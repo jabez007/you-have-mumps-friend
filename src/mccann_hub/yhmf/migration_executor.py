@@ -8,7 +8,7 @@ from typing import Any
 
 from pydantic import TypeAdapter, ValidationError
 
-from . import indexes, references
+from . import indexes, migration_claims, references
 from .codecs import decode_key
 from .errors import MigrationError, StorageError
 from .maintenance import (
@@ -56,7 +56,7 @@ def _bind(registry: Registry, source: type[Model], target: type[Model]) -> _Bind
     plan = build_plan(inspection)
     if not plan.execution_supported:
         raise MigrationError(
-            "Only additive root scalar defaults and non-unique indexes are supported"
+            "Migration supports root scalar defaults, index additions, and unique promotions"
         )
     defaults = _literal_defaults(new, plan)
     return _Binding(old, new, registry, plan, defaults)
@@ -93,13 +93,16 @@ def _check_review(binding: _Binding, reviewed: MigrationPlan) -> None:
 
 def _check_new_indexes_empty(store: Store, binding: _Binding) -> None:
     for change in binding.plan.changes:
-        if change.kind != "index_added":
+        if change.kind not in {"index_added", "index_changed"}:
             continue
         path = Path(
             "^YHMFIndex",
             (binding.target.global_name[1:].encode("ascii"), change.path[0].encode("ascii")),
         )
-        for global_name in ("^YHMFIndex", "^YHMFUnique"):
+        globals_to_check = (
+            ("^YHMFIndex", "^YHMFUnique") if change.kind == "index_added" else ("^YHMFUnique",)
+        )
+        for global_name in globals_to_check:
             root = Path(global_name, path.subscripts)
             if store.get(root) is not None or store.children(root, limit=1):
                 raise StorageError("A newly declared index already contains unmanaged entries")
@@ -211,7 +214,7 @@ class _Record:
     new_entries: frozenset[indexes.Entry]
 
 
-def _prepare(store: Store, binding: _Binding, key: bytes, phase: str) -> _Record:
+def _prepare(store: Store, binding: _Binding, key: bytes, status: MigrationStatus) -> _Record:
     root = binding.source.path(decode_key(key))
     _check_metadata(store, binding.source, root)
     values = record_values(binding.source, root, store)
@@ -226,14 +229,17 @@ def _prepare(store: Store, binding: _Binding, key: bytes, phase: str) -> _Record
     ):
         raise MigrationError("Migration validation would change an existing field")
     additions = {path: value for path, value in new_nodes.items() if path not in old_nodes}
-    _check_additions(store, additions, phase)
+    _check_additions(store, additions, status.phase)
     old_entries = indexes.entries(binding.source, root, old)
     new_entries = indexes.entries(binding.target, root, new)
-    if not old_entries <= new_entries:
-        raise MigrationError("Migration would change existing index identities")
-    indexes.replace(store, old_entries, old_entries)
-    _check_added_entries(store, new_entries - old_entries, phase)
+    extension = indexes.check_extension(
+        store, old_entries, new_entries, built=status.phase in {"verify", "retag"}
+    )
     _validate_targets(store, binding, references.links(binding.registry, binding.target, root, new))
+    if status.phase == "validate":
+        migration_claims.reserve(store, status.migration_id, extension.claims)
+    else:
+        migration_claims.verify(store, status.migration_id, extension.claims)
     return _Record(root, additions, old_entries, new_entries)
 
 
@@ -244,20 +250,13 @@ def _check_additions(store: Store, additions: dict[Path, bytes], phase: str) -> 
             raise StorageError("A backfill field is missing, corrupt, or already occupied")
 
 
-def _check_added_entries(store: Store, entries: frozenset[indexes.Entry], phase: str) -> None:
-    if phase in {"verify", "retag"}:
-        indexes.replace(store, entries, entries)
-    elif any(store.get(entry.path) is not None for entry in entries):
-        raise StorageError("An unexpected backfill index entry already exists")
-
-
-def _process(store: Store, binding: _Binding, key: bytes, phase: str) -> None:
-    record = _prepare(store, binding, key, phase)
-    if phase == "backfill":
+def _process(store: Store, binding: _Binding, key: bytes, status: MigrationStatus) -> None:
+    record = _prepare(store, binding, key, status)
+    if status.phase == "backfill":
         for path, value in record.additions.items():
             store.set(path, value)
-        indexes.replace(store, record.old_entries, record.new_entries)
-    elif phase == "retag":
+        indexes.extend(store, record.old_entries, record.new_entries)
+    elif status.phase == "retag":
         for name, value in metadata(binding.target).items():
             store.set(record.root.child(b"%m", name), value)
 
@@ -325,7 +324,7 @@ def _batch(store: Store, binding: _Binding, status: MigrationStatus, limit: int)
         raise StorageError("An unmanaged value occupies the application global root")
     keys = store.children(root, limit=limit, after=status.cursor)
     for key in keys:
-        _process(store, binding, key, status.phase)
+        _process(store, binding, key, status)
     counter = _COUNTER[status.phase]
     changes: dict[str, Any] = {counter: getattr(status, counter) + len(keys)}
     if keys:

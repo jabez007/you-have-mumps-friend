@@ -262,8 +262,10 @@ The framework detects incompatible schemas and refuses unsafe access. Schema
 changes require an explicit migration.
 
 Schema comparisons and deterministic review plans are implemented. The initial
-executor supports root scalar literal-default backfills and new non-unique
-root equality indexes. It uses a maintenance gate and bounded checkpoints before
+executor supports root scalar literal-default backfills, new root scalar indexes,
+and promotion of equality indexes to unique. Job-scoped reservations detect
+duplicate values across validation batches before application data changes.
+It uses a maintenance gate and bounded checkpoints before
 atomic activation. Broader migration execution remains a later milestone.
 
 Production migrations must be reviewable, recoverable, and appropriately checkpointed.
@@ -386,12 +388,13 @@ Semantic snapshot comparisons and deterministic migration review plans are
 implemented, including nested fields, identity, relationships, and index
 definitions. Planning is read-only and does not inspect record values or prove
 data compatibility. An additive migration executor now supports root scalar
-literal defaults and non-unique root equality index additions. A database-wide
+literal defaults, root index additions, and promotion of equality indexes to
+unique. A database-wide
 maintenance gate, source fingerprint barrier, bounded transactional checkpoints,
 four validation/backfill/verification/metadata passes, and atomic activation
 keep partial results inaccessible. Failed batches resume from their preceding
 checkpoint. Abort is available only before the first backfill commits. Nested,
-destructive, reference, and unique-index migrations remain later work.
+destructive, reference, and uniqueness-downgrade migrations remain later work.
 
 Begin with a storage-contract prototype rather than a full ORM.
 

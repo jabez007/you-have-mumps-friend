@@ -26,11 +26,13 @@ _STEP_ORDER = {
 
 
 def _supported_change(change: SchemaChange, nonscalar: set[str]) -> bool:
-    if change.destructive or change.requires_manual_review or change.unique:
+    if change.destructive or change.requires_manual_review:
         return False
     if change.kind in {"metadata_changed", "schema_version_changed"}:
         return True
-    if change.kind not in {"field_added", "index_added"} or len(change.path) != 1:
+    if change.kind not in {"field_added", "index_added", "index_changed"} or len(change.path) != 1:
+        return False
+    if change.kind == "index_changed" and not change.unique:
         return False
     if change.path[0] in nonscalar:
         return False
@@ -118,7 +120,8 @@ class MigrationPlan:
         nonscalar = {item["field"] for item in document.get("hierarchy", [])}
         nonscalar.update(item["path"][0] for item in document.get("references", []))
         return any(
-            change.kind in {"field_added", "index_added"} for change in self.changes
+            change.kind in {"field_added", "index_added", "index_changed"}
+            for change in self.changes
         ) and all(_supported_change(change, nonscalar) for change in self.changes)
 
     def to_dict(self, *, include_defaults: bool = False) -> dict[str, Any]:

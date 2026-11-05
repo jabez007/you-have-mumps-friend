@@ -297,20 +297,21 @@ record validation still happens under maintenance before any backfill.
 ## Execute an additive migration
 
 Keep the exact source model declaration available alongside the target. The
-executor accepts added root scalar fields with literal defaults and added root
-scalar, non-unique equality indexes. Existing values, owned trees, references,
-and uniqueness claims are preserved. Nested backfills, unique index additions,
-reference changes, removals, and default factories remain unsupported.
+executor accepts added root scalar fields with literal defaults, new root scalar
+indexes, and promotion of existing root equality indexes to unique indexes.
+Existing values, owned trees, references, equality entries, and uniqueness claims
+are preserved. Nested backfills, index removals or uniqueness downgrades,
+reference changes, field removals, and default factories remain unsupported.
 
 ```python
 plan = next_db.plan_migration(CatalogV2)
 # Review plan.changes, plan.steps, and any declared defaults before starting.
 assert plan.execution_supported
-status = next_db.begin_migration(Catalog, CatalogV2, plan=plan)
+status = next_db.begin_migration(CatalogProduct, CatalogV2, plan=plan)
 migration_id = status.migration_id  # Retain this ID for recovery.
 while status.phase != "complete":
     status = next_db.advance_migration(
-        migration_id, Catalog, CatalogV2, batch_size=25
+        migration_id, CatalogProduct, CatalogV2, batch_size=25
     )
 ```
 
@@ -320,6 +321,22 @@ validate source records and target values, backfill fields and indexes, verify
 the results, then update record metadata. A final transaction publishes the
 target snapshot and fingerprint, marks the job complete, and releases maintenance.
 An empty page advances the phase; the cursor resets for the next pass.
+
+Adding `unique=True` to an existing root scalar field uses the same methods.
+Validation reserves every new non-null unique value under the migration job,
+using the same normalization as ordinary writes. Duplicates across batches raise
+`UniqueViolation` before application indexes or record metadata change. The failed
+batch and its reservations roll back together. You can then abort and correct
+the source data before reviewing and starting a new plan. Multiple null values
+remain allowed. Duplicate errors omit indexed values and record identities.
+
+Backfill builds new equality entries and unique claims from those validated
+reservations. Promoting an equality index adds claims without deleting or
+rewriting its existing entries. Verification checks both the reservations and
+the active entries and claims before activation. Reservations contain normalized
+values and owner identities inside framework metadata. They remain with completed
+and aborted jobs, use space proportional to the new non-null unique values, and
+are absent from normal migration status output.
 
 The database-wide gate blocks ordinary operations from current mapper clients.
 Schema inspection, planning, and `migration_status(migration_id)` remain
