@@ -6,7 +6,7 @@ from copy import deepcopy
 from dataclasses import dataclass, replace
 from typing import Any
 
-from pydantic import TypeAdapter, ValidationError
+from pydantic import ValidationError
 
 from . import indexes, migration_claims, references
 from .codecs import decode_key
@@ -21,6 +21,7 @@ from .maintenance import (
     require_owner,
     save_status,
 )
+from .migration_defaults import BackfillDefaults
 from .migrations import MigrationPlan, build_plan
 from .models import Model
 from .records import metadata, record_nodes, record_values
@@ -44,7 +45,7 @@ class _Binding:
     target: ModelSpec
     registry: Registry
     plan: MigrationPlan
-    defaults: dict[str, Any]
+    defaults: BackfillDefaults
 
 
 def _bind(registry: Registry, source: type[Model], target: type[Model]) -> _Binding:
@@ -58,27 +59,8 @@ def _bind(registry: Registry, source: type[Model], target: type[Model]) -> _Bind
         raise MigrationError(
             "Migration supports root scalar defaults, index additions, and unique promotions"
         )
-    defaults = _literal_defaults(new, plan)
+    defaults = BackfillDefaults(new, plan)
     return _Binding(old, new, registry, plan, defaults)
-
-
-def _literal_defaults(spec: ModelSpec, plan: MigrationPlan) -> dict[str, Any]:
-    result = {}
-    for change in plan.changes:
-        if change.kind != "field_added":
-            continue
-        name = change.path[0]
-        field = spec.model.model_fields[name]
-        if field.default_factory is not None:
-            raise MigrationError("Migration defaults must be literals")
-        assert change.default_json is not None
-        try:
-            result[name] = TypeAdapter(field.rebuild_annotation()).validate_json(
-                change.default_json, strict=True
-            )
-        except ValidationError:
-            raise MigrationError("A literal default does not satisfy its target field") from None
-    return result
 
 
 def _check_review(binding: _Binding, reviewed: MigrationPlan) -> None:
@@ -183,9 +165,7 @@ def _field_nodes(spec: ModelSpec, root: Path, record: Model) -> dict[Path, bytes
 def _validate_models(binding: _Binding, values: dict[str, Any]) -> tuple[Model, Model]:
     try:
         old = binding.source.model.model_validate(deepcopy(values))
-        new = binding.target.model.model_validate(
-            {**deepcopy(values), **deepcopy(binding.defaults)}
-        )
+        new = binding.target.model.model_validate(binding.defaults.apply(values))
     except ValidationError:
         raise MigrationError(
             "A stored record does not satisfy the migration model bindings"
