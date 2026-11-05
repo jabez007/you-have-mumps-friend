@@ -44,6 +44,27 @@ def test_identical_snapshots_have_no_changes():
     assert compare_schemas(original, SchemaSnapshot(original.canonical)) == ()
 
 
+@pytest.mark.parametrize("version,manual", [(1, True), (3, False)])
+def test_owned_version_downgrades_require_review_like_root_downgrades(version, manual):
+    class Detail(Model):
+        __schema_version__ = 2
+        code: str
+
+    class Before(Product):
+        detail: Detail
+
+    class NewDetail(Detail):
+        __schema_version__ = version
+        note: str | None = None
+
+    class After(Before):
+        detail: NewDetail
+
+    changes = compare_schemas(snapshot(Before), snapshot(After))
+    change = next(c for c in changes if c.kind == "owned_version_changed")
+    assert change.path == ("detail",) and change.requires_manual_review is manual
+
+
 def test_added_optional_field_and_index_have_explicit_defaults():
     class New(Product):
         __schema_version__ = 2

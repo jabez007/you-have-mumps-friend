@@ -290,7 +290,12 @@ def _changed(path: tuple[str, ...], old: _Field, new: _Field) -> list[SchemaChan
     if old.default_json != new.default_json:
         changes.append(SchemaChange("default_changed", path, default_json=new.default_json))
     if old.version != new.version:
-        changes.append(SchemaChange("owned_version_changed", path))
+        downgrade = (
+            old.version is not None and new.version is not None and new.version < old.version
+        )
+        changes.append(
+            SchemaChange("owned_version_changed", path, requires_manual_review=downgrade)
+        )
     if old.index != new.index:
         changes.append(
             SchemaChange(
