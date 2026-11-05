@@ -15,6 +15,7 @@ from mccann_hub.yhmf.schemas import schema_path
 _models = runpy.run_path(str(FilePath(__file__).with_name("migration_models.py")))
 Product, ProductV2 = _models["Product"], _models["ProductV2"]
 _unique_models = runpy.run_path(str(FilePath(__file__).with_name("unique_migration_models.py")))
+_nested_models = runpy.run_path(str(FilePath(__file__).with_name("nested_migration_models.py")))
 
 
 class RendezvousStore(NativeStore):
@@ -49,18 +50,27 @@ class RendezvousStore(NativeStore):
             "crash_reservation": path.global_name == "^YHMFMigration"
             and len(path.subscripts) > 2
             and path.subscripts[2] == b"unique",
+            "crash_nested_field": path.global_name == "^YHMFTestWarehouse"
+            and len(path.subscripts) == 4
+            and path.subscripts[1] == b"lots"
+            and path.subscripts[-1] == b"note",
         }
         if self.waiting and guards.get(self.operation, False):
             self.rendezvous()
 
 
 def run(operation, migration_id, kind="additive"):
-    source, target = {
-        "additive": (Product, ProductV2),
-        "unique": (_unique_models["Product"], _unique_models["UniqueProduct"]),
+    source, target, related = {
+        "additive": (Product, ProductV2, ()),
+        "unique": (_unique_models["Product"], _unique_models["UniqueProduct"], ()),
+        "nested": (
+            _nested_models["Warehouse"],
+            _nested_models["WarehouseV2"],
+            (_nested_models["Target"],),
+        ),
     }[kind]
     store = RendezvousStore(operation, migration_id)
-    db = Database(store, Registry(target))
+    db = Database(store, Registry(*related, target))
     error = None
     try:
         if operation == "write":

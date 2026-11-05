@@ -20,6 +20,9 @@ _models = runpy.run_path(str(_WORKER))
 Product, ProductV2 = _models["Product"], _models["ProductV2"]
 _unique_models = _models["_unique_models"]
 UniqueSource, UniqueTarget = _unique_models["Product"], _unique_models["UniqueProduct"]
+_nested_models = _models["_nested_models"]
+Warehouse, WarehouseV2 = _nested_models["Warehouse"], _nested_models["WarehouseV2"]
+RelatedTarget = _nested_models["Target"]
 
 
 @pytest.fixture
@@ -252,8 +255,8 @@ def test_unique_native_restart_commits_only_one_reservation_and_claim_set(
     assert db.check_indexes(UniqueTarget).issues == ()
 
 
-def unique_worker_race(migration_id):
-    processes = [worker("advance", migration_id, "unique") for _ in range(2)]
+def migration_worker_race(migration_id, kind="unique"):
+    processes = [worker("advance", migration_id, kind) for _ in range(2)]
     try:
         for process in processes:
             ready(process)
@@ -282,7 +285,7 @@ def test_unique_preflight_workers_serialize_reservations_and_find_cross_batch_du
         record.sku = "SKU0"
         old.save(record)
     status = unique_start(db)
-    summaries = unique_worker_race(status.migration_id)
+    summaries = migration_worker_race(status.migration_id)
     current = db.migration_status(status.migration_id)
     if duplicate:
         assert sum(item.get("error") == "UniqueViolation" for item in summaries) == 1
@@ -327,3 +330,126 @@ def test_unique_worker_death_rolls_back_reservations_or_claims_before_resume(
     current = db.migration_status(status.migration_id)
     assert unique_advance_to(db, current, "complete").retagged == 3
     assert db.check_indexes(UniqueTarget).issues == ()
+
+
+@pytest.fixture
+def nested_db(db):
+    names = (
+        Product.__global__,
+        Warehouse.__global__,
+        RelatedTarget.__global__,
+        "^YHMFSchema",
+        "^YHMFIndex",
+        "^YHMFUnique",
+        "^YHMFRef",
+        "^YHMFMigration",
+    )
+    for name in names:
+        db.store.delete_tree(Path(name))
+    old = Database(db.store, Registry(RelatedTarget, Warehouse))
+    old.insert(RelatedTarget(id="T1"))
+    for record in _nested_models["sample_records"]():
+        old.insert(record)
+    yield Database(db.store, Registry(RelatedTarget, WarehouseV2))
+    for name in names:
+        db.store.delete_tree(Path(name))
+
+
+def nested_start(db):
+    return start(db, Warehouse, WarehouseV2)
+
+
+def nested_advance_to(db, status, phase):
+    return advance_to(db, status, phase, Warehouse, WarehouseV2)
+
+
+@pytest.mark.parametrize("phase", ["validate", "backfill", "activate"])
+def test_native_nested_restart_reloads_whole_parent_and_its_checkpoint(
+    nested_db, monkeypatch, phase
+):
+    db = nested_db
+    status = nested_advance_to(db, nested_start(db), phase)
+    yottadb = importlib.import_module("yottadb")
+    original = db.store.set
+    checkpoints = []
+
+    def restart_once(path, value):
+        original(path, value)
+        if path == job_path(status.migration_id):
+            checkpoints.append(value)
+            if len(checkpoints) == 1:
+                raise yottadb.YDBTPRestart()
+
+    monkeypatch.setattr(db.store, "set", restart_once)
+    updated = db.advance_migration(status.migration_id, Warehouse, WarehouseV2, batch_size=1)
+    assert len(checkpoints) == 2 and checkpoints[0] == checkpoints[1]
+    assert db.migration_status(status.migration_id) == updated
+    monkeypatch.setattr(db.store, "set", original)
+    assert nested_advance_to(db, updated, "complete").retagged == 3
+    assert db.get(WarehouseV2, "W1").lots[-1].samples["μ"].quality == 7
+    assert db.check_indexes(WarehouseV2).issues == ()
+
+
+@pytest.mark.parametrize("duplicate", [False, True])
+def test_native_nested_preflight_workers_keep_parent_cursors_and_unique_reservations(
+    nested_db, duplicate
+):
+    db = nested_db
+    if duplicate:
+        old = Database(db.store, Registry(RelatedTarget, Warehouse))
+        record = old.get(Warehouse, "W2")
+        record.lots[0].serial = "private-A"
+        old.save(record)
+    status = nested_start(db)
+    summaries = migration_worker_race(status.migration_id, kind="nested")
+    current = db.migration_status(status.migration_id)
+    if duplicate:
+        assert sum(item.get("error") == "UniqueViolation" for item in summaries) == 1
+        assert current.validated == 1 and current.backfilled == 0
+        assert len(db.store.children(job_path(status.migration_id).child(b"unique"), limit=10)) == 3
+        db.abort_migration(status.migration_id)
+        assert old.get(Warehouse, "W2").lots[0].serial == "private-A"
+    else:
+        assert sorted(item["validated"] for item in summaries) == [1, 2]
+        assert sum(item["reads"] for item in summaries) >= 3
+        assert nested_advance_to(db, current, "complete").retagged == 3
+
+
+@pytest.mark.parametrize(
+    "operation,phase",
+    [
+        ("crash_reservation", "validate"),
+        ("crash_nested_field", "backfill"),
+        ("crash_claim", "backfill"),
+    ],
+)
+def test_native_worker_death_cannot_expose_a_partial_parent_tree(nested_db, operation, phase):
+    db = nested_db
+    status = nested_advance_to(db, nested_start(db), phase)
+    process = worker(operation, status.migration_id, kind="nested")
+    try:
+        ready(process)
+        process.kill()
+        process.wait(timeout=5)
+    finally:
+        stop(process)
+    assert db.migration_status(status.migration_id) == status
+    root = Path(Warehouse.__global__, (b"s:W1",))
+    assert db.store.get(root.child(b"note")) is None
+    assert db.store.get(root.child(b"header", b"note")) is None
+    assert db.store.get(root.child(b"lots", b"-1", b"note")) is None
+    if phase == "validate":
+        assert db.store.children(job_path(status.migration_id).child(b"unique"), limit=10) == ()
+    for field in (b"lots.serial", b"lots.samples.reading"):
+        assert db.store.children(Path("^YHMFUnique", (b"YHMFTestWarehouse", field)), limit=10) == ()
+    process = worker("resume", status.migration_id, kind="nested")
+    try:
+        stdout, stderr = process.communicate(timeout=20)
+        assert process.returncode == 0, stderr
+        assert json.loads(stdout)["phase"] == phase
+    finally:
+        stop(process)
+    current = db.migration_status(status.migration_id)
+    assert nested_advance_to(db, current, "complete").retagged == 3
+    assert db.get(WarehouseV2, "W2").header is None
+    assert db.check_indexes(WarehouseV2).issues == ()
