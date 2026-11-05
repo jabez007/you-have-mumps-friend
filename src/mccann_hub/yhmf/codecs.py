@@ -3,9 +3,11 @@
 
 import base64
 import binascii
+import json
 import math
 import re
 from decimal import Decimal, InvalidOperation
+from typing import Any
 
 from .errors import StorageError
 
@@ -14,6 +16,13 @@ type Key = str | int
 LAYOUT_VERSION = 1
 MAX_INTEGER_KEY = 999_999_999_999_999_999
 _INTEGER = re.compile(rb"(?:0|-[1-9][0-9]*|[1-9][0-9]*)\Z")
+
+
+def canonical_json(value: Any) -> bytes:
+    """Encode deterministic, finite JSON for persisted mapper metadata."""
+    return json.dumps(
+        value, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False
+    ).encode("ascii")
 
 
 def encode_key(value: Key) -> bytes:

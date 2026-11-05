@@ -7,17 +7,12 @@ import re
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Literal, NoReturn, cast
 
+from .codecs import canonical_json as canonical_json
 from .errors import StorageError
 from .storage import MAX_VALUE_BYTES, Path, Store
 
 if TYPE_CHECKING:
     from .registry import ModelSpec
-
-
-def canonical_json(value: Any) -> bytes:
-    return json.dumps(
-        value, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False
-    ).encode("ascii")
 
 
 def schema_path(global_name: str) -> Path:
