@@ -104,6 +104,15 @@ def _child_spec(
 def _field_spec(model: type[Model], name: str, ancestors: tuple[type[Model], ...]) -> FieldSpec:
     annotation = scalar_type(model.model_fields[name].annotation)
     metadata = _field_metadata(model, name)
+    return _field_type_spec(annotation, name, metadata, ancestors)
+
+
+def _field_type_spec(
+    annotation: Any,
+    name: str,
+    metadata: dict[str, Any],
+    ancestors: tuple[type[Model], ...],
+) -> FieldSpec:
     if get_origin(annotation) is Children:
         return _child_spec(annotation, name, metadata, ancestors)
     if "children_key" in metadata:
