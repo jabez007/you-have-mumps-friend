@@ -244,7 +244,10 @@ def _make_spec(model: type[Model]) -> ModelSpec:
     references = _reference_declarations(node.fields)
     if references:
         declaration["references"] = references
-    snapshot = canonical_json(declaration)
+    try:
+        snapshot = canonical_json(declaration)
+    except (TypeError, ValueError) as exc:
+        raise SchemaError("Model declarations must produce finite canonical JSON") from exc
     return ModelSpec(
         model,
         global_name,

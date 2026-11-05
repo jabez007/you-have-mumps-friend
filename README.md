@@ -223,6 +223,7 @@ executes default factories.
 `has_data` reports whether any node exists in the application global; it does
 not count records. Incomplete metadata, invalid canonical JSON, a mismatched
 global, or a bad snapshot fingerprint raises `StorageError`.
+Declarations that generate nonfinite JSON numbers are rejected with `SchemaError`.
 
 `SchemaSnapshot` exposes immutable canonical bytes and derived metadata. Its
 normal representation excludes schema contents. `snapshot.to_dict()` explicitly

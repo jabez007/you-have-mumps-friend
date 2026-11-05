@@ -10,6 +10,7 @@ return. Other control and non-ASCII characters use lowercase `\uXXXX` escapes;
 supplementary characters use surrogate pairs. Quotation marks and backslashes
 are escaped; forward slashes and HTML characters are not. Object keys in schema
 snapshots are sorted. Arrays retain their declared order.
+Nonfinite JSON numbers are rejected when generating or inspecting snapshots.
 
 ## Keys and paths
 

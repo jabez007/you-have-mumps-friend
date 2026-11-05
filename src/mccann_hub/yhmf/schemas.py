@@ -15,9 +15,9 @@ if TYPE_CHECKING:
 
 
 def canonical_json(value: Any) -> bytes:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode(
-        "ascii"
-    )
+    return json.dumps(
+        value, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False
+    ).encode("ascii")
 
 
 def schema_path(global_name: str) -> Path:

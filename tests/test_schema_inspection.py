@@ -6,7 +6,7 @@ from dataclasses import FrozenInstanceError
 import pytest
 
 from mccann_hub.yhmf import Database, Field, Model, Path, Registry, SchemaSnapshot
-from mccann_hub.yhmf.errors import SchemaMismatch, StorageError, TransactionError
+from mccann_hub.yhmf.errors import SchemaError, SchemaMismatch, StorageError, TransactionError
 
 
 class Product(Model):
@@ -60,7 +60,15 @@ def test_unmanaged_data_is_distinguished_from_an_empty_global(store, read_only_s
     assert db.inspect_schema(Product).status == "unmanaged"
 
 
-@pytest.mark.parametrize("damage", ["missing_snapshot", "missing_fingerprint", "bad_fingerprint"])
+@pytest.mark.parametrize(
+    "damage",
+    [
+        "missing_snapshot",
+        "missing_fingerprint",
+        "bad_fingerprint",
+        "wrong_global",
+    ],
+)
 def test_incomplete_or_inconsistent_installed_metadata_is_rejected(store, read_only_store, damage):
     db = Database(store, Registry(Product))
     db.insert(Product(id="P1", name="Main"))
@@ -71,8 +79,16 @@ def test_incomplete_or_inconsistent_installed_metadata_is_rejected(store, read_o
         snapshot = store.get(root.child(b"snapshot"))
         store.delete_tree(root)
         store.set(root.child(b"snapshot"), snapshot)
-    else:
+    elif damage == "bad_fingerprint":
         store.set(root, b"0" * 64)
+    else:
+        document = json.loads(store.get(root.child(b"snapshot")))
+        document["global"] = "^OtherProduct"
+        copied = json.dumps(
+            document, ensure_ascii=True, sort_keys=True, separators=(",", ":")
+        ).encode("ascii")
+        store.set(root.child(b"snapshot"), copied)
+        store.set(root, hashlib.sha256(copied).hexdigest().encode("ascii"))
     with pytest.raises(StorageError):
         Database(read_only_store, db.registry).inspect_schema(Product)
 
@@ -123,3 +139,12 @@ def test_inspection_observes_transaction_handle_lifetime(read_only_store):
     tx = db.atomic(lambda handle: handle)
     with pytest.raises(TransactionError):
         tx.inspect_schema(Product)
+
+
+@pytest.mark.parametrize("default", [float("nan"), float("inf"), -float("inf")])
+def test_registry_cannot_generate_nonfinite_json_snapshots(default):
+    class Nonfinite(Product):
+        amount: float = default
+
+    with pytest.raises(SchemaError, match="canonical JSON"):
+        Registry(Nonfinite)
