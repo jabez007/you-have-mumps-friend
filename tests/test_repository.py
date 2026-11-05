@@ -150,7 +150,7 @@ def test_future_index_flags_fail_explicitly():
         Field(unique=True)
 
 
-@pytest.mark.parametrize("name", ["^YHMFSchema", "^YHMFIndex"])
+@pytest.mark.parametrize("name", ["^YHMFSchema", "^YHMFIndex", "^YHMFRef"])
 def test_reject_framework_owned_globals(name):
     class Reserved(Product):
         __global__ = name

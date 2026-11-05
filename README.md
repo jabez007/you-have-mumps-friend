@@ -162,6 +162,9 @@ your current database; use only disposable data.
 Native qualification covers forced transaction restarts, rollback of schema
 installation, and four independent processes committing 160 updates to one
 record. Concurrent reads assert that both fields agree throughout those updates.
+Reference race tests pause independent processes after reading the same incoming
+count, then release them together. They check reference creation against target
+deletion, concurrent addition and removal, and index state after native restarts.
 These tests establish correctness for the tested environment, not throughput
 or compatibility with other engine releases.
 

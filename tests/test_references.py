@@ -257,3 +257,27 @@ def test_corrupt_inbound_count_refuses_deletion(db):
     with pytest.raises(StorageError, match="disagree"):
         db.delete(Product, "P42")
     assert db.get(Product, "P42").name == "Main"
+
+
+def test_abort_restores_record_and_reference_index_together(db):
+    db.insert(Product(id="P42", name="Main"))
+
+    def create(tx):
+        tx.insert(Order(id=1, product=ref()))
+        raise RuntimeError("abort after reverse writes")
+
+    with pytest.raises(RuntimeError, match="abort after"):
+        db.atomic(create)
+    assert inbound(db) is None
+    with pytest.raises(NotFound):
+        db.get(Order, 1)
+    db.insert(Order(id=1, product=ref()))
+
+    def remove(tx):
+        tx.delete(Order, 1)
+        raise RuntimeError("abort after reverse deletion")
+
+    with pytest.raises(RuntimeError, match="abort after"):
+        db.atomic(remove)
+    assert inbound(db) == b"1"
+    assert db.get(Order, 1).product == ref()
