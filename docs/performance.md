@@ -118,5 +118,77 @@ nested cumulative times must not be summed. Environment output records CPU model
 logical CPU count, runtime versions, and the CI source commit.
 
 All these workloads run through the existing disposable native database harness.
-Offline workload tests establish behavior and accounting only. Native measurements
-and profile findings will be recorded after both CI environments execute them.
+Offline workload tests establish behavior and accounting only. Both native environments executed the expanded workloads in
+[CI run 42278547820](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42278547820),
+commit `37013c13a74b10eacd2b68d84d7034eb6ccb4e55`. Each ran 852 tests successfully before the benchmark.
+The [version-two results](benchmarks/native-followups-2026-11-06.json) preserve the
+complete latency, operation-count, contention, and profile summaries.
+
+### Indexed serial results
+
+Median microseconds per change at 1,000 lots:
+
+| Engine | Workload | Patch | Whole replacement |
+| --- | --- | ---: | ---: |
+| r2.02 | indexed | 191.50 | 213,108.52 |
+| r2.02 | unique | 200.20 | 211,791.23 |
+| r2.02 | reference | 282.62 | 214,032.38 |
+| r2.06 | indexed | 302.63 | 318,013.39 |
+| r2.06 | unique | 293.94 | 315,574.74 |
+| r2.06 | reference | 425.10 | 314,034.86 |
+
+Both engines observed constant serial patch node work across all tested sizes:
+
+| Workload | Reads | Writes | Tree deletes | Child enumerations |
+| --- | ---: | ---: | ---: | ---: |
+| Equality quantity | 19 | 2 | 1 | 0 |
+| Unique serial | 21 | 3 | 2 | 0 |
+| Reference | 32 | 5 | 2 | 2 |
+
+### Concurrent increments
+
+Four processes committed 40 increments each, for 160 commits per burst, using 100
+lots per root. Entries below show commits/second and callback retries in parentheses.
+The roots pattern has four roots; the other patterns share one root.
+
+| Engine | Workload | Method | Separate roots | Separate children | Same child |
+| --- | --- | --- | ---: | ---: | ---: |
+| r2.02 | unindexed | patch | 3,300.88 (0) | 2,201.71 (196) | 1,852.03 (354) |
+| r2.02 | unindexed | replace | 97.98 (430) | 97.26 (450) | 96.55 (437) |
+| r2.02 | indexed | patch | 1,682.50 (239) | 1,319.15 (347) | 1,349.99 (373) |
+| r2.02 | indexed | replace | 24.46 (442) | 24.08 (452) | 24.52 (442) |
+| r2.06 | unindexed | patch | 2,605.92 (0) | 1,124.91 (199) | 1,146.79 (196) |
+| r2.06 | unindexed | replace | 120.14 (200) | 110.83 (210) | 117.77 (191) |
+| r2.06 | indexed | patch | 1,080.96 (108) | 1,073.04 (195) | 1,091.27 (194) |
+| r2.06 | indexed | replace | 23.94 (302) | 23.56 (315) | 24.96 (285) |
+
+Every burst preserved all increments and passed index and reverse-count checks.
+Separate roots eliminated observed retries for the unindexed patch case in this
+run. Indexed separate roots still retried, consistent with shared index-page
+contention; that explanation is an inference, not a block-level trace. Root
+separation therefore does not establish a zero-contention guarantee.
+
+### Profile findings
+
+Both runners reported AMD EPYC 9V74 processors and four logical CPUs. Runtime
+versions and platform strings are in the JSON. Each patch profile executed 25
+updates at 1,000 lots; the whole-replacement profile used 100 lots.
+
+`owned._has_functions` made 2,550 calls, including recursive calls, per 25-patch
+profile. For unindexed patches its cumulative time was 4.794 ms out of 12.366 ms
+in the enclosing operation on r2.02, and 6.763 ms out of 17.095 ms on r2.06.
+Those approximately 39-40 percent shares describe instrumented profiles. They do
+not predict an equal reduction in unprofiled request latency.
+
+The guard walk invokes `_nested_model_schema` for ordinary dictionaries even
+though peeling validator wrappers is needed only at function nodes. Simplifying
+that dispatch is a measured optimization candidate that requires no stored-data
+cache. Preserve nested-model and Annotated-validator rejection tests before
+changing the policy. Path construction/validation is another visible cost,
+especially for whole replacement; it is a separate follow-up.
+
+These are short, warm bursts with sequential keys and aligned quantity values.
+They do not characterize cold caches, random index-value distributions, long-run
+throughput, unique-claim conflict rates, or application callbacks with side effects.
+The baseline and follow-up timings come from different runs and must not be used
+as a before/after speed claim.
