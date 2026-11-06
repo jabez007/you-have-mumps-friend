@@ -294,3 +294,27 @@ forced swallowed restart and four-process counter increments. Existing failure
 revalidation and rollback tests must remain intact. The initial C901 check passes
 at the configured maximum of ten. Native CI on both supported engines remains
 required before closing these issues.
+
+### Declaration policy design, issue 3
+
+The registry already visits every root and owned NodeSpec. Reject extra='allow'
+at that seam because record input extraction intentionally persists only declared
+fields; accepted extra values would otherwise disappear. Do not add a second
+field-enumeration persistence path or change canonical fingerprints to describe
+unsupported storage. Reject nullable owned declarations too, even when their
+current value is null. Extra='ignore' remains ordinary Pydantic input behavior.
+
+The existing input_values helper recursively converts owned instances into plain
+mappings before validation. This already protects writes with instance revalidation,
+default validation, or assignment validation disabled. Scalar codecs independently
+reject nonfinite values. Prove those safeguards with a configuration matrix and
+keep their existing canonical fingerprints unchanged. This requires no format-two
+metadata conversion. Reuse existing validation errors and value-free SchemaError
+messages. The configured complexity check still passes at ten.
+
+Transaction slice `22001f6` passed all six jobs in
+[CI run 42309069293](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42309069293).
+Both native engines executed the controlled caught-signal tests and four-process
+counter regressions. Issues 1 and 7 are closed after that qualification. The
+configuration matrix for issue 3 has five failing-before-fix declaration regressions;
+all safe-option, rollback, and fingerprint checks pass under both Pydantic versions.

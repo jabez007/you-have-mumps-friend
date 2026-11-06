@@ -158,6 +158,8 @@ def _node_spec(
         raise SchemaError("Owned models cannot declare an independent global")
     if type(model.__schema_version__) is not int or model.__schema_version__ < 1:
         raise SchemaError("Schema versions must be positive integers")
+    if model.model_config.get("extra") == "allow":
+        raise SchemaError("Models with extra='allow' cannot be persisted; declare stored fields")
     if model.model_computed_fields:
         raise SchemaError("Computed fields are not persisted")
     for name, field in model.model_fields.items():

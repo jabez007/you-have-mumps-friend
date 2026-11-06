@@ -91,3 +91,15 @@ inside [`atomic`](transactions.md). For direct changes to existing owned paths, 
 
 Ownership declarations cannot be recursive. Reads and writes also enforce
 [size limits](../reference/limits.md) on collections and records.
+
+## Keep persistent fields explicit
+
+The registry rejects `extra="allow"` on a root or any owned model. Unknown values
+accepted by that policy have no declared storage field. Declare them as model
+fields instead. `extra="ignore"` remains available when input data intentionally
+contains values that the application discards.
+
+Disabling instance, default, or assignment validation does not bypass write-time
+validation. The mapper rebuilds plain owned input and validates it before writing.
+Setting `allow_inf_nan=True` does not permit nonfinite stored scalars. See the
+[configuration compatibility policy](../schema-compatibility.md#model-configuration-and-declared-data).

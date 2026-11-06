@@ -89,3 +89,27 @@ versions. Legacy goldens remain committed unchanged. `tests/test_schema_contract
 exercises CRUD, nested mutations, index rebuilding, old job recovery, binary
 backfills, and metadata corruption on both adapters. Native CI separately exercises
 concurrent initialization, metadata changes, rollback, and transaction restarts.
+
+## Model configuration and declared data
+
+Registration rejects `extra="allow"` on root and owned models. The mapper stores
+only declared fields, so accepting extra instance data would silently discard it.
+Declare persistent fields explicitly or use Pydantic's `extra="forbid"` or
+`extra="ignore"` input policy. Values already discarded by older writes cannot
+be recovered from the database.
+
+The following overrides do not change the canonical contract:
+
+| Setting | Persistence safeguard |
+| --- | --- |
+| `revalidate_instances` | Writes rebuild plain input mappings recursively before model validation. |
+| `validate_default=False` | Writes validate each extracted field value explicitly. |
+| `validate_assignment=False` | Writes revalidate the complete value rather than trusting assignments. |
+| `allow_inf_nan=True` | Scalar codecs reject nonfinite values before persistence. |
+| `extra="ignore"` | Pydantic discards undeclared input before constructing the value object. |
+
+Existing format-two databases with the same declared fields retain their snapshot
+and record identities when these safe options change. This patch adds no metadata
+format conversion. Supported legacy policies retain the existing compatibility
+checks; an unsupported legacy policy must be reviewed explicitly rather than
+silently reinterpreted.
