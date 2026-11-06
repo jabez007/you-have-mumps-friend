@@ -81,3 +81,42 @@ YHMF_BENCHMARK=1 bash scripts/test-native.sh -q
 
 This uses a newly created disposable database and prints `YHMF_BENCHMARK` JSON
 after the tests. No production database is involved.
+
+
+## Indexed, concurrent, and profiling follow-ups
+
+The version-two benchmark output adds equality-indexed quantity updates, unique
+serial changes, and indexed reference changes. The tracked lot contains all three
+kinds of secondary data so the unchanged entries exercise the same declared model.
+The direct node baseline is limited to unindexed data; indexed cases compare
+partial patch with atomic whole replacement, both maintaining their invariants.
+All serial cases retain the same sizes, five warmups, and measured sample count.
+
+Contention bursts use four independent native processes by default. A controller
+waits until each worker has warmed its connection, releases all workers, and waits
+for their measured loops. The patterns are separate roots, separate children of
+one root, and one shared child. Every operation increments quantity through a read
+inside `atomic`. Both patch and replacement run on unindexed and indexed models.
+The default burst uses 100 lots and 40 commits per worker. Startup and state reset
+are excluded; reported aggregate throughput includes the controller's release and
+result-collection overhead. Worker latencies measure the operation itself.
+
+Operation counters distinguish committed calls from callback attempts. Their
+difference measures callback retries, not all internal engine restart events.
+Final assertions check every quantity, unaffected children, index audits, and
+reverse-reference counts. A failed assertion or worker failure fails qualification.
+Different logical roots can still conflict on physical YottaDB blocks or shared
+index pages; the experiment measures that behavior without assuming isolation by
+root key. Contention retry counts and timings are descriptive and have no pass
+threshold.
+
+Separate cProfile runs capture the Python/native call path without the operation
+counting wrapper. Profiles cover each patch workload and an indexed whole
+replacement. They report call counts, self time, and cumulative time. Profiled
+timings are instrumented and must not be substituted for unprofiled latency, and
+nested cumulative times must not be summed. Environment output records CPU model,
+logical CPU count, runtime versions, and the CI source commit.
+
+All these workloads run through the existing disposable native database harness.
+Offline workload tests establish behavior and accounting only. Native measurements
+and profile findings will be recorded after both CI environments execute them.

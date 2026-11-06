@@ -643,17 +643,24 @@ YHMF_BENCHMARK=1 bash scripts/test-native.sh -q
 ```
 
 After tests, this runs `scripts/benchmark-mutations.py` in the same disposable
-native database. Both native CI environments run it too. The JSON output reports
-median and p95 latency and adapter operation counts for direct native node
-assignment, a deep framework patch, and read/modify/save of the entire aggregate
-at 1, 10, 100, and 1,000 lots. Each sample performs a real change after five warmup
-iterations. The quantity is unindexed so all three variants have equivalent
-secondary-entry work; separate correctness tests cover indexed mutations.
-Direct assignment measures a `NativeStore` transaction and scalar write. Results
-include Python and instrumentation overhead and describe a warm, uncontended
-microbenchmark rather than production throughput. Results from both configured native environments are recorded in the
-[performance report](docs/performance.md). In-memory operation counts establish
-work scope only.
+native database. Both native CI environments run it too. Serial measurements
+report median/p95 latency and adapter operation counts at 1, 10, 100, and 1,000
+lots, with five warmups. The unindexed case compares direct node assignment,
+deep patch, and read/modify/save. Indexed quantity, unique serial, and indexed
+reference changes compare patch and replacement with the same integrity work.
+
+Version-two output also includes four-process contention bursts and separate
+cProfile summaries. Contention compares independent roots, independent children,
+and a shared child; callback-attempt counts expose retry work. Final values,
+indexes, and reverse-reference counts are checked after each workload. Profiles
+run without the operation-counting wrapper and are separate from latency samples.
+
+Direct assignment measures a `NativeStore` transaction and scalar write. Latency
+measurements include Python and counting overhead. Serial measurements use a warm,
+uncontended database; contention throughput includes controller coordination.
+These describe the measured workloads and do not establish production throughput.
+See the [performance report](docs/performance.md) for native evidence and limits.
+Offline operation counts establish work scope only.
 
 ## Run native storage tests
 
