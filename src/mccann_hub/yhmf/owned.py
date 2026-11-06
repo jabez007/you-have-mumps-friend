@@ -2,13 +2,13 @@
 """Typed direct addressing and validation policy for parent-owned values."""
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from .codecs import Key, encode_key
 from .errors import MutationError, NotFound, StorageError
 from .models import Model
 from .records import MAX_CHILDREN
-from .registry import FieldSpec, ModelSpec, NodeSpec
+from .registry import FieldSpec, ModelSpec, NodeSpec, supports_local_validation
 from .storage import Path, Store
 
 if TYPE_CHECKING:
@@ -25,47 +25,9 @@ class Owner:
     relative: tuple[bytes, ...]
 
 
-def _nested_model_schema(value: dict[str, Any], model: type[Model]) -> bool:
-    inner = value
-    while str(inner.get("type", "")).startswith("function-"):
-        wrapped = inner.get("schema")
-        if not isinstance(wrapped, dict):
-            return False
-        inner = wrapped
-    nested = inner.get("cls")
-    return (
-        isinstance(nested, type)
-        and issubclass(nested, Model)
-        and nested is not model
-        and value.get("ref") is not None
-        and value.get("ref") == nested.__pydantic_core_schema__.get("ref")
-    )
-
-
-def _has_functions(value: Any, model: type[Model]) -> bool:
-    if isinstance(value, list):
-        return any(_has_functions(item, model) for item in value)
-    if not isinstance(value, dict):
-        return False
-    nested = value.get("cls")
-    if value.get("type") == "model" and nested is not model:
-        return False
-    if str(value.get("type", "")).startswith("function-"):
-        return not _nested_model_schema(value, model)
-    # Ordinary schema dictionaries have no wrappers to peel. Keep the existing
-    # treatment of foreign cls/ref descriptors without probing every dictionary.
-    if nested is not None and nested is not model and _nested_model_schema(value, model):
-        return False
-    return any(_has_functions(item, model) for item in value.values())
-
-
 def require_local_validation(model: type[Model]) -> None:
     """Reject ancestor validation whose dependency on descendants is unknowable."""
-    if (
-        model.__pydantic_post_init__
-        or model.__pydantic_custom_init__
-        or _has_functions(model.__pydantic_core_schema__, model)
-    ):
+    if not supports_local_validation(model):
         raise MutationError(
             "Partial mutation cannot validate this owner's custom validators; "
             "use whole-aggregate save inside atomic"

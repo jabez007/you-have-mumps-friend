@@ -406,3 +406,21 @@ malformed-marker, nullable, nested-container, and rollback regressions. Add nati
 insertion benchmarks for growing target and unrelated collections, comparing direct
 node insertion, insert_child, and atomic whole replacement. No claim about block
 conflicts follows from operation counts. Existing C901 passes at ten.
+
+### Declaration compilation design, issue 31
+
+Reuse immutable Registry-owned ModelSpec, NodeSpec, and FieldSpec objects. First
+move validator classification from owned traversal into the registry declaration
+module as a behavior-preserving refactor. Then compile that policy and scalar
+TypeAdapters at registration and reuse them in queries and partial mutations.
+No process-global cache or database-metadata cache is introduced. Separate model
+classes with equal fingerprints retain separate Python validation behavior.
+
+Declarations are fixed after registration; changes require a new class and registry.
+Make rebuilt Pydantic schemas fail clearly on access rather than using stale compiled
+rules. Continue reading the live installed metadata pair in every transaction.
+Golden fingerprints and storage bytes must remain unchanged. Test same-fingerprint
+classes with different validators, Annotated/ancestor guards, reference adapters,
+model configuration, and live schema corruption. Use native before/after benchmark
+and profile output; do not infer latency improvements from cache-hit counts. C901
+passes at ten before the changes.

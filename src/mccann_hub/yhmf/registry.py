@@ -30,6 +30,49 @@ def scalar_type(annotation: Any) -> Any:
     return annotation
 
 
+def _nested_model_schema(value: dict[str, Any], model: type[Model]) -> bool:
+    inner = value
+    while str(inner.get("type", "")).startswith("function-"):
+        wrapped = inner.get("schema")
+        if not isinstance(wrapped, dict):
+            return False
+        inner = wrapped
+    nested = inner.get("cls")
+    return (
+        isinstance(nested, type)
+        and issubclass(nested, Model)
+        and nested is not model
+        and value.get("ref") is not None
+        and value.get("ref") == nested.__pydantic_core_schema__.get("ref")
+    )
+
+
+def _has_functions(value: Any, model: type[Model]) -> bool:
+    if isinstance(value, list):
+        return any(_has_functions(item, model) for item in value)
+    if not isinstance(value, dict):
+        return False
+    nested = value.get("cls")
+    if value.get("type") == "model" and nested is not model:
+        return False
+    if str(value.get("type", "")).startswith("function-"):
+        return not _nested_model_schema(value, model)
+    # Ordinary schema dictionaries have no wrappers to peel. Keep the existing
+    # treatment of foreign cls/ref descriptors without probing every dictionary.
+    if nested is not None and nested is not model and _nested_model_schema(value, model):
+        return False
+    return any(_has_functions(item, model) for item in value.values())
+
+
+def supports_local_validation(model: type[Model]) -> bool:
+    """Classify declarations whose partial validation cannot depend on descendants."""
+    return not (
+        model.__pydantic_post_init__
+        or model.__pydantic_custom_init__
+        or _has_functions(model.__pydantic_core_schema__, model)
+    )
+
+
 def field_adapter(model: type[Model], name: str) -> TypeAdapter[Any]:
     """Compile a field's declared rules and owner config without model validators."""
     field = model.model_fields[name]

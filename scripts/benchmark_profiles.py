@@ -51,7 +51,7 @@ def measure(db, workload, method, size, iterations):
             name: sum(
                 row[1]
                 for key, row in stats.stats.items()
-                if key[2] == name and key[0].endswith("/yhmf/owned.py")
+                if key[2] == name and key[0].endswith(("/yhmf/owned.py", "/yhmf/registry.py"))
             )
             for name in ("_has_functions", "_nested_model_schema")
         },
