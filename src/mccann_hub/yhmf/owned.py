@@ -47,12 +47,15 @@ def _has_functions(value: Any, model: type[Model]) -> bool:
         return any(_has_functions(item, model) for item in value)
     if not isinstance(value, dict):
         return False
-    if _nested_model_schema(value, model):
-        return False
-    if value.get("type") == "model" and value.get("cls") is not model:
+    nested = value.get("cls")
+    if value.get("type") == "model" and nested is not model:
         return False
     if str(value.get("type", "")).startswith("function-"):
-        return True
+        return not _nested_model_schema(value, model)
+    # Ordinary schema dictionaries have no wrappers to peel. Keep the existing
+    # treatment of foreign cls/ref descriptors without probing every dictionary.
+    if nested is not None and nested is not model and _nested_model_schema(value, model):
+        return False
     return any(_has_functions(item, model) for item in value.values())
 
 

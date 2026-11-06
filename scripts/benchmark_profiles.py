@@ -47,6 +47,14 @@ def measure(db, workload, method, size, iterations):
         "lots": size,
         "iterations": iterations,
         "profiled_total_s": round(stats.total_tt, 6),
+        "guard_calls": {
+            name: sum(
+                row[1]
+                for key, row in stats.stats.items()
+                if key[2] == name and key[0].endswith("/yhmf/owned.py")
+            )
+            for name in ("_has_functions", "_nested_model_schema")
+        },
         "top_cumulative": sorted(functions, key=lambda row: row["cumulative_s"], reverse=True)[:12],
         "top_self": sorted(functions, key=lambda row: row["self_s"], reverse=True)[:12],
     }
