@@ -440,3 +440,19 @@ expired handles, maintenance, and paging under key changes. Raw access is a sepa
 contract: the existing Store and Path escape hatch bypasses mapper invariants.
 Keep issue 30 open until that controlled interface is decided and delivered. No
 layout or fingerprint changes. C901 passes at ten before this work.
+
+### Explicit reference and batch reads, issues 12 and 16
+
+Reuse the registry's concrete Reference target extraction, Database.get, _run, and
+the query page bound. Add typed resolve(Reference[T]), resolve_many(sequence), and
+get_many(model, keys). Each call uses one transaction, preserves input order and
+duplicates, and reads each distinct target once. Deduplication is local to a single
+callback attempt, never an identity map or persistent cache. Validate the finite
+sequence bound before database work and validate every key before cache lookup.
+Missing targets raise value-free NotFound; no implicit attribute loading.
+
+Lists contain detached models, and duplicate positions share the fetched instance
+within that result. Empty batches are allowed but still respect active handles and
+maintenance. Native restarts reconstruct the attempt's cache. No metadata or layout
+change. Occurrence projection for issue 16 is a separate subsequent slice; keep that
+issue open until it ships. C901 passes at ten.

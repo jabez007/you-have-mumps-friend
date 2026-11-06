@@ -7,6 +7,7 @@
 | Children in one collection | 1000 | `MAX_CHILDREN`, `records.py` |
 | Stored nodes in one record, including metadata and presence markers | 10,000 | `MAX_RECORD_NODES`, `records.py` |
 | Records in one query page | 1 to 1000, default 100 | `MAX_QUERY_RECORDS`, `queries.py` |
+| Items in `get_many` or `resolve_many` | 0 to 1000, including duplicates | `MAX_QUERY_RECORDS`, `queries.py` |
 | Parents in one migration batch | 1 to 100 | `MAX_BATCH_SIZE`, `migration_executor.py` |
 | Records in one adoption | 100 | `MAX_ADOPTION_RECORDS`, `adoption.py` |
 | Bytes in one node value, including the type tag | 32,766 | `MAX_VALUE_BYTES`, `storage.py` |

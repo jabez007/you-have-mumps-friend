@@ -1,16 +1,19 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Bounded key and equality-index plans with explicit record scans and audits."""
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 from . import indexes
 from .codecs import Key, decode_key, encode_key
 from .errors import NotFound, QueryError, SchemaError, StorageError
-from .models import Model
+from .maintenance import require_available
+from .models import Model, Reference
 from .mutations import read_owner
 from .owned import OwnedPath, Owner, require_object, resolve_collection
 from .records import walk_values
+from .registry import reference_target
 from .storage import Path
 
 if TYPE_CHECKING:
@@ -181,6 +184,57 @@ def count_children(db: "Database", model: type[Model], key: Key, *, collection: 
     def read(tx: "Database") -> int:
         _, _, _, count = resolve_collection(tx, tx.registry.spec(model), key, collection)
         return count
+
+    return db._run(read)
+
+
+def _batch[T](values: Sequence[T]) -> tuple[T, ...]:
+    if isinstance(values, str | bytes | bytearray) or not isinstance(values, Sequence):
+        raise QueryError("Batch reads require a finite sequence")
+    size = len(values)
+    if size > MAX_QUERY_RECORDS:
+        raise QueryError("Batch reads accept at most 1000 items")
+    return tuple(values[index] for index in range(size))
+
+
+def get_many[M: Model](db: "Database", model: type[M], keys: Sequence[Key]) -> list[M]:
+    batch = _batch(keys)
+
+    def read(tx: "Database") -> list[M]:
+        spec = tx.registry.spec(model)
+        tx._check_schema(spec)
+        cache: dict[Key, M] = {}
+        result = []
+        for key in batch:
+            spec.path(key)  # Validate before cache lookup: bool must not alias int.
+            if key not in cache:
+                cache[key] = tx.get(model, key)
+            result.append(cache[key])
+        return result
+
+    return db._run(read)
+
+
+def resolve_many[M: Model](db: "Database", refs: Sequence[Reference[M]]) -> list[M]:
+    batch = _batch(refs)
+
+    def read(tx: "Database") -> list[M]:
+        require_available(tx.store)
+        cache: dict[tuple[type[M], Key], M] = {}
+        result = []
+        for reference in batch:
+            if not isinstance(reference, Reference):
+                raise SchemaError("Resolution requires a concrete Reference target")
+            model = cast(type[M], reference_target(type(reference)))
+            tx.registry.spec(model).path(reference.key)
+            identity = (model, reference.key)
+            if identity not in cache:
+                try:
+                    cache[identity] = tx.get(model, reference.key)
+                except NotFound:
+                    raise NotFound("Reference target does not exist") from None
+            result.append(cache[identity])
+        return result
 
     return db._run(read)
 

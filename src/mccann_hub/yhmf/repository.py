@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Explicit CRUD with atomic schema checks and retry-local transaction handles."""
 
-from collections.abc import Callable, Iterator, Mapping
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from typing import Any, overload
 
@@ -13,6 +13,7 @@ from . import (
     migration_executor,
     migration_jobs,
     mutations,
+    queries,
     references,
 )
 from .codecs import Key
@@ -27,7 +28,7 @@ from .errors import (
 from .index_rebuilds import IndexRebuildPlan
 from .maintenance import MigrationStatus, load_status, require_available
 from .migrations import MigrationPlan, build_plan
-from .models import Model
+from .models import Model, Reference
 from .owned import OwnedPath
 from .queries import IndexReport, Query, audit_indexes, count_children, scan
 from .queries import children as read_children
@@ -152,6 +153,18 @@ class Database:
     def count(self, model: type[Model], key: Key, *, collection: OwnedPath) -> int:
         """Read an owned collection's authoritative count marker, without a key scan."""
         return count_children(self, model, key, collection=collection)
+
+    def get_many[M: Model](self, model: type[M], keys: Sequence[Key]) -> list[M]:
+        """Read at most 1,000 ordered keys, fetching duplicate targets once per attempt."""
+        return queries.get_many(self, model, keys)
+
+    def resolve[M: Model](self, reference: Reference[M]) -> M:
+        """Explicitly read a registered reference target in this transaction."""
+        return self.resolve_many((reference,))[0]
+
+    def resolve_many[M: Model](self, refs: Sequence[Reference[M]]) -> list[M]:
+        """Resolve a bounded ordered batch, deduplicated only within this read attempt."""
+        return queries.resolve_many(self, refs)
 
     def insert_child(
         self, model: type[Model], key: Key, *, collection: OwnedPath, record: Model

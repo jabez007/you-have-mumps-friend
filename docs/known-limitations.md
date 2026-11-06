@@ -39,6 +39,11 @@ Variable-width owned containers still require bounded traversal for node limits.
 [#30](https://github.com/jabez007/you-have-mumps-friend/issues/30) remains open for the
 separate controlled raw-access interface. See [collection paging](guides/models-and-ownership.md).
 
+Explicit `resolve`, `resolve_many`, and `get_many` provide bounded transactional target
+reads, issue [#12](https://github.com/jabez007/you-have-mumps-friend/issues/12). Issue
+[#16](https://github.com/jabez007/you-have-mumps-friend/issues/16) remains open for
+occurrence projections.
+
 ## Defects
 
 | Behavior | What to do for now | Issue |
@@ -52,7 +57,7 @@ These features are not in version 0.5.0:
 - Field types for `date`, `datetime`, `UUID`, `Enum`, `Literal`, `list`, `dict`, and unions
   other than `| None`. [#11](https://github.com/jabez007/you-have-mumps-friend/issues/11)
 - Computed fields ([#17](https://github.com/jabez007/you-have-mumps-friend/issues/17)) and model inheritance ([#18](https://github.com/jabez007/you-have-mumps-friend/issues/18)).
-- Reference traversal ([#12](https://github.com/jabez007/you-have-mumps-friend/issues/12)), `set_null` and `cascade` ([#13](https://github.com/jabez007/you-have-mumps-friend/issues/13)), and many-to-many
+- `set_null` and `cascade` ([#13](https://github.com/jabez007/you-have-mumps-friend/issues/13)), and many-to-many
   and inverse relations ([#14](https://github.com/jabez007/you-have-mumps-friend/issues/14)).
 - Range, prefix, sorted, and multi-predicate queries. [#15](https://github.com/jabez007/you-have-mumps-friend/issues/15)
 - Queries that return owned children. Queries return whole owning roots. [#16](https://github.com/jabez007/you-have-mumps-friend/issues/16)

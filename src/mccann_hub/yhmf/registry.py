@@ -190,7 +190,7 @@ def _field_type_spec(
     if "children_key" in metadata:
         raise SchemaError("ChildField requires a Children[Model] annotation")
     if isinstance(annotation, type) and issubclass(annotation, Reference):
-        target = _reference_target(annotation)
+        target = reference_target(annotation)
         return FieldSpec(name, "reference", target=target, target_key=_key_field(target))
     if metadata.get("on_delete"):
         raise SchemaError("on_delete requires a Reference field")
@@ -201,7 +201,7 @@ def _field_type_spec(
     return FieldSpec(name, "scalar")
 
 
-def _reference_target(annotation: type[Reference[Any]]) -> type[Model]:
+def reference_target(annotation: type[Reference[Any]]) -> type[Model]:
     args = annotation.__pydantic_generic_metadata__["args"]
     if len(args) != 1 or not isinstance(args[0], type) or not issubclass(args[0], Model):
         raise SchemaError("References require a concrete target Model")

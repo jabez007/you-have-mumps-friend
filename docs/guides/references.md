@@ -43,12 +43,26 @@ deletion. Changing or removing a reference releases the previous target.
 
 ## Read the target
 
-Reading a source does not load its target. Read the target yourself:
+Reading a source does not load its target. Resolve it explicitly:
 
 ```python
 lot = db.get(StockLot, "L-001")
-assert db.get(Product, lot.product.key).id == "P42"
+assert db.resolve(lot.product).id == "P42"
+assert db.atomic(lambda tx: tx.resolve(tx.get(StockLot, "L-001").product)).id == "P42"
+assert [product.id for product in db.resolve_many([lot.product, lot.product])] == ["P42", "P42"]
+assert [product.id for product in db.get_many(Product, ["P42", "P42"])] == ["P42", "P42"]
 ```
+
+`resolve(Reference[T])` returns `T`. `resolve_many` and `get_many` accept finite sequences
+of at most 1000 items, preserve order and duplicate positions, and read each distinct
+target once per call. A batch is one transaction; a native restart rebuilds its cache.
+For a shared snapshot with source reads or later writes, call these methods inside
+`atomic`. There is no cache across calls and no implicit loading on attribute access.
+
+Results are detached models. Duplicate positions share the fetched Python instance
+within that result, so copy it explicitly if independent mutable values are needed.
+Empty batches are permitted. Missing targets raise `NotFound` without exposing keys;
+an unregistered target or mismatched key type raises `SchemaError`.
 
 ## Understand deletion
 
