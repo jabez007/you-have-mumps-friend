@@ -21,13 +21,16 @@ Revision, constraint, nullability, and existing-default changes can now execute
 validation-only migrations, issue [#2](https://github.com/jabez007/you-have-mumps-friend/issues/2).
 Existing stored values must remain valid and unchanged.
 
+Null collection paths now raise `NotFound` for owned reads and mutations, issue
+[#8](https://github.com/jabez007/you-have-mumps-friend/issues/8). Invalid markers or
+descendants under a null marker still raise `StorageError`.
+
 ## Defects
 
 | Behavior | What to do for now | Issue |
 | --- | --- | --- |
 | `insert_child` reads the whole aggregate, so its cost and its conflict rate grow with the aggregate. | Keep shared collections small, or model high-volume children as top-level records. | [#4](https://github.com/jabez007/you-have-mumps-friend/issues/4) |
 | A too-small region gives a raw `%YDB-E-REC2BIG` error on first write. | [Create the region](guides/native-setup.md#create-a-database) with larger limits. | [#6](https://github.com/jabez007/you-have-mumps-friend/issues/6) |
-| A null collection on a path raises `StorageError` and not `NotFound`. | Check for null before you use the path. | [#8](https://github.com/jabez007/you-have-mumps-friend/issues/8) |
 | Migrating a model that another model references requires redefining the referring model too, and `Registry(NewTarget, OldReferrer)` gives a misleading error. | Redefine the referrer against the new target. | [#9](https://github.com/jabez007/you-have-mumps-friend/issues/9) |
 | A very large integer, such as `10**5000`, raises plain `ValueError`. | Catch `ValueError` as well as `YHMFError` around such values. | [#10](https://github.com/jabez007/you-have-mumps-friend/issues/10) |
 | Swapping two unique values in one transaction raises `UniqueViolation`, because constraints apply after each write. | Move one value to a temporary value first. | [#23](https://github.com/jabez007/you-have-mumps-friend/issues/23) |

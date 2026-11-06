@@ -354,3 +354,11 @@ Regression tests cover the reported five changes, stricter constraints, owned
 revisions, restart/reopen, normalization rejection, and failures before activation.
 Existing additive failure and recovery tests stay intact. C901 passes at ten
 before implementation.
+
+### Null ownership design, issue 8
+
+Reuse collection_count and require_object's absence policy: a null marker with no
+descendants means NotFound; null with descendants and malformed collection markers
+remain StorageError. Leave null collections null rather than creating owners.
+Exercise get, patch, insert_child, and delete_child with rollback assertions. No
+API, schema, or layout changes; configured C901 passes at ten.

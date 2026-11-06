@@ -74,6 +74,10 @@ def require_local_validation(model: type[Model]) -> None:
 
 def collection_count(store: Store, path: Path) -> int:
     marker = store.get(path)
+    if marker == b"n:":
+        if store.children(path, limit=1):
+            raise StorageError("Null collection has unexpected descendants")
+        raise NotFound("Owned collection is null")
     try:
         if marker is None or not marker.startswith(b"c:"):
             raise ValueError
