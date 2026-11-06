@@ -4,7 +4,7 @@
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 
-from . import index_rebuilds, indexes, migration_executor, migration_jobs, references
+from . import adoption, index_rebuilds, indexes, migration_executor, migration_jobs, references
 from .codecs import Key
 from .errors import (
     AlreadyExists,
@@ -199,6 +199,18 @@ class Database:
         """Inspect metadata atomically without requiring a matching installed schema."""
         spec = self.registry.spec(model)
         return self._run(lambda tx: inspect_schema(tx.store, spec))
+
+    def adopt(self, model: type[Model]) -> int:
+        """Explicitly adopt at most 100 exact layout-one records; never rewrite data."""
+        self._migration_ready()
+        spec = self.registry.spec(model)
+
+        def attempt(tx: Database) -> int:
+            require_available(tx.store)
+            with tx._writing():
+                return adoption.adopt(tx, spec)
+
+        return self._run(attempt)
 
     def plan_migration(self, model: type[Model]) -> MigrationPlan:
         """Describe schema changes without scanning, validating, or modifying records."""

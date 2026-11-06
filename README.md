@@ -57,6 +57,23 @@ its root value and all descendants. Raw data at any key prevents installation;
 use explicit adoption or an intentional external migration. Failed installation
 and record writes roll back together.
 
+For a small global already encoded exactly in YHMF layout one, explicitly call:
+
+```python
+adopted_count = db.adopt(Product)
+```
+
+Adoption requires absent installed-schema metadata, equality/unique namespaces,
+and inbound-reference metadata. It accepts at most 100 records and 10,000 encoded
+record nodes in one transaction. Each record must have either no `%m` metadata
+or complete matching metadata. Fields, child counts, keys, constraints, unique
+values, and reference targets are validated. Unknown nodes, partial metadata,
+and arbitrary legacy encodings are rejected. Stored field bytes are preserved;
+metadata and secondary structures are installed atomically. A failed adoption
+leaves all data and metadata unchanged. Larger or differently encoded datasets
+need an external, explicitly reviewed migration. Adoption requires a standalone
+call outside `atomic`.
+
 ## Store owned child records
 
 ```python

@@ -46,3 +46,16 @@ Behavioral regressions cover root values, raw records at equal and different
 keys, missing metadata, altered snapshots, and read/write/query/delete access.
 The native process tests pause transactions after their initial schema read,
 commit one writer, then release its stale competitor to exercise TP restarts.
+
+## Explicit adoption
+
+`Database.adopt(model)` is a standalone transaction for small globals already
+encoded in layout one. It reuses `record_values`, Pydantic validation,
+`record_nodes`, `indexes.replace`, and `references.replace`. It compares every
+stored node against the re-encoded validated object, accepting absent or fully
+matching record metadata. No unknown field bytes are removed or overwritten.
+The whole operation, including self-reference validation, is atomic. It is
+bounded to 100 records and 10,000 encoded record nodes, with an additional
+per-record traversal budget. This avoids adding a second resumable migration
+engine for importing arbitrary legacy formats. Existing migration execution
+requires installed source schemas and cannot safely perform this adoption.
