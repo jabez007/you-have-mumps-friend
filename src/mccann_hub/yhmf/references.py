@@ -4,11 +4,12 @@
 import hashlib
 import json
 from collections import Counter
+from collections.abc import Iterable
 from dataclasses import dataclass
 
 from .errors import ReferenceViolation, StorageError
 from .models import Model
-from .records import walk_values
+from .records import FieldValue, walk_values
 from .registry import ModelSpec, Registry
 from .storage import Path, Store
 
@@ -26,8 +27,15 @@ class Link:
 
 
 def links(registry: Registry, spec: ModelSpec, root: Path, record: Model) -> frozenset[Link]:
+    return links_at(registry, spec, root, walk_values(spec.fields, record))
+
+
+def links_at(
+    registry: Registry, spec: ModelSpec, root: Path, values: Iterable[FieldValue]
+) -> frozenset[Link]:
+    """Build normal reverse identities for explicitly addressed field occurrences."""
     result = set()
-    for field, path, value in walk_values(spec.fields, record):
+    for field, path, value in values:
         if field.target is None or value is None:
             continue
         target = registry.spec(field.target).path(value.key)

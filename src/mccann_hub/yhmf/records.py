@@ -18,6 +18,8 @@ from .models import Model
 from .registry import FieldSpec, ModelSpec, NodeSpec
 from .storage import MAX_VALUE_BYTES, Path, Store
 
+type FieldValue = tuple[FieldSpec, tuple[bytes, ...], Any]
+
 MAX_CHILDREN = 1000
 MAX_RECORD_NODES = 10_000
 
@@ -38,6 +40,14 @@ def _check_child_key(node: NodeSpec, key: Key, value: Any) -> None:
         raise StorageError("Child dictionary key does not match its declared identity")
 
 
+def encode_leaf(field: FieldSpec, value: Any) -> bytes:
+    if field.kind == "scalar" or value is None:
+        return encode_scalar(cast(Scalar, value))
+    if field.kind == "reference":
+        return b"r:" + encode_key(value.key)
+    raise StorageError("An owned subtree is not a scalar field")
+
+
 class _Encoder:
     def __init__(self) -> None:
         self.nodes: dict[Path, bytes] = {}
@@ -53,10 +63,8 @@ class _Encoder:
         for field in fields:
             value = getattr(record, field.name)
             path = root.child(field.name.encode("ascii"))
-            if field.kind == "scalar" or value is None:
-                self.put(path, encode_scalar(cast(Scalar, value)))
-            elif field.kind == "reference":
-                self.put(path, b"r:" + encode_key(value.key))
+            if field.kind in {"scalar", "reference"} or value is None:
+                self.put(path, encode_leaf(field, value))
             elif field.kind == "embedded":
                 assert field.node is not None
                 self.put(path, b"o:1")
@@ -82,6 +90,13 @@ def record_nodes(spec: ModelSpec, root: Path, record: Model) -> dict[Path, bytes
     for name, value in metadata(spec).items():
         encoder.put(root.child(b"%m", name), value)
     encoder.fields(spec.fields, root, record)
+    return encoder.nodes
+
+
+def node_nodes(fields: tuple[FieldSpec, ...], root: Path, record: Model) -> dict[Path, bytes]:
+    """Encode an owned value without introducing root record metadata."""
+    encoder = _Encoder()
+    encoder.fields(fields, root, record)
     return encoder.nodes
 
 
@@ -144,7 +159,11 @@ class _Reader:
 
 
 def record_values(spec: ModelSpec, root: Path, store: Store) -> dict[str, Any]:
-    return _Reader(store).fields(spec.fields, root)
+    return node_values(spec.fields, root, store)
+
+
+def node_values(fields: tuple[FieldSpec, ...], root: Path, store: Store) -> dict[str, Any]:
+    return _Reader(store).fields(fields, root)
 
 
 def walk_values(
