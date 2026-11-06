@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Compile declared migration literals and apply them to copied source values."""
 
+import json
 from copy import deepcopy
 from typing import Any
 
@@ -71,9 +72,14 @@ def _literal_defaults(spec: ModelSpec, plan: MigrationPlan) -> dict[tuple[str, .
             raise MigrationError("Migration defaults must be literals")
         assert change.default_json is not None
         try:
-            result[change.path] = TypeAdapter(field.rebuild_annotation()).validate_json(
-                change.default_json, strict=True
-            )
+            adapter = TypeAdapter(field.rebuild_annotation())
+            literal = json.loads(change.default_json)
+            if isinstance(literal, dict) and set(literal) == {"$bytes"}:
+                result[change.path] = adapter.validate_python(
+                    bytes.fromhex(literal["$bytes"]), strict=True
+                )
+            else:
+                result[change.path] = adapter.validate_json(change.default_json, strict=True)
         except ValidationError:
             raise MigrationError("A literal default does not satisfy its target field") from None
     return result

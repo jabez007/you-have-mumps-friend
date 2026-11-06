@@ -61,10 +61,14 @@ The schema fingerprint is the lowercase hexadecimal SHA-256 of the canonical
 snapshot bytes. These metadata values do not use scalar type tags.
 
 `^YHMFSchema("Product")` holds the installed fingerprint, with the snapshot at
-its `"snapshot"` child. The snapshot is compact, sorted-key, ASCII JSON containing
-the layout version, global, schema version, primary-key field, and Pydantic's
-validation JSON schema. Model titles and validation constraints participate in
-the fingerprint. This is conservative schema compatibility, not a migration plan.
+its `"snapshot"` child. The snapshot is compact, sorted-key, ASCII JSON.
+Legacy format one includes Pydantic's validation JSON Schema. New installations
+use framework-owned format 2 with explicit `format_version: 2`, `codec_version: 1`,
+`layout: 1`, and an independent application `version`. Its declaration grammar
+retains properties, required fields, hierarchy, and references for the existing
+migration inspector. Scalar codecs, deterministic defaults, built-in constraints,
+and reference key codecs participate; titles, class names, and descriptions do not.
+See [the compatibility contract](schema-compatibility.md).
 Schema installation and the first write occur in the same transaction.
 
 Nested model schema versions, relationship kinds, and child-key fields also
@@ -78,9 +82,12 @@ The engine reserves
 global to exactly one top-level model. Save replaces the entire record subtree;
 it does not merge raw nodes or silently overwrite unmanaged records.
 
-CRUD verifies the installed fingerprint and exact registered snapshot bytes on
-each transaction attempt, without a process-local cache. Missing or changed
-snapshot bytes fail safely. Automatic installation checks that the entire
+CRUD reads both installed metadata nodes on every transaction attempt. Exact
+canonical bytes take the direct path; supported legacy bytes undergo integrity
+and compatibility checks before binding the operation to the stored identity.
+Bounded caches contain only pure results keyed by immutable declarations or full
+snapshot bytes. They never cache installed-state decisions or hide changed nodes.
+Missing or corrupt snapshot bytes fail safely. Automatic installation checks that the entire
 application global is empty in the same transaction as metadata installation.
 A root value counts as data even when there are no descendants.
 
@@ -93,7 +100,9 @@ can be inspected; inspection alone does not claim compatibility with them.
 The comparison interface resolves local JSON Schema definitions and compares
 declared paths, scalar types, validation, defaults, ownership, references, and
 index flags. Unknown constructs are reported for manual review. Presentation-only
-changes still alter the stored fingerprint and require record metadata updates.
+changes are excluded from canonical format-two identities. Compatible legacy
+identities remain unchanged, including their record metadata. Real migrations
+continue to retag records through the existing checkpoints.
 
 Read-only migration plans use review format version 1. They contain source and
 target fingerprint summaries, sorted changes, and ordered proposed steps. They

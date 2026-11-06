@@ -83,9 +83,9 @@ class Database:
         self._ensure_active()
         return operation(self) if self._transaction else self.atomic(operation)
 
-    def _check_schema(self, spec: ModelSpec, *, install: bool = False) -> None:
+    def _check_schema(self, spec: ModelSpec, *, install: bool = False) -> ModelSpec:
         require_available(self.store)
-        check_schema(self.store, spec, install=install)
+        return check_schema(self.store, spec, install=install)
 
     def _exists(self, spec: ModelSpec, root: Path) -> bool:
         layout = self.store.get(root.child(b"%m", b"layout"))
@@ -114,8 +114,8 @@ class Database:
         root = spec.path(key)
 
         def read(tx: Database) -> Model:
-            tx._check_schema(spec)
-            if not tx._exists(spec, root):
+            bound = tx._check_schema(spec)
+            if not tx._exists(bound, root):
                 raise NotFound("Record does not exist")
             result = model.model_validate(record_values(spec, root, tx.store))
             if getattr(result, spec.key_field) != key:
@@ -163,13 +163,12 @@ class Database:
         values = input_values(spec.fields, record)
         validated = type(record).model_validate(values)
         root = spec.path(getattr(validated, spec.key_field))
-        nodes = record_nodes(spec, root, validated)
         new_links = references.links(self.registry, spec, root, validated)
         new_entries = indexes.entries(spec, root, validated)
 
         def write(tx: Database) -> M:
-            tx._check_schema(spec)
-            exists = tx._exists(spec, root)
+            bound = tx._check_schema(spec)
+            exists = tx._exists(bound, root)
             if insert and exists:
                 raise AlreadyExists("Insert cannot replace an existing record")
             old_links: frozenset[references.Link] = frozenset()
@@ -179,7 +178,8 @@ class Database:
                 old_links = references.links(tx.registry, spec, root, previous)
                 old_entries = indexes.entries(spec, root, previous)
             with tx._writing():
-                tx._check_schema(spec, install=True)
+                bound = tx._check_schema(spec, install=True)
+                nodes = record_nodes(bound, root, validated)
                 tx.store.delete_tree(root)
                 for path, value in nodes.items():
                     tx.store.set(path, value)
@@ -194,7 +194,7 @@ class Database:
         targets = {(link.target_model, link.target) for link in links}
         for model, path in targets:
             spec = self.registry.spec(model)
-            self._check_schema(spec)
+            spec = self._check_schema(spec)
             if not self._exists(spec, path):
                 raise ReferenceViolation("Reference target does not exist")
 
@@ -212,8 +212,8 @@ class Database:
         root = spec.path(key)
 
         def remove(tx: Database) -> bool:
-            tx._check_schema(spec)
-            exists = tx._exists(spec, root)
+            bound = tx._check_schema(spec)
+            exists = tx._exists(bound, root)
             if exists:
                 record = tx.get(model, key)
                 old_links = references.links(tx.registry, spec, root, record)

@@ -73,7 +73,7 @@ def require_schema_operation(store: Store, status: MigrationStatus) -> None:
         raise MigrationError("This job requires its own maintenance executor")
 
 
-def manifests(store: Store, status: MigrationStatus) -> tuple[bytes, bytes]:
+def saved_snapshots(store: Store, status: MigrationStatus) -> tuple[bytes, bytes]:
     root = job_path(status.migration_id)
     source, target = (
         store.get(root.child(b"source_snapshot")),
@@ -88,6 +88,11 @@ def manifests(store: Store, status: MigrationStatus) -> tuple[bytes, bytes]:
         snapshot = SchemaSnapshot(data)
         if snapshot.global_name != status.global_name or snapshot.fingerprint != fingerprint:
             raise StorageError("Migration snapshot does not match its checkpoint")
+    return source, target
+
+
+def manifests(store: Store, status: MigrationStatus) -> tuple[bytes, bytes]:
+    source, target = saved_snapshots(store, status)
     if store.get(schema_path(status.global_name).child(b"snapshot")) != source:
         raise StorageError("Installed source snapshot changed during migration")
     return source, target

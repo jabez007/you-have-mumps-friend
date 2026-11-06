@@ -6,7 +6,7 @@ from .errors import StorageError
 from .models import Model
 from .records import metadata, record_nodes
 from .registry import ModelSpec, Registry
-from .schemas import check_schema, schema_path
+from .schemas import check_schema
 from .storage import Path, Store
 
 
@@ -37,8 +37,6 @@ def validate_targets(
             # A retag batch may encounter an already-retagged self-reference.
             fingerprint = store.get(link.target.child(b"%m", b"fingerprint"))
             spec = target if fingerprint == target.fingerprint else source
-        elif store.get(schema_path(spec.global_name)) != spec.fingerprint:
-            raise StorageError("A reference target has an incompatible installed schema")
         else:
-            check_schema(store, spec)
+            spec = check_schema(store, spec)
         check_metadata(store, spec, link.target)

@@ -69,13 +69,17 @@ def test_hierarchy_roundtrip_and_native_paths(db):
 
 
 def test_complete_storage_and_schema_fixtures(db):
-    db.insert(warehouse())
     fixture_dir = FilePath(__file__).parent / "fixtures"
     expected = {
         tuple(part.encode("utf-8") for part in entry["subscripts"]): entry["value"].encode("utf-8")
         for entry in json.loads((fixture_dir / "warehouse.json").read_text())
     }
     schema = (fixture_dir / "warehouse-schema.json").read_bytes()
+    schema_root = Path("^YHMFSchema", (b"YHMFTestWarehouse",))
+    db.store.set(schema_root, hashlib.sha256(schema).hexdigest().encode("ascii"))
+    db.store.set(schema_root.child(b"snapshot"), schema)
+    db.insert(warehouse())
+    assert db.get(Warehouse, 7) == warehouse()
     expected[(b"7", b"%m", b"fingerprint")] = hashlib.sha256(schema).hexdigest().encode("ascii")
     actual = {}
 

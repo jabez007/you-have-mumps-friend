@@ -10,16 +10,20 @@ from mccann_hub.yhmf import Field, Model, Registry
 from mccann_hub.yhmf.canonical_schema import schema_bytes
 from mccann_hub.yhmf.errors import SchemaError
 from mccann_hub.yhmf.registry import _node_spec
-from tests.canonical_models import Warehouse
+from tests.canonical_models import Product, Warehouse
 
 
 def canonical(model):
     return schema_bytes(_node_spec(model, keyed=True, ancestors=()), model.__global__)
 
 
-def test_canonical_golden_is_independent_of_pydantic_output():
-    fixture = Path(__file__).with_name("fixtures") / "schema-canonical-v2.json"
-    assert canonical(Warehouse) == fixture.read_bytes()
+@pytest.mark.parametrize(
+    "model,name",
+    [(Warehouse, "schema-canonical-v2.json"), (Product, "schema-canonical-product-v2.json")],
+)
+def test_canonical_golden_is_independent_of_pydantic_output(model, name):
+    fixture = Path(__file__).with_name("fixtures") / name
+    assert canonical(model) == fixture.read_bytes()
 
 
 def test_titles_descriptions_class_names_and_field_order_do_not_define_persistence():

@@ -29,11 +29,13 @@ jobs:
       - uses: astral-sh/setup-uv@v10.3.3
         with:
           version: "0.9.5"
-      - name: Qualify legacy fingerprints and mutation validation
+      - name: Qualify canonical contracts, legacy recovery, and mutation validation
         run: >-
           uv run --isolated --no-project --python 3.12
           --with 'pytest>=8,<9' --with 'pydantic==${{ matrix.pydantic }}'
           python -m pytest tests/test_schema_fingerprints.py
+          tests/test_canonical_schema.py tests/test_schema_contracts.py
+          tests/test_migration_execution.py tests/test_nested_migrations.py tests/test_index_rebuilds.py
           tests/test_partial_mutations.py tests/test_child_mutations.py -m 'not native' -q
         env:
           PYTHONPATH: src

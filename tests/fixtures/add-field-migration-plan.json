@@ -3,34 +3,83 @@
   "execution_supported": true,
   "status": "different",
   "has_data": true,
-  "requires_manual_review": false,
-  "destructive": false,
   "source": {
     "global": "^YHMFTestProduct",
-    "key": "id",
+    "fingerprint": "191f9f2da3b65fe863ad9f035d872e0eb11de83a8096f36d925b9d26646a4b6b",
     "layout": 1,
     "version": 1,
-    "fingerprint": "85b922b219c70f7d4a6d6870d6e6f8d104e46f8e2e9d977e9b2c02e81e187239"
+    "key": "id"
   },
   "target": {
     "global": "^YHMFTestProduct",
-    "key": "id",
+    "fingerprint": "8b9734a449f91858ab018bd2568be01ce83277ce5c6b2ec3ef60852b145b676e",
     "layout": 1,
     "version": 2,
-    "fingerprint": "96359bda04055066b4fa5efb7511502a93fde1372497b5d6c0dc0951586fb796"
+    "key": "id"
   },
+  "requires_manual_review": false,
+  "destructive": false,
   "changes": [
-    {"kind": "schema_version_changed", "path": [], "destructive": false, "requires_manual_review": false},
-    {"kind": "field_added", "path": ["note"], "destructive": false, "requires_manual_review": false, "default_available": true},
-    {"kind": "index_added", "path": ["note"], "destructive": false, "requires_manual_review": false, "unique": false}
+    {
+      "kind": "schema_version_changed",
+      "path": [],
+      "destructive": false,
+      "requires_manual_review": false
+    },
+    {
+      "kind": "field_added",
+      "path": [
+        "note"
+      ],
+      "destructive": false,
+      "requires_manual_review": false,
+      "default_available": true
+    },
+    {
+      "kind": "index_added",
+      "path": [
+        "note"
+      ],
+      "destructive": false,
+      "requires_manual_review": false,
+      "unique": false
+    }
   ],
   "steps": [
-    {"kind": "validate_source_schema", "path": []},
-    {"kind": "backfill_field", "path": ["note"], "default_source": "declared", "scope": "existing_owners"},
-    {"kind": "validate_records", "path": []},
-    {"kind": "rebuild_index", "path": ["note"], "unique": false},
-    {"kind": "validate_indexes", "path": []},
-    {"kind": "update_record_metadata", "path": []},
-    {"kind": "activate_schema", "path": []}
+    {
+      "kind": "validate_source_schema",
+      "path": []
+    },
+    {
+      "kind": "backfill_field",
+      "path": [
+        "note"
+      ],
+      "default_source": "declared",
+      "scope": "existing_owners"
+    },
+    {
+      "kind": "validate_records",
+      "path": []
+    },
+    {
+      "kind": "rebuild_index",
+      "path": [
+        "note"
+      ],
+      "unique": false
+    },
+    {
+      "kind": "validate_indexes",
+      "path": []
+    },
+    {
+      "kind": "update_record_metadata",
+      "path": []
+    },
+    {
+      "kind": "activate_schema",
+      "path": []
+    }
   ]
 }

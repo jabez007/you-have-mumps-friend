@@ -156,7 +156,7 @@ def test_stale_source_and_resume_bindings_leave_checkpoint_unchanged(store):
     plan = db.plan_migration(ProductV2)
 
     class Different(Product):
-        pass
+        __schema_version__ = Product.__schema_version__ + 1
 
     before = snapshot(store)
     with pytest.raises(MigrationError):

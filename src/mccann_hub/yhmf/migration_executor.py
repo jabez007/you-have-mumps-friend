@@ -9,7 +9,7 @@ from pydantic import ValidationError
 
 from . import indexes, migration_claims, migration_cleanup, migration_jobs, references
 from .codecs import decode_key
-from .errors import MigrationError, StorageError
+from .errors import MigrationError, SchemaMismatch, StorageError
 from .maintenance import (
     MigrationStatus,
     load_status,
@@ -22,6 +22,7 @@ from .migrations import MigrationPlan, build_plan
 from .models import Model
 from .records import metadata, record_values
 from .registry import ModelSpec, Registry
+from .schema_compatibility import bind_snapshot
 from .schemas import SchemaInspection, SchemaSnapshot
 from .storage import Path, Store
 
@@ -45,11 +46,24 @@ class _Binding:
     cleanup_roots: tuple[Path, ...]
 
 
-def _bind(registry: Registry, source: type[Model], target: type[Model]) -> _Binding:
+def _bind(
+    registry: Registry,
+    source: type[Model],
+    target: type[Model],
+    source_snapshot: SchemaSnapshot | None = None,
+    target_snapshot: SchemaSnapshot | None = None,
+) -> _Binding:
     old = Registry().register(source)
     new = Registry().register(target)
     if registry.spec(target).snapshot != new.snapshot:
         raise MigrationError("Target declaration changed after registration")
+    try:
+        if source_snapshot is not None:
+            old = bind_snapshot(old, source_snapshot)
+        if target_snapshot is not None:
+            new = bind_snapshot(new, target_snapshot)
+    except SchemaMismatch:
+        raise MigrationError("Migration model differs from the saved schema binding") from None
     inspection = SchemaInspection(SchemaSnapshot(new.snapshot), SchemaSnapshot(old.snapshot), True)
     plan = build_plan(inspection)
     if not plan.execution_supported:
@@ -94,7 +108,7 @@ def begin(
     target: type[Model],
     reviewed: MigrationPlan,
 ) -> MigrationStatus:
-    binding = _bind(registry, source, target)
+    binding = _bind(registry, source, target, reviewed.inspection.installed)
     _check_review(binding, reviewed)
     return migration_jobs.begin(
         store,
@@ -206,11 +220,12 @@ def advance(
 ) -> MigrationStatus:
     if type(batch_size) is not int or not 1 <= batch_size <= MAX_BATCH_SIZE:
         raise MigrationError("Migration batch size must be between 1 and 100")
-    binding = _bind(registry, source, target)
 
     def attempt() -> MigrationStatus:
         status = load_status(store, migration_id)
         migration_jobs.require_schema_operation(store, status)
+        saved = migration_jobs.saved_snapshots(store, status)
+        binding = _bind(registry, source, target, *(SchemaSnapshot(data) for data in saved))
         if status.phase == "complete":
             return _completed_binding(status, binding)
         if status.phase == "aborted":

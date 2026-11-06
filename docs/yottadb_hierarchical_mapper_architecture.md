@@ -351,6 +351,19 @@ whole-aggregate operations remain compatible. See
 [ADR 0004](adr/0004-hierarchical-mutations.md) and the
 [native performance report](performance.md).
 
+### v0.5: Schema stability, reliability, and developer experience
+
+Canonical schema format 2 is derived from the typed registry and explicit codecs,
+independent of generated JSON Schema. Existing format-one snapshots and record
+fingerprints remain intact. Transactional bindings verify legacy compatibility;
+maintenance resumes exact saved manifests. Custom validation and callable default
+changes require an owning application schema revision. See
+[ADR 0006](adr/0006-canonical-schema-contracts.md).
+
+After schema qualification, extend adversarial state-machine and native recovery
+testing, then build and measure a warehouse inventory ledger through public APIs.
+Each phase must pass its quality gates before the following phase begins.
+
 ## 14. Testing strategy
 
 Testing will combine pure unit tests with integration tests against an actual YottaDB installation.

@@ -1,17 +1,41 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Conservative comparisons of version-one mapper snapshots, without live models."""
+"""Conservative comparisons of supported mapper snapshots, without live models."""
 
+import json
 import re
 from dataclasses import dataclass, field
+from decimal import InvalidOperation
 from typing import Any, cast
 
+from .canonical_schema import numeric_rule
 from .errors import StorageError
 from .schemas import SchemaSnapshot, canonical_json
 from .storage import Path
 
 _PRESENTATION = {"title", "description", "examples", "deprecated", "readOnly", "writeOnly"}
-_IGNORED_RULES = _PRESENTATION | {"default", "yhmf", "$defs", "type", "format", "anyOf", "required"}
-_SNAPSHOT_KEYS = {"declaration", "global", "key", "layout", "version", "hierarchy", "references"}
+_IGNORED_RULES = _PRESENTATION | {
+    "default",
+    "yhmf",
+    "$defs",
+    "type",
+    "format",
+    "anyOf",
+    "required",
+    "codec",
+    "default_factory",
+    "custom_validation",
+}
+_SNAPSHOT_KEYS = {
+    "declaration",
+    "global",
+    "key",
+    "layout",
+    "version",
+    "hierarchy",
+    "references",
+    "format_version",
+    "codec_version",
+}
 
 
 @dataclass(frozen=True)
@@ -55,8 +79,25 @@ def _rules(schema: dict[str, Any]) -> bytes:
     return canonical_json(rules)
 
 
+def _field_rules(raw: dict[str, Any], variants: list[Any], *, legacy: bool) -> tuple[bytes, ...]:
+    rules = {}
+    for part in (raw, *variants):
+        rules.update(json.loads(_rules(part)))
+    if legacy and {part.get("type") for part in variants} == {"number", "string"}:
+        if rules.get("pattern") == r"^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$":
+            del rules["pattern"]
+    for name in ("minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum", "multipleOf"):
+        if name in rules:
+            try:
+                rules[name] = numeric_rule(rules[name])
+            except (InvalidOperation, ValueError):
+                raise _Unsupported() from None
+    return (canonical_json(rules),)
+
+
 class _Fields:
-    def __init__(self, snapshot: SchemaSnapshot) -> None:
+    def __init__(self, snapshot: SchemaSnapshot, *, legacy_comparison: bool = False) -> None:
+        self.legacy_comparison = legacy_comparison
         document = snapshot.to_dict()
         if document.keys() - _SNAPSHOT_KEYS:
             raise _Unsupported()
@@ -110,7 +151,7 @@ class _Fields:
             if not all(isinstance(entry.get(key), str) for key in ("global", "key", "on_delete")):
                 raise _Unsupported(path)
             if (
-                entry.keys() - {"path", "global", "key", "on_delete"}
+                entry.keys() - {"path", "global", "key", "on_delete", "key_codec"}
                 or entry["on_delete"] != "restrict"
             ):
                 raise _Unsupported(path)
@@ -202,12 +243,14 @@ class _Fields:
         if kind != "scalar" and (len(variants) != 1 or variants[0].get("type") != "object"):
             raise _Unsupported(path)
         signature = self._types(kind, variants, path)
-        rules = (_rules(raw), *sorted(_rules(variant) for variant in variants))
+        rules = _field_rules(raw, variants, legacy=self.legacy_comparison)
         relation = {
             key: value
             for key, value in (relationship or {}).items()
             if key not in {"path", "field", "fields", "version"}
         }
+        if self.legacy_comparison:
+            relation.pop("key_codec", None)
         return _Field(
             kind,
             signature,
@@ -321,6 +364,8 @@ def _headers(old: SchemaSnapshot, new: SchemaSnapshot) -> list[SchemaChange]:
         )
     if old.layout_version != new.layout_version or new.layout_version != 1:
         changes.append(SchemaChange("layout_changed", requires_manual_review=True))
+    if old.to_dict().get("codec_version", 1) != new.to_dict().get("codec_version", 1):
+        changes.append(SchemaChange("codec_changed", requires_manual_review=True))
     if old.schema_version != new.schema_version:
         downgrade = new.schema_version < old.schema_version
         changes.append(SchemaChange("schema_version_changed", requires_manual_review=downgrade))
@@ -363,7 +408,11 @@ def compare_schemas(old: SchemaSnapshot, new: SchemaSnapshot) -> tuple[SchemaCha
         return ()
     changes = _headers(old, new)
     try:
-        before, after = _Fields(old), _Fields(new)
+        legacy = old.format_version != new.format_version
+        before, after = (
+            _Fields(old, legacy_comparison=legacy),
+            _Fields(new, legacy_comparison=legacy),
+        )
         for path in sorted(before.fields.keys() | after.fields.keys()):
             if path not in before.fields:
                 changes.extend(_added(path, after.fields[path]))

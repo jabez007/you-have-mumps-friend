@@ -110,7 +110,7 @@ def resolve(
     if type(at) is not tuple:
         raise MutationError("Owned paths must be tuples")
     root = spec.path(key)
-    tx._check_schema(spec)
+    spec = tx._check_schema(spec)
     if not tx._exists(spec, root):
         raise NotFound("Root record does not exist")
     owner = Owner(NodeSpec(spec.model, spec.key_field, spec.fields), root, ())

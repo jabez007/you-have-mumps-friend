@@ -5,6 +5,7 @@ import hashlib
 import json
 import re
 from dataclasses import dataclass, field
+from functools import lru_cache
 from typing import TYPE_CHECKING, Any, Literal, NoReturn, cast
 
 from .codecs import canonical_json as canonical_json
@@ -34,8 +35,8 @@ def install_schema(store: Store, spec: "ModelSpec") -> None:
     store.set(root.child(b"snapshot"), spec.snapshot)
 
 
-def check_schema(store: Store, spec: "ModelSpec", *, install: bool = False) -> None:
-    """Verify exact metadata on each transaction attempt, with no local cache."""
+def check_schema(store: Store, spec: "ModelSpec", *, install: bool = False) -> "ModelSpec":
+    """Read live metadata on every attempt and bind a supported installed identity."""
     root = schema_path(spec.global_name)
     fingerprint = store.get(root)
     snapshot = store.get(root.child(b"snapshot"))
@@ -48,13 +49,17 @@ def check_schema(store: Store, spec: "ModelSpec", *, install: bool = False) -> N
                     "Nonempty unmanaged global requires explicit adoption or migration"
                 )
             install_schema(store, spec)
-        return
+        return spec
     if fingerprint != spec.fingerprint:
         # Distinguish corrupted metadata from a valid, different declaration.
-        inspect_schema(store, spec)
-        raise SchemaMismatch("Installed schema differs; an explicit migration is required")
+        from .schema_compatibility import bind_snapshot
+
+        installed = _installed_snapshot(spec.global_name, fingerprint, snapshot)
+        assert installed is not None
+        return bind_snapshot(spec, installed)
     if snapshot != spec.snapshot:
         raise StorageError("Installed schema snapshot does not match its registered fingerprint")
+    return spec
 
 
 def _reject_constant(value: str) -> NoReturn:
@@ -75,6 +80,13 @@ def _snapshot_document(data: bytes) -> dict[str, Any]:
 
 
 def _validate_header(document: dict[str, Any]) -> None:
+    format_version = document.get("format_version", 1)
+    if type(format_version) is not int or format_version not in (1, 2):
+        raise StorageError("Unsupported schema representation format")
+    if format_version == 2 and (
+        type(document.get("codec_version")) is not int or document["codec_version"] != 1
+    ):
+        raise StorageError("Unsupported schema codec version")
     global_name = document.get("global")
     if not isinstance(global_name, str):
         raise StorageError("Schema snapshot has no valid global")
@@ -100,6 +112,7 @@ class SchemaSnapshot:
     layout_version: int = field(init=False)
     schema_version: int = field(init=False)
     primary_key: str = field(init=False)
+    format_version: int = field(init=False)
 
     def __post_init__(self) -> None:
         document = _snapshot_document(self.canonical)
@@ -108,10 +121,32 @@ class SchemaSnapshot:
         object.__setattr__(self, "layout_version", document["layout"])
         object.__setattr__(self, "schema_version", document["version"])
         object.__setattr__(self, "primary_key", document["key"])
+        object.__setattr__(self, "format_version", document.get("format_version", 1))
 
     def to_dict(self) -> dict[str, Any]:
         """Return a fresh JSON document, including declared default values."""
         return cast(dict[str, Any], json.loads(self.canonical))
+
+
+@lru_cache(maxsize=128)
+def validated_snapshot(data: bytes) -> SchemaSnapshot:
+    """Cache pure parsing only; callers still read and verify both live metadata nodes."""
+    return SchemaSnapshot(data)
+
+
+def _installed_snapshot(
+    global_name: str, fingerprint: bytes | None, data: bytes | None
+) -> SchemaSnapshot | None:
+    if fingerprint is None and data is None:
+        return None
+    if fingerprint is None or data is None:
+        raise StorageError("Installed schema metadata is incomplete")
+    installed = validated_snapshot(data)
+    if installed.global_name != global_name:
+        raise StorageError("Installed snapshot global does not match its location")
+    if fingerprint != installed.fingerprint.encode("ascii"):
+        raise StorageError("Installed schema fingerprint does not match its snapshot")
+    return installed
 
 
 @dataclass(frozen=True)
@@ -120,29 +155,35 @@ class SchemaInspection:
     installed: SchemaSnapshot | None
     has_data: bool
     migration_id: str | None = None
+    compatible: bool = False
 
     @property
     def status(self) -> Literal["uninstalled", "unmanaged", "matching", "different"]:
         if self.installed is None:
             return "unmanaged" if self.has_data else "uninstalled"
         return (
-            "matching" if self.installed.fingerprint == self.declared.fingerprint else "different"
+            "matching"
+            if self.compatible or self.installed.fingerprint == self.declared.fingerprint
+            else "different"
         )
 
 
 def inspect_schema(store: Store, spec: "ModelSpec") -> SchemaInspection:
-    declared = SchemaSnapshot(spec.snapshot)
+    declared = validated_snapshot(spec.snapshot)
     root = schema_path(spec.global_name)
     fingerprint, migration_id = inspected_fingerprint(store, spec.global_name, store.get(root))
     data = store.get(root.child(b"snapshot"))
-    installed = None
-    if fingerprint is not None or data is not None:
-        if fingerprint is None or data is None:
-            raise StorageError("Installed schema metadata is incomplete")
-        installed = SchemaSnapshot(data)
-        if installed.global_name != spec.global_name:
-            raise StorageError("Installed snapshot global does not match its location")
-        if fingerprint != installed.fingerprint.encode("ascii"):
-            raise StorageError("Installed schema fingerprint does not match its snapshot")
+    installed = _installed_snapshot(spec.global_name, fingerprint, data)
     record_root = Path(spec.global_name)
-    return SchemaInspection(declared, installed, has_data(store, record_root), migration_id)
+    compatible = False
+    if installed is not None:
+        from .schema_compatibility import bind_snapshot
+
+        try:
+            bind_snapshot(spec, installed)
+            compatible = True
+        except SchemaMismatch:
+            pass
+    return SchemaInspection(
+        declared, installed, has_data(store, record_root), migration_id, compatible
+    )

@@ -10,12 +10,13 @@ from pydantic import ValidationError
 
 from . import indexes, migration_claims, migration_cleanup, migration_jobs, references
 from .codecs import LAYOUT_VERSION, canonical_json, decode_key
-from .errors import MigrationError, StorageError
+from .errors import MigrationError, SchemaMismatch, StorageError
 from .maintenance import MigrationStatus, job_path, load_status, require_owner, save_status
 from .migration_records import check_metadata, field_nodes, validate_targets
 from .models import Model
 from .records import record_values
 from .registry import ModelSpec, Registry
+from .schema_compatibility import bind_snapshot
 from .schemas import SchemaInspection, SchemaSnapshot
 from .storage import Path, Store
 
@@ -86,8 +87,9 @@ def begin(
 ) -> MigrationStatus:
     spec = _spec(registry, model)
     snapshot = SchemaSnapshot(spec.snapshot)
-    if reviewed.inspection.declared != snapshot or reviewed.inspection.installed != snapshot:
+    if reviewed.inspection.declared != snapshot or reviewed.inspection.installed is None:
         raise MigrationError("Rebuild requires the exact installed model declaration")
+    spec = _saved_spec(spec, reviewed.inspection.installed)
     plan = build_plan(spec, reviewed.inspection, fields=reviewed.fields)
     if (
         not plan.execution_supported
@@ -99,6 +101,13 @@ def begin(
         {"format_version": 1, "kind": "index_rebuild", "fields": list(plan.fields)}
     )
     return migration_jobs.begin(store, spec, spec, operation=operation)
+
+
+def _saved_spec(spec: ModelSpec, snapshot: SchemaSnapshot) -> ModelSpec:
+    try:
+        return bind_snapshot(spec, snapshot)
+    except SchemaMismatch:
+        raise MigrationError("Rebuild declaration differs from the saved job") from None
 
 
 def _selection(store: Store, status: MigrationStatus) -> tuple[str, ...]:
@@ -224,11 +233,15 @@ def advance(
 ) -> MigrationStatus:
     if type(batch_size) is not int or not 1 <= batch_size <= 100:
         raise MigrationError("Rebuild batch size must be between 1 and 100")
-    spec = _spec(registry, model)
+    declared = _spec(registry, model)
 
     def attempt() -> MigrationStatus:
         status = load_status(store, migration_id)
         fields = _selection(store, status)
+        source, target = migration_jobs.saved_snapshots(store, status)
+        spec = _saved_spec(declared, SchemaSnapshot(source))
+        if source != target:
+            raise MigrationError("Rebuild snapshots differ from the supplied model")
         snapshot = SchemaSnapshot(spec.snapshot)
         plan = build_plan(spec, SchemaInspection(snapshot, snapshot, True), fields=fields)
         if (

@@ -1,6 +1,8 @@
 # ADR 0002: Preserve legacy fingerprints while specifying a stable successor
 
-Status: legacy compatibility decision accepted for v0.3.1; successor format proposed.
+Status: historical v0.3.1 decision. The successor proposal and cross-runtime
+rejection policy are superseded by [ADR 0006](0006-canonical-schema-contracts.md)
+for v0.5. Legacy bytes remain unchanged.
 
 ## Evidence
 

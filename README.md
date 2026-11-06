@@ -49,9 +49,9 @@ catches the exception. Later operations on that handle raise `TransactionError`.
 
 The registry rejects overlapping globals, aliases, unsupported field types,
 and missing or ambiguous primary keys. Access checks both the installed schema
-fingerprint and exact snapshot bytes inside each transaction, and incompatible declarations raise `SchemaMismatch` before writes.
-Changing a model name, field declaration, default, or constraint can change the
-fingerprint. Read-only migration planning and a bounded additive migration executor
+fingerprint and snapshot bytes inside each transaction, and incompatible declarations
+raise `SchemaMismatch` before writes. New schemas use a framework-owned, versioned
+contract; Python class names and presentation metadata do not change its fingerprint. Read-only migration planning and a bounded additive migration executor
 are available.
 Adding an index changes the declared schema; existing data requires an explicit
 migration and index rebuild.
@@ -332,7 +332,7 @@ executes default factories.
 | --- | --- |
 | `uninstalled` | No installed schema or application data exists. |
 | `unmanaged` | Application data exists without installed schema metadata. |
-| `matching` | Installed and declared fingerprints agree. |
+| `matching` | Exact identity or a verified compatible legacy declaration. |
 | `different` | Valid installed metadata differs from the declaration. |
 
 `has_data` reports whether any node exists in the application global; it does
@@ -366,15 +366,24 @@ field with a literal default can describe a backfill. Required fields without
 defaults and fields with default factories require manual values. Comparing
 snapshots does not run validators or default factories.
 
-Legacy schema fingerprints include Pydantic's generated JSON Schema. They are
-not stable across every compatible Pydantic release: the same Decimal declaration
-has different bytes under tested versions 2.12.0 and 2.14.3. Pin your application's
-Pydantic version in its lockfile when deploying an installed schema. Upgrading
-YHMF to v0.3.1 preserves existing schema identities; upgrading Pydantic requires a
-separate compatibility review. A mismatch is rejected without modifying data.
-Do not delete metadata to bypass it. A framework-owned successor and its explicit
-metadata migration are designed in [ADR 0002](docs/adr/0002-schema-fingerprint-compatibility.md)
-but are not activated by this release.
+New installations use canonical schema format 2, generated from registered field
+types, codecs, constraints, defaults, ownership, references, and indexes. Schema
+format, application `__schema_version__`, storage layout, and codec version are
+separate. Golden fixtures qualify the same bytes under Pydantic 2.12.0 and 2.14.3.
+
+Legacy format-one metadata remains supported and unchanged. Opening an existing
+database verifies its integrity and binds operations to its installed fingerprint.
+Presentation changes and the specifically qualified incidental Decimal pattern
+can compare compatible. Other unsupported or genuine changes fail safely. An
+actual data migration can activate format 2 while using the existing bounded
+executor; opening a database does not perform a migration or retag records.
+
+Custom validators and default factories require application-managed revisions:
+bump the owning model's `__schema_version__` whenever their persistence-relevant
+behavior changes. Function bodies cannot be reliably fingerprinted. Built-in
+constraints are recorded automatically; unknown validation metadata is rejected.
+See [schema compatibility](docs/schema-compatibility.md) and
+[ADR 0006](docs/adr/0006-canonical-schema-contracts.md) for guarantees and limits.
 
 ## Review a migration plan
 
@@ -581,7 +590,7 @@ insertion and deletion, and atomic composition. It preserves layout one,
 whole-aggregate `save`, schema migrations, and existing index/reference identities.
 Unsafe ancestor validation is explicitly rejected. Child insertion retains a
 bounded aggregate size check; optimistic revisions, automatic change tracking,
-Go bindings, and the proposed successor fingerprint format remain deferred.
+and Go bindings remain deferred. Canonical schema format 2 is implemented in v0.5.
 
 Native qualification includes deterministic process races, forced restarts,
 rollback, index/reference checks, legacy migration compatibility, and the installed

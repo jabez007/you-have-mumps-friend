@@ -8,6 +8,7 @@ from dataclasses import dataclass, replace
 from decimal import Decimal
 from typing import Any, Literal, Union, get_args, get_origin
 
+from .canonical_schema import schema_bytes
 from .codecs import LAYOUT_VERSION
 from .errors import SchemaError
 from .models import Children, Model, Reference
@@ -227,16 +228,14 @@ def _reference_declarations(
     return result
 
 
-def _make_spec(model: type[Model]) -> ModelSpec:
-    model.model_rebuild()
-    global_name = _application_global(model)
-    node = _node_spec(model, keyed=True, ancestors=())
-    key = _key_field(model)
+def _legacy_snapshot(node: NodeSpec, global_name: str) -> bytes:
+    # Preserve the original ordering and JSON Schema exactly for old databases.
+    model = node.model
     declaration = {
         "layout": LAYOUT_VERSION,
         "global": global_name,
         "version": model.__schema_version__,
-        "key": key,
+        "key": node.key_field,
         "declaration": model.model_json_schema(),
     }
     hierarchy = _hierarchy(node.fields)
@@ -245,8 +244,18 @@ def _make_spec(model: type[Model]) -> ModelSpec:
     references = _reference_declarations(node.fields)
     if references:
         declaration["references"] = references
+    return canonical_json(declaration)
+
+
+def _make_spec(model: type[Model], *, legacy: bool = False) -> ModelSpec:
+    model.model_rebuild()
+    global_name = _application_global(model)
+    node = _node_spec(model, keyed=True, ancestors=())
+    key = _key_field(model)
     try:
-        snapshot = canonical_json(declaration)
+        snapshot = (
+            _legacy_snapshot(node, global_name) if legacy else schema_bytes(node, global_name)
+        )
     except (TypeError, ValueError) as exc:
         raise SchemaError("Model declarations must produce finite canonical JSON") from exc
     return ModelSpec(

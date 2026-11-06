@@ -192,6 +192,8 @@ def _index_steps(changes: tuple[SchemaChange, ...]) -> set[MigrationStep]:
 
 
 def build_plan(inspection: SchemaInspection) -> MigrationPlan:
+    if inspection.status == "matching":
+        return MigrationPlan(inspection, (), ())
     if inspection.installed is None:
         unmanaged = inspection.has_data
         change = SchemaChange(

@@ -9,9 +9,17 @@ import math
 import re
 import types
 from decimal import Decimal
-from typing import TYPE_CHECKING, Any, Union, get_args, get_origin
+from typing import TYPE_CHECKING, Any, Union, cast, get_args, get_origin
 
-from pydantic import AfterValidator, BeforeValidator, PlainValidator, WrapValidator
+from pydantic import (
+    AfterValidator,
+    BeforeValidator,
+    PlainSerializer,
+    PlainValidator,
+    WithJsonSchema,
+    WrapSerializer,
+    WrapValidator,
+)
 from pydantic.fields import FieldInfo
 
 from .codecs import LAYOUT_VERSION, canonical_json
@@ -54,6 +62,19 @@ _POLICY_DEFAULTS = {
 }
 
 
+def numeric_rule(value: Any) -> str:
+    """Canonical exact coefficient/exponent, with no decimal-context rounding."""
+    number = Decimal(str(value))
+    if not number.is_finite():
+        raise SchemaError("Schema numeric constraints must be finite")
+    sign, digits, exponent = number.as_tuple()
+    coefficient = "".join(map(str, digits)).rstrip("0")
+    if not coefficient:
+        return "0"
+    power = cast(int, exponent) + len(digits) - len(coefficient)
+    return f"{'-' if sign else ''}{coefficient}E{power}"
+
+
 def _value(value: Any) -> Any:
     if value is None or type(value) in (str, bool, int):
         return value
@@ -71,12 +92,22 @@ def _value(value: Any) -> Any:
         return {name: _value(getattr(value, name)) for name in type(value).model_fields}
     if isinstance(value, (list, tuple)):
         return [_value(item) for item in value]
-    if isinstance(value, dict) and all(type(key) is str for key in value):
-        return {key: _value(item) for key, item in value.items()}
+    if isinstance(value, dict):
+        return _mapping(value)
     raise SchemaError("Schema defaults and constraints require supported deterministic values")
 
 
+def _mapping(value: dict[Any, Any]) -> dict[str, Any]:
+    if all(type(key) is str for key in value):
+        return {key: _value(item) for key, item in value.items()}
+    if all(type(key) in (str, int) for key in value):
+        return {"$map": [[key, _value(value[key])] for key in sorted(value, key=canonical_json)]}
+    raise SchemaError("Schema default mappings require string or integer keys")
+
+
 def _metadata(item: Any) -> dict[str, Any]:
+    if isinstance(item, (PlainSerializer, WrapSerializer, WithJsonSchema)):
+        return {}  # Persistence uses its own codecs and never these presentation hooks.
     if isinstance(item, _CALLABLES):
         return {"custom_validation": True}
     attributes = (
@@ -88,7 +119,7 @@ def _metadata(item: Any) -> dict[str, Any]:
     # values through these public metadata attributes, not generated JSON.
     unknown = attributes.keys() - _RULES.keys()
     if unknown:
-        raise SchemaError("Unsupported validation metadata; use an explicit schema revision")
+        raise SchemaError("Unsupported validation metadata in canonical schema")
     return {_RULES[key]: _value(value) for key, value in attributes.items() if value is not None}
 
 
@@ -96,6 +127,9 @@ def _rules(field: FieldInfo) -> dict[str, Any]:
     result: dict[str, Any] = {}
     for item in field.metadata:
         result.update(_metadata(item))
+    for name in ("minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum", "multipleOf"):
+        if name in result:
+            result[name] = numeric_rule(result[name])
     return result
 
 

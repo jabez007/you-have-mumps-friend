@@ -379,7 +379,7 @@ def test_changed_registration_cannot_begin_a_stale_rebuild(store):
     plan = db.plan_index_rebuild(model)
 
     class Renamed(model):
-        pass
+        __schema_version__ = model.__schema_version__ + 1
 
     other = Database(store, Registry(Renamed))
     assert not other.plan_index_rebuild(Renamed).execution_supported

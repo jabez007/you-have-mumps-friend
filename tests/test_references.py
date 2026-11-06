@@ -217,6 +217,7 @@ def test_reference_snapshot_records_target_and_policy(db):
         "global": "^YHMFTestProduct",
         "key": "id",
         "on_delete": "restrict",
+        "key_codec": "str",
     } in declaration["references"]
 
 
