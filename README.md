@@ -110,6 +110,55 @@ Reads and writes reject collections larger than 1000 children and records larger
 than 10000 stored nodes. These prototype bounds include presence markers and
 record metadata. Native path limits also apply to deeply nested records.
 
+## Patch scalar fields at an owned path
+
+```python
+from decimal import Decimal
+
+db.patch(Warehouse, 7, changes={"name": "Renamed"})
+db.patch(
+    Warehouse, 7,
+    at=("bins", "A01", "lots", "L-001"),
+    changes={"quantity": Decimal("25.5")},
+)
+lot = db.get(Warehouse, 7, at=("bins", "A01", "lots", "L-001"))
+```
+
+Each path starts at the registered root key. Embedded objects take a field name;
+keyed children take a collection field and a key of the child's declared type.
+Missing owners raise `NotFound`. A patch changes scalar or `Reference` fields;
+changing keys or replacing owned subtrees through `changes` raises `MutationError`.
+Use `at` to patch inside an existing embedded object. Mutations never materialize
+missing objects or collections implicitly.
+
+A leaf patch validates the complete leaf model, including cross-field validators.
+A scalar patch on an owner with descendants validates selected fields with their
+constraints and model configuration. Custom validation on such an owner or any
+ancestor makes partial mutation unsupported and raises `MutationError`. This
+includes Annotated function validators, custom initialization, and post-init hooks.
+Use complete `get`/`save` inside `atomic` for those models. No validator is silently
+skipped to obtain a faster update.
+
+Patches read their affected state within the transaction, write only changed
+scalar nodes, and maintain only affected indexes and reference entries. They do
+not rewrite sibling child collections. Different-field patches preserve both
+assignments; same-field assignments serialize with the later commit winning.
+For arithmetic, read the owned value inside the callback:
+
+```python
+def receive(tx):
+    at = ("bins", "A01", "lots", "L-001")
+    current = tx.get(Warehouse, 7, at=at)
+    tx.patch(Warehouse, 7, at=at, changes={"quantity": current.quantity + Decimal("1")})
+
+db.atomic(receive)
+```
+
+The callback may restart. Keep external side effects outside it. Failed mutations
+make the transaction roll back even if the callback catches the exception.
+See [ADR 0004](docs/adr/0004-hierarchical-mutations.md) for validation and storage
+tradeoffs.
+
 ## Link independently persisted records
 
 ```python

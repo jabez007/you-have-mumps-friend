@@ -1,10 +1,19 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Explicit CRUD with atomic schema checks and retry-local transaction handles."""
 
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager
+from typing import Any, overload
 
-from . import adoption, index_rebuilds, indexes, migration_executor, migration_jobs, references
+from . import (
+    adoption,
+    index_rebuilds,
+    indexes,
+    migration_executor,
+    migration_jobs,
+    mutations,
+    references,
+)
 from .codecs import Key
 from .errors import (
     AlreadyExists,
@@ -18,6 +27,7 @@ from .index_rebuilds import IndexRebuildPlan
 from .maintenance import MigrationStatus, load_status, require_available
 from .migrations import MigrationPlan, build_plan
 from .models import Model
+from .owned import OwnedPath
 from .queries import IndexReport, Query, audit_indexes, scan
 from .records import metadata, record_nodes, record_values
 from .registry import ModelSpec, Registry
@@ -89,12 +99,20 @@ class Database:
             raise SchemaMismatch("Record has no matching installed schema")
         return True
 
-    def get[M: Model](self, model: type[M], key: Key) -> M:
+    @overload
+    def get[M: Model](self, model: type[M], key: Key) -> M: ...
+
+    @overload
+    def get(self, model: type[Model], key: Key, *, at: OwnedPath) -> Model: ...
+
+    def get(self, model: type[Model], key: Key, *, at: OwnedPath = ()) -> Model:
         """Read a complete record or raise NotFound; never fill missing stored fields."""
         spec = self.registry.spec(model)
+        if at != ():
+            return self._run(lambda tx: mutations.read(tx, spec, key, at))
         root = spec.path(key)
 
-        def read(tx: Database) -> M:
+        def read(tx: Database) -> Model:
             tx._check_schema(spec)
             if not tx._exists(spec, root):
                 raise NotFound("Record does not exist")
@@ -104,6 +122,18 @@ class Database:
             return result
 
         return self._run(read)
+
+    def patch(
+        self, model: type[Model], key: Key, *, changes: Mapping[str, Any], at: OwnedPath = ()
+    ) -> None:
+        """Validate and update scalar or Reference fields at an explicit owned path."""
+        spec = self.registry.spec(model)
+
+        def attempt(tx: Database) -> None:
+            with tx._writing():
+                mutations.patch(tx, spec, key, at, changes)
+
+        self._run(attempt)
 
     def _write[M: Model](self, record: M, *, insert: bool) -> M:
         spec = self.registry.spec(type(record))

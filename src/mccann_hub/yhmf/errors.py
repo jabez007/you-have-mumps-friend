@@ -48,3 +48,7 @@ class MigrationError(YHMFError):
 
 class MaintenanceActive(MigrationError):
     """An active migration holds the database-wide mapper maintenance gate."""
+
+
+class MutationError(YHMFError, ValueError):
+    """A partial mutation cannot preserve declared validation or ownership."""
