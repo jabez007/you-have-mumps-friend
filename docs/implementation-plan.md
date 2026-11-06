@@ -481,3 +481,26 @@ including the driver's additional upstream clarification. Record Pydantic's MIT
 metadata without inferring legal obligations for an application. Remove the
 architecture's unreviewed deployment interpretation. Legal advice is an external
 remaining requirement, so issue 35 stays open. No dependencies or runtime changes.
+
+### Retire terminal maintenance jobs, issue 22
+
+Reuse migration_cleanup's bounded first-leaf deletion, terminal MigrationStatus,
+job_path validation, and NativeStore.atomic. Extract leaf deletion without the
+cleanup-counter side effect first. Add prune_migration(id, batch_size=25), returning
+whether retirement is complete. Each call removes at most 100 requested leaves;
+the job root is deleted last. Absent jobs return complete. Refuse active jobs and
+gate owners, while permitting retirement of an unrelated terminal job.
+
+An optional pruning=true checkpoint flag marks intentional partial retirement.
+Omit it from ordinary checkpoints to retain existing bytes. Lifecycle executors
+reject marked jobs clearly instead of treating removed snapshots as corruption.
+Pruning requires no model bindings and can reopen after every committed batch.
+Older maintenance readers reject the new optional flag; ordinary application
+records, installed schemas, indexes, references, and other jobs remain unchanged.
+
+Source-free execution of an unfinished migration cannot reconstruct arbitrary
+Python validator behavior from schema metadata. Retain exact source and target
+declarations until completion or safe abort; then retire them and the job according
+to the application's audit policy. Test bounds, active rejection, reservations,
+resume/idempotence, rollback, and index-rebuild jobs on both adapters. C901 passes
+at ten before implementation.

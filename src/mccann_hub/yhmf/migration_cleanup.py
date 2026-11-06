@@ -56,9 +56,8 @@ def _first_leaf(store: Store, root: Path) -> Path | None:
     return path if store.get(path) is not None else None
 
 
-def clear_batch(store: Store, migration_id: str, roots: tuple[Path, ...], *, limit: int) -> int:
-    """Delete at most limit leaves; their absence is the durable traversal progress."""
-    count = removed_count(store, migration_id)
+def delete_leaves(store: Store, roots: tuple[Path, ...], *, limit: int) -> int:
+    """Delete bounded leaves inside the caller's transaction, retaining parents until last."""
     deleted = 0
     for root in roots:
         while deleted < limit:
@@ -69,6 +68,13 @@ def clear_batch(store: Store, migration_id: str, roots: tuple[Path, ...], *, lim
             deleted += 1
         if deleted == limit:
             break
+    return deleted
+
+
+def clear_batch(store: Store, migration_id: str, roots: tuple[Path, ...], *, limit: int) -> int:
+    """Delete at most limit leaves; their absence is the durable traversal progress."""
+    count = removed_count(store, migration_id)
+    deleted = delete_leaves(store, roots, limit=limit)
     if deleted:
         store.set(
             job_path(migration_id).child(b"cleaned_nodes"),
