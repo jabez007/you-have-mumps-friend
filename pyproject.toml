@@ -26,6 +26,7 @@ packages = ["src/mccann_hub"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 addopts = "--import-mode=importlib"
 markers = ["native: requires a configured, disposable YottaDB database", "adversarial: generated correctness and fault-injection workloads"]
 
@@ -42,4 +43,6 @@ max-complexity = 10
 [tool.mypy]
 python_version = "3.12"
 strict = true
-files = ["src"]
+files = ["src", "examples"]
+explicit_package_bases = true
+mypy_path = "$MYPY_CONFIG_FILE_DIR/src"

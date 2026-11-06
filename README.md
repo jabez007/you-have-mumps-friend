@@ -676,6 +676,10 @@ Offline operation counts establish work scope only.
 See [correctness testing](docs/testing.md) for generated state machines, independent
 integrity assertions, fault injection, longer profiles, and reproduction commands.
 
+The [warehouse inventory example](examples/inventory/README.md) demonstrates
+receive, move, adjustment, indexed stock queries, and an independent movement ledger
+using the public API. Run `uv run python -m examples.inventory` for its memory demo.
+
 Install [YottaDB](https://docs.yottadb.com/AdminOpsGuide/installydb.html) and
 set `ydb_dist` to its installation directory. Then run:
 
