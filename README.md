@@ -407,9 +407,9 @@ transaction. Completed and aborted job metadata remains available for inspection
 
 An explicit rebuild repairs equality entries and uniqueness claims from stored
 records while keeping the installed model declaration unchanged. It supports
-declared root and nested indexes, including reference equality indexes. The
-reverse-reference graph is checked through existing maintenance validation and
-is left unchanged.
+declared root and nested indexes, including reference equality indexes. Existing
+reverse edges and target metadata receive the same maintenance checks;
+reverse-reference counts are left unchanged.
 
 ```python
 plan = db.plan_index_rebuild(CatalogProduct)  # All declared indexes by default.
@@ -452,6 +452,8 @@ historical maintenance metadata remain outside this operation.
 
 ## v0.3 release scope
 
+Version `0.3.0` completes the schema-evolution milestone within the scope below.
+
 The v0.3 scope is schema inspection and comparison, deterministic review plans,
 scalar-default additions in existing owned trees, scalar index additions,
 promotions, downgrades and removals, and explicit declared-index rebuilds.
@@ -461,7 +463,8 @@ jobs remain supported. New owned containers, field deletion or relocation,
 storage-type changes, reference migrations, and default-factory backfills remain
 later work.
 
-Qualification runs the deterministic checks, installed-wheel checks, and native
+Qualification covers the deterministic checks, installed-wheel schema migration
+and index reconstruction workflow, and native
 rollback, restart, process-death, and concurrency suites. The native CI matrix
 uses Python 3.12 with YottaDB r2.02 on Ubuntu 22.04 and r2.06 on Ubuntu 24.04.
 These results apply to those tested environments, not every accepted runtime or

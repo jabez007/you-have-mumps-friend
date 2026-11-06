@@ -316,12 +316,12 @@ Implement schema snapshots, schema comparisons, migration generation, migration 
 
 Acceptance requires interrupted-migration tests and schema compatibility tests.
 
-The v0.3 completion boundary is now fixed to schema inspection and comparisons,
+Version 0.3.0 completes this milestone within the following boundary: schema inspection and comparisons,
 deterministic review plans, scalar-default additions in existing owned trees,
 scalar index additions, promotions, downgrades and removals, and explicit index
 rebuilds for an unchanged installed declaration. Jobs use maintenance ownership,
 bounded updates, atomic activation, safe early abort, and durable resume.
-Qualification includes native restart, process-death, concurrency, legacy-job
+Qualification covers native restart, process-death, concurrency, legacy-job
 compatibility, and installed-wheel tests. New owned containers, destructive
 record changes, reference migrations, and full reverse-reference repair belong
 to later milestones.

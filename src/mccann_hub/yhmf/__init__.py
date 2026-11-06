@@ -35,4 +35,4 @@ __all__ = [
     "Store",
     "compare_schemas",
 ]
-__version__ = "0.3.0rc1"
+__version__ = "0.3.0"
