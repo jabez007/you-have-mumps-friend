@@ -57,7 +57,10 @@ It will not introduce a shared Python/Go runtime prematurely.
 
 The framework's original source code will use **GPL-3.0-or-later**, with SPDX identifiers and a canonical license file.
 
-YottaDB and YDBPython are AGPLv3. GPLv3 §13 permits combining GPLv3 and AGPLv3 modules, but the AGPL-covered components retain their own terms. The framework will document those obligations and obtain legal clarification before making representations about proprietary applications or network-service deployment.
+YottaDB and YDBPython publish AGPLv3 terms and separate upstream notices. The
+[component license page](licensing.md) links those sources. The project has not
+obtained counsel review and makes no deployment-specific representation about
+combining these components, proprietary applications, or network services.
 
 Runtime dependencies will undergo license compatibility review. Inspiration from Odoo and Ferro does not authorize copying implementation code without checking its provenance and license.
 

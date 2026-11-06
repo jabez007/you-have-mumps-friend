@@ -472,3 +472,12 @@ through real documents and a deliberately failing example. CI runs it with the
 locked environment. Shell and M snippets retain their native integration harnesses.
 Make README file links absolute GitHub URLs and verify their local targets for the
 future PyPI long description. No runtime API or storage change; C901 passes at ten.
+
+### Component license sources, issue 35
+
+Reuse LICENSE, pyproject.toml, and the architecture's license section. Publish a
+factual page linking upstream engine and driver COPYING and LICENSE notices,
+including the driver's additional upstream clarification. Record Pydantic's MIT
+metadata without inferring legal obligations for an application. Remove the
+architecture's unreviewed deployment interpretation. Legal advice is an external
+remaining requirement, so issue 35 stays open. No dependencies or runtime changes.

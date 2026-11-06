@@ -124,5 +124,6 @@ durably, follow [set up a YottaDB database](https://github.com/jabez007/you-have
 YHMF is licensed under [GPL-3.0-or-later](https://github.com/jabez007/you-have-mumps-friend/blob/main/LICENSE). The distribution is `mccann-hub-yhmf`,
 imported as `mccann_hub.yhmf`.
 
-YottaDB and YDBPython have separate upstream licenses. This repository does not provide legal
-advice about applications that combine them with this code.
+YottaDB and YDBPython have separate upstream AGPLv3 notices. See the
+[component licenses](https://github.com/jabez007/you-have-mumps-friend/blob/main/docs/licensing.md)
+for their terms. This repository provides no legal advice or counsel-reviewed deployment guidance.
