@@ -326,13 +326,24 @@ compatibility, and installed-wheel tests. New owned containers, destructive
 record changes, reference migrations, and full reverse-reference repair belong
 to later milestones.
 
-### v0.4 — Developer experience and interoperability
+### v0.3.1 — Integrity hardening
 
-Refine type support, diagnostics, performance, documentation, and tooling.
+Protect initial installation from unmanaged globals, verify installed snapshot
+integrity, qualify fingerprint compatibility, and document detached-write
+concurrency. Complete native qualification before starting v0.4. See
+[implementation order](implementation-plan.md) and
+[ADR 0001](adr/0001-schema-installation-integrity.md).
 
-Prototype an independent Go reader/writer using the versioned global layout.
+### v0.4 — Fine-grained hierarchical mutations
 
-Benchmark the mapper against direct YDBPython access and identify abstraction overhead before considering a Rust or native performance layer.
+Add transactional scalar patches and keyed owned-child insertion, updates, and
+deletion with direct node addressing. Preserve Pydantic validation, affected
+indexes, unique claims, references, and whole-aggregate replacement. Verify native
+concurrency and compare direct node mutations, framework mutations, and whole
+replacements as unrelated hierarchy sizes grow.
+
+Go interoperability, general query expansion, automatic change tracking, and
+native performance extensions are deferred.
 
 ## 14. Testing strategy
 

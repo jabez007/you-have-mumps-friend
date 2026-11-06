@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Literal, NoReturn, cast
 
 from .codecs import canonical_json as canonical_json
-from .errors import StorageError
+from .errors import SchemaMismatch, StorageError
 from .maintenance import inspected_fingerprint
 from .storage import MAX_VALUE_BYTES, Path, Store
 
@@ -18,6 +18,43 @@ if TYPE_CHECKING:
 
 def schema_path(global_name: str) -> Path:
     return Path("^YHMFSchema", (global_name[1:].encode("ascii"),))
+
+
+def has_data(store: Store, root: Path) -> bool:
+    """Include both a value at the root and any descendant, without scanning."""
+    return store.get(root) is not None or bool(store.children(root, limit=1))
+
+
+def install_schema(store: Store, spec: "ModelSpec") -> None:
+    """Publish a validated declaration inside the caller's transaction."""
+    if len(spec.snapshot) > MAX_VALUE_BYTES:
+        raise StorageError("Schema snapshot exceeds the node limit")
+    root = schema_path(spec.global_name)
+    store.set(root, spec.fingerprint)
+    store.set(root.child(b"snapshot"), spec.snapshot)
+
+
+def check_schema(store: Store, spec: "ModelSpec", *, install: bool = False) -> None:
+    """Verify exact metadata on each transaction attempt, with no local cache."""
+    root = schema_path(spec.global_name)
+    fingerprint = store.get(root)
+    snapshot = store.get(root.child(b"snapshot"))
+    if fingerprint is None:
+        if snapshot is not None or store.children(root, limit=1):
+            raise StorageError("Installed schema metadata is incomplete")
+        if install:
+            if has_data(store, Path(spec.global_name)):
+                raise StorageError(
+                    "Nonempty unmanaged global requires explicit adoption or migration"
+                )
+            install_schema(store, spec)
+        return
+    if fingerprint != spec.fingerprint:
+        # Distinguish corrupted metadata from a valid, different declaration.
+        inspect_schema(store, spec)
+        raise SchemaMismatch("Installed schema differs; an explicit migration is required")
+    if snapshot != spec.snapshot:
+        raise StorageError("Installed schema snapshot does not match its registered fingerprint")
 
 
 def _reject_constant(value: str) -> NoReturn:
@@ -108,5 +145,4 @@ def inspect_schema(store: Store, spec: "ModelSpec") -> SchemaInspection:
         if fingerprint != installed.fingerprint.encode("ascii"):
             raise StorageError("Installed schema fingerprint does not match its snapshot")
     record_root = Path(spec.global_name)
-    has_data = store.get(record_root) is not None or bool(store.children(record_root, limit=1))
-    return SchemaInspection(declared, installed, has_data, migration_id)
+    return SchemaInspection(declared, installed, has_data(store, record_root), migration_id)

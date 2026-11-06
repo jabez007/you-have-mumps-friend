@@ -21,8 +21,8 @@ from .models import Model
 from .queries import IndexReport, Query, audit_indexes, scan
 from .records import metadata, record_nodes, record_values
 from .registry import ModelSpec, Registry
-from .schemas import SchemaInspection, inspect_schema, schema_path
-from .storage import MAX_VALUE_BYTES, Path, Store
+from .schemas import SchemaInspection, check_schema, inspect_schema, schema_path
+from .storage import Path, Store
 
 
 class Database:
@@ -74,16 +74,7 @@ class Database:
 
     def _check_schema(self, spec: ModelSpec, *, install: bool = False) -> None:
         require_available(self.store)
-        root = schema_path(spec.global_name)
-        current = self.store.get(root)
-        if current is None:
-            if install:
-                if len(spec.snapshot) > MAX_VALUE_BYTES:
-                    raise StorageError("Schema snapshot exceeds the node limit")
-                self.store.set(root, spec.fingerprint)
-                self.store.set(root.child(b"snapshot"), spec.snapshot)
-        elif current != spec.fingerprint:
-            raise SchemaMismatch("Installed schema differs; an explicit migration is required")
+        check_schema(self.store, spec, install=install)
 
     def _exists(self, spec: ModelSpec, root: Path) -> bool:
         layout = self.store.get(root.child(b"%m", b"layout"))

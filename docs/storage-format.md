@@ -78,6 +78,12 @@ The engine reserves
 global to exactly one top-level model. Save replaces the entire record subtree;
 it does not merge raw nodes or silently overwrite unmanaged records.
 
+CRUD verifies the installed fingerprint and exact registered snapshot bytes on
+each transaction attempt, without a process-local cache. Missing or changed
+snapshot bytes fail safely. Automatic installation checks that the entire
+application global is empty in the same transaction as metadata installation.
+A root value counts as data even when there are no descendants.
+
 The inspection interface verifies the canonical bytes and their fingerprint
 before exposing installed metadata. An absent fingerprint with a snapshot, or
 an absent snapshot with a fingerprint, is incomplete metadata and causes an

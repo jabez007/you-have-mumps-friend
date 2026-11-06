@@ -30,7 +30,10 @@ assert db.get(Product, "P42").quantity == Decimal("10.50")
 
 Use `NativeStore()` with a configured YottaDB environment for durable storage.
 `MemoryStore()` lasts only as long as the Python process. `insert` rejects existing
-keys; `save` replaces a record or inserts it. `get` raises `NotFound` when absent,
+keys; `save` replaces a record or inserts it. Detached saves use last-writer-wins
+semantics: two readers can each change a copy and the later save replaces the
+entire earlier result. Use `atomic` with the read inside the callback for safe
+read/modify/write; reading before the callback does not gain this protection. `get` raises `NotFound` when absent,
 and `delete` returns whether a record existed. Keys must match their declared type.
 
 `db.atomic(callback)` passes a transaction handle to the callback. The handle
@@ -41,13 +44,18 @@ If a backend write fails, the transaction must roll back even when the callback
 catches the exception. Later operations on that handle raise `TransactionError`.
 
 The registry rejects overlapping globals, aliases, unsupported field types,
-and missing or ambiguous primary keys. Access checks an installed schema
-fingerprint, and incompatible declarations raise `SchemaMismatch` before writes.
+and missing or ambiguous primary keys. Access checks both the installed schema
+fingerprint and exact snapshot bytes inside each transaction, and incompatible declarations raise `SchemaMismatch` before writes.
 Changing a model name, field declaration, default, or constraint can change the
 fingerprint. Read-only migration planning and a bounded additive migration executor
 are available.
 Adding an index changes the declared schema; existing data requires an explicit
 migration and index rebuild.
+
+Automatic schema installation requires an empty application global, including
+its root value and all descendants. Raw data at any key prevents installation;
+use explicit adoption or an intentional external migration. Failed installation
+and record writes roll back together.
 
 ## Store owned child records
 
