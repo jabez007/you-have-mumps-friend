@@ -168,8 +168,22 @@ def test_removed_indexes_are_explicit_plan_steps(store, read_only_store):
         sku: str
 
     plan = Database(read_only_store, Registry(Unindexed)).plan_migration(Unindexed)
+    assert plan.execution_supported
     assert any(step.kind == "drop_index" and step.path == ("sku",) for step in plan.steps)
     assert any(step.kind == "validate_indexes" for step in plan.steps)
+
+
+def test_unique_downgrade_has_an_explicit_claim_removal_step(store, read_only_store):
+    seed(store)
+
+    class Downgraded(Product):
+        sku: str = Field(index=True)
+
+    plan = Database(read_only_store, Registry(Downgraded)).plan_migration(Downgraded)
+    assert plan.execution_supported
+    assert any(step.kind == "drop_uniqueness" and step.path == ("sku",) for step in plan.steps)
+    assert not any(step.kind == "rebuild_index" for step in plan.steps)
+    assert any(step["kind"] == "drop_uniqueness" for step in plan.to_dict()["steps"])
 
 
 def test_changing_existing_defaults_does_not_overwrite_old_values(store, read_only_store):

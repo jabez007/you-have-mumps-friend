@@ -243,6 +243,6 @@ class Database:
         return self._run(lambda tx: load_status(tx.store, migration_id))
 
     def abort_migration(self, migration_id: str) -> MigrationStatus:
-        """Release maintenance only if no backfill batch has committed."""
+        """Release maintenance before any update batch or cleanup deletion commits."""
         self._migration_ready()
         return migration_executor.abort(self.store, migration_id)

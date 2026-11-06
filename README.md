@@ -266,7 +266,8 @@ assert plan.to_json() == next_db.plan_migration(CatalogV2).to_json()
 Plans describe changes from the installed fingerprint to the current declaration.
 They order backfills before index rebuilding and place schema activation after
 validation and record metadata updates. Unique indexes add a uniqueness check;
-reference changes add reverse-index rebuilding and validation. Matching schemas
+index removals produce `drop_index` steps, and uniqueness downgrades produce
+`drop_uniqueness` steps. Reference changes add reverse-index rebuilding and validation. Matching schemas
 produce an empty plan. Empty globals produce an installation plan; unmanaged data
 requires manual review and is never adopted implicitly.
 
@@ -294,14 +295,14 @@ write any database nodes. `requires_manual_review=False` does not certify data
 compatibility. `execution_supported` identifies the executor's structural subset;
 record validation still happens under maintenance before any backfill.
 
-## Execute an additive migration
+## Execute a scalar or index migration
 
 Keep the exact source model declaration available alongside the target. The
 executor accepts added scalar fields with literal defaults, new scalar indexes,
-and promotion of existing equality indexes to unique indexes. These operations
+promotion or downgrade of existing equality indexes, and index removals. These operations
 apply to root fields and fields inside existing embedded objects and children.
-Existing values, owned trees, references, equality entries, and uniqueness claims
-are preserved. New owned containers, index removals or uniqueness downgrades,
+Existing field values, owned trees, references, and retained index nodes are
+preserved. Index changes remain limited to scalar fields. New owned containers,
 reference changes, field removals, and default factories remain unsupported.
 
 ```python
@@ -319,7 +320,8 @@ while status.phase != "complete":
 Each call commits at most one batch or phase transition. Batch sizes range from
 1 to 100 records, with the existing per-record node and child limits. Four passes
 validate source records and target values, backfill fields and indexes, verify
-the results, then update record metadata. A final transaction publishes the
+the results, then update record metadata. Index removals and uniqueness downgrades
+also enter a bounded `cleanup` phase before activation. A final transaction publishes the
 target snapshot and fingerprint, marks the job complete, and releases maintenance.
 An empty page advances the phase; the cursor resets for the next pass.
 
@@ -338,6 +340,22 @@ the active entries and claims before activation. Reservations contain normalized
 values and owner identities inside framework metadata. They remain with completed
 and aborted jobs, use space proportional to the new non-null unique values, and
 are absent from normal migration status output.
+
+Changing `unique=True` to `index=True` removes unique claims while retaining
+equality entries and queries. Removing the index declaration removes equality
+entries and any unique claims while preserving stored field values. After
+activation, duplicates are allowed for a downgraded field. Equality queries on a
+field whose index was removed raise `QueryError`; they never imply a scan.
+
+The update batches remove expected entries and claims by parent. Verification
+checks that retained nodes still match and removed nodes are absent. Cleanup
+then drains retired namespaces, including orphan nodes, before the target schema
+can activate. Each cleanup call deletes at most `batch_size` leaf nodes, with
+the usual 1 through 100 limit. During cleanup, the record counters stay unchanged;
+committed deletions and an internal deletion count record progress. Repeated
+calls may return the same status until cleanup finishes. Raw writers must remain
+stopped. If a retired namespace reappears before activation, the job returns to
+cleanup with maintenance still held.
 
 Nested changes use dotted declaration paths such as `lots.note` and
 `lots.samples.reading`. Scalar defaults are added to every existing owner at that
@@ -377,9 +395,10 @@ not release partially migrated data to callers. Normal status output omits
 record keys; `status.to_dict(include_cursor=True)` explicitly exposes the encoded
 cursor.
 
-`abort_migration(migration_id)` restores source access before any backfill batch
-commits, including after a validation failure. Once a backfill commits, abort is
-refused: recovery requires resume or operator-managed restoration from backup.
+`abort_migration(migration_id)` restores source access before any update batch or
+cleanup deletion commits, including after a validation failure. Once updates
+commit, abort is refused: recovery requires resume or operator-managed restoration from backup.
+This also applies to cleanup of orphan metadata in an empty application global.
 Do not remove the gate or fingerprint barrier manually. Migration lifecycle
 methods require standalone calls outside `db.atomic`; each manages its own
 transaction. Completed and aborted job metadata remains available for inspection.

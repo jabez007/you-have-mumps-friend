@@ -113,22 +113,37 @@ same transaction as its batch's data changes.
 
 Each job has `"source_snapshot"` and `"target_snapshot"` children containing
 the canonical schema bytes. The checkpoints progress through `validate`,
-`backfill`, `verify`, `retag`, `activate`, and `complete`. Each bounded pass stores
+`backfill`, `verify`, `retag`, optionally `cleanup`, then `activate` and `complete`. Each bounded pass stores
 its last encoded record key as hexadecimal and resets it at the next phase.
 The counters are `validated`, `backfilled`, `verified`, and `retagged`.
 Activation requires equal counters and publishes the target schema, completes
-the job, and removes the gate in one transaction. Before any backfill commits,
+the job, and removes the gate in one transaction. Before any update batch or cleanup deletion commits,
 abort can restore the source fingerprint and persist the `aborted` phase.
 
-The executor adds scalar nodes and new equality entries or unique claims at
+The executor adds scalar nodes and changes equality entries or unique claims at
 root fields and inside existing owned objects and children.
 It can promote existing scalar equality indexes to unique indexes without
 rewriting their equality entries. It rejects occupied backfill paths and nonempty new-index
-namespaces. Existing fields and index identities must remain byte-for-byte
-unchanged. Existing expected equality entries, uniqueness claims, reverse edges,
-and reference target metadata are validated without rewriting them. Verification
+namespaces. Existing fields and retained index identities must remain byte-for-byte
+unchanged. A uniqueness downgrade removes claims without rewriting equality
+entries; an index removal retires both equality and claim namespaces for that
+declaration path. Existing expected index nodes, reverse edges,
+and reference target metadata are validated before updates. Verification
 checks expected entries by record; it does not perform a full reverse index
 audit for unrelated orphan entries.
+
+After parent metadata updates, retirements enter `cleanup`. Each call removes
+at most its batch limit of leaves under the exact retired namespaces, including
+orphan entries and namespace values. A node is deleted only after checking it
+has no descendants. The absence of committed leaves is durable traversal
+progress; cleanup does not store an index-value cursor. The job's
+`"cleaned_nodes"` child contains a canonical, nonnegative ASCII integer counting
+cleanup deletions. An absent child means zero. This count commits with the
+deletions and checkpoint and prevents abort after cleanup starts, even when
+record counters are zero. Record counters are unchanged during cleanup.
+Activation rechecks that all retired namespaces are empty and returns to cleanup
+if they reappear. Other index namespaces and application globals are untouched.
+Older library versions that do not recognize this phase refuse to resume it.
 
 Logical migration paths contain field names only. Index namespaces join those
 names with dots, including the full path for nested additions and promotions.

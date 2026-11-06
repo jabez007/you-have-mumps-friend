@@ -17,6 +17,7 @@ _STEP_ORDER = {
     "validate_uniqueness": 40,
     "rebuild_references": 50,
     "drop_index": 60,
+    "drop_uniqueness": 60,
     "rebuild_index": 70,
     "validate_indexes": 80,
     "update_record_metadata": 90,
@@ -41,9 +42,10 @@ def _supported_change(change: SchemaChange, nonscalar: set[tuple[str, ...]]) -> 
         return False
     if change.kind in {"metadata_changed", "schema_version_changed", "owned_version_changed"}:
         return True
-    if change.kind not in {"field_added", "index_added", "index_changed"} or not change.path:
-        return False
-    if change.kind == "index_changed" and not change.unique:
+    if (
+        change.kind not in {"field_added", "index_added", "index_changed", "index_removed"}
+        or not change.path
+    ):
         return False
     if change.path in nonscalar:
         return False
@@ -88,7 +90,7 @@ def _change_document(change: SchemaChange, include_defaults: bool) -> dict[str, 
 
 def _step_document(step: MigrationStep, include_defaults: bool) -> dict[str, Any]:
     result: dict[str, Any] = {"kind": step.kind, "path": list(step.path)}
-    if step.kind in {"rebuild_index", "drop_index", "validate_uniqueness"}:
+    if step.kind in {"rebuild_index", "drop_index", "drop_uniqueness", "validate_uniqueness"}:
         result["unique"] = step.unique
     if step.kind == "backfill_field":
         result["default_source"] = "declared"
@@ -118,7 +120,7 @@ class MigrationPlan:
 
     @property
     def execution_supported(self) -> bool:
-        """Whether the plan fits additive scalar changes in existing owned trees."""
+        """Whether the plan fits scalar additions and index changes in existing owned trees."""
         source = self.inspection.installed
         if (
             source is None
@@ -131,7 +133,7 @@ class MigrationPlan:
         nonscalar = _owned_paths(document.get("hierarchy", []))
         nonscalar.update(tuple(item["path"]) for item in document.get("references", []))
         return any(
-            change.kind in {"field_added", "index_added", "index_changed"}
+            change.kind in {"field_added", "index_added", "index_changed", "index_removed"}
             for change in self.changes
         ) and all(_supported_change(change, nonscalar) for change in self.changes)
 
@@ -176,6 +178,8 @@ def _index_steps(changes: tuple[SchemaChange, ...]) -> set[MigrationStep]:
     for change in changes:
         if change.kind == "index_removed":
             result.add(MigrationStep("drop_index", change.path, unique=change.unique))
+        elif change.kind == "index_changed" and not change.unique:
+            result.add(MigrationStep("drop_uniqueness", change.path, unique=True))
         elif change.kind in {"index_added", "index_changed", "index_rebuild_required"}:
             result.add(MigrationStep("rebuild_index", change.path, unique=change.unique))
             if change.unique:

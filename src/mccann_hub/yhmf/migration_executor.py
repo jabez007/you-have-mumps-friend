@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Bounded, resumable additive migrations behind an owned maintenance gate."""
+"""Bounded scalar and index migrations behind an owned maintenance gate."""
 
 import uuid
 from copy import deepcopy
@@ -8,7 +8,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from . import indexes, migration_claims, references
+from . import indexes, migration_claims, migration_cleanup, references
 from .codecs import decode_key
 from .errors import MigrationError, StorageError
 from .maintenance import (
@@ -46,6 +46,7 @@ class _Binding:
     registry: Registry
     plan: MigrationPlan
     defaults: BackfillDefaults
+    cleanup_roots: tuple[Path, ...]
 
 
 def _bind(registry: Registry, source: type[Model], target: type[Model]) -> _Binding:
@@ -56,11 +57,9 @@ def _bind(registry: Registry, source: type[Model], target: type[Model]) -> _Bind
     inspection = SchemaInspection(SchemaSnapshot(new.snapshot), SchemaSnapshot(old.snapshot), True)
     plan = build_plan(inspection)
     if not plan.execution_supported:
-        raise MigrationError(
-            "Migration supports scalar defaults, index additions, and unique promotions"
-        )
+        raise MigrationError("Migration supports scalar defaults and scalar index changes")
     defaults = BackfillDefaults(new, plan)
-    return _Binding(old, new, registry, plan, defaults)
+    return _Binding(old, new, registry, plan, defaults, migration_cleanup.retired_roots(old, plan))
 
 
 def _check_review(binding: _Binding, reviewed: MigrationPlan) -> None:
@@ -76,6 +75,8 @@ def _check_review(binding: _Binding, reviewed: MigrationPlan) -> None:
 def _check_new_indexes_empty(store: Store, binding: _Binding) -> None:
     for change in binding.plan.changes:
         if change.kind not in {"index_added", "index_changed"}:
+            continue
+        if change.kind == "index_changed" and not change.unique:
             continue
         path = Path(
             "^YHMFIndex",
@@ -212,14 +213,14 @@ def _prepare(store: Store, binding: _Binding, key: bytes, status: MigrationStatu
     _check_additions(store, additions, status.phase)
     old_entries = indexes.entries(binding.source, root, old)
     new_entries = indexes.entries(binding.target, root, new)
-    extension = indexes.check_extension(
-        store, old_entries, new_entries, built=status.phase in {"verify", "retag"}
+    transition = indexes.check_transition(
+        store, old_entries, new_entries, updated=status.phase in {"verify", "retag"}
     )
     _validate_targets(store, binding, references.links(binding.registry, binding.target, root, new))
     if status.phase == "validate":
-        migration_claims.reserve(store, status.migration_id, extension.claims)
+        migration_claims.reserve(store, status.migration_id, transition.claims)
     else:
-        migration_claims.verify(store, status.migration_id, extension.claims)
+        migration_claims.verify(store, status.migration_id, transition.claims)
     return _Record(root, additions, old_entries, new_entries)
 
 
@@ -235,7 +236,7 @@ def _process(store: Store, binding: _Binding, key: bytes, status: MigrationStatu
     if status.phase == "backfill":
         for path, value in record.additions.items():
             store.set(path, value)
-        indexes.extend(store, record.old_entries, record.new_entries)
+        indexes.apply_transition(store, record.old_entries, record.new_entries)
     elif status.phase == "retag":
         for name, value in metadata(binding.target).items():
             store.set(record.root.child(b"%m", name), value)
@@ -243,12 +244,20 @@ def _process(store: Store, binding: _Binding, key: bytes, status: MigrationStatu
 
 def _check_counts(status: MigrationStatus) -> None:
     counts = (status.validated, status.backfilled, status.verified, status.retagged)
-    index = ("validate", "backfill", "verify", "retag", "activate", "complete").index(status.phase)
+    index = ("validate", "backfill", "verify", "retag", "cleanup", "activate", "complete").index(
+        status.phase
+    )
     if len(set(counts[:index])) > 1 or any(counts[index + 1 :]):
         raise StorageError("Migration counters do not match the current phase")
 
 
-def _activate(store: Store, status: MigrationStatus, target: bytes) -> MigrationStatus:
+def _activate(
+    store: Store, status: MigrationStatus, target: bytes, retired: tuple[Path, ...]
+) -> MigrationStatus:
+    if not migration_cleanup.empty(store, retired):
+        result = replace(status, phase="cleanup", cursor=b"")
+        save_status(store, result)
+        return result
     root = schema_path(status.global_name)
     store.set(root.child(b"snapshot"), target)
     store.set(root, status.target_fingerprint.encode("ascii"))
@@ -283,7 +292,9 @@ def advance(
             raise MigrationError("Resume bindings do not match the saved migration snapshots")
         _check_counts(status)
         if status.phase == "activate":
-            return _activate(store, status, manifests[1])
+            return _activate(store, status, manifests[1], binding.cleanup_roots)
+        if status.phase == "cleanup":
+            return migration_cleanup.advance(store, status, binding.cleanup_roots, limit=batch_size)
         return _batch(store, binding, status, batch_size)
 
     return store.atomic(attempt)
@@ -311,6 +322,8 @@ def _batch(store: Store, binding: _Binding, status: MigrationStatus, limit: int)
         changes["cursor"] = keys[-1]
     else:
         changes.update(phase=_NEXT[status.phase], cursor=b"")
+        if status.phase == "retag" and binding.cleanup_roots:
+            changes["phase"] = "cleanup"
     updated = replace(status, **changes)
     _check_counts(updated)
     save_status(store, updated)
@@ -322,8 +335,15 @@ def abort(store: Store, migration_id: str) -> MigrationStatus:
         status = load_status(store, migration_id)
         if status.phase == "aborted":
             return status
-        if status.phase == "complete" or status.backfilled or status.retagged:
-            raise MigrationError("A committed backfill must be resumed; it cannot be aborted")
+        if (
+            status.phase == "complete"
+            or status.backfilled
+            or status.retagged
+            or migration_cleanup.removed_count(store, migration_id)
+        ):
+            raise MigrationError(
+                "Committed migration updates must be resumed; they cannot be aborted"
+            )
         require_owner(store, status)
         source, _ = _check_manifests(store, status)
         store.set(

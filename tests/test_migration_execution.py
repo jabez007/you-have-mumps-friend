@@ -169,7 +169,7 @@ def test_stale_source_and_resume_bindings_leave_checkpoint_unchanged(store):
     assert snapshot(store) == before
 
 
-@pytest.mark.parametrize("kind", ["demotion", "removed", "factory", "type", "reference"])
+@pytest.mark.parametrize("kind", ["validation", "removed", "factory", "type", "reference"])
 def test_unsupported_changes_do_not_claim_maintenance(store, kind):
     seed(store)
     calls = []
@@ -178,8 +178,8 @@ def test_unsupported_changes_do_not_claim_maintenance(store, kind):
         calls.append(1)
         return "generated"
 
-    class Demoted(Product):
-        sku: str = Field(index=True)
+    class Constrained(Product):
+        name: str = Field(min_length=1)
 
     class Removed(Model):
         __global__ = Product.__global__
@@ -195,7 +195,7 @@ def test_unsupported_changes_do_not_claim_maintenance(store, kind):
         parent: Reference[Product] | None = None
 
     target = {
-        "demotion": Demoted,
+        "validation": Constrained,
         "removed": Removed,
         "factory": Dynamic,
         "type": Numeric,

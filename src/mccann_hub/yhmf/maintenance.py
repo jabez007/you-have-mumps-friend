@@ -11,7 +11,7 @@ from .errors import MaintenanceActive, MigrationError, StorageError
 from .storage import Path, Store
 
 GATE = Path("^YHMFMigration", (b"gate",))
-PHASES = ("validate", "backfill", "verify", "retag", "activate", "complete", "aborted")
+PHASES = ("validate", "backfill", "verify", "retag", "cleanup", "activate", "complete", "aborted")
 
 
 def job_path(migration_id: str) -> Path:

@@ -263,7 +263,7 @@ changes require an explicit migration.
 
 Schema comparisons and deterministic review plans are implemented. The initial
 executor supports scalar literal-default backfills in existing owned trees, new scalar indexes,
-and promotion of equality indexes to unique. Job-scoped reservations detect
+and index promotion, uniqueness downgrade, or removal. Job-scoped reservations detect
 duplicate values across validation batches before application data changes.
 It uses a maintenance gate and bounded checkpoints before
 atomic activation. Broader migration execution remains a later milestone.
@@ -388,15 +388,16 @@ Semantic snapshot comparisons and deterministic migration review plans are
 implemented, including nested fields, identity, relationships, and index
 definitions. Planning is read-only and does not inspect record values or prove
 data compatibility. An additive migration executor now supports scalar
-literal defaults, index additions, and promotion of equality indexes to unique
+literal defaults, index additions, promotions, uniqueness downgrades, and removals
 at roots and inside existing embedded objects and child collections. Null owners
 remain null, and child identities and collection counts are preserved. Each
 parent tree commits atomically, and progress is checkpointed by parent. A database-wide
 maintenance gate, source fingerprint barrier, bounded transactional checkpoints,
-four validation/backfill/verification/metadata passes, and atomic activation
+four validation/update/verification/metadata passes, bounded cleanup of retired
+index namespaces, and atomic activation
 keep partial results inaccessible. Failed batches resume from their preceding
-checkpoint. Abort is available only before the first backfill commits. New owned
-containers, destructive, reference, and uniqueness-downgrade migrations remain
+checkpoint. Abort is available before any update batch or cleanup deletion
+commits. New owned containers, field destruction, and reference migrations remain
 later work.
 
 Begin with a storage-contract prototype rather than a full ORM.
