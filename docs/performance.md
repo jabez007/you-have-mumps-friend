@@ -80,8 +80,11 @@ an unrelated collection under the same root. Cleanup is outside timing and count
 the final aggregate and indexes are checked independently of the timed interval.
 Methods compare direct node writes, `insert_child`, and atomic root read/save. The
 direct baseline maintains object/count markers but omits mapper validation, metadata,
-limits, and secondary integrity checks. No new native measurements are claimed here
-until this benchmark executes in CI.
+limits, and secondary integrity checks. Both supported engines executed these workloads in
+[CI run 42312220389](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42312220389),
+source `73b87d1510aa873ab5c488a2ce445e77f6cec7f4`. The
+[complete insertion results](benchmarks/native-child-insertion-2026-11-06.json) include
+environment, median/p95, and node-operation counts.
 
 Insertion now counts flat child collections using their transactional c:N markers and
 declared field width. It descends only into variable-width owned containers when
@@ -257,3 +260,34 @@ and invalidation semantics; stored metadata must remain checked within each TP
 attempt. Unique-claim conflict-rate and longer contention measurements are also
 remaining follow-ups. These results do not motivate record revisions, a storage
 format migration, or a native extension as a performance shortcut.
+
+
+### Child insertion results
+
+[CI run 42312220389](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42312220389)
+executed both supported engines at source `73b87d1510aa873ab5c488a2ce445e77f6cec7f4`.
+The [raw results](benchmarks/native-child-insertion-2026-11-06.json) retain all sizes,
+environments, p95 values, and operation counts. Median times below are microseconds.
+
+| Engine | Collection growing | Existing lots | Direct | insert_child | Whole replacement |
+| --- | --- | ---: | ---: | ---: | ---: |
+| r2.02 | Target | 1 | 21.73 | 171.27 | 348.71 |
+| r2.02 | Target | 999 | 21.62 | 172.70 | 58,222.03 |
+| r2.02 | Unrelated | 1 | 21.35 | 180.32 | 406.18 |
+| r2.02 | Unrelated | 999 | 21.43 | 185.37 | 57,111.01 |
+| r2.06 | Target | 1 | 36.58 | 272.29 | 540.48 |
+| r2.06 | Target | 999 | 37.06 | 277.58 | 74,546.72 |
+| r2.06 | Unrelated | 1 | 36.26 | 291.95 | 621.36 |
+| r2.06 | Unrelated | 999 | 36.27 | 301.77 | 74,517.79 |
+
+At every size, target-collection insertion used 18 reads, four writes, two child
+enumerations, and one transaction attempt. Inserting into a separate empty collection
+used 21 reads with the same writes, enumerations, and attempts. Direct insertion used
+one read and four writes. Whole replacement grew from 46 to 6,034 reads for the target
+pattern and from 52 to 6,040 for the unrelated pattern, and deleted the root each time.
+
+These serial warm samples establish bounded node work for this fixed-width layout.
+They do not measure insertion contention, crash recovery, cold caches, or sustained
+throughput. No fsync or journal setting is independently varied in this run. The
+existing patch contention tests exercise a different operation and cannot qualify
+concurrent insertion performance. Runner and engine effects are not isolated.

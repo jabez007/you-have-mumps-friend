@@ -1,0 +1,749 @@
+{
+  "ci_run": "https://github.com/jabez007/you-have-mumps-friend/actions/runs/42312220389",
+  "format_version": 1,
+  "results": [
+    {
+      "cpu_model": "AMD EPYC 9V74 80-Core Processor",
+      "insertions": [
+        {
+          "existing_lots": 1,
+          "iterations": 40,
+          "median_us": 21.73,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "get": 1.0,
+            "set": 4.0
+          },
+          "p95_us": 24.61,
+          "pattern": "target_collection"
+        },
+        {
+          "existing_lots": 1,
+          "iterations": 40,
+          "median_us": 171.27,
+          "method": "insert_child",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 2.0,
+            "get": 18.0,
+            "set": 4.0
+          },
+          "p95_us": 194.48,
+          "pattern": "target_collection"
+        },
+        {
+          "existing_lots": 1,
+          "iterations": 40,
+          "median_us": 348.71,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 1.0,
+            "get": 46.0,
+            "set": 15.0
+          },
+          "p95_us": 368.44,
+          "pattern": "target_collection"
+        },
+        {
+          "existing_lots": 1,
+          "iterations": 40,
+          "median_us": 21.35,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "get": 1.0,
+            "set": 4.0
+          },
+          "p95_us": 23.14,
+          "pattern": "unrelated_collection"
+        },
+        {
+          "existing_lots": 1,
+          "iterations": 40,
+          "median_us": 180.32,
+          "method": "insert_child",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 2.0,
+            "get": 21.0,
+            "set": 4.0
+          },
+          "p95_us": 196.34,
+          "pattern": "unrelated_collection"
+        },
+        {
+          "existing_lots": 1,
+          "iterations": 40,
+          "median_us": 406.18,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 6.0,
+            "delete_tree": 1.0,
+            "get": 52.0,
+            "set": 18.0
+          },
+          "p95_us": 448.63,
+          "pattern": "unrelated_collection"
+        },
+        {
+          "existing_lots": 10,
+          "iterations": 40,
+          "median_us": 20.98,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "get": 1.0,
+            "set": 4.0
+          },
+          "p95_us": 32.81,
+          "pattern": "target_collection"
+        },
+        {
+          "existing_lots": 10,
+          "iterations": 40,
+          "median_us": 164.97,
+          "method": "insert_child",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 2.0,
+            "get": 18.0,
+            "set": 4.0
+          },
+          "p95_us": 183.53,
+          "pattern": "target_collection"
+        },
+        {
+          "existing_lots": 10,
+          "iterations": 40,
+          "median_us": 863.64,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 1.0,
+            "get": 100.0,
+            "set": 42.0
+          },
+          "p95_us": 888.27,
+          "pattern": "target_collection"
+        },
+        {
+          "existing_lots": 10,
+          "iterations": 40,
+          "median_us": 21.22,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "get": 1.0,
+            "set": 4.0
+          },
+          "p95_us": 22.13,
+          "pattern": "unrelated_collection"
+        },
+        {
+          "existing_lots": 10,
+          "iterations": 40,
+          "median_us": 180.94,
+          "method": "insert_child",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 2.0,
+            "get": 21.0,
+            "set": 4.0
+          },
+          "p95_us": 198.83,
+          "pattern": "unrelated_collection"
+        },
+        {
+          "existing_lots": 10,
+          "iterations": 40,
+          "median_us": 925.88,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 6.0,
+            "delete_tree": 1.0,
+            "get": 106.0,
+            "set": 45.0
+          },
+          "p95_us": 961.53,
+          "pattern": "unrelated_collection"
+        },
+        {
+          "existing_lots": 100,
+          "iterations": 40,
+          "median_us": 21.46,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "get": 1.0,
+            "set": 4.0
+          },
+          "p95_us": 33.55,
+          "pattern": "target_collection"
+        },
+        {
+          "existing_lots": 100,
+          "iterations": 40,
+          "median_us": 167.52,
+          "method": "insert_child",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 2.0,
+            "get": 18.0,
+            "set": 4.0
+          },
+          "p95_us": 184.29,
+          "pattern": "target_collection"
+        },
+        {
+          "existing_lots": 100,
+          "iterations": 40,
+          "median_us": 6049.19,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 1.0,
+            "get": 640.0,
+            "set": 312.0
+          },
+          "p95_us": 6170.51,
+          "pattern": "target_collection"
+        },
+        {
+          "existing_lots": 100,
+          "iterations": 40,
+          "median_us": 22.08,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "get": 1.0,
+            "set": 4.0
+          },
+          "p95_us": 23.42,
+          "pattern": "unrelated_collection"
+        },
+        {
+          "existing_lots": 100,
+          "iterations": 40,
+          "median_us": 186.84,
+          "method": "insert_child",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 2.0,
+            "get": 21.0,
+            "set": 4.0
+          },
+          "p95_us": 209.56,
+          "pattern": "unrelated_collection"
+        },
+        {
+          "existing_lots": 100,
+          "iterations": 40,
+          "median_us": 6219.73,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 6.0,
+            "delete_tree": 1.0,
+            "get": 646.0,
+            "set": 315.0
+          },
+          "p95_us": 6516.57,
+          "pattern": "unrelated_collection"
+        },
+        {
+          "existing_lots": 999,
+          "iterations": 40,
+          "median_us": 21.62,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "get": 1.0,
+            "set": 4.0
+          },
+          "p95_us": 23.66,
+          "pattern": "target_collection"
+        },
+        {
+          "existing_lots": 999,
+          "iterations": 40,
+          "median_us": 172.7,
+          "method": "insert_child",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 2.0,
+            "get": 18.0,
+            "set": 4.0
+          },
+          "p95_us": 204.24,
+          "pattern": "target_collection"
+        },
+        {
+          "existing_lots": 999,
+          "iterations": 40,
+          "median_us": 58222.03,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 1.0,
+            "get": 6034.0,
+            "set": 3009.0
+          },
+          "p95_us": 64932.56,
+          "pattern": "target_collection"
+        },
+        {
+          "existing_lots": 999,
+          "iterations": 40,
+          "median_us": 21.43,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "get": 1.0,
+            "set": 4.0
+          },
+          "p95_us": 23.51,
+          "pattern": "unrelated_collection"
+        },
+        {
+          "existing_lots": 999,
+          "iterations": 40,
+          "median_us": 185.37,
+          "method": "insert_child",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 2.0,
+            "get": 21.0,
+            "set": 4.0
+          },
+          "p95_us": 203.6,
+          "pattern": "unrelated_collection"
+        },
+        {
+          "existing_lots": 999,
+          "iterations": 40,
+          "median_us": 57111.01,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 6.0,
+            "delete_tree": 1.0,
+            "get": 6040.0,
+            "set": 3012.0
+          },
+          "p95_us": 62933.05,
+          "pattern": "unrelated_collection"
+        }
+      ],
+      "logical_cpus": 4,
+      "platform": "Linux-6.8.0-1070-azure-x86_64-with-glibc2.35",
+      "pydantic": "2.14.3",
+      "python": "3.12.12",
+      "source_commit": "73b87d1510aa873ab5c488a2ce445e77f6cec7f4",
+      "yottadb": "pywr v0.10.0 YottaDB r2.02 Linux x86_64"
+    },
+    {
+      "cpu_model": "AMD EPYC 7763 64-Core Processor",
+      "insertions": [
+        {
+          "existing_lots": 1,
+          "iterations": 40,
+          "median_us": 36.58,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "get": 1.0,
+            "set": 4.0
+          },
+          "p95_us": 40.53,
+          "pattern": "target_collection"
+        },
+        {
+          "existing_lots": 1,
+          "iterations": 40,
+          "median_us": 272.29,
+          "method": "insert_child",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 2.0,
+            "get": 18.0,
+            "set": 4.0
+          },
+          "p95_us": 281.09,
+          "pattern": "target_collection"
+        },
+        {
+          "existing_lots": 1,
+          "iterations": 40,
+          "median_us": 540.48,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 1.0,
+            "get": 46.0,
+            "set": 15.0
+          },
+          "p95_us": 557.7,
+          "pattern": "target_collection"
+        },
+        {
+          "existing_lots": 1,
+          "iterations": 40,
+          "median_us": 36.26,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "get": 1.0,
+            "set": 4.0
+          },
+          "p95_us": 55.58,
+          "pattern": "unrelated_collection"
+        },
+        {
+          "existing_lots": 1,
+          "iterations": 40,
+          "median_us": 291.95,
+          "method": "insert_child",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 2.0,
+            "get": 21.0,
+            "set": 4.0
+          },
+          "p95_us": 319.17,
+          "pattern": "unrelated_collection"
+        },
+        {
+          "existing_lots": 1,
+          "iterations": 40,
+          "median_us": 621.36,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 6.0,
+            "delete_tree": 1.0,
+            "get": 52.0,
+            "set": 18.0
+          },
+          "p95_us": 639.77,
+          "pattern": "unrelated_collection"
+        },
+        {
+          "existing_lots": 10,
+          "iterations": 40,
+          "median_us": 35.93,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "get": 1.0,
+            "set": 4.0
+          },
+          "p95_us": 53.39,
+          "pattern": "target_collection"
+        },
+        {
+          "existing_lots": 10,
+          "iterations": 40,
+          "median_us": 285.51,
+          "method": "insert_child",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 2.0,
+            "get": 18.0,
+            "set": 4.0
+          },
+          "p95_us": 341.91,
+          "pattern": "target_collection"
+        },
+        {
+          "existing_lots": 10,
+          "iterations": 40,
+          "median_us": 1211.73,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 1.0,
+            "get": 100.0,
+            "set": 42.0
+          },
+          "p95_us": 1251.17,
+          "pattern": "target_collection"
+        },
+        {
+          "existing_lots": 10,
+          "iterations": 40,
+          "median_us": 35.97,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "get": 1.0,
+            "set": 4.0
+          },
+          "p95_us": 39.66,
+          "pattern": "unrelated_collection"
+        },
+        {
+          "existing_lots": 10,
+          "iterations": 40,
+          "median_us": 293.45,
+          "method": "insert_child",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 2.0,
+            "get": 21.0,
+            "set": 4.0
+          },
+          "p95_us": 320.27,
+          "pattern": "unrelated_collection"
+        },
+        {
+          "existing_lots": 10,
+          "iterations": 40,
+          "median_us": 1308.34,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 6.0,
+            "delete_tree": 1.0,
+            "get": 106.0,
+            "set": 45.0
+          },
+          "p95_us": 1349.24,
+          "pattern": "unrelated_collection"
+        },
+        {
+          "existing_lots": 100,
+          "iterations": 40,
+          "median_us": 36.81,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "get": 1.0,
+            "set": 4.0
+          },
+          "p95_us": 55.81,
+          "pattern": "target_collection"
+        },
+        {
+          "existing_lots": 100,
+          "iterations": 40,
+          "median_us": 276.94,
+          "method": "insert_child",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 2.0,
+            "get": 18.0,
+            "set": 4.0
+          },
+          "p95_us": 304.4,
+          "pattern": "target_collection"
+        },
+        {
+          "existing_lots": 100,
+          "iterations": 40,
+          "median_us": 7989.81,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 1.0,
+            "get": 640.0,
+            "set": 312.0
+          },
+          "p95_us": 8117.59,
+          "pattern": "target_collection"
+        },
+        {
+          "existing_lots": 100,
+          "iterations": 40,
+          "median_us": 36.07,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "get": 1.0,
+            "set": 4.0
+          },
+          "p95_us": 55.99,
+          "pattern": "unrelated_collection"
+        },
+        {
+          "existing_lots": 100,
+          "iterations": 40,
+          "median_us": 293.14,
+          "method": "insert_child",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 2.0,
+            "get": 21.0,
+            "set": 4.0
+          },
+          "p95_us": 320.15,
+          "pattern": "unrelated_collection"
+        },
+        {
+          "existing_lots": 100,
+          "iterations": 40,
+          "median_us": 8080.5,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 6.0,
+            "delete_tree": 1.0,
+            "get": 646.0,
+            "set": 315.0
+          },
+          "p95_us": 8225.77,
+          "pattern": "unrelated_collection"
+        },
+        {
+          "existing_lots": 999,
+          "iterations": 40,
+          "median_us": 37.06,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "get": 1.0,
+            "set": 4.0
+          },
+          "p95_us": 58.2,
+          "pattern": "target_collection"
+        },
+        {
+          "existing_lots": 999,
+          "iterations": 40,
+          "median_us": 277.58,
+          "method": "insert_child",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 2.0,
+            "get": 18.0,
+            "set": 4.0
+          },
+          "p95_us": 303.25,
+          "pattern": "target_collection"
+        },
+        {
+          "existing_lots": 999,
+          "iterations": 40,
+          "median_us": 74546.72,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 1.0,
+            "get": 6034.0,
+            "set": 3009.0
+          },
+          "p95_us": 82500.35,
+          "pattern": "target_collection"
+        },
+        {
+          "existing_lots": 999,
+          "iterations": 40,
+          "median_us": 36.27,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "get": 1.0,
+            "set": 4.0
+          },
+          "p95_us": 54.62,
+          "pattern": "unrelated_collection"
+        },
+        {
+          "existing_lots": 999,
+          "iterations": 40,
+          "median_us": 301.77,
+          "method": "insert_child",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 2.0,
+            "get": 21.0,
+            "set": 4.0
+          },
+          "p95_us": 352.61,
+          "pattern": "unrelated_collection"
+        },
+        {
+          "existing_lots": 999,
+          "iterations": 40,
+          "median_us": 74517.79,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 6.0,
+            "delete_tree": 1.0,
+            "get": 6040.0,
+            "set": 3012.0
+          },
+          "p95_us": 82499.32,
+          "pattern": "unrelated_collection"
+        }
+      ],
+      "logical_cpus": 4,
+      "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+      "pydantic": "2.14.3",
+      "python": "3.12.3",
+      "source_commit": "73b87d1510aa873ab5c488a2ce445e77f6cec7f4",
+      "yottadb": "pywr v0.10.0 YottaDB r2.06 Linux x86_64"
+    }
+  ],
+  "warmup_iterations": 5
+}
