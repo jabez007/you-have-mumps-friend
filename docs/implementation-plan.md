@@ -370,3 +370,12 @@ Translate Python's decimal integer conversion limit into a value-free StorageErr
 preserving its ValueError inheritance. Reject oversized encoded keys before integer
 conversion. Keep current encodings, interpreter limits, and finite-number rules.
 Prove both codec failures and rollback of prior atomic writes. C901 passes at ten.
+
+### Reference binding diagnostics, issue 9
+
+Keep Registry's exact-declaration binding and reference_fields traversal. Name the
+source declaration, field, and missing target at validation rather than falling
+through to the generic database-access error. Document explicit target rebinding
+and prove that unchanged target identities need no referrer migration. Resolving
+by global name would silently substitute Python validation behavior and requires
+a separate contract. No schema, layout, or API changes; C901 passes at ten.

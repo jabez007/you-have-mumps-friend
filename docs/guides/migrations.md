@@ -156,6 +156,13 @@ does not replace values already stored.
 Plans are per top-level model. Identity and reference changes can require coordination with
 other models.
 
+If another model contains `Reference[OldTarget]`, redeclare that field as
+`Reference[NewTarget]` and register the new target and referrer together. Registries bind
+references to exact Python declarations. When the target global and key identity are
+unchanged, the referrer's persistence contract stays identical and needs no separate
+migration. Target key or global changes require a reviewed data migration; rebinding the
+Python class alone does not make them compatible.
+
 Planning inspects the schema and does a bounded data-presence check. It does not scan or
 validate records, run factories or validators, rebuild indexes, or write any node.
 

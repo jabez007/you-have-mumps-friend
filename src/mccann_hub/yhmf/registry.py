@@ -297,7 +297,12 @@ class Registry:
         for spec in self._specs.values():
             for field in reference_fields(spec.fields):
                 assert field.target is not None
-                self.spec(field.target)
+                if field.target not in self._specs:
+                    raise SchemaError(
+                        f"{spec.model.__name__}.{field.name} references unregistered target "
+                        f"{field.target.__name__}; register that exact target declaration or "
+                        "redeclare the reference against its registered replacement"
+                    )
 
     def register(self, model: type[Model]) -> ModelSpec:
         if model in self._specs:

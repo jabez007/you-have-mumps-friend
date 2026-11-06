@@ -34,7 +34,6 @@ Integers beyond Python's configured decimal conversion limit now raise `StorageE
 | --- | --- | --- |
 | `insert_child` reads the whole aggregate, so its cost and its conflict rate grow with the aggregate. | Keep shared collections small, or model high-volume children as top-level records. | [#4](https://github.com/jabez007/you-have-mumps-friend/issues/4) |
 | A too-small region gives a raw `%YDB-E-REC2BIG` error on first write. | [Create the region](guides/native-setup.md#create-a-database) with larger limits. | [#6](https://github.com/jabez007/you-have-mumps-friend/issues/6) |
-| Migrating a model that another model references requires redefining the referring model too, and `Registry(NewTarget, OldReferrer)` gives a misleading error. | Redefine the referrer against the new target. | [#9](https://github.com/jabez007/you-have-mumps-friend/issues/9) |
 | Swapping two unique values in one transaction raises `UniqueViolation`, because constraints apply after each write. | Move one value to a temporary value first. | [#23](https://github.com/jabez007/you-have-mumps-friend/issues/23) |
 
 ## Missing features
@@ -55,6 +54,12 @@ These features are not in version 0.5.0:
 - Change tracking. `save` always rewrites the whole aggregate. [#27](https://github.com/jabez007/you-have-mumps-friend/issues/27)
 
 ## Operating limits
+
+- Registries bind references to exact target declarations. After changing a target,
+  redefine referring fields against that declaration. Errors now name the source field
+  and missing target. A referrer needs no migration when the target global and key identity
+  are unchanged. See the [migration guide](guides/migrations.md) and
+  [#9](https://github.com/jabez007/you-have-mumps-friend/issues/9).
 
 - A migration or index rebuild blocks ordinary mapper operations on every model in the
   database until it finishes. See [stop other clients first](guides/migrations.md#stop-other-clients-first)

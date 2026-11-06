@@ -206,7 +206,7 @@ def test_reference_is_immutable():
 
 
 def test_reference_target_must_be_registered():
-    with pytest.raises(SchemaError, match="Register"):
+    with pytest.raises(SchemaError, match=r"Order\.product references unregistered target Product"):
         Registry(Order)
 
 
