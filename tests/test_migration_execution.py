@@ -371,3 +371,35 @@ def test_owned_values_and_existing_references_survive_migration(store):
     assert {p: v for p, v in after.items() if p.global_name in {"^YHMFRef", "^YHMFUnique"}} == {
         p: v for p, v in before.items() if p.global_name in {"^YHMFRef", "^YHMFUnique"}
     }
+
+
+def test_migration_rejects_corrupted_external_reference_target_schema(store):
+    class Target(Model):
+        __global__ = "^YHMFTestProduct"
+        id: str = Field(primary_key=True)
+
+    class Source(Model):
+        __global__ = "^YHMFTestOrder"
+        id: str = Field(primary_key=True)
+        target: Reference[Target]
+
+    class Added(Source):
+        __schema_version__ = 2
+        note: str = "new"
+
+    old = Database(store, Registry(Target, Source))
+    old.insert(Target(id="P"))
+    old.insert(Source(id="S", target=Reference[Target](key="P")))
+    db = Database(store, Registry(Target, Added))
+    status = db.begin_migration(Source, Added, plan=db.plan_migration(Added))
+    target_schema = schema_path(Target.__global__)
+    saved = store.get(target_schema.child(b"snapshot"))
+    store.delete_tree(target_schema.child(b"snapshot"))
+    with pytest.raises(StorageError):
+        db.advance_migration(status.migration_id, Source, Added, batch_size=1)
+    assert db.migration_status(status.migration_id) == status
+    assert store.get(Path(Source.__global__, (b"s:S", b"note"))) is None
+    store.set(target_schema.child(b"snapshot"), saved)
+    progressed = db.advance_migration(status.migration_id, Source, Added, batch_size=1)
+    assert progressed.validated == 1
+    db.abort_migration(status.migration_id)
