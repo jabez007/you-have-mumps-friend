@@ -277,6 +277,16 @@ field with a literal default can describe a backfill. Required fields without
 defaults and fields with default factories require manual values. Comparing
 snapshots does not run validators or default factories.
 
+Legacy schema fingerprints include Pydantic's generated JSON Schema. They are
+not stable across every compatible Pydantic release: the same Decimal declaration
+has different bytes under tested versions 2.12.0 and 2.14.3. Pin your application's
+Pydantic version in its lockfile when deploying an installed schema. Upgrading
+YHMF to v0.3.1 preserves existing schema identities; upgrading Pydantic requires a
+separate compatibility review. A mismatch is rejected without modifying data.
+Do not delete metadata to bypass it. A framework-owned successor and its explicit
+metadata migration are designed in [ADR 0002](docs/adr/0002-schema-fingerprint-compatibility.md)
+but are not activated by this release.
+
 ## Review a migration plan
 
 ```python
@@ -474,6 +484,16 @@ first committed clearing deletion or reconstruction batch. After that, recovery
 requires resume or operator-managed restoration. Raw writers must remain stopped.
 Rebuilding reverse-reference counts, repairing application records, and pruning
 historical maintenance metadata remain outside this operation.
+
+## v0.3.1 hardening
+
+Version `0.3.1` rejects implicit installation over any unmanaged global data,
+checks both installed metadata nodes during CRUD, and adds bounded explicit
+layout-one adoption. Schema identities and layout version one are preserved.
+Legacy fingerprint drift across Pydantic versions is confirmed and documented;
+a new fingerprint format is proposed, not activated. Detached `save` remains
+last-writer-wins; `atomic` protects read/modify/write when the read occurs inside
+the callback. Optimistic record revisions are deferred beyond v0.4.
 
 ## v0.3 release scope
 

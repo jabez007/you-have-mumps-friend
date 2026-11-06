@@ -58,3 +58,23 @@ def test_crud_never_trusts_incomplete_or_changed_snapshot(store, damage, operati
         operations[operation]()
     assert store.get(Path(Product.__global__, (b"s:old", b"name"))) == b"s:Old"
     assert store.get(Path(Product.__global__, (b"s:new", b"name"))) is None
+
+
+def test_detached_save_replaces_the_other_copy_but_atomic_reads_current_state(store):
+    db = Database(store, Registry(Product))
+    db.insert(Product(id="one", name="Initial"))
+    first = db.get(Product, "one")
+    second = db.get(Product, "one")
+    first.name = "First"
+    db.save(first)
+    second.name += "-second"
+    db.save(second)
+    assert db.get(Product, "one").name == "Initial-second"
+
+    def update(tx):
+        current = tx.get(Product, "one")
+        current.name += "-atomic"
+        tx.save(current)
+
+    db.atomic(update)
+    assert db.get(Product, "one").name == "Initial-second-atomic"

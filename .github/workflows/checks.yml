@@ -19,6 +19,23 @@ jobs:
           uv venv /tmp/yhmf-wheel --python 3.12
           uv pip install --python /tmp/yhmf-wheel/bin/python dist/*.whl
           /tmp/yhmf-wheel/bin/python -I scripts/smoke-wheel.py
+  fingerprints:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        pydantic: ["2.12.0", "2.14.3"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.9.5"
+      - name: Qualify legacy fingerprint generation
+        run: >-
+          uv run --isolated --no-project --python 3.12
+          --with 'pytest>=8,<9' --with 'pydantic==${{ matrix.pydantic }}'
+          python -m pytest tests/test_schema_fingerprints.py -m 'not native' -q
+        env:
+          PYTHONPATH: src
   native:
     strategy:
       fail-fast: false
