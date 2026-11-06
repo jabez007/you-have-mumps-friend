@@ -152,10 +152,17 @@ def test_primary_key_type_changes_affect_the_whole_identity():
 
 
 def test_presentation_changes_do_not_become_data_transformations():
+    from mccann_hub.yhmf.registry import _make_spec
+
     class Presentation(Product):
         name: str = Field(description="A revised label")
 
-    assert change_kinds(snapshot(Product), snapshot(Presentation)) == {("metadata_changed", ())}
+    assert change_kinds(snapshot(Product), snapshot(Presentation)) == set()
+    # Legacy snapshots retain their exact bytes, but presentation still does not
+    # become a field transformation when those historical snapshots are compared.
+    old = SchemaSnapshot(_make_spec(Product, legacy=True).snapshot)
+    presented = SchemaSnapshot(_make_spec(Presentation, legacy=True).snapshot)
+    assert change_kinds(old, presented) == {("metadata_changed", ())}
 
 
 def test_existing_default_changes_do_not_become_field_additions():
