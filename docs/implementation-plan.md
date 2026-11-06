@@ -69,3 +69,19 @@ Persistence-input regressions also confirmed that disabling Pydantic instance
 revalidation could admit unchecked nested copies. `cbe6479` makes root save and
 child insertion share recursive plain input construction. All four public-path
 regressions fail with the old methods and pass with the fix.
+
+
+## Follow-up qualification
+
+CI action runtimes were updated to the verified checkout v7.0.1 and setup-uv
+v10.3.3 releases while keeping uv 0.9.5. The native benchmark now measures equality,
+unique, and reference updates, coordinated four-process bursts, callback retry
+work, and separate cProfile summaries. Workload tests verify final data and
+secondary structures. Native profile evidence led to a small guard dispatch
+simplification without caching schema metadata or changing storage layout.
+
+The performance report preserves both measured source commits and all results.
+The optimized implementation passed 852 tests in each native environment, 443
+local tests, and the dependency compatibility checks. New-schema identities,
+optimistic revisions, path-construction optimization, and longer-running workload
+qualification remain separate follow-ups.

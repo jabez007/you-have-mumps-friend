@@ -1,0 +1,3500 @@
+{
+  "ci_run": "https://github.com/jabez007/you-have-mumps-friend/actions/runs/42279862741",
+  "source_commit": "3483458be8d4043559038b318f1047bbe26445d1",
+  "results": [
+    {
+      "contention": [
+        {
+          "callback_attempts": 160,
+          "callback_retries": 0,
+          "commits_per_second": 3155.61,
+          "committed": 160,
+          "elapsed_s": 0.050703,
+          "iterations_per_worker": 40,
+          "lots_per_root": 100,
+          "median_us": 389.52,
+          "method": "patch",
+          "operations_per_commit": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "get": 30.0,
+            "set": 1.0
+          },
+          "p95_us": 453.05,
+          "pattern": "separate_roots",
+          "workers": 4,
+          "workload": "unindexed"
+        },
+        {
+          "callback_attempts": 364,
+          "callback_retries": 204,
+          "commits_per_second": 1180.6,
+          "committed": 160,
+          "elapsed_s": 0.135524,
+          "iterations_per_worker": 40,
+          "lots_per_root": 100,
+          "median_us": 847.2,
+          "method": "patch",
+          "operations_per_commit": {
+            "atomic": 1.0,
+            "attempts": 2.275,
+            "get": 65.3,
+            "set": 1.8125
+          },
+          "p95_us": 1721.26,
+          "pattern": "separate_children",
+          "workers": 4,
+          "workload": "unindexed"
+        },
+        {
+          "callback_attempts": 345,
+          "callback_retries": 185,
+          "commits_per_second": 1200.14,
+          "committed": 160,
+          "elapsed_s": 0.133318,
+          "iterations_per_worker": 40,
+          "lots_per_root": 100,
+          "median_us": 394.86,
+          "method": "patch",
+          "operations_per_commit": {
+            "atomic": 1.0,
+            "attempts": 2.15625,
+            "get": 61.4625,
+            "set": 1.65625
+          },
+          "p95_us": 1513.57,
+          "pattern": "same_child",
+          "workers": 4,
+          "workload": "unindexed"
+        },
+        {
+          "callback_attempts": 391,
+          "callback_retries": 231,
+          "commits_per_second": 139.62,
+          "committed": 160,
+          "elapsed_s": 1.145933,
+          "iterations_per_worker": 40,
+          "lots_per_root": 100,
+          "median_us": 17570.66,
+          "method": "replace",
+          "operations_per_commit": {
+            "atomic": 1.0,
+            "attempts": 2.44375,
+            "children": 8.875,
+            "delete_tree": 1.85,
+            "get": 1391.0375,
+            "set": 555.7375
+          },
+          "p95_us": 121309.62,
+          "pattern": "separate_roots",
+          "workers": 4,
+          "workload": "unindexed"
+        },
+        {
+          "callback_attempts": 374,
+          "callback_retries": 214,
+          "commits_per_second": 147.06,
+          "committed": 160,
+          "elapsed_s": 1.087957,
+          "iterations_per_worker": 40,
+          "lots_per_root": 100,
+          "median_us": 12675.56,
+          "method": "replace",
+          "operations_per_commit": {
+            "atomic": 1.0,
+            "attempts": 2.3375,
+            "children": 8.78125,
+            "delete_tree": 1.8875,
+            "get": 1366.66875,
+            "set": 557.94375
+          },
+          "p95_us": 132378.63,
+          "pattern": "separate_children",
+          "workers": 4,
+          "workload": "unindexed"
+        },
+        {
+          "callback_attempts": 368,
+          "callback_retries": 208,
+          "commits_per_second": 147.58,
+          "committed": 160,
+          "elapsed_s": 1.084187,
+          "iterations_per_worker": 40,
+          "lots_per_root": 100,
+          "median_us": 14712.0,
+          "method": "replace",
+          "operations_per_commit": {
+            "atomic": 1.0,
+            "attempts": 2.3,
+            "children": 8.4875,
+            "delete_tree": 1.81875,
+            "get": 1326.66875,
+            "set": 546.60625
+          },
+          "p95_us": 126475.16,
+          "pattern": "same_child",
+          "workers": 4,
+          "workload": "unindexed"
+        },
+        {
+          "callback_attempts": 229,
+          "callback_retries": 69,
+          "commits_per_second": 1183.48,
+          "committed": 160,
+          "elapsed_s": 0.135194,
+          "iterations_per_worker": 40,
+          "lots_per_root": 100,
+          "median_us": 540.53,
+          "method": "patch",
+          "operations_per_commit": {
+            "atomic": 1.0,
+            "attempts": 1.43125,
+            "delete_tree": 1.43125,
+            "get": 51.525,
+            "set": 2.85
+          },
+          "p95_us": 2226.69,
+          "pattern": "separate_roots",
+          "workers": 4,
+          "workload": "indexed"
+        },
+        {
+          "callback_attempts": 358,
+          "callback_retries": 198,
+          "commits_per_second": 1156.93,
+          "committed": 160,
+          "elapsed_s": 0.138297,
+          "iterations_per_worker": 40,
+          "lots_per_root": 100,
+          "median_us": 1120.42,
+          "method": "patch",
+          "operations_per_commit": {
+            "atomic": 1.0,
+            "attempts": 2.2375,
+            "delete_tree": 1.775,
+            "get": 77.65,
+            "set": 3.5125
+          },
+          "p95_us": 2247.0,
+          "pattern": "separate_children",
+          "workers": 4,
+          "workload": "indexed"
+        },
+        {
+          "callback_attempts": 341,
+          "callback_retries": 181,
+          "commits_per_second": 1147.6,
+          "committed": 160,
+          "elapsed_s": 0.139422,
+          "iterations_per_worker": 40,
+          "lots_per_root": 100,
+          "median_us": 583.07,
+          "method": "patch",
+          "operations_per_commit": {
+            "atomic": 1.0,
+            "attempts": 2.13125,
+            "delete_tree": 1.65625,
+            "get": 73.8375,
+            "set": 3.3125
+          },
+          "p95_us": 2225.56,
+          "pattern": "same_child",
+          "workers": 4,
+          "workload": "indexed"
+        },
+        {
+          "callback_attempts": 457,
+          "callback_retries": 297,
+          "commits_per_second": 31.79,
+          "committed": 160,
+          "elapsed_s": 5.032554,
+          "iterations_per_worker": 40,
+          "lots_per_root": 100,
+          "median_us": 121053.72,
+          "method": "replace",
+          "operations_per_commit": {
+            "atomic": 1.0,
+            "attempts": 2.85625,
+            "children": 11.2875,
+            "delete_tree": 4.70625,
+            "get": 4042.525,
+            "set": 1146.04375
+          },
+          "p95_us": 284480.88,
+          "pattern": "separate_roots",
+          "workers": 4,
+          "workload": "indexed"
+        },
+        {
+          "callback_attempts": 454,
+          "callback_retries": 294,
+          "commits_per_second": 32.31,
+          "committed": 160,
+          "elapsed_s": 4.952563,
+          "iterations_per_worker": 40,
+          "lots_per_root": 100,
+          "median_us": 116563.01,
+          "method": "replace",
+          "operations_per_commit": {
+            "atomic": 1.0,
+            "attempts": 2.8375,
+            "children": 11.1625,
+            "delete_tree": 4.40625,
+            "get": 3915.14375,
+            "set": 1077.2375
+          },
+          "p95_us": 288968.6,
+          "pattern": "separate_children",
+          "workers": 4,
+          "workload": "indexed"
+        },
+        {
+          "callback_attempts": 469,
+          "callback_retries": 309,
+          "commits_per_second": 30.64,
+          "committed": 160,
+          "elapsed_s": 5.22218,
+          "iterations_per_worker": 40,
+          "lots_per_root": 100,
+          "median_us": 126771.34,
+          "method": "replace",
+          "operations_per_commit": {
+            "atomic": 1.0,
+            "attempts": 2.93125,
+            "children": 11.6,
+            "delete_tree": 4.8,
+            "get": 4144.4375,
+            "set": 1184.18125
+          },
+          "p95_us": 284057.09,
+          "pattern": "same_child",
+          "workers": 4,
+          "workload": "indexed"
+        }
+      ],
+      "cpu_model": "AMD EPYC 9V74 80-Core Processor",
+      "format_version": 2,
+      "logical_cpus": 4,
+      "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+      "profiles": [
+        {
+          "guard_calls": {
+            "_has_functions": 2550,
+            "_nested_model_schema": 0
+          },
+          "iterations": 25,
+          "lots": 1000,
+          "method": "patch",
+          "profiled_total_s": 0.011651,
+          "top_cumulative": [
+            {
+              "cumulative_s": 0.011951,
+              "function": "benchmark_support.py:147:mutate",
+              "primitive_calls": 25,
+              "self_s": 3.8e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.011897,
+              "function": "mccann_hub/yhmf/repository.py:127:patch",
+              "primitive_calls": 25,
+              "self_s": 2.1e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.011872,
+              "function": "mccann_hub/yhmf/repository.py:82:_run",
+              "primitive_calls": 25,
+              "self_s": 1.8e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.011851,
+              "function": "mccann_hub/yhmf/repository.py:64:atomic",
+              "primitive_calls": 25,
+              "self_s": 2.5e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.011824,
+              "function": "mccann_hub/yhmf/storage.py:149:atomic",
+              "primitive_calls": 25,
+              "self_s": 1.6e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.011808,
+              "function": "yottadb/__init__.py:396:tp",
+              "primitive_calls": 25,
+              "self_s": 1e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.011798,
+              "function": "~:0:<built-in method _yottadb.tp>",
+              "primitive_calls": 25,
+              "self_s": 6e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.011739,
+              "function": "mccann_hub/yhmf/storage.py:152:attempt",
+              "primitive_calls": 25,
+              "self_s": 3.1e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.011696,
+              "function": "mccann_hub/yhmf/repository.py:70:attempt",
+              "primitive_calls": 25,
+              "self_s": 2.9e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.011497,
+              "function": "mccann_hub/yhmf/repository.py:133:attempt",
+              "primitive_calls": 25,
+              "self_s": 5.9e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.01135,
+              "function": "mccann_hub/yhmf/mutations.py:103:patch",
+              "primitive_calls": 25,
+              "self_s": 0.000138,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.007958,
+              "function": "mccann_hub/yhmf/owned.py:107:resolve",
+              "primitive_calls": 25,
+              "self_s": 0.000104,
+              "total_calls": 25
+            }
+          ],
+          "top_self": [
+            {
+              "cumulative_s": 0.003973,
+              "function": "mccann_hub/yhmf/owned.py:45:_has_functions",
+              "primitive_calls": 50,
+              "self_s": 0.001787,
+              "total_calls": 2550
+            },
+            {
+              "cumulative_s": 0.002711,
+              "function": "mccann_hub/yhmf/storage.py:25:__post_init__",
+              "primitive_calls": 475,
+              "self_s": 0.000793,
+              "total_calls": 475
+            },
+            {
+              "cumulative_s": 0.004802,
+              "function": "~:0:<built-in method builtins.any>",
+              "primitive_calls": 575,
+              "self_s": 0.000746,
+              "total_calls": 1625
+            },
+            {
+              "cumulative_s": 0.003791,
+              "function": "mccann_hub/yhmf/owned.py:59:<genexpr>",
+              "primitive_calls": 450,
+              "self_s": 0.000671,
+              "total_calls": 3300
+            },
+            {
+              "cumulative_s": 0.000696,
+              "function": "mccann_hub/yhmf/storage.py:32:<genexpr>",
+              "primitive_calls": 1800,
+              "self_s": 0.00061,
+              "total_calls": 1800
+            },
+            {
+              "cumulative_s": 0.000549,
+              "function": "~:0:<built-in method builtins.isinstance>",
+              "primitive_calls": 6875,
+              "self_s": 0.000549,
+              "total_calls": 6875
+            },
+            {
+              "cumulative_s": 0.000393,
+              "function": "~:0:<built-in method _yottadb.get>",
+              "primitive_calls": 375,
+              "self_s": 0.000393,
+              "total_calls": 375
+            },
+            {
+              "cumulative_s": 0.000378,
+              "function": "~:0:<method 'get' of 'dict' objects>",
+              "primitive_calls": 3650,
+              "self_s": 0.000378,
+              "total_calls": 3650
+            },
+            {
+              "cumulative_s": 0.000627,
+              "function": "copy.py:118:deepcopy",
+              "primitive_calls": 75,
+              "self_s": 0.000304,
+              "total_calls": 325
+            },
+            {
+              "cumulative_s": 0.000371,
+              "function": "mccann_hub/yhmf/storage.py:34:<genexpr>",
+              "primitive_calls": 1800,
+              "self_s": 0.00028,
+              "total_calls": 1800
+            },
+            {
+              "cumulative_s": 0.000606,
+              "function": "~:0:<built-in method builtins.sum>",
+              "primitive_calls": 475,
+              "self_s": 0.000234,
+              "total_calls": 475
+            },
+            {
+              "cumulative_s": 0.000222,
+              "function": "~:0:<method 'startswith' of 'str' objects>",
+              "primitive_calls": 1425,
+              "self_s": 0.000222,
+              "total_calls": 1425
+            }
+          ],
+          "workload": "unindexed"
+        },
+        {
+          "guard_calls": {
+            "_has_functions": 2550,
+            "_nested_model_schema": 0
+          },
+          "iterations": 25,
+          "lots": 1000,
+          "method": "patch",
+          "profiled_total_s": 0.016963,
+          "top_cumulative": [
+            {
+              "cumulative_s": 0.017459,
+              "function": "benchmark_support.py:147:mutate",
+              "primitive_calls": 25,
+              "self_s": 3.3e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.017399,
+              "function": "mccann_hub/yhmf/repository.py:127:patch",
+              "primitive_calls": 25,
+              "self_s": 2.3e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.017371,
+              "function": "mccann_hub/yhmf/repository.py:82:_run",
+              "primitive_calls": 25,
+              "self_s": 1.8e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.01735,
+              "function": "mccann_hub/yhmf/repository.py:64:atomic",
+              "primitive_calls": 25,
+              "self_s": 2.7e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.017321,
+              "function": "mccann_hub/yhmf/storage.py:149:atomic",
+              "primitive_calls": 25,
+              "self_s": 1.8e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.017303,
+              "function": "yottadb/__init__.py:396:tp",
+              "primitive_calls": 25,
+              "self_s": 1e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.017293,
+              "function": "~:0:<built-in method _yottadb.tp>",
+              "primitive_calls": 25,
+              "self_s": 9.2e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.017201,
+              "function": "mccann_hub/yhmf/storage.py:152:attempt",
+              "primitive_calls": 25,
+              "self_s": 3.4e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.017155,
+              "function": "mccann_hub/yhmf/repository.py:70:attempt",
+              "primitive_calls": 25,
+              "self_s": 3.2e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.016943,
+              "function": "mccann_hub/yhmf/repository.py:133:attempt",
+              "primitive_calls": 25,
+              "self_s": 7.8e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.016768,
+              "function": "mccann_hub/yhmf/mutations.py:103:patch",
+              "primitive_calls": 25,
+              "self_s": 0.000149,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.008097,
+              "function": "mccann_hub/yhmf/owned.py:107:resolve",
+              "primitive_calls": 25,
+              "self_s": 0.000118,
+              "total_calls": 25
+            }
+          ],
+          "top_self": [
+            {
+              "cumulative_s": 0.004064,
+              "function": "mccann_hub/yhmf/owned.py:45:_has_functions",
+              "primitive_calls": 50,
+              "self_s": 0.001844,
+              "total_calls": 2550
+            },
+            {
+              "cumulative_s": 0.003839,
+              "function": "mccann_hub/yhmf/storage.py:25:__post_init__",
+              "primitive_calls": 625,
+              "self_s": 0.001033,
+              "total_calls": 625
+            },
+            {
+              "cumulative_s": 0.001035,
+              "function": "mccann_hub/yhmf/storage.py:32:<genexpr>",
+              "primitive_calls": 2650,
+              "self_s": 0.000903,
+              "total_calls": 2650
+            },
+            {
+              "cumulative_s": 0.005344,
+              "function": "~:0:<built-in method builtins.any>",
+              "primitive_calls": 725,
+              "self_s": 0.000886,
+              "total_calls": 1775
+            },
+            {
+              "cumulative_s": 0.00066,
+              "function": "~:0:<built-in method builtins.isinstance>",
+              "primitive_calls": 8150,
+              "self_s": 0.00066,
+              "total_calls": 8150
+            },
+            {
+              "cumulative_s": 0.00388,
+              "function": "mccann_hub/yhmf/owned.py:59:<genexpr>",
+              "primitive_calls": 450,
+              "self_s": 0.000638,
+              "total_calls": 3300
+            },
+            {
+              "cumulative_s": 0.001364,
+              "function": "copy.py:118:deepcopy",
+              "primitive_calls": 75,
+              "self_s": 0.000602,
+              "total_calls": 675
+            },
+            {
+              "cumulative_s": 0.000557,
+              "function": "~:0:<built-in method _yottadb.get>",
+              "primitive_calls": 475,
+              "self_s": 0.000557,
+              "total_calls": 475
+            },
+            {
+              "cumulative_s": 0.000506,
+              "function": "~:0:<method 'get' of 'dict' objects>",
+              "primitive_calls": 4375,
+              "self_s": 0.000506,
+              "total_calls": 4375
+            },
+            {
+              "cumulative_s": 0.000574,
+              "function": "mccann_hub/yhmf/storage.py:34:<genexpr>",
+              "primitive_calls": 2650,
+              "self_s": 0.000418,
+              "total_calls": 2650
+            },
+            {
+              "cumulative_s": 0.003185,
+              "function": "mccann_hub/yhmf/indexes.py:106:entries_at",
+              "primitive_calls": 50,
+              "self_s": 0.000383,
+              "total_calls": 50
+            },
+            {
+              "cumulative_s": 0.000896,
+              "function": "~:0:<built-in method builtins.sum>",
+              "primitive_calls": 625,
+              "self_s": 0.000322,
+              "total_calls": 625
+            }
+          ],
+          "workload": "indexed"
+        },
+        {
+          "guard_calls": {
+            "_has_functions": 2550,
+            "_nested_model_schema": 0
+          },
+          "iterations": 25,
+          "lots": 1000,
+          "method": "patch",
+          "profiled_total_s": 0.01718,
+          "top_cumulative": [
+            {
+              "cumulative_s": 0.017701,
+              "function": "benchmark_support.py:147:mutate",
+              "primitive_calls": 25,
+              "self_s": 3.2e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.017651,
+              "function": "mccann_hub/yhmf/repository.py:127:patch",
+              "primitive_calls": 25,
+              "self_s": 2.4e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.017622,
+              "function": "mccann_hub/yhmf/repository.py:82:_run",
+              "primitive_calls": 25,
+              "self_s": 1.9e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.0176,
+              "function": "mccann_hub/yhmf/repository.py:64:atomic",
+              "primitive_calls": 25,
+              "self_s": 2.8e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.017569,
+              "function": "mccann_hub/yhmf/storage.py:149:atomic",
+              "primitive_calls": 25,
+              "self_s": 1.7e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.017552,
+              "function": "yottadb/__init__.py:396:tp",
+              "primitive_calls": 25,
+              "self_s": 1e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.017543,
+              "function": "~:0:<built-in method _yottadb.tp>",
+              "primitive_calls": 25,
+              "self_s": 0.000166,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.017377,
+              "function": "mccann_hub/yhmf/storage.py:152:attempt",
+              "primitive_calls": 25,
+              "self_s": 3.2e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.017333,
+              "function": "mccann_hub/yhmf/repository.py:70:attempt",
+              "primitive_calls": 25,
+              "self_s": 3.2e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.017124,
+              "function": "mccann_hub/yhmf/repository.py:133:attempt",
+              "primitive_calls": 25,
+              "self_s": 7.7e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.016949,
+              "function": "mccann_hub/yhmf/mutations.py:103:patch",
+              "primitive_calls": 25,
+              "self_s": 0.00015,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.008057,
+              "function": "mccann_hub/yhmf/owned.py:107:resolve",
+              "primitive_calls": 25,
+              "self_s": 0.000108,
+              "total_calls": 25
+            }
+          ],
+          "top_self": [
+            {
+              "cumulative_s": 0.004027,
+              "function": "mccann_hub/yhmf/owned.py:45:_has_functions",
+              "primitive_calls": 50,
+              "self_s": 0.001858,
+              "total_calls": 2550
+            },
+            {
+              "cumulative_s": 0.00403,
+              "function": "mccann_hub/yhmf/storage.py:25:__post_init__",
+              "primitive_calls": 675,
+              "self_s": 0.001109,
+              "total_calls": 675
+            },
+            {
+              "cumulative_s": 0.001098,
+              "function": "mccann_hub/yhmf/storage.py:32:<genexpr>",
+              "primitive_calls": 2850,
+              "self_s": 0.000958,
+              "total_calls": 2850
+            },
+            {
+              "cumulative_s": 0.005382,
+              "function": "~:0:<built-in method builtins.any>",
+              "primitive_calls": 775,
+              "self_s": 0.000874,
+              "total_calls": 1825
+            },
+            {
+              "cumulative_s": 0.000687,
+              "function": "~:0:<built-in method builtins.isinstance>",
+              "primitive_calls": 8400,
+              "self_s": 0.000687,
+              "total_calls": 8400
+            },
+            {
+              "cumulative_s": 0.003841,
+              "function": "mccann_hub/yhmf/owned.py:59:<genexpr>",
+              "primitive_calls": 450,
+              "self_s": 0.000634,
+              "total_calls": 3300
+            },
+            {
+              "cumulative_s": 0.000613,
+              "function": "~:0:<built-in method _yottadb.get>",
+              "primitive_calls": 525,
+              "self_s": 0.000613,
+              "total_calls": 525
+            },
+            {
+              "cumulative_s": 0.001338,
+              "function": "copy.py:118:deepcopy",
+              "primitive_calls": 75,
+              "self_s": 0.000612,
+              "total_calls": 675
+            },
+            {
+              "cumulative_s": 0.000461,
+              "function": "~:0:<method 'get' of 'dict' objects>",
+              "primitive_calls": 4375,
+              "self_s": 0.000461,
+              "total_calls": 4375
+            },
+            {
+              "cumulative_s": 0.000581,
+              "function": "mccann_hub/yhmf/storage.py:34:<genexpr>",
+              "primitive_calls": 2850,
+              "self_s": 0.00043,
+              "total_calls": 2850
+            },
+            {
+              "cumulative_s": 0.003268,
+              "function": "mccann_hub/yhmf/indexes.py:106:entries_at",
+              "primitive_calls": 50,
+              "self_s": 0.000401,
+              "total_calls": 50
+            },
+            {
+              "cumulative_s": 0.000924,
+              "function": "~:0:<built-in method builtins.sum>",
+              "primitive_calls": 675,
+              "self_s": 0.000343,
+              "total_calls": 675
+            }
+          ],
+          "workload": "unique"
+        },
+        {
+          "guard_calls": {
+            "_has_functions": 2550,
+            "_nested_model_schema": 0
+          },
+          "iterations": 25,
+          "lots": 1000,
+          "method": "patch",
+          "profiled_total_s": 0.022745,
+          "top_cumulative": [
+            {
+              "cumulative_s": 0.023601,
+              "function": "benchmark_support.py:147:mutate",
+              "primitive_calls": 25,
+              "self_s": 3.7e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.023268,
+              "function": "mccann_hub/yhmf/repository.py:127:patch",
+              "primitive_calls": 25,
+              "self_s": 2.4e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.02324,
+              "function": "mccann_hub/yhmf/repository.py:82:_run",
+              "primitive_calls": 25,
+              "self_s": 2.2e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.023215,
+              "function": "mccann_hub/yhmf/repository.py:64:atomic",
+              "primitive_calls": 25,
+              "self_s": 2.8e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.023184,
+              "function": "mccann_hub/yhmf/storage.py:149:atomic",
+              "primitive_calls": 25,
+              "self_s": 1.9e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.023165,
+              "function": "yottadb/__init__.py:396:tp",
+              "primitive_calls": 25,
+              "self_s": 1e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.023154,
+              "function": "~:0:<built-in method _yottadb.tp>",
+              "primitive_calls": 25,
+              "self_s": 0.000118,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.023037,
+              "function": "mccann_hub/yhmf/storage.py:152:attempt",
+              "primitive_calls": 25,
+              "self_s": 3.5e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.022989,
+              "function": "mccann_hub/yhmf/repository.py:70:attempt",
+              "primitive_calls": 25,
+              "self_s": 3.3e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.022764,
+              "function": "mccann_hub/yhmf/repository.py:133:attempt",
+              "primitive_calls": 25,
+              "self_s": 9.3e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.022565,
+              "function": "mccann_hub/yhmf/mutations.py:103:patch",
+              "primitive_calls": 25,
+              "self_s": 0.000169,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.009221,
+              "function": "mccann_hub/yhmf/mutations.py:87:replace_secondary",
+              "primitive_calls": 25,
+              "self_s": 0.000131,
+              "total_calls": 25
+            }
+          ],
+          "top_self": [
+            {
+              "cumulative_s": 0.004054,
+              "function": "mccann_hub/yhmf/owned.py:45:_has_functions",
+              "primitive_calls": 50,
+              "self_s": 0.001859,
+              "total_calls": 2550
+            },
+            {
+              "cumulative_s": 0.006072,
+              "function": "mccann_hub/yhmf/storage.py:25:__post_init__",
+              "primitive_calls": 1075,
+              "self_s": 0.001746,
+              "total_calls": 1075
+            },
+            {
+              "cumulative_s": 0.001577,
+              "function": "mccann_hub/yhmf/storage.py:32:<genexpr>",
+              "primitive_calls": 4075,
+              "self_s": 0.001382,
+              "total_calls": 4075
+            },
+            {
+              "cumulative_s": 0.006084,
+              "function": "~:0:<built-in method builtins.any>",
+              "primitive_calls": 1175,
+              "self_s": 0.001078,
+              "total_calls": 2225
+            },
+            {
+              "cumulative_s": 0.001032,
+              "function": "~:0:<built-in method _yottadb.get>",
+              "primitive_calls": 800,
+              "self_s": 0.001032,
+              "total_calls": 800
+            },
+            {
+              "cumulative_s": 0.000826,
+              "function": "~:0:<built-in method builtins.isinstance>",
+              "primitive_calls": 9875,
+              "self_s": 0.000826,
+              "total_calls": 9875
+            },
+            {
+              "cumulative_s": 0.001647,
+              "function": "copy.py:118:deepcopy",
+              "primitive_calls": 75,
+              "self_s": 0.000687,
+              "total_calls": 775
+            },
+            {
+              "cumulative_s": 0.003856,
+              "function": "mccann_hub/yhmf/owned.py:59:<genexpr>",
+              "primitive_calls": 450,
+              "self_s": 0.000642,
+              "total_calls": 3300
+            },
+            {
+              "cumulative_s": 0.000832,
+              "function": "mccann_hub/yhmf/storage.py:34:<genexpr>",
+              "primitive_calls": 4075,
+              "self_s": 0.000612,
+              "total_calls": 4075
+            },
+            {
+              "cumulative_s": 0.001334,
+              "function": "~:0:<built-in method builtins.sum>",
+              "primitive_calls": 1075,
+              "self_s": 0.000503,
+              "total_calls": 1075
+            },
+            {
+              "cumulative_s": 0.000497,
+              "function": "~:0:<method 'get' of 'dict' objects>",
+              "primitive_calls": 4600,
+              "self_s": 0.000497,
+              "total_calls": 4600
+            },
+            {
+              "cumulative_s": 0.000457,
+              "function": "~:0:<built-in method builtins.len>",
+              "primitive_calls": 5425,
+              "self_s": 0.000457,
+              "total_calls": 5425
+            }
+          ],
+          "workload": "reference"
+        },
+        {
+          "guard_calls": {
+            "_has_functions": 0,
+            "_nested_model_schema": 0
+          },
+          "iterations": 25,
+          "lots": 100,
+          "method": "replace",
+          "profiled_total_s": 1.520548,
+          "top_cumulative": [
+            {
+              "cumulative_s": 1.612978,
+              "function": "benchmark_support.py:147:mutate",
+              "primitive_calls": 25,
+              "self_s": 8.3e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 1.612839,
+              "function": "mccann_hub/yhmf/repository.py:64:atomic",
+              "primitive_calls": 25,
+              "self_s": 5.7e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 1.612777,
+              "function": "mccann_hub/yhmf/storage.py:149:atomic",
+              "primitive_calls": 25,
+              "self_s": 3.4e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 1.612743,
+              "function": "yottadb/__init__.py:396:tp",
+              "primitive_calls": 25,
+              "self_s": 1.5e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 1.612728,
+              "function": "~:0:<built-in method _yottadb.tp>",
+              "primitive_calls": 25,
+              "self_s": 0.000664,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 1.612064,
+              "function": "mccann_hub/yhmf/storage.py:152:attempt",
+              "primitive_calls": 25,
+              "self_s": 6.3e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 1.611978,
+              "function": "mccann_hub/yhmf/repository.py:70:attempt",
+              "primitive_calls": 25,
+              "self_s": 0.001051,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 1.610625,
+              "function": "benchmark_support.py:157:replace",
+              "primitive_calls": 25,
+              "self_s": 0.000953,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 1.422705,
+              "function": "mccann_hub/yhmf/repository.py:205:save",
+              "primitive_calls": 25,
+              "self_s": 0.003224,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 1.419481,
+              "function": "mccann_hub/yhmf/repository.py:161:_write",
+              "primitive_calls": 25,
+              "self_s": 0.000195,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.955923,
+              "function": "mccann_hub/yhmf/repository.py:82:_run",
+              "primitive_calls": 50,
+              "self_s": 0.002246,
+              "total_calls": 75
+            },
+            {
+              "cumulative_s": 0.767763,
+              "function": "mccann_hub/yhmf/repository.py:170:write",
+              "primitive_calls": 25,
+              "self_s": 0.003136,
+              "total_calls": 25
+            }
+          ],
+          "top_self": [
+            {
+              "cumulative_s": 0.195756,
+              "function": "mccann_hub/yhmf/storage.py:32:<genexpr>",
+              "primitive_calls": 489950,
+              "self_s": 0.171049,
+              "total_calls": 489950
+            },
+            {
+              "cumulative_s": 0.618637,
+              "function": "mccann_hub/yhmf/storage.py:25:__post_init__",
+              "primitive_calls": 93975,
+              "self_s": 0.149466,
+              "total_calls": 93975
+            },
+            {
+              "cumulative_s": 0.732313,
+              "function": "mccann_hub/yhmf/indexes.py:106:entries_at",
+              "primitive_calls": 50,
+              "self_s": 0.087465,
+              "total_calls": 50
+            },
+            {
+              "cumulative_s": 0.097824,
+              "function": "mccann_hub/yhmf/storage.py:34:<genexpr>",
+              "primitive_calls": 489950,
+              "self_s": 0.07209,
+              "total_calls": 489950
+            },
+            {
+              "cumulative_s": 0.250562,
+              "function": "~:0:<built-in method builtins.any>",
+              "primitive_calls": 94000,
+              "self_s": 0.054799,
+              "total_calls": 94000
+            },
+            {
+              "cumulative_s": 0.148674,
+              "function": "~:0:<built-in method builtins.sum>",
+              "primitive_calls": 93975,
+              "self_s": 0.05085,
+              "total_calls": 93975
+            },
+            {
+              "cumulative_s": 0.050772,
+              "function": "~:0:<built-in method builtins.isinstance>",
+              "primitive_calls": 655275,
+              "self_s": 0.050772,
+              "total_calls": 655275
+            },
+            {
+              "cumulative_s": 0.049156,
+              "function": "~:0:<built-in method builtins.len>",
+              "primitive_calls": 652523,
+              "self_s": 0.049156,
+              "total_calls": 652523
+            },
+            {
+              "cumulative_s": 0.048358,
+              "function": "encoder.py:205:iterencode",
+              "primitive_calls": 35000,
+              "self_s": 0.048358,
+              "total_calls": 35000
+            },
+            {
+              "cumulative_s": 0.046233,
+              "function": "~:0:<built-in method _yottadb.get>",
+              "primitive_calls": 38750,
+              "self_s": 0.046233,
+              "total_calls": 38750
+            },
+            {
+              "cumulative_s": 0.060147,
+              "function": "mccann_hub/yhmf/records.py:196:walk_values",
+              "primitive_calls": 40300,
+              "self_s": 0.042822,
+              "total_calls": 130500
+            },
+            {
+              "cumulative_s": 0.146765,
+              "function": "__init__.py:183:dumps",
+              "primitive_calls": 50000,
+              "self_s": 0.039632,
+              "total_calls": 50000
+            }
+          ],
+          "workload": "indexed"
+        }
+      ],
+      "pydantic": "2.14.3",
+      "python": "3.12.3",
+      "rows": [
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 3.47,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "set": 1.0
+          },
+          "p95_us": 4.03,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 133.83,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "get": 15.0,
+            "set": 1.0
+          },
+          "p95_us": 170.66,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 293.56,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 1.0,
+            "get": 46.0,
+            "set": 12.0
+          },
+          "p95_us": 331.56,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 3.43,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "set": 1.0
+          },
+          "p95_us": 3.77,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 131.11,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "get": 15.0,
+            "set": 1.0
+          },
+          "p95_us": 148.17,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 769.75,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 1.0,
+            "get": 100.0,
+            "set": 39.0
+          },
+          "p95_us": 794.74,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 3.52,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "set": 1.0
+          },
+          "p95_us": 3.95,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 129.72,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "get": 15.0,
+            "set": 1.0
+          },
+          "p95_us": 144.67,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 5478.6,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 1.0,
+            "get": 640.0,
+            "set": 309.0
+          },
+          "p95_us": 5639.21,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 3.45,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "set": 1.0
+          },
+          "p95_us": 3.83,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 132.71,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "get": 15.0,
+            "set": 1.0
+          },
+          "p95_us": 158.86,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 52880.55,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 1.0,
+            "get": 6040.0,
+            "set": 3009.0
+          },
+          "p95_us": 60981.23,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 215.26,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "delete_tree": 1.0,
+            "get": 19.0,
+            "set": 2.0
+          },
+          "p95_us": 246.07,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 557.38,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 2.0,
+            "get": 65.0,
+            "set": 15.0
+          },
+          "p95_us": 627.08,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 217.53,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "delete_tree": 1.0,
+            "get": 19.0,
+            "set": 2.0
+          },
+          "p95_us": 235.71,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 2639.48,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 2.0,
+            "get": 200.0,
+            "set": 60.0
+          },
+          "p95_us": 2710.51,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 217.68,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "delete_tree": 1.0,
+            "get": 19.0,
+            "set": 2.0
+          },
+          "p95_us": 240.04,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 23678.96,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 2.0,
+            "get": 1550.0,
+            "set": 510.0
+          },
+          "p95_us": 29352.5,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 216.34,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "delete_tree": 1.0,
+            "get": 19.0,
+            "set": 2.0
+          },
+          "p95_us": 248.32,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 246291.98,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 2.0,
+            "get": 15050.0,
+            "set": 5010.0
+          },
+          "p95_us": 261316.16,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 227.05,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "delete_tree": 2.0,
+            "get": 21.0,
+            "set": 3.0
+          },
+          "p95_us": 260.53,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 562.73,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 3.0,
+            "get": 66.0,
+            "set": 16.0
+          },
+          "p95_us": 645.87,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 220.71,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "delete_tree": 2.0,
+            "get": 21.0,
+            "set": 3.0
+          },
+          "p95_us": 242.61,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 2614.02,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 3.0,
+            "get": 201.0,
+            "set": 61.0
+          },
+          "p95_us": 2653.94,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 218.58,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "delete_tree": 2.0,
+            "get": 21.0,
+            "set": 3.0
+          },
+          "p95_us": 244.84,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 23974.04,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 3.0,
+            "get": 1551.0,
+            "set": 511.0
+          },
+          "p95_us": 31354.79,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 225.48,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "delete_tree": 2.0,
+            "get": 21.0,
+            "set": 3.0
+          },
+          "p95_us": 260.38,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 244915.19,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 3.0,
+            "get": 15051.0,
+            "set": 5011.0
+          },
+          "p95_us": 258748.96,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 314.64,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 2.0,
+            "delete_tree": 2.0,
+            "get": 32.0,
+            "set": 5.0
+          },
+          "p95_us": 363.37,
+          "workload": "reference"
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 592.56,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 6.0,
+            "delete_tree": 3.0,
+            "get": 68.0,
+            "set": 18.0
+          },
+          "p95_us": 608.28,
+          "workload": "reference"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 311.73,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 2.0,
+            "delete_tree": 2.0,
+            "get": 32.0,
+            "set": 5.0
+          },
+          "p95_us": 331.74,
+          "workload": "reference"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 2711.22,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 6.0,
+            "delete_tree": 3.0,
+            "get": 207.5,
+            "set": 63.0
+          },
+          "p95_us": 2813.9,
+          "workload": "reference"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 315.63,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 2.0,
+            "delete_tree": 2.0,
+            "get": 32.0,
+            "set": 5.0
+          },
+          "p95_us": 336.76,
+          "workload": "reference"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 23641.85,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 6.0,
+            "delete_tree": 3.0,
+            "get": 1557.5,
+            "set": 513.0
+          },
+          "p95_us": 29750.27,
+          "workload": "reference"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 317.56,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 2.0,
+            "delete_tree": 2.0,
+            "get": 32.0,
+            "set": 5.0
+          },
+          "p95_us": 342.02,
+          "workload": "reference"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 242596.85,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 6.0,
+            "delete_tree": 3.0,
+            "get": 15057.5,
+            "set": 5013.0
+          },
+          "p95_us": 254478.27,
+          "workload": "reference"
+        }
+      ],
+      "source_commit": "3483458be8d4043559038b318f1047bbe26445d1",
+      "warmup_iterations": 5,
+      "yottadb": "pywr v0.10.0 YottaDB r2.06 Linux x86_64"
+    },
+    {
+      "contention": [
+        {
+          "callback_attempts": 160,
+          "callback_retries": 0,
+          "commits_per_second": 2834.97,
+          "committed": 160,
+          "elapsed_s": 0.056438,
+          "iterations_per_worker": 40,
+          "lots_per_root": 100,
+          "median_us": 450.2,
+          "method": "patch",
+          "operations_per_commit": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "get": 30.0,
+            "set": 1.0
+          },
+          "p95_us": 499.04,
+          "pattern": "separate_roots",
+          "workers": 4,
+          "workload": "unindexed"
+        },
+        {
+          "callback_attempts": 450,
+          "callback_retries": 290,
+          "commits_per_second": 1536.14,
+          "committed": 160,
+          "elapsed_s": 0.104157,
+          "iterations_per_worker": 40,
+          "lots_per_root": 100,
+          "median_us": 1740.58,
+          "method": "patch",
+          "operations_per_commit": {
+            "atomic": 1.0,
+            "attempts": 2.8125,
+            "get": 83.85625,
+            "set": 2.66875
+          },
+          "p95_us": 3169.48,
+          "pattern": "separate_children",
+          "workers": 4,
+          "workload": "unindexed"
+        },
+        {
+          "callback_attempts": 485,
+          "callback_retries": 325,
+          "commits_per_second": 1497.27,
+          "committed": 160,
+          "elapsed_s": 0.106861,
+          "iterations_per_worker": 40,
+          "lots_per_root": 100,
+          "median_us": 1898.39,
+          "method": "patch",
+          "operations_per_commit": {
+            "atomic": 1.0,
+            "attempts": 3.03125,
+            "get": 90.475,
+            "set": 2.875
+          },
+          "p95_us": 2964.75,
+          "pattern": "same_child",
+          "workers": 4,
+          "workload": "unindexed"
+        },
+        {
+          "callback_attempts": 560,
+          "callback_retries": 400,
+          "commits_per_second": 85.2,
+          "committed": 160,
+          "elapsed_s": 1.877989,
+          "iterations_per_worker": 40,
+          "lots_per_root": 100,
+          "median_us": 49750.41,
+          "method": "replace",
+          "operations_per_commit": {
+            "atomic": 1.0,
+            "attempts": 3.5,
+            "children": 13.85,
+            "delete_tree": 3.4125,
+            "get": 2212.15,
+            "set": 829.81875
+          },
+          "p95_us": 65973.53,
+          "pattern": "separate_roots",
+          "workers": 4,
+          "workload": "unindexed"
+        },
+        {
+          "callback_attempts": 615,
+          "callback_retries": 455,
+          "commits_per_second": 75.51,
+          "committed": 160,
+          "elapsed_s": 2.118786,
+          "iterations_per_worker": 40,
+          "lots_per_root": 100,
+          "median_us": 54820.61,
+          "method": "replace",
+          "operations_per_commit": {
+            "atomic": 1.0,
+            "attempts": 3.84375,
+            "children": 15.275,
+            "delete_tree": 3.78125,
+            "get": 2441.925,
+            "set": 876.5375
+          },
+          "p95_us": 65978.48,
+          "pattern": "separate_children",
+          "workers": 4,
+          "workload": "unindexed"
+        },
+        {
+          "callback_attempts": 614,
+          "callback_retries": 454,
+          "commits_per_second": 77.06,
+          "committed": 160,
+          "elapsed_s": 2.076329,
+          "iterations_per_worker": 40,
+          "lots_per_root": 100,
+          "median_us": 54525.31,
+          "method": "replace",
+          "operations_per_commit": {
+            "atomic": 1.0,
+            "attempts": 3.8375,
+            "children": 15.3,
+            "delete_tree": 3.7875,
+            "get": 2442.28125,
+            "set": 878.31875
+          },
+          "p95_us": 65396.34,
+          "pattern": "same_child",
+          "workers": 4,
+          "workload": "unindexed"
+        },
+        {
+          "callback_attempts": 420,
+          "callback_retries": 260,
+          "commits_per_second": 1320.57,
+          "committed": 160,
+          "elapsed_s": 0.12116,
+          "iterations_per_worker": 40,
+          "lots_per_root": 100,
+          "median_us": 1707.69,
+          "method": "patch",
+          "operations_per_commit": {
+            "atomic": 1.0,
+            "attempts": 2.625,
+            "delete_tree": 2.6,
+            "get": 94.30625,
+            "set": 4.9625
+          },
+          "p95_us": 3991.0,
+          "pattern": "separate_roots",
+          "workers": 4,
+          "workload": "indexed"
+        },
+        {
+          "callback_attempts": 501,
+          "callback_retries": 341,
+          "commits_per_second": 1119.37,
+          "committed": 160,
+          "elapsed_s": 0.142937,
+          "iterations_per_worker": 40,
+          "lots_per_root": 100,
+          "median_us": 2802.43,
+          "method": "patch",
+          "operations_per_commit": {
+            "atomic": 1.0,
+            "attempts": 3.13125,
+            "delete_tree": 2.98125,
+            "get": 112.05,
+            "set": 5.775
+          },
+          "p95_us": 4200.42,
+          "pattern": "separate_children",
+          "workers": 4,
+          "workload": "indexed"
+        },
+        {
+          "callback_attempts": 503,
+          "callback_retries": 343,
+          "commits_per_second": 1142.32,
+          "committed": 160,
+          "elapsed_s": 0.140065,
+          "iterations_per_worker": 40,
+          "lots_per_root": 100,
+          "median_us": 2662.97,
+          "method": "patch",
+          "operations_per_commit": {
+            "atomic": 1.0,
+            "attempts": 3.14375,
+            "delete_tree": 2.55,
+            "get": 111.54375,
+            "set": 4.88125
+          },
+          "p95_us": 4536.43,
+          "pattern": "same_child",
+          "workers": 4,
+          "workload": "indexed"
+        },
+        {
+          "callback_attempts": 619,
+          "callback_retries": 459,
+          "commits_per_second": 18.6,
+          "committed": 160,
+          "elapsed_s": 8.601679,
+          "iterations_per_worker": 40,
+          "lots_per_root": 100,
+          "median_us": 231822.0,
+          "method": "replace",
+          "operations_per_commit": {
+            "atomic": 1.0,
+            "attempts": 3.86875,
+            "children": 15.4625,
+            "delete_tree": 6.65625,
+            "get": 5457.5625,
+            "set": 1529.6375
+          },
+          "p95_us": 270223.9,
+          "pattern": "separate_roots",
+          "workers": 4,
+          "workload": "indexed"
+        },
+        {
+          "callback_attempts": 587,
+          "callback_retries": 427,
+          "commits_per_second": 19.6,
+          "committed": 160,
+          "elapsed_s": 8.163031,
+          "iterations_per_worker": 40,
+          "lots_per_root": 100,
+          "median_us": 214270.57,
+          "method": "replace",
+          "operations_per_commit": {
+            "atomic": 1.0,
+            "attempts": 3.66875,
+            "children": 14.6625,
+            "delete_tree": 6.2625,
+            "get": 5154.2,
+            "set": 1372.4
+          },
+          "p95_us": 270240.24,
+          "pattern": "separate_children",
+          "workers": 4,
+          "workload": "indexed"
+        },
+        {
+          "callback_attempts": 593,
+          "callback_retries": 433,
+          "commits_per_second": 19.48,
+          "committed": 160,
+          "elapsed_s": 8.212853,
+          "iterations_per_worker": 40,
+          "lots_per_root": 100,
+          "median_us": 216762.47,
+          "method": "replace",
+          "operations_per_commit": {
+            "atomic": 1.0,
+            "attempts": 3.70625,
+            "children": 14.825,
+            "delete_tree": 6.3125,
+            "get": 5207.91875,
+            "set": 1393.76875
+          },
+          "p95_us": 268469.3,
+          "pattern": "same_child",
+          "workers": 4,
+          "workload": "indexed"
+        }
+      ],
+      "cpu_model": "INTEL(R) XEON(R) PLATINUM 8573C",
+      "format_version": 2,
+      "logical_cpus": 4,
+      "platform": "Linux-6.8.0-1070-azure-x86_64-with-glibc2.35",
+      "profiles": [
+        {
+          "guard_calls": {
+            "_has_functions": 2550,
+            "_nested_model_schema": 0
+          },
+          "iterations": 25,
+          "lots": 1000,
+          "method": "patch",
+          "profiled_total_s": 0.014808,
+          "top_cumulative": [
+            {
+              "cumulative_s": 0.015107,
+              "function": "benchmark_support.py:147:mutate",
+              "primitive_calls": 25,
+              "self_s": 4.1e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.015046,
+              "function": "mccann_hub/yhmf/repository.py:127:patch",
+              "primitive_calls": 25,
+              "self_s": 2.8e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.015012,
+              "function": "mccann_hub/yhmf/repository.py:82:_run",
+              "primitive_calls": 25,
+              "self_s": 2.4e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.014983,
+              "function": "mccann_hub/yhmf/repository.py:64:atomic",
+              "primitive_calls": 25,
+              "self_s": 3e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.014949,
+              "function": "mccann_hub/yhmf/storage.py:149:atomic",
+              "primitive_calls": 25,
+              "self_s": 2.1e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.014928,
+              "function": "yottadb/__init__.py:396:tp",
+              "primitive_calls": 25,
+              "self_s": 1.5e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.014913,
+              "function": "~:0:<built-in method _yottadb.tp>",
+              "primitive_calls": 25,
+              "self_s": 7.2e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.014841,
+              "function": "mccann_hub/yhmf/storage.py:152:attempt",
+              "primitive_calls": 25,
+              "self_s": 4.4e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.014782,
+              "function": "mccann_hub/yhmf/repository.py:70:attempt",
+              "primitive_calls": 25,
+              "self_s": 4.1e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.014514,
+              "function": "mccann_hub/yhmf/repository.py:133:attempt",
+              "primitive_calls": 25,
+              "self_s": 8.1e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.014316,
+              "function": "mccann_hub/yhmf/mutations.py:103:patch",
+              "primitive_calls": 25,
+              "self_s": 0.000195,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.009865,
+              "function": "mccann_hub/yhmf/owned.py:107:resolve",
+              "primitive_calls": 25,
+              "self_s": 0.000143,
+              "total_calls": 25
+            }
+          ],
+          "top_self": [
+            {
+              "cumulative_s": 0.004949,
+              "function": "mccann_hub/yhmf/owned.py:45:_has_functions",
+              "primitive_calls": 50,
+              "self_s": 0.002245,
+              "total_calls": 2550
+            },
+            {
+              "cumulative_s": 0.003352,
+              "function": "mccann_hub/yhmf/storage.py:25:__post_init__",
+              "primitive_calls": 475,
+              "self_s": 0.000975,
+              "total_calls": 475
+            },
+            {
+              "cumulative_s": 0.005936,
+              "function": "~:0:<built-in method builtins.any>",
+              "primitive_calls": 575,
+              "self_s": 0.000938,
+              "total_calls": 1625
+            },
+            {
+              "cumulative_s": 0.004717,
+              "function": "mccann_hub/yhmf/owned.py:59:<genexpr>",
+              "primitive_calls": 450,
+              "self_s": 0.000805,
+              "total_calls": 3300
+            },
+            {
+              "cumulative_s": 0.000801,
+              "function": "mccann_hub/yhmf/storage.py:32:<genexpr>",
+              "primitive_calls": 1800,
+              "self_s": 0.000684,
+              "total_calls": 1800
+            },
+            {
+              "cumulative_s": 0.000681,
+              "function": "~:0:<built-in method builtins.isinstance>",
+              "primitive_calls": 6875,
+              "self_s": 0.000681,
+              "total_calls": 6875
+            },
+            {
+              "cumulative_s": 0.0005,
+              "function": "~:0:<method 'get' of 'dict' objects>",
+              "primitive_calls": 3650,
+              "self_s": 0.0005,
+              "total_calls": 3650
+            },
+            {
+              "cumulative_s": 0.000479,
+              "function": "~:0:<built-in method _yottadb.get>",
+              "primitive_calls": 375,
+              "self_s": 0.000479,
+              "total_calls": 375
+            },
+            {
+              "cumulative_s": 0.000841,
+              "function": "copy.py:118:deepcopy",
+              "primitive_calls": 75,
+              "self_s": 0.000419,
+              "total_calls": 325
+            },
+            {
+              "cumulative_s": 0.000478,
+              "function": "mccann_hub/yhmf/storage.py:34:<genexpr>",
+              "primitive_calls": 1800,
+              "self_s": 0.000354,
+              "total_calls": 1800
+            },
+            {
+              "cumulative_s": 0.000778,
+              "function": "~:0:<built-in method builtins.sum>",
+              "primitive_calls": 475,
+              "self_s": 0.0003,
+              "total_calls": 475
+            },
+            {
+              "cumulative_s": 0.000294,
+              "function": "~:0:<method 'startswith' of 'str' objects>",
+              "primitive_calls": 1425,
+              "self_s": 0.000294,
+              "total_calls": 1425
+            }
+          ],
+          "workload": "unindexed"
+        },
+        {
+          "guard_calls": {
+            "_has_functions": 2550,
+            "_nested_model_schema": 0
+          },
+          "iterations": 25,
+          "lots": 1000,
+          "method": "patch",
+          "profiled_total_s": 0.021709,
+          "top_cumulative": [
+            {
+              "cumulative_s": 0.022208,
+              "function": "benchmark_support.py:147:mutate",
+              "primitive_calls": 25,
+              "self_s": 4.6e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.02214,
+              "function": "mccann_hub/yhmf/repository.py:127:patch",
+              "primitive_calls": 25,
+              "self_s": 2.8e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.022105,
+              "function": "mccann_hub/yhmf/repository.py:82:_run",
+              "primitive_calls": 25,
+              "self_s": 2.6e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.022074,
+              "function": "mccann_hub/yhmf/repository.py:64:atomic",
+              "primitive_calls": 25,
+              "self_s": 3.4e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.022037,
+              "function": "mccann_hub/yhmf/storage.py:149:atomic",
+              "primitive_calls": 25,
+              "self_s": 2.3e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.022014,
+              "function": "yottadb/__init__.py:396:tp",
+              "primitive_calls": 25,
+              "self_s": 1.5e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.021999,
+              "function": "~:0:<built-in method _yottadb.tp>",
+              "primitive_calls": 25,
+              "self_s": 0.000106,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.021893,
+              "function": "mccann_hub/yhmf/storage.py:152:attempt",
+              "primitive_calls": 25,
+              "self_s": 4.8e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.021829,
+              "function": "mccann_hub/yhmf/repository.py:70:attempt",
+              "primitive_calls": 25,
+              "self_s": 4.3e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.021558,
+              "function": "mccann_hub/yhmf/repository.py:133:attempt",
+              "primitive_calls": 25,
+              "self_s": 0.000102,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.021328,
+              "function": "mccann_hub/yhmf/mutations.py:103:patch",
+              "primitive_calls": 25,
+              "self_s": 0.000201,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.010169,
+              "function": "mccann_hub/yhmf/owned.py:107:resolve",
+              "primitive_calls": 25,
+              "self_s": 0.000148,
+              "total_calls": 25
+            }
+          ],
+          "top_self": [
+            {
+              "cumulative_s": 0.00514,
+              "function": "mccann_hub/yhmf/owned.py:45:_has_functions",
+              "primitive_calls": 50,
+              "self_s": 0.002353,
+              "total_calls": 2550
+            },
+            {
+              "cumulative_s": 0.004726,
+              "function": "mccann_hub/yhmf/storage.py:25:__post_init__",
+              "primitive_calls": 625,
+              "self_s": 0.001286,
+              "total_calls": 625
+            },
+            {
+              "cumulative_s": 0.006644,
+              "function": "~:0:<built-in method builtins.any>",
+              "primitive_calls": 725,
+              "self_s": 0.001088,
+              "total_calls": 1775
+            },
+            {
+              "cumulative_s": 0.001201,
+              "function": "mccann_hub/yhmf/storage.py:32:<genexpr>",
+              "primitive_calls": 2650,
+              "self_s": 0.001025,
+              "total_calls": 2650
+            },
+            {
+              "cumulative_s": 0.00489,
+              "function": "mccann_hub/yhmf/owned.py:59:<genexpr>",
+              "primitive_calls": 450,
+              "self_s": 0.000834,
+              "total_calls": 3300
+            },
+            {
+              "cumulative_s": 0.000825,
+              "function": "~:0:<built-in method builtins.isinstance>",
+              "primitive_calls": 8150,
+              "self_s": 0.000825,
+              "total_calls": 8150
+            },
+            {
+              "cumulative_s": 0.001754,
+              "function": "copy.py:118:deepcopy",
+              "primitive_calls": 75,
+              "self_s": 0.000798,
+              "total_calls": 675
+            },
+            {
+              "cumulative_s": 0.000729,
+              "function": "~:0:<built-in method _yottadb.get>",
+              "primitive_calls": 475,
+              "self_s": 0.000729,
+              "total_calls": 475
+            },
+            {
+              "cumulative_s": 0.000618,
+              "function": "~:0:<method 'get' of 'dict' objects>",
+              "primitive_calls": 4375,
+              "self_s": 0.000618,
+              "total_calls": 4375
+            },
+            {
+              "cumulative_s": 0.004142,
+              "function": "mccann_hub/yhmf/indexes.py:106:entries_at",
+              "primitive_calls": 50,
+              "self_s": 0.00053,
+              "total_calls": 50
+            },
+            {
+              "cumulative_s": 0.000701,
+              "function": "mccann_hub/yhmf/storage.py:34:<genexpr>",
+              "primitive_calls": 2650,
+              "self_s": 0.00052,
+              "total_calls": 2650
+            },
+            {
+              "cumulative_s": 0.001138,
+              "function": "~:0:<built-in method builtins.sum>",
+              "primitive_calls": 625,
+              "self_s": 0.000437,
+              "total_calls": 625
+            }
+          ],
+          "workload": "indexed"
+        },
+        {
+          "guard_calls": {
+            "_has_functions": 2550,
+            "_nested_model_schema": 0
+          },
+          "iterations": 25,
+          "lots": 1000,
+          "method": "patch",
+          "profiled_total_s": 0.02194,
+          "top_cumulative": [
+            {
+              "cumulative_s": 0.022476,
+              "function": "benchmark_support.py:147:mutate",
+              "primitive_calls": 25,
+              "self_s": 4.5e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.022405,
+              "function": "mccann_hub/yhmf/repository.py:127:patch",
+              "primitive_calls": 25,
+              "self_s": 2.8e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.022371,
+              "function": "mccann_hub/yhmf/repository.py:82:_run",
+              "primitive_calls": 25,
+              "self_s": 2.5e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.022341,
+              "function": "mccann_hub/yhmf/repository.py:64:atomic",
+              "primitive_calls": 25,
+              "self_s": 3.4e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.022303,
+              "function": "mccann_hub/yhmf/storage.py:149:atomic",
+              "primitive_calls": 25,
+              "self_s": 2.4e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.022279,
+              "function": "yottadb/__init__.py:396:tp",
+              "primitive_calls": 25,
+              "self_s": 1.6e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.022263,
+              "function": "~:0:<built-in method _yottadb.tp>",
+              "primitive_calls": 25,
+              "self_s": 0.000139,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.022124,
+              "function": "mccann_hub/yhmf/storage.py:152:attempt",
+              "primitive_calls": 25,
+              "self_s": 4.9e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.02206,
+              "function": "mccann_hub/yhmf/repository.py:70:attempt",
+              "primitive_calls": 25,
+              "self_s": 4.2e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.021786,
+              "function": "mccann_hub/yhmf/repository.py:133:attempt",
+              "primitive_calls": 25,
+              "self_s": 0.000104,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.02155,
+              "function": "mccann_hub/yhmf/mutations.py:103:patch",
+              "primitive_calls": 25,
+              "self_s": 0.000198,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.010172,
+              "function": "mccann_hub/yhmf/owned.py:107:resolve",
+              "primitive_calls": 25,
+              "self_s": 0.000164,
+              "total_calls": 25
+            }
+          ],
+          "top_self": [
+            {
+              "cumulative_s": 0.00501,
+              "function": "mccann_hub/yhmf/owned.py:45:_has_functions",
+              "primitive_calls": 50,
+              "self_s": 0.002282,
+              "total_calls": 2550
+            },
+            {
+              "cumulative_s": 0.00514,
+              "function": "mccann_hub/yhmf/storage.py:25:__post_init__",
+              "primitive_calls": 675,
+              "self_s": 0.001415,
+              "total_calls": 675
+            },
+            {
+              "cumulative_s": 0.001324,
+              "function": "mccann_hub/yhmf/storage.py:32:<genexpr>",
+              "primitive_calls": 2850,
+              "self_s": 0.001124,
+              "total_calls": 2850
+            },
+            {
+              "cumulative_s": 0.006683,
+              "function": "~:0:<built-in method builtins.any>",
+              "primitive_calls": 775,
+              "self_s": 0.00112,
+              "total_calls": 1825
+            },
+            {
+              "cumulative_s": 0.000872,
+              "function": "~:0:<built-in method builtins.isinstance>",
+              "primitive_calls": 8400,
+              "self_s": 0.000872,
+              "total_calls": 8400
+            },
+            {
+              "cumulative_s": 0.00083,
+              "function": "~:0:<built-in method _yottadb.get>",
+              "primitive_calls": 525,
+              "self_s": 0.00083,
+              "total_calls": 525
+            },
+            {
+              "cumulative_s": 0.004763,
+              "function": "mccann_hub/yhmf/owned.py:59:<genexpr>",
+              "primitive_calls": 450,
+              "self_s": 0.000821,
+              "total_calls": 3300
+            },
+            {
+              "cumulative_s": 0.001711,
+              "function": "copy.py:118:deepcopy",
+              "primitive_calls": 75,
+              "self_s": 0.000781,
+              "total_calls": 675
+            },
+            {
+              "cumulative_s": 0.000601,
+              "function": "~:0:<method 'get' of 'dict' objects>",
+              "primitive_calls": 4375,
+              "self_s": 0.000601,
+              "total_calls": 4375
+            },
+            {
+              "cumulative_s": 0.000768,
+              "function": "mccann_hub/yhmf/storage.py:34:<genexpr>",
+              "primitive_calls": 2850,
+              "self_s": 0.000569,
+              "total_calls": 2850
+            },
+            {
+              "cumulative_s": 0.004187,
+              "function": "mccann_hub/yhmf/indexes.py:106:entries_at",
+              "primitive_calls": 50,
+              "self_s": 0.000548,
+              "total_calls": 50
+            },
+            {
+              "cumulative_s": 0.001222,
+              "function": "~:0:<built-in method builtins.sum>",
+              "primitive_calls": 675,
+              "self_s": 0.000454,
+              "total_calls": 675
+            }
+          ],
+          "workload": "unique"
+        },
+        {
+          "guard_calls": {
+            "_has_functions": 2550,
+            "_nested_model_schema": 0
+          },
+          "iterations": 25,
+          "lots": 1000,
+          "method": "patch",
+          "profiled_total_s": 0.029181,
+          "top_cumulative": [
+            {
+              "cumulative_s": 0.030109,
+              "function": "benchmark_support.py:147:mutate",
+              "primitive_calls": 25,
+              "self_s": 4.9e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.029709,
+              "function": "mccann_hub/yhmf/repository.py:127:patch",
+              "primitive_calls": 25,
+              "self_s": 3e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.029673,
+              "function": "mccann_hub/yhmf/repository.py:82:_run",
+              "primitive_calls": 25,
+              "self_s": 2.7e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.02964,
+              "function": "mccann_hub/yhmf/repository.py:64:atomic",
+              "primitive_calls": 25,
+              "self_s": 3.5e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.029602,
+              "function": "mccann_hub/yhmf/storage.py:149:atomic",
+              "primitive_calls": 25,
+              "self_s": 2.6e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.029576,
+              "function": "yottadb/__init__.py:396:tp",
+              "primitive_calls": 25,
+              "self_s": 1.4e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.029562,
+              "function": "~:0:<built-in method _yottadb.tp>",
+              "primitive_calls": 25,
+              "self_s": 0.000139,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.029423,
+              "function": "mccann_hub/yhmf/storage.py:152:attempt",
+              "primitive_calls": 25,
+              "self_s": 4.9e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.029359,
+              "function": "mccann_hub/yhmf/repository.py:70:attempt",
+              "primitive_calls": 25,
+              "self_s": 4.4e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.02908,
+              "function": "mccann_hub/yhmf/repository.py:133:attempt",
+              "primitive_calls": 25,
+              "self_s": 0.000109,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.028837,
+              "function": "mccann_hub/yhmf/mutations.py:103:patch",
+              "primitive_calls": 25,
+              "self_s": 0.000225,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 0.011868,
+              "function": "mccann_hub/yhmf/mutations.py:87:replace_secondary",
+              "primitive_calls": 25,
+              "self_s": 0.000174,
+              "total_calls": 25
+            }
+          ],
+          "top_self": [
+            {
+              "cumulative_s": 0.005191,
+              "function": "mccann_hub/yhmf/owned.py:45:_has_functions",
+              "primitive_calls": 50,
+              "self_s": 0.002394,
+              "total_calls": 2550
+            },
+            {
+              "cumulative_s": 0.007543,
+              "function": "mccann_hub/yhmf/storage.py:25:__post_init__",
+              "primitive_calls": 1075,
+              "self_s": 0.002186,
+              "total_calls": 1075
+            },
+            {
+              "cumulative_s": 0.001833,
+              "function": "mccann_hub/yhmf/storage.py:32:<genexpr>",
+              "primitive_calls": 4075,
+              "self_s": 0.001569,
+              "total_calls": 4075
+            },
+            {
+              "cumulative_s": 0.007607,
+              "function": "~:0:<built-in method builtins.any>",
+              "primitive_calls": 1175,
+              "self_s": 0.001362,
+              "total_calls": 2225
+            },
+            {
+              "cumulative_s": 0.001293,
+              "function": "~:0:<built-in method _yottadb.get>",
+              "primitive_calls": 800,
+              "self_s": 0.001293,
+              "total_calls": 800
+            },
+            {
+              "cumulative_s": 0.001068,
+              "function": "~:0:<built-in method builtins.isinstance>",
+              "primitive_calls": 9875,
+              "self_s": 0.001068,
+              "total_calls": 9875
+            },
+            {
+              "cumulative_s": 0.002173,
+              "function": "copy.py:118:deepcopy",
+              "primitive_calls": 75,
+              "self_s": 0.000926,
+              "total_calls": 775
+            },
+            {
+              "cumulative_s": 0.004942,
+              "function": "mccann_hub/yhmf/owned.py:59:<genexpr>",
+              "primitive_calls": 450,
+              "self_s": 0.000822,
+              "total_calls": 3300
+            },
+            {
+              "cumulative_s": 0.001056,
+              "function": "mccann_hub/yhmf/storage.py:34:<genexpr>",
+              "primitive_calls": 4075,
+              "self_s": 0.000788,
+              "total_calls": 4075
+            },
+            {
+              "cumulative_s": 0.001727,
+              "function": "~:0:<built-in method builtins.sum>",
+              "primitive_calls": 1075,
+              "self_s": 0.000671,
+              "total_calls": 1075
+            },
+            {
+              "cumulative_s": 0.000668,
+              "function": "~:0:<method 'get' of 'dict' objects>",
+              "primitive_calls": 4600,
+              "self_s": 0.000668,
+              "total_calls": 4600
+            },
+            {
+              "cumulative_s": 0.000569,
+              "function": "~:0:<built-in method builtins.len>",
+              "primitive_calls": 5425,
+              "self_s": 0.000569,
+              "total_calls": 5425
+            }
+          ],
+          "workload": "reference"
+        },
+        {
+          "guard_calls": {
+            "_has_functions": 0,
+            "_nested_model_schema": 0
+          },
+          "iterations": 25,
+          "lots": 100,
+          "method": "replace",
+          "profiled_total_s": 1.835348,
+          "top_cumulative": [
+            {
+              "cumulative_s": 1.930285,
+              "function": "benchmark_support.py:147:mutate",
+              "primitive_calls": 25,
+              "self_s": 0.000112,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 1.93012,
+              "function": "mccann_hub/yhmf/repository.py:64:atomic",
+              "primitive_calls": 25,
+              "self_s": 6e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 1.930049,
+              "function": "mccann_hub/yhmf/storage.py:149:atomic",
+              "primitive_calls": 25,
+              "self_s": 4.7e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 1.930002,
+              "function": "yottadb/__init__.py:396:tp",
+              "primitive_calls": 25,
+              "self_s": 2.3e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 1.929979,
+              "function": "~:0:<built-in method _yottadb.tp>",
+              "primitive_calls": 25,
+              "self_s": 0.00089,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 1.929089,
+              "function": "mccann_hub/yhmf/storage.py:152:attempt",
+              "primitive_calls": 25,
+              "self_s": 8e-05,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 1.928983,
+              "function": "mccann_hub/yhmf/repository.py:70:attempt",
+              "primitive_calls": 25,
+              "self_s": 0.00079,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 1.927827,
+              "function": "benchmark_support.py:157:replace",
+              "primitive_calls": 25,
+              "self_s": 0.000786,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 1.707005,
+              "function": "mccann_hub/yhmf/repository.py:205:save",
+              "primitive_calls": 25,
+              "self_s": 0.002993,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 1.704012,
+              "function": "mccann_hub/yhmf/repository.py:161:_write",
+              "primitive_calls": 25,
+              "self_s": 0.00022,
+              "total_calls": 25
+            },
+            {
+              "cumulative_s": 1.140116,
+              "function": "mccann_hub/yhmf/repository.py:82:_run",
+              "primitive_calls": 50,
+              "self_s": 0.00212,
+              "total_calls": 75
+            },
+            {
+              "cumulative_s": 0.919358,
+              "function": "mccann_hub/yhmf/repository.py:170:write",
+              "primitive_calls": 25,
+              "self_s": 0.003252,
+              "total_calls": 25
+            }
+          ],
+          "top_self": [
+            {
+              "cumulative_s": 0.223154,
+              "function": "mccann_hub/yhmf/storage.py:32:<genexpr>",
+              "primitive_calls": 489950,
+              "self_s": 0.190235,
+              "total_calls": 489950
+            },
+            {
+              "cumulative_s": 0.749019,
+              "function": "mccann_hub/yhmf/storage.py:25:__post_init__",
+              "primitive_calls": 93975,
+              "self_s": 0.182198,
+              "total_calls": 93975
+            },
+            {
+              "cumulative_s": 0.896812,
+              "function": "mccann_hub/yhmf/indexes.py:106:entries_at",
+              "primitive_calls": 50,
+              "self_s": 0.109658,
+              "total_calls": 50
+            },
+            {
+              "cumulative_s": 0.120134,
+              "function": "mccann_hub/yhmf/storage.py:34:<genexpr>",
+              "primitive_calls": 489950,
+              "self_s": 0.087685,
+              "total_calls": 489950
+            },
+            {
+              "cumulative_s": 0.29318,
+              "function": "~:0:<built-in method builtins.any>",
+              "primitive_calls": 94000,
+              "self_s": 0.070017,
+              "total_calls": 94000
+            },
+            {
+              "cumulative_s": 0.186539,
+              "function": "~:0:<built-in method builtins.sum>",
+              "primitive_calls": 93975,
+              "self_s": 0.066406,
+              "total_calls": 93975
+            },
+            {
+              "cumulative_s": 0.065306,
+              "function": "~:0:<built-in method builtins.isinstance>",
+              "primitive_calls": 655275,
+              "self_s": 0.065306,
+              "total_calls": 655275
+            },
+            {
+              "cumulative_s": 0.061657,
+              "function": "~:0:<built-in method builtins.len>",
+              "primitive_calls": 652523,
+              "self_s": 0.061657,
+              "total_calls": 652523
+            },
+            {
+              "cumulative_s": 0.077975,
+              "function": "mccann_hub/yhmf/records.py:196:walk_values",
+              "primitive_calls": 40300,
+              "self_s": 0.057031,
+              "total_calls": 130500
+            },
+            {
+              "cumulative_s": 0.052316,
+              "function": "~:0:<built-in method _yottadb.get>",
+              "primitive_calls": 38750,
+              "self_s": 0.052316,
+              "total_calls": 38750
+            },
+            {
+              "cumulative_s": 0.051173,
+              "function": "encoder.py:205:iterencode",
+              "primitive_calls": 35000,
+              "self_s": 0.051173,
+              "total_calls": 35000
+            },
+            {
+              "cumulative_s": 0.11721,
+              "function": "encoder.py:183:encode",
+              "primitive_calls": 50000,
+              "self_s": 0.045909,
+              "total_calls": 50000
+            }
+          ],
+          "workload": "indexed"
+        }
+      ],
+      "pydantic": "2.14.3",
+      "python": "3.12.12",
+      "rows": [
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 3.53,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "set": 1.0
+          },
+          "p95_us": 4.43,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 154.3,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "get": 15.0,
+            "set": 1.0
+          },
+          "p95_us": 193.16,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 327.61,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 1.0,
+            "get": 46.0,
+            "set": 12.0
+          },
+          "p95_us": 365.74,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 3.46,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "set": 1.0
+          },
+          "p95_us": 4.12,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 160.85,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "get": 15.0,
+            "set": 1.0
+          },
+          "p95_us": 176.28,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 800.46,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 1.0,
+            "get": 100.0,
+            "set": 39.0
+          },
+          "p95_us": 832.61,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 3.49,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "set": 1.0
+          },
+          "p95_us": 3.93,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 154.96,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "get": 15.0,
+            "set": 1.0
+          },
+          "p95_us": 173.4,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 5539.98,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 1.0,
+            "get": 640.0,
+            "set": 309.0
+          },
+          "p95_us": 5911.96,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 3.49,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "set": 1.0
+          },
+          "p95_us": 4.15,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 156.04,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "get": 15.0,
+            "set": 1.0
+          },
+          "p95_us": 176.11,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 52422.86,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 1.0,
+            "get": 6040.0,
+            "set": 3009.0
+          },
+          "p95_us": 60048.07,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 239.32,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "delete_tree": 1.0,
+            "get": 19.0,
+            "set": 2.0
+          },
+          "p95_us": 269.99,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 597.37,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 2.0,
+            "get": 65.0,
+            "set": 15.0
+          },
+          "p95_us": 682.97,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 241.33,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "delete_tree": 1.0,
+            "get": 19.0,
+            "set": 2.0
+          },
+          "p95_us": 259.4,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 2640.36,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 2.0,
+            "get": 200.0,
+            "set": 60.0
+          },
+          "p95_us": 2773.75,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 246.45,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "delete_tree": 1.0,
+            "get": 19.0,
+            "set": 2.0
+          },
+          "p95_us": 276.41,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 23733.91,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 2.0,
+            "get": 1550.0,
+            "set": 510.0
+          },
+          "p95_us": 31102.46,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 266.74,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "delete_tree": 1.0,
+            "get": 19.0,
+            "set": 2.0
+          },
+          "p95_us": 507.05,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 250503.03,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 2.0,
+            "get": 15050.0,
+            "set": 5010.0
+          },
+          "p95_us": 263301.39,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 252.24,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "delete_tree": 2.0,
+            "get": 21.0,
+            "set": 3.0
+          },
+          "p95_us": 298.05,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 594.0,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 3.0,
+            "get": 66.0,
+            "set": 16.0
+          },
+          "p95_us": 647.08,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 249.71,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "delete_tree": 2.0,
+            "get": 21.0,
+            "set": 3.0
+          },
+          "p95_us": 270.91,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 2714.2,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 3.0,
+            "get": 201.0,
+            "set": 61.0
+          },
+          "p95_us": 2873.87,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 244.27,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "delete_tree": 2.0,
+            "get": 21.0,
+            "set": 3.0
+          },
+          "p95_us": 281.49,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 24011.45,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 3.0,
+            "get": 1551.0,
+            "set": 511.0
+          },
+          "p95_us": 30225.85,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 246.5,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "delete_tree": 2.0,
+            "get": 21.0,
+            "set": 3.0
+          },
+          "p95_us": 276.6,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 250503.34,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 4.0,
+            "delete_tree": 3.0,
+            "get": 15051.0,
+            "set": 5011.0
+          },
+          "p95_us": 261989.89,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 352.57,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 2.0,
+            "delete_tree": 2.0,
+            "get": 32.0,
+            "set": 5.0
+          },
+          "p95_us": 382.49,
+          "workload": "reference"
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 636.68,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 6.0,
+            "delete_tree": 3.0,
+            "get": 68.0,
+            "set": 18.0
+          },
+          "p95_us": 700.3,
+          "workload": "reference"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 345.13,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 2.0,
+            "delete_tree": 2.0,
+            "get": 32.0,
+            "set": 5.0
+          },
+          "p95_us": 380.95,
+          "workload": "reference"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 2751.78,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 6.0,
+            "delete_tree": 3.0,
+            "get": 207.5,
+            "set": 63.0
+          },
+          "p95_us": 2932.61,
+          "workload": "reference"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 348.45,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 2.0,
+            "delete_tree": 2.0,
+            "get": 32.0,
+            "set": 5.0
+          },
+          "p95_us": 405.18,
+          "workload": "reference"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 23827.06,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 6.0,
+            "delete_tree": 3.0,
+            "get": 1557.5,
+            "set": 513.0
+          },
+          "p95_us": 30517.1,
+          "workload": "reference"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 364.45,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 2.0,
+            "delete_tree": 2.0,
+            "get": 32.0,
+            "set": 5.0
+          },
+          "p95_us": 388.55,
+          "workload": "reference"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 245786.25,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 6.0,
+            "delete_tree": 3.0,
+            "get": 15057.5,
+            "set": 5013.0
+          },
+          "p95_us": 257972.28,
+          "workload": "reference"
+        }
+      ],
+      "source_commit": "3483458be8d4043559038b318f1047bbe26445d1",
+      "warmup_iterations": 5,
+      "yottadb": "pywr v0.10.0 YottaDB r2.02 Linux x86_64"
+    }
+  ]
+}

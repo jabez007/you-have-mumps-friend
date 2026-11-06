@@ -192,3 +192,51 @@ They do not characterize cold caches, random index-value distributions, long-run
 throughput, unique-claim conflict rates, or application callbacks with side effects.
 The baseline and follow-up timings come from different runs and must not be used
 as a before/after speed claim.
+
+
+### Guard dispatch optimization
+
+The wrapper-probe simplification is implemented in `3483458be8d4043559038b318f1047bbe26445d1` and qualified
+in [CI run 42279862741](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42279862741).
+Both native environments passed 852 tests and all expanded workloads. Local
+validation passed 443 tests; both dependency compatibility jobs passed 39 cases.
+The [post-change results](benchmarks/native-guard-dispatch-2026-11-06.json) include
+explicit guard call counters.
+
+Inspection still walks the current model schema on every operation. Wrapper
+recognition is restricted to function nodes and foreign class/ref descriptors;
+ordinary dictionaries avoid the helper call. Existing handling of model, field,
+Annotated, plain, and nested-model validators remains intact. No metadata or
+validation-policy cache was introduced, and installed-schema reads are unchanged.
+
+Each 25-patch profile still made 2,550 recursive `_has_functions` calls, while
+`_nested_model_schema` probes fell from 1,000 to zero for the benchmark models.
+The helper remains in use for actual validator wrappers. This establishes less
+redundant work; it is not a guarantee that every workload has zero wrapper probes.
+
+The newer r2.02 runner used an Intel Xeon Platinum 8573C instead of the prior
+AMD EPYC processor. The r2.06 runner reported AMD EPYC 9V74 again. Both had four
+logical CPUs. There is no controlled same-host before/after speedup claim.
+Observed post-change median microseconds at 1,000 lots were:
+
+| Engine | Workload | Patch | Whole replacement |
+| --- | --- | ---: | ---: |
+| r2.02 | unindexed | 156.04 | 52,422.86 |
+| r2.02 | indexed | 266.74 | 250,503.03 |
+| r2.02 | unique | 246.50 | 250,503.34 |
+| r2.02 | reference | 364.45 | 245,786.25 |
+| r2.06 | unindexed | 132.71 | 52,880.55 |
+| r2.06 | indexed | 216.34 | 246,291.98 |
+| r2.06 | unique | 225.48 | 244,915.19 |
+| r2.06 | reference | 317.56 | 242,596.85 |
+
+The unindexed model has two scalar fields. The tracked model adds a unique serial
+and a reference, so differences between those workloads also include validation
+of additional fields. Indexed patch versus replacement compares the same model.
+
+Next optimization candidates are further reductions in guard traversal and native
+path construction/validation. Any policy reuse needs explicit declaration lifetime
+and invalidation semantics; stored metadata must remain checked within each TP
+attempt. Unique-claim conflict-rate and longer contention measurements are also
+remaining follow-ups. These results do not motivate record revisions, a storage
+format migration, or a native extension as a performance shortcut.

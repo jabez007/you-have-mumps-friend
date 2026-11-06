@@ -647,7 +647,7 @@ native database. Both native CI environments run it too. Serial measurements
 report median/p95 latency and adapter operation counts at 1, 10, 100, and 1,000
 lots, with five warmups. The unindexed case compares direct node assignment,
 deep patch, and read/modify/save. Indexed quantity, unique serial, and indexed
-reference changes compare patch and replacement with the same integrity work.
+reference changes compare patch and replacement with the same integrity requirements.
 
 Version-two output also includes four-process contention bursts and separate
 cProfile summaries. Contention compares independent roots, independent children,
