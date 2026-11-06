@@ -121,3 +121,37 @@ limitations remain in place unless the example demonstrates a correctness need.
 No new dependency is planned. Hypothesis is already a development dependency.
 All source changes retain the configured complexity maximum of ten. The initial
 complexity check passed without over-threshold cleanup candidates.
+
+### Phase 1 qualification
+
+Canonical generation and legacy integration are independently committed in
+`28c5141` and `e24b26d`. [CI run 42288583847](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42288583847)
+passed all five jobs: 883 tests per native r2.02/r2.06 environment, 464 local tests,
+and 138 selected compatibility tests per Pydantic version. Both complete local
+non-native suites also passed under 2.12.0 and 2.14.3. Ruff, formatting, complexity,
+strict mypy, build, isolated wheel smoke, and the existing native benchmark ran.
+The foreign-runtime compatibility regression fails against `268ab73` and passes
+with the new binding. No dependency, record-layout, or application-data conversion
+was introduced. Phase 1 is complete before Phase 2 work begins.
+
+### Phase 2 design note
+
+Reuse Hypothesis, the public Database interface, disposable adapter fixtures,
+native worker rendezvous, and existing migration checkpoint instrumentation.
+The test module will be a client of the persistence module, with a plain Python
+reference state and separately derived physical index/reference expectations.
+Do not call mapper codecs or entry builders to construct those expectations.
+Generate inserts, scalar/reference/index patches, owned-child insert/delete,
+aggregate replacements/deletes, invalid writes, uniqueness conflicts, restricted
+deletes, and explicit atomic aborts. Verify logical and physical state after each
+step, including absence of stale entries. Existing native races already cover
+children, fields, uniqueness, parent deletion, references, and forced TP restarts;
+extend them for a warmed legacy schema changing during an active transaction.
+
+Keep routine examples bounded. A separate stress profile and CI job will run
+longer generated sequences with Hypothesis reproduction output enabled. Native
+state-machine examples remain bounded and use the same independent assertions.
+Add migration interruption cases at installation and committed-batch boundaries
+alongside existing field/index/checkpoint/activation rollback cases. No production
+abstraction or public API change is planned unless a generated case proves a defect.
+The source complexity check remains at ten and passes before this phase.
