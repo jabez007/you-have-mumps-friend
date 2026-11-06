@@ -230,6 +230,21 @@ Owned models cannot declare independent globals, and ownership declarations
 cannot be recursive. Child access currently goes through the loaded parent
 aggregate. Updating a parent replaces its entire subtree in one transaction.
 
+## Direct owned mutations
+
+`get(..., at=...)`, `patch`, `insert_child`, and `delete_child` resolve declared
+ownership from a registered root. Scalar patches preserve every unrelated node
+and collection marker. Secondary entries retain their existing full location
+identities; only changed occurrences are passed to the normal index/reference
+replacement routines. Root metadata and schema fingerprints are unchanged.
+
+Child insertion/deletion updates only its subtree, affected secondary entries,
+and the existing collection count. Insertion enumerates declared ownership keys
+to preserve the aggregate node budget because layout one has no size counter.
+Scalar patch preserves node count; deletion reduces it. No storage upgrade is
+required for v0.4. See [ADR 0004](adr/0004-hierarchical-mutations.md) for validation
+restrictions and concurrent mutation semantics.
+
 ## References and reverse entries
 
 A non-null reference is `r:` followed by the target's canonical encoded key.

@@ -25,10 +25,29 @@ class Owner:
     relative: tuple[bytes, ...]
 
 
+def _nested_model_schema(value: dict[str, Any], model: type[Model]) -> bool:
+    inner = value
+    while str(inner.get("type", "")).startswith("function-"):
+        wrapped = inner.get("schema")
+        if not isinstance(wrapped, dict):
+            return False
+        inner = wrapped
+    nested = inner.get("cls")
+    return (
+        isinstance(nested, type)
+        and issubclass(nested, Model)
+        and nested is not model
+        and value.get("ref") is not None
+        and value.get("ref") == nested.__pydantic_core_schema__.get("ref")
+    )
+
+
 def _has_functions(value: Any, model: type[Model]) -> bool:
     if isinstance(value, list):
         return any(_has_functions(item, model) for item in value)
     if not isinstance(value, dict):
+        return False
+    if _nested_model_schema(value, model):
         return False
     if value.get("type") == "model" and value.get("cls") is not model:
         return False

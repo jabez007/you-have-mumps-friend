@@ -8,9 +8,9 @@ from pathlib import Path as FilePath
 
 import pytest
 
-from mccann_hub.yhmf import Database, NativeStore, Path, Registry
+from mccann_hub.yhmf import Database, NativeStore, Path, Reference, Registry
 from mccann_hub.yhmf.errors import NotFound
-from tests.mutation_models import Product, Warehouse, warehouse
+from tests.mutation_models import Lot, Product, Warehouse, warehouse
 from tests.test_native_schema_safety import ready
 
 pytestmark = pytest.mark.native
@@ -134,4 +134,71 @@ def test_native_patch_restart_and_rollback_keep_data_and_secondary_entries_toget
     with pytest.raises(RuntimeError):
         db.atomic(abort)
     assert db.get(Warehouse, "W").bins["A"].lots["0"].serial == "claimed"
+    assert db.check_indexes(Warehouse, limit=5).issues == ()
+
+
+@pytest.mark.parametrize("delete_first", [False, True])
+@pytest.mark.parametrize("operation", ["delete_child", "delete_bin"])
+def test_native_child_or_ancestor_delete_races_with_patch(db, delete_first, operation):
+    delete = (operation, "0", "unused")
+    patch = ("quantity", "0", "1")
+    commands = (delete, patch) if delete_first else (patch, delete)
+    expected = ["committed", "NotFound"] if delete_first else ["committed", "committed"]
+    assert race(*commands) == expected
+    with pytest.raises(NotFound):
+        db.get(Warehouse, "W", at=("bins", "A", "lots", "0"))
+    assert db.check_indexes(Warehouse, limit=5).issues == ()
+
+
+def test_native_concurrent_insertions_preserve_collection_count_and_siblings(db):
+    assert race(("insert", "new1", "one"), ("insert", "new2", "two")) == ["committed", "committed"]
+    lots = db.get(Warehouse, "W").bins["A"].lots
+    assert lots.keys() == {"0", "1", "new1", "new2"}
+    assert lots["new1"].note == "one" and lots["new2"].note == "two"
+    assert db.check_indexes(Warehouse, limit=5).issues == ()
+
+
+@pytest.mark.parametrize("delete_first", [False, True])
+def test_native_reference_patch_and_target_deletion_remain_atomic(db, delete_first):
+    db.insert(Product(id="P", name="Target"))
+    delete, link = ("delete_product", "0", "unused"), ("link_product", "0", "unused")
+    assert race(*((delete, link) if delete_first else (link, delete))) == [
+        "committed",
+        "ReferenceViolation",
+    ]
+    assert db.check_indexes(Warehouse, limit=5).issues == ()
+
+
+def test_native_child_reference_removal_allows_concurrent_target_delete(db):
+    db.insert(Product(id="P", name="Target"))
+    db.patch(
+        Warehouse,
+        "W",
+        at=("bins", "A", "lots", "0"),
+        changes={"product": Reference[Product](key="P")},
+    )
+    assert race(("delete_referenced_child", "0", "unused"), ("delete_product", "0", "unused")) == [
+        "committed",
+        "committed",
+    ]
+    with pytest.raises(NotFound):
+        db.get(Product, "P")
+
+
+def test_native_child_insertion_and_deletion_restart_as_one_transaction(db):
+    yottadb = importlib.import_module("yottadb")
+    attempts = []
+
+    def change(tx):
+        attempts.append(tx.get(Warehouse, "W").bins["A"].lots.keys())
+        tx.insert_child(
+            Warehouse, "W", collection=("bins", "A", "lots"), record=Lot(id="new", serial="new")
+        )
+        tx.delete_child(Warehouse, "W", at=("bins", "A", "lots", "0"))
+        if len(attempts) == 1:
+            raise yottadb.YDBTPRestart()
+
+    db.atomic(change)
+    assert attempts == [{"0", "1"}, {"0", "1"}]
+    assert db.get(Warehouse, "W").bins["A"].lots.keys() == {"1", "new"}
     assert db.check_indexes(Warehouse, limit=5).issues == ()

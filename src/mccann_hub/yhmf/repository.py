@@ -7,6 +7,7 @@ from typing import Any, overload
 
 from . import (
     adoption,
+    child_mutations,
     index_rebuilds,
     indexes,
     migration_executor,
@@ -132,6 +133,28 @@ class Database:
         def attempt(tx: Database) -> None:
             with tx._writing():
                 mutations.patch(tx, spec, key, at, changes)
+
+        self._run(attempt)
+
+    def insert_child(
+        self, model: type[Model], key: Key, *, collection: OwnedPath, record: Model
+    ) -> None:
+        """Insert a validated keyed child into an existing owned collection."""
+        spec = self.registry.spec(model)
+
+        def attempt(tx: Database) -> None:
+            with tx._writing():
+                child_mutations.insert(tx, spec, key, collection, record)
+
+        self._run(attempt)
+
+    def delete_child(self, model: type[Model], key: Key, *, at: OwnedPath) -> None:
+        """Delete an existing child subtree and its secondary occurrences."""
+        spec = self.registry.spec(model)
+
+        def attempt(tx: Database) -> None:
+            with tx._writing():
+                child_mutations.delete(tx, spec, key, at)
 
         self._run(attempt)
 

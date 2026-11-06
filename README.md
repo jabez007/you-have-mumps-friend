@@ -90,6 +90,7 @@ class Bin(Model):
 class Warehouse(Model):
     __global__ = "^Warehouse"
     id: int = Field(primary_key=True)
+    name: str = "Main"
     bins: Children[Bin] = ChildField(key="code")
 
 db = Database(MemoryStore(), Registry(Warehouse))
@@ -104,7 +105,7 @@ models have no `__global__`; their parent controls persistence and deletion.
 `Children` is a dictionary, and each key must match the child's primary key.
 Changing the parent or dictionary key changes the child's physical identity.
 Edit the loaded aggregate and save its root inside `atomic` when coordinating
-updates. Direct child CRUD is not implemented yet.
+updates. Use the explicit mutations below for direct changes to existing owned paths.
 
 Reads and writes reject collections larger than 1000 children and records larger
 than 10000 stored nodes. These prototype bounds include presence markers and
@@ -158,6 +159,38 @@ The callback may restart. Keep external side effects outside it. Failed mutation
 make the transaction roll back even if the callback catches the exception.
 See [ADR 0004](docs/adr/0004-hierarchical-mutations.md) for validation and storage
 tradeoffs.
+
+## Insert and delete keyed children
+
+```python
+db.insert_child(
+    Warehouse, 7,
+    collection=("bins", "A01", "lots"),
+    record=Lot(number="L-002", quantity=Decimal("3")),
+)
+db.delete_child(Warehouse, 7, at=("bins", "A01", "lots", "L-002"))
+```
+
+Insertion requires an existing collection and derives the child key from its
+validated identity. It rejects existing child data and validates the complete
+new subtree. Deletion requires an existing keyed child, removes its subtree,
+releases its outgoing references and unique claims, and preserves siblings.
+Both update the collection count and enforce collection length constraints.
+They share the ancestor-validation restrictions of `patch`.
+
+Child insertion counts declared aggregate nodes through ownership markers and
+bounded key enumeration to preserve layout one's 10,000-node limit. Its size
+check grows with the aggregate; scalar patches and child deletion avoid that
+aggregate traversal. No cached size or revision metadata is added. Existing
+v0.3 databases and older whole-aggregate writers retain the same layout.
+
+Use `insert` to create a root and reject duplicates; `save` to intentionally
+replace or upsert its whole aggregate; `patch` to change scalar/reference values;
+and child operations to change keyed ownership. Wrap related operations in
+`atomic` so they commit together. Parent or child deletion concurrent with a
+nested update causes serialization and a missing-owner error on retry when the
+delete wins. Unique-index conflicts allow one claimant. Failure and restart
+preserve nodes, collection counts, indexes, and reference entries together.
 
 ## Link independently persisted records
 

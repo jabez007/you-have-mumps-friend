@@ -199,3 +199,72 @@ def test_scalar_work_is_independent_of_unrelated_children_and_touches_only_affec
                 if path.global_name == "^YHMFIndex":
                     assert path.subscripts[1] == b"bins.lots.quantity"
     assert counts[0] == counts[1]
+
+
+def test_plain_ancestor_validator_is_rejected_with_a_clear_error(store):
+    from pydantic import PlainValidator
+
+    class Validated(Warehouse):
+        name: Annotated[str, PlainValidator(lambda value: value)] = "Main"
+
+    db = Database(store, Registry(Product, Validated))
+    db.insert(Validated(id="W", bins=warehouse().bins))
+    with pytest.raises(MutationError, match="custom validators"):
+        db.patch(Validated, "W", at=("bins", "A", "lots", "0"), changes={"note": "No"})
+
+
+def test_mutation_paths_observe_maintenance_and_corrupt_snapshot_gates(db):
+    from mccann_hub.yhmf.errors import MaintenanceActive, StorageError
+
+    operations = (
+        lambda: db.patch(Warehouse, "W", changes={"name": "No"}),
+        lambda: db.insert_child(
+            Warehouse, "W", collection=("bins", "A", "lots"), record=Lot(id="new")
+        ),
+        lambda: db.delete_child(Warehouse, "W", at=("bins", "A", "lots", "0")),
+        lambda: db.get(Warehouse, "W", at=("bins", "A", "lots", "0")),
+    )
+    job = db.begin_index_rebuild(Warehouse, plan=db.plan_index_rebuild(Warehouse))
+    for operation in operations:
+        with pytest.raises(MaintenanceActive):
+            operation()
+    db.abort_migration(job.migration_id)
+    db.store.delete_tree(Path("^YHMFSchema", (b"YHMFTestWarehouse", b"snapshot")))
+    for operation in operations:
+        with pytest.raises(StorageError):
+            operation()
+
+
+def test_nested_leaf_model_validator_runs_without_requiring_parent_tree(store):
+    from mccann_hub.yhmf import ChildField, Children
+
+    class CheckedLot(Lot):
+        @model_validator(mode="after")
+        def approved(self):
+            if self.note == "blocked" and self.quantity > 0:
+                raise ValueError("blocked quantity")
+            return self
+
+    class Root(Model):
+        __global__ = "^YHMFTestWarehouse"
+        id: str = Field(primary_key=True)
+        lots: Children[CheckedLot] = ChildField(key="id")
+
+    db = Database(store, Registry(Product, Root))
+    db.insert(Root(id="W", lots={"L": CheckedLot(id="L", note="blocked")}))
+    with pytest.raises(ValidationError, match="blocked quantity"):
+        db.patch(Root, "W", at=("lots", "L"), changes={"quantity": Decimal("1")})
+    db.patch(Root, "W", at=("lots", "L"), changes={"quantity": Decimal("1"), "note": "approved"})
+    assert db.get(Root, "W").lots["L"].quantity == 1
+
+
+def test_parent_annotated_owned_field_validator_is_not_mistaken_for_child_validation(store):
+    class Root(Model):
+        __global__ = "^YHMFTestWarehouse"
+        id: str = Field(primary_key=True)
+        lot: Annotated[Lot, AfterValidator(lambda value: value)]
+
+    db = Database(store, Registry(Product, Root))
+    db.insert(Root(id="W", lot=Lot(id="L")))
+    with pytest.raises(MutationError, match="custom validators"):
+        db.patch(Root, "W", at=("lot",), changes={"quantity": Decimal("1")})
