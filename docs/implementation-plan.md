@@ -330,3 +330,27 @@ declaration. Preserve codecs, stored indexes, signatures, and schema identities.
 Single-field queries do not execute arbitrary cross-field model validators. Add
 regressions for string transforms, bounds, nonstrict fields, nested owners, primary
 keys, and nullable references before changing the query callers.
+
+### Validation-only migration design, issue 2
+
+The planner already compares root and owned revisions, constraints, nullability,
+and defaults. The executor already validates both declarations and refuses changes
+to existing field bytes. Extend those mechanisms rather than adding a migration
+API. Validation-only plans use validation, verification, retagging, and activation;
+they skip the backfill pass. The historical backfilled counter records readiness
+for verification, including records requiring no writes. Existing checkpoints and
+additive migrations retain their phases and recovery behavior.
+
+Expose value-free execution blockers in plan documents so structural limitations
+are distinct from manual review. A record validation or normalization failure in
+the initial validation-only pass aborts the job and restores the source in the
+same transaction. Raise its error after that transaction commits; an engine
+restart can therefore revalidate the read set. Storage faults remain resumable
+failures, and failures after retagging cannot automatically restore the source.
+Reuse the maintenance abort helper inside the owned transaction, never nest TP.
+Preserve application values, indexes, metadata formats, and legacy bindings.
+
+Regression tests cover the reported five changes, stricter constraints, owned
+revisions, restart/reopen, normalization rejection, and failures before activation.
+Existing additive failure and recovery tests stay intact. C901 passes at ten
+before implementation.

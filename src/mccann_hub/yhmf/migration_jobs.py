@@ -109,28 +109,25 @@ def complete(store: Store, status: MigrationStatus, target: bytes) -> MigrationS
     return completed
 
 
-def abort(store: Store, migration_id: str) -> MigrationStatus:
-    def attempt() -> MigrationStatus:
-        status = load_status(store, migration_id)
-        if status.phase == "aborted":
-            return status
-        if (
-            status.phase == "complete"
-            or status.backfilled
-            or status.retagged
-            or migration_cleanup.removed_count(store, migration_id)
-        ):
-            raise MigrationError(
-                "Committed migration updates must be resumed; they cannot be aborted"
-            )
-        require_owner(store, status)
-        source, _ = manifests(store, status)
-        store.set(
-            schema_path(status.global_name), SchemaSnapshot(source).fingerprint.encode("ascii")
-        )
-        result = replace(status, phase="aborted", cursor=b"")
-        save_status(store, result)
-        store.delete_tree(GATE)
-        return result
+def abort_owned(store: Store, status: MigrationStatus) -> MigrationStatus:
+    """Restore source access inside the caller's transaction, before committed updates."""
+    if status.phase == "aborted":
+        return status
+    if (
+        status.phase == "complete"
+        or status.backfilled
+        or status.retagged
+        or migration_cleanup.removed_count(store, status.migration_id)
+    ):
+        raise MigrationError("Committed migration updates must be resumed; they cannot be aborted")
+    require_owner(store, status)
+    source, _ = manifests(store, status)
+    store.set(schema_path(status.global_name), SchemaSnapshot(source).fingerprint.encode("ascii"))
+    result = replace(status, phase="aborted", cursor=b"")
+    save_status(store, result)
+    store.delete_tree(GATE)
+    return result
 
-    return store.atomic(attempt)
+
+def abort(store: Store, migration_id: str) -> MigrationStatus:
+    return store.atomic(lambda: abort_owned(store, load_status(store, migration_id)))
