@@ -51,3 +51,31 @@ A native persistent-error regression checks attempts 0 through 3 and verifies
 that initial schema installation and record writes all roll back. Existing
 simultaneous-worker tests remain unchanged. Native CI for both configured engines
 is the acceptance gate; the adapter harness alone cannot establish engine behavior.
+
+
+## Review hardening: native control signals and nesting
+
+Issues 1 and 7 exposed two gaps outside the validation-error policy. Native get,
+set, delete, and traversal calls now retain the first restart or rollback signal
+in a context shared by NativeStore instances during that attempt. Subsequent calls
+propagate it without invoking the engine. Callback exit must also propagate it,
+even when a caller caught it or raised a different error afterward. The context
+resets on every exit and every restart. Native NodeEnd traversal termination
+retains its ordinary behavior.
+
+The same active context rejects nested native atomic entry through other handles.
+MemoryStore rejects reentrant entry while holding its existing lock, which still
+serializes concurrent threads and permits independent memory databases. This adds
+no stored metadata or new retry counter. Database handle expiration and failed-write
+protection remain in place. The validation-error policy above is unchanged.
+
+This tracking covers native calls through the adapter. Raw yottadb-module calls
+remain responsible for returning native control signals themselves. The supported
+native concurrency model remains independent processes. Arbitrary callback side
+effects cannot be automatically detected; issue 33 must preserve this contract.
+
+Regressions exercise caught signals from all four storage methods, signal identity,
+pending calls through another store, later callback errors, fresh transactions,
+and outer/alias nesting. Four-process native tests run both plain and broad-handler
+counter callbacks for 1,500 commits per worker. Controlled native tests also force
+caught restart and rollback signals after a staged write.

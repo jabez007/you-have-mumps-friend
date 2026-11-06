@@ -3,17 +3,21 @@
 This page lists behavior in version 0.5.0 that can surprise you. Each item links to its
 issue in the [issue tracker](https://github.com/jabez007/you-have-mumps-friend/issues).
 
+The development branch fixes swallowed native control signals and outer-handle
+transaction nesting, issues [#1](https://github.com/jabez007/you-have-mumps-friend/issues/1)
+and [#7](https://github.com/jabez007/you-have-mumps-friend/issues/7). The original
+v0.5.0 implementation has those defects. See the current
+[transaction contract](guides/transactions.md).
+
 ## Defects
 
 | Behavior | What to do for now | Issue |
 | --- | --- | --- |
-| A restart caught by a broad `except` around a read inside `atomic` can still commit that attempt. | Catch only specific errors inside callbacks. | [#1](https://github.com/jabez007/you-have-mumps-friend/issues/1) |
 | Bumping `__schema_version__`, or changing only a validator, constraint, or default, gives `SchemaMismatch` on open. The plan says no manual review is needed, but it cannot execute. | Do not change these on a model that holds data. Use a new global and copy the data, or restore the old declaration. | [#2](https://github.com/jabez007/you-have-mumps-friend/issues/2) |
 | `extra="allow"` loses the extra values with no error, and the schema fingerprint ignores this setting. | Keep the default `extra="forbid"`. | [#3](https://github.com/jabez007/you-have-mumps-friend/issues/3) |
 | `insert_child` reads the whole aggregate, so its cost and its conflict rate grow with the aggregate. | Keep shared collections small, or model high-volume children as top-level records. | [#4](https://github.com/jabez007/you-have-mumps-friend/issues/4) |
 | `where` does not apply the model's configuration, such as `str_to_lower`, to filter values. | Pass values in their stored form. | [#5](https://github.com/jabez007/you-have-mumps-friend/issues/5) |
 | A too-small region gives a raw `%YDB-E-REC2BIG` error on first write. | [Create the region](guides/native-setup.md#create-a-database) with larger limits. | [#6](https://github.com/jabez007/you-have-mumps-friend/issues/6) |
-| `db.atomic` inside a `db.atomic` callback runs like a savepoint and is not rejected. | Do not nest. | [#7](https://github.com/jabez007/you-have-mumps-friend/issues/7) |
 | A null collection on a path raises `StorageError` and not `NotFound`. | Check for null before you use the path. | [#8](https://github.com/jabez007/you-have-mumps-friend/issues/8) |
 | Migrating a model that another model references requires redefining the referring model too, and `Registry(NewTarget, OldReferrer)` gives a misleading error. | Redefine the referrer against the new target. | [#9](https://github.com/jabez007/you-have-mumps-friend/issues/9) |
 | A very large integer, such as `10**5000`, raises plain `ValueError`. | Catch `ValueError` as well as `YHMFError` around such values. | [#10](https://github.com/jabez007/you-have-mumps-friend/issues/10) |

@@ -238,3 +238,59 @@ are documented in the v0.5.0 delivery report. All three implementation phases ar
 complete. Version 0.5.0 preserves layout one, legacy identities, namespace, and GPL
 licensing, and adds no dependency. Release tags and package publication are separate
 repository operations.
+
+## Review issue delivery
+
+The issue review at `63ad653` identified 35 follow-ups. The approved pushback is
+posted on issues 1, 2, 3, 5, 11, 15, 17, 18, 19, 23, 24, 25, 26, 27, 28, 29, 30,
+32, 33, 34, and 35. Implement the valid work within those recommendations, with
+independently verified commits pushed after each slice. Keep design proposals
+open until their acceptance criteria are met; comments alone do not complete them.
+
+Delivery order:
+
+1. Transaction control and lifecycle: swallowed native signals and shared-handle
+   nesting, issues 1 and 7. Preserve the existing stable validation retry policy.
+2. Declaration and filter correctness: reject lossy extra-field policies on root
+   and owned models, issue 3; share configured filter validation, issue 5.
+3. Schema revision and validation-only migration execution, issue 2, including
+   explicit unsupported reasons and safe recovery boundaries.
+4. Remaining error and registration contracts: null collections, large integers,
+   referrer diagnostics, and region-size errors, issues 8, 10, 9, and 6.
+5. Fixed-width child insertion counting and native measurements, issue 4, followed
+   by declaration-scoped guard/adapter optimization, issue 31.
+6. Bounded collection, occurrence, batch, reference, and inverse reads, issues 30,
+   16, 12, and 14. Keep raw-write design separate from collection paging.
+7. Migration housekeeping, transforms, and scoped maintenance, issues 22, 20, and
+   21, as separate designs and increments using existing maintenance infrastructure.
+8. Complete issue 34's regression, journal, documentation, and packaging checks
+   alongside the work they verify. Publish factual licensing documentation for 35.
+9. Address the remaining proposals through the approved smaller designs and
+   feasibility checks, including types, grouped mutations, typing, M interoperability,
+   computed fields, extension, access rules, encoding, contention, and error retries.
+   Preserve detached-save semantics when evaluating issue 27's write optimization.
+
+### Transaction control design, issues 1 and 7
+
+Reuse NativeStore's get/set/delete/traversal seam, its TP callback wrapper,
+MemoryStore's reentrant lock and rollback snapshot, and Database's expiring handles.
+The missing invariant is that a native restart or rollback invalidates the whole
+attempt even if caller code catches its exception. Record the first control signal
+at the native-call seam and propagate it when the callback ends. Later native
+calls in that attempt must also refuse to continue. A fresh attempt gets fresh
+state. Preserve native signal identity and the existing application-error retries.
+
+NativeStore instances share the process's nonthreaded YottaDB engine, so an active
+callback context must also reject nested atomic entry through another handle or
+store instance. MemoryStore owns an independent database per instance; reject its
+reentrant atomic entry while holding its existing lock, without rejecting serialized
+work from other threads or transactions on independent memory stores. No public
+method or storage layout changes. A flag only on Database is insufficient, and
+changing upstream exception inheritance globally would break its public contract.
+
+Deterministic regressions cover all native-call methods, caught restarts/rollbacks,
+post-signal calls, fresh retries, and shared-handle nesting. Native tests add a
+forced swallowed restart and four-process counter increments. Existing failure
+revalidation and rollback tests must remain intact. The initial C901 check passes
+at the configured maximum of ten. Native CI on both supported engines remains
+required before closing these issues.

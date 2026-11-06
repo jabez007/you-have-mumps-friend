@@ -4,15 +4,39 @@
 import importlib
 import re
 from collections.abc import Callable
+from contextvars import ContextVar
 from dataclasses import dataclass
 from threading import RLock
 from typing import Protocol, cast
 
-from .errors import StorageError, YHMFError
+from .errors import StorageError, TransactionError, YHMFError
 
 MAX_VALUE_BYTES = 32_766
 _GLOBAL = re.compile(r"\^[A-Za-z%][A-Za-z0-9]{0,30}\Z")
 _INTEGER = re.compile(rb"(?:0|-[1-9][0-9]*|[1-9][0-9]*)\Z")
+
+
+@dataclass
+class _NativeAttempt:
+    signal: BaseException | None = None
+
+
+_native_attempt: ContextVar[_NativeAttempt | None] = ContextVar("yhmf_native_attempt", default=None)
+
+
+def _native_callback[T](callback: Callable[[], T]) -> T:
+    state = _NativeAttempt()
+    token = _native_attempt.set(state)
+    try:
+        try:
+            return callback()
+        finally:
+            # The native engine must receive its control signal even if user
+            # code caught it or subsequently raised a different exception.
+            if state.signal is not None:
+                raise state.signal
+    finally:
+        _native_attempt.reset(token)
 
 
 @dataclass(frozen=True)
@@ -70,6 +94,7 @@ class MemoryStore:
     def __init__(self) -> None:
         self._nodes: dict[Path, bytes] = {}
         self._lock = RLock()
+        self._atomic_active = False
 
     def get(self, path: Path) -> bytes | None:
         with self._lock:
@@ -105,12 +130,17 @@ class MemoryStore:
 
     def atomic[T](self, callback: Callable[[], T]) -> T:
         with self._lock:
+            if self._atomic_active:
+                raise TransactionError("Nested atomic callbacks are not supported")
             before = self._nodes.copy()
+            self._atomic_active = True
             try:
                 return callback()
             except BaseException:
                 self._nodes = before
                 raise
+            finally:
+                self._atomic_active = False
 
 
 class NativeStore:
@@ -125,14 +155,14 @@ class NativeStore:
             ) from exc
 
     def get(self, path: Path) -> bytes | None:
-        return cast(bytes | None, self._ydb.get(path.global_name, path.subscripts))
+        return cast(bytes | None, self._call(self._ydb.get, path.global_name, path.subscripts))
 
     def set(self, path: Path, value: bytes) -> None:
         _check_value(value)
-        self._ydb.set(path.global_name, path.subscripts, value)
+        self._call(self._ydb.set, path.global_name, path.subscripts, value)
 
     def delete_tree(self, path: Path) -> None:
-        self._ydb.delete_tree(path.global_name, path.subscripts)
+        self._call(self._ydb.delete_tree, path.global_name, path.subscripts)
 
     def children(self, path: Path, *, limit: int, after: bytes = b"") -> tuple[bytes, ...]:
         _check_limit(limit)
@@ -140,19 +170,34 @@ class NativeStore:
         current = after
         for _ in range(limit):
             try:
-                current = self._ydb.subscript_next(path.global_name, path.subscripts + (current,))
+                current = self._call(
+                    self._ydb.subscript_next, path.global_name, path.subscripts + (current,)
+                )
             except self._ydb.YDBNodeEnd:
                 break
             keys.append(current)
         return tuple(keys)
 
+    def _call[**P, T](self, operation: Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> T:
+        state = _native_attempt.get()
+        if state is not None and state.signal is not None:
+            raise state.signal
+        try:
+            return operation(*args, **kwargs)
+        except (self._ydb.YDBTPRestart, self._ydb.YDBTPRollback) as signal:
+            if state is not None:
+                state.signal = signal
+            raise
+
     def atomic[T](self, callback: Callable[[], T]) -> T:
+        if _native_attempt.get() is not None:
+            raise TransactionError("Nested atomic callbacks are not supported")
         result: list[T] = []
 
         def attempt() -> int:
             result.clear()
             try:
-                result.append(callback())
+                result.append(_native_callback(callback))
             except (self._ydb.YDBTPRestart, self._ydb.YDBTPRollback, self._ydb.YDBError):
                 raise
             except (YHMFError, ValueError):

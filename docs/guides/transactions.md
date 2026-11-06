@@ -71,18 +71,22 @@ the exception. Later operations on that handle raise `TransactionError`.
 
 ## Do not nest transactions
 
-Calling `tx.atomic` inside a callback raises `TransactionError`.
+Calling `atomic` through the transaction handle, the original database handle, or
+another handle sharing its backend raises `TransactionError`. The inner callback
+does not execute. An uncaught nesting error rolls back the outer transaction.
 
-> **Warning:** The guard does not cover the outer handle yet. Calling `db.atomic` inside
-> a `db.atomic` callback runs like a savepoint instead of raising. Do not rely on this
-> behavior. See [known limitations](../known-limitations.md).
+Memory stores are independent databases, so separate memory-store instances can
+run independent transactions. Native-store instances share YottaDB's nonthreaded
+engine and cannot open nested transactions through another instance.
 
 ## Do not swallow restarts
 
-> **Warning:** A restart that reaches a broad `except` inside a callback can commit that
-> attempt with the wrong data. In a live run with four writers, a callback that caught
-> `Exception` around a read and carried on with a fallback value lost most of its
-> increments. The same workload lost none with the read outside any `try`. See
-> [known limitations](../known-limitations.md).
+The native adapter remembers restart and rollback signals received by its storage
+calls. Catching one inside a callback cannot turn that attempt into a successful
+commit. Subsequent native calls reject the invalid attempt, and the original signal
+reaches YottaDB when the callback ends. A restart creates fresh attempt state.
 
-Catch only the specific errors you expect, such as `NotFound`.
+Catch only the specific business errors you expect, such as `NotFound`. Broad
+handlers can still hide application mistakes. Direct calls to the `yottadb` module
+bypass the adapter's signal tracking and must obey its native exception contract.
+Callbacks and validators must remain free of external side effects.
