@@ -4,6 +4,7 @@
 import sys
 
 from mccann_hub.yhmf import Database, Field, Model, NativeStore, Path, Registry
+from mccann_hub.yhmf.errors import YHMFError
 
 
 class Counter(Model):
@@ -31,6 +32,9 @@ class RendezvousStore(NativeStore):
 
 
 def run(operation, key):
+    if operation.startswith("metadata_"):
+        metadata_update()
+        return
     if operation == "detached":
         db = Database(NativeStore(), Registry(Counter))
         record = db.get(Counter, 1)
@@ -50,6 +54,20 @@ def run(operation, key):
 
             db.atomic(increment)
     print("committed", flush=True)
+
+
+def metadata_update():
+    store = RendezvousStore()
+    store.waiting = False
+    db = Database(store, Registry(Counter))
+    db.get(Counter, 1)  # Warm the legacy parse and compatibility caches first.
+    store.waiting = True
+    try:
+        db.patch(Counter, 1, changes={"count": 1})
+    except YHMFError as exc:
+        print(type(exc).__name__, flush=True)
+    else:
+        print("committed", flush=True)
 
 
 if __name__ == "__main__":

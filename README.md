@@ -673,6 +673,9 @@ Offline operation counts establish work scope only.
 
 ## Run native storage tests
 
+See [correctness testing](docs/testing.md) for generated state machines, independent
+integrity assertions, fault injection, longer profiles, and reproduction commands.
+
 Install [YottaDB](https://docs.yottadb.com/AdminOpsGuide/installydb.html) and
 set `ydb_dist` to its installation directory. Then run:
 
