@@ -614,6 +614,24 @@ Ruff checks cyclomatic complexity with a maximum of 10. Native tests skip
 unless you explicitly select a disposable database. The in-memory adapter does
 not prove native conflict handling or process concurrency.
 
+## Benchmark native mutations
+
+```sh
+YHMF_BENCHMARK=1 bash scripts/test-native.sh -q
+```
+
+After tests, this runs `scripts/benchmark-mutations.py` in the same disposable
+native database. Both native CI environments run it too. The JSON output reports
+median and p95 latency and adapter operation counts for direct native node
+assignment, a deep framework patch, and read/modify/save of the entire aggregate
+at 1, 10, 100, and 1,000 lots. Each sample performs a real change after five warmup
+iterations. The quantity is unindexed so all three variants have equivalent
+secondary-entry work; separate correctness tests cover indexed mutations.
+Direct assignment measures a `NativeStore` transaction and scalar write. Results
+include Python and instrumentation overhead and describe a warm, uncontended
+microbenchmark rather than production throughput. Native results are required
+before making speed claims; in-memory operation counts establish work scope only.
+
 ## Run native storage tests
 
 Install [YottaDB](https://docs.yottadb.com/AdminOpsGuide/installydb.html) and

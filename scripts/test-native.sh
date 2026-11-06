@@ -27,3 +27,7 @@ EOF
 "$ydb_dist/mupip" create
 "$project_dir/.venv/bin/python" -c 'import yottadb; print(yottadb.release())'
 "$project_dir/.venv/bin/pytest" "$project_dir/tests" "$@"
+
+if [[ "${YHMF_BENCHMARK:-0}" == "1" ]]; then
+    "$project_dir/.venv/bin/python" "$project_dir/scripts/benchmark-mutations.py"
+fi

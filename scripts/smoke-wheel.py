@@ -5,7 +5,17 @@ from decimal import Decimal
 from importlib.metadata import version
 
 import mccann_hub
-from mccann_hub.yhmf import Database, Field, MemoryStore, Model, Path, Registry, __version__
+from mccann_hub.yhmf import (
+    ChildField,
+    Children,
+    Database,
+    Field,
+    MemoryStore,
+    Model,
+    Path,
+    Registry,
+    __version__,
+)
 from mccann_hub.yhmf.errors import UniqueViolation
 
 
@@ -21,6 +31,33 @@ class After(Before):
     sku: str | None = Field(default=None, unique=True)
     price: Decimal = Field(unique=True)
     note: str | None = Field(default=None, index=True)
+
+
+class WheelLot(Model):
+    id: str = Field(primary_key=True)
+    quantity: Decimal = Field(default=Decimal("0"), ge=0, index=True)
+
+
+class WheelWarehouse(Model):
+    __global__ = "^YHMFWheelWarehouse"
+    id: str = Field(primary_key=True)
+    lots: Children[WheelLot] = ChildField(key="id")
+
+
+def smoke_mutations(store):
+    db = Database(store, Registry(WheelWarehouse))
+    db.insert(WheelWarehouse(id="W", lots={"old": WheelLot(id="old")}))
+
+    def receive(tx):
+        tx.insert_child(WheelWarehouse, "W", collection=("lots",), record=WheelLot(id="new"))
+        tx.patch(WheelWarehouse, "W", at=("lots", "new"), changes={"quantity": Decimal("2.5")})
+        tx.delete_child(WheelWarehouse, "W", at=("lots", "old"))
+
+    db.atomic(receive)
+    owned = db.get(WheelWarehouse, "W", at=("lots", "new"))
+    assert isinstance(owned, WheelLot) and owned.quantity == Decimal("2.5")
+    assert db.get(WheelWarehouse, "W").lots.keys() == {"new"}
+    assert db.check_indexes(WheelWarehouse).issues == ()
 
 
 def finish(status, advance):
@@ -59,7 +96,10 @@ def main():
         pass
     else:
         raise AssertionError("Rebuilt uniqueness constraint was not enforced")
-    print("Installed wheel: schema migration, index rebuild, and namespace checks passed")
+    smoke_mutations(store)
+    print(
+        "Installed wheel: migration, rebuild, hierarchical mutations, and namespace checks passed"
+    )
 
 
 if __name__ == "__main__":

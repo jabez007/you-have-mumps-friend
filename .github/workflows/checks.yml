@@ -71,3 +71,4 @@ jobs:
       - run: bash scripts/test-native.sh -q
         env:
           ydb_dist: /opt/yottadb/test
+          YHMF_BENCHMARK: "1"
