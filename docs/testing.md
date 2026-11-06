@@ -111,3 +111,10 @@ The offline test suite runs these same examples and verifies that README links a
 absolute or local anchors. GitHub file links are checked against local files, so the
 PyPI long description does not depend on repository-relative link resolution. This
 does not validate external website availability or qualify a package publication.
+
+The journal-enabled addition passed both supported engines in
+[CI run 42314303424](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42314303424),
+source `f42e0c50b107c0a690d25dfefbf4256af61c6169`: 1,198 tests per engine per journal mode,
+plus the separate native stress pass. The same run executed 29 Python documentation
+blocks and passed both Pydantic compatibility jobs. Subsequent examples and tests can
+increase these counts. See the [journal measurements](performance.md#journal-enabled-qualification).

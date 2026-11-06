@@ -315,3 +315,31 @@ of compilation or differences between engines. The evidence establishes eliminat
 repeated declaration work and preserved integrity, rather than a fixed speedup. Setup and
 registration costs are excluded; applications that recreate registries per request will
 pay those costs repeatedly. Live installed-schema checks still occur on every transaction.
+
+### Journal-enabled qualification
+
+[CI run 42314303424](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42314303424)
+executed the native suite and benchmark workloads with journaling off, then with
+before-image journaling enabled, at source `f42e0c50b107c0a690d25dfefbf4256af61c6169`.
+The [serial measurements](benchmarks/native-journaling-2026-11-06.json) retain environment,
+mode, median/p95, and operation counts for patches, replacements, and insertion patterns.
+MUPIP reported journal creation with BEFORE_IMAGES in both journal-enabled runs. Each
+engine passed 1,198 tests with one expected non-native skip in each mode, plus a separate
+18-case native adversarial stress pass before the journal-enabled run.
+
+For the unindexed patch at 1,000 lots, times in microseconds were:
+
+| Engine | Journaling | Median | p95 |
+| --- | --- | ---: | ---: |
+| r2.02 | Off | 158.83 | 187.10 |
+| r2.02 | Before-image | 345.24 | 636.93 |
+| r2.06 | Off | 163.48 | 174.93 |
+| r2.06 | Before-image | 267.79 | 524.55 |
+
+Each pair ran on the same runner in fresh databases, with the nonjournaled workload
+first. Order and cache effects are not randomized, and 40 samples give coarse tails.
+These measurements demonstrate the workload under both modes; they do not establish a
+universal journaling multiplier, power-loss durability, recovery time, or engine-version
+performance differences. Inventory benchmarks also executed in both modes. Their original
+methodology string still said journaling was off; the structured journaling field and
+harness mode are authoritative, and the string is corrected in subsequent output.

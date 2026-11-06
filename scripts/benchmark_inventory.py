@@ -215,8 +215,8 @@ def main():
                     "methodology": (
                         "Warm, single-process, counted native operations. Existing balances; "
                         "one ledger append per workflow. Direct assignment excludes all ledger "
-                        "and integrity work. Default disposable region; no journaling "
-                        "configured by harness."
+                        "and integrity work. Disposable region configured by the harness; "
+                        "the journaling field records its mode."
                     ),
                     "results": results,
                 },

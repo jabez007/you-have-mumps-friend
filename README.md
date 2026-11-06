@@ -8,7 +8,7 @@ relationships, indexes, and migrations. It does not treat the database as relati
 declare models with [Pydantic](https://docs.pydantic.dev/), and a warehouse's bins and lots
 live under the warehouse's own subscripts.
 
-**This is an early prototype; the latest release is 0.5.0.** These docs describe the
+**This is an early prototype.** These docs describe the
 development branch. The API and storage layout can change. It is not on PyPI yet. See
 [what works today](#what-works-today).
 
