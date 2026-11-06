@@ -424,3 +424,19 @@ classes with different validators, Annotated/ancestor guards, reference adapters
 model configuration, and live schema corruption. Use native before/after benchmark
 and profile output; do not infer latency improvements from cache-hit counts. C901
 passes at ten before the changes.
+
+### Bounded collection reads, issue 30
+
+Reuse owned.resolve, collection_count, the existing child-collection resolver, and
+the owned-record reader. Move the latter two helpers to shared seams before adding
+reads. Expose children(model, key, collection=..., limit=100, after=None) and
+count(model, key, collection=...) without loading the owning root. Each page is one
+transaction, ordered by the child's native key; cursors are exclusive keys, not
+snapshot tokens. Null collections raise NotFound and corrupt markers fail safely.
+The count trusts the authoritative transactional marker rather than scanning keys.
+
+Test 25-of-1,000 node work, typed numeric/string keys, null and missing owners,
+expired handles, maintenance, and paging under key changes. Raw access is a separate
+contract: the existing Store and Path escape hatch bypasses mapper invariants.
+Keep issue 30 open until that controlled interface is decided and delivered. No
+layout or fingerprint changes. C901 passes at ten before this work.

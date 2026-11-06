@@ -11,10 +11,8 @@ from .owned import (
     OwnedPath,
     Owner,
     collection_count,
-    field_named,
-    require_local_validation,
     require_object,
-    resolve,
+    resolve_collection,
 )
 from .records import (
     MAX_CHILDREN,
@@ -29,20 +27,6 @@ from .storage import Path, Store
 
 if TYPE_CHECKING:
     from .repository import Database
-
-
-def _collection(
-    tx: "Database", spec: ModelSpec, key: Key, collection: OwnedPath
-) -> tuple[Owner, FieldSpec, Path, int]:
-    if type(collection) is not tuple or not collection:
-        raise MutationError("Collection must be a nonempty owned field path")
-    owner = resolve(tx, spec, key, collection[:-1], mutate=True)
-    require_local_validation(owner.node)
-    field = field_named(owner.node, collection[-1])
-    if field.kind != "children":
-        raise MutationError("Collection path must name a keyed Children field")
-    path = owner.path.child(field.name.encode("ascii"))
-    return owner, field, path, collection_count(tx.store, path)
 
 
 def _length(owner: Owner, field: FieldSpec, count: int) -> None:
@@ -102,7 +86,7 @@ def _value_count(store: Store, spec: ModelSpec, root: Path, allowance: int) -> N
 
 
 def insert(tx: "Database", spec: ModelSpec, key: Key, collection: OwnedPath, record: Model) -> None:
-    owner, field, path, count = _collection(tx, spec, key, collection)
+    owner, field, path, count = resolve_collection(tx, spec, key, collection, mutate=True)
     assert field.node is not None and field.node.key_field is not None
     if not isinstance(record, field.node.model):
         raise MutationError("Inserted child type does not match its declared model")
@@ -127,7 +111,7 @@ def insert(tx: "Database", spec: ModelSpec, key: Key, collection: OwnedPath, rec
 def delete(tx: "Database", spec: ModelSpec, key: Key, at: OwnedPath) -> None:
     if type(at) is not tuple or len(at) < 2:
         raise MutationError("Deletion requires a collection and parent-scoped child key")
-    owner, field, path, count = _collection(tx, spec, key, at[:-1])
+    owner, field, path, count = resolve_collection(tx, spec, key, at[:-1], mutate=True)
     assert field.node is not None and field.node.key_field is not None
     child_key = at[-1]
     if type(child_key) is not field.node.model.model_fields[field.node.key_field].annotation:

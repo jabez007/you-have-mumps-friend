@@ -12,7 +12,7 @@ from .models import Model
 from .owned import OwnedPath, Owner, require_local_validation, resolve
 from .records import FieldValue, encode_leaf, node_values
 from .registry import FieldSpec, ModelSpec
-from .storage import Path
+from .storage import Path, Store
 
 if TYPE_CHECKING:
     from .repository import Database
@@ -20,7 +20,12 @@ if TYPE_CHECKING:
 
 def read(tx: "Database", spec: ModelSpec, key: Key, at: OwnedPath) -> Model:
     owner = resolve(tx, spec, key, at)
-    values = node_values(owner.node.fields, owner.path, tx.store)
+    return read_owner(tx.store, owner)
+
+
+def read_owner(store: Store, owner: Owner) -> Model:
+    """Validate a resolved object's values and identity without rereading its ancestors."""
+    values = node_values(owner.node.fields, owner.path, store)
     result = owner.node.model.model_validate(values)
     _identity(
         owner, values, {field.name: getattr(result, field.name) for field in owner.node.fields}

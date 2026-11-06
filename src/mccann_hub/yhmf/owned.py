@@ -110,3 +110,18 @@ def _step(store: Store, owner: Owner, remaining: OwnedPath) -> tuple[Owner, Owne
     path = owner.path.child(*parts)
     require_object(store, path)
     return Owner(field.node, path, owner.relative + parts), remaining[consumed:]
+
+
+def resolve_collection(
+    tx: "Database", spec: ModelSpec, key: Key, collection: OwnedPath, *, mutate: bool = False
+) -> tuple[Owner, FieldSpec, Path, int]:
+    if type(collection) is not tuple or not collection:
+        raise MutationError("Collection must be a nonempty owned field path")
+    owner = resolve(tx, spec, key, collection[:-1], mutate=mutate)
+    if mutate:
+        require_local_validation(owner.node)
+    field = field_named(owner.node, collection[-1])
+    if field.kind != "children":
+        raise MutationError("Collection path must name a keyed Children field")
+    path = owner.path.child(field.name.encode("ascii"))
+    return owner, field, path, collection_count(tx.store, path)
