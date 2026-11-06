@@ -63,10 +63,13 @@ A query accepts one equality predicate on a declared index or the primary key. A
 unindexed or unknown field raises `QueryError`. Filter values must satisfy the declared
 field type and constraints.
 
-> **Warning:** `where` does not apply the model's configuration to the filter value. On a
-> model with `str_to_lower`, `where(email=" Me@X.org ")` returns nothing, while the stored
-> value is `me@x.org`. Pass the normalized value. See
-> [known limitations](../known-limitations.md).
+`where` applies the field's declared constraints and its owning model's configuration,
+including string normalization and strictness. A nested field uses its owned model's
+configuration. A primary-key predicate applies the same rules; `get` continues to use
+an exact stored key. Reference values keep the reference model's own configuration.
+
+Predicates validate one field. They do not run custom field validators or model validators
+that depend on a complete record. For those transformations, pass the stored value.
 
 ## Page through results
 

@@ -4,13 +4,12 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal
 
-from pydantic import TypeAdapter
-
 from . import indexes
 from .codecs import Key, decode_key
 from .errors import NotFound, QueryError, StorageError
 from .models import Model
 from .records import walk_values
+from .registry import field_adapter
 from .storage import Path
 
 if TYPE_CHECKING:
@@ -55,8 +54,7 @@ class Query[M: Model]:
         name, value = next(iter(equals.items()))
         spec = self._db.registry.spec(self._model)
         if name == spec.key_field:
-            annotation = self._model.model_fields[name].rebuild_annotation()
-            validated = TypeAdapter(annotation).validate_python(value, strict=True)
+            validated = field_adapter(self._model, name).validate_python(value)
             spec.path(validated)
             return Query(self._db, self._model, field=name, value=validated)
         definitions = indexes.definitions(spec)

@@ -13,13 +13,16 @@ The development branch also rejects lossy `extra="allow"` declarations on root
 and owned models, issue [#3](https://github.com/jabez007/you-have-mumps-friend/issues/3).
 Supported format-two configuration overrides retain their installed identities.
 
+Equality predicates now apply their owning declaration's configuration and constraints,
+issue [#5](https://github.com/jabez007/you-have-mumps-friend/issues/5). Custom field and
+model validators still require a complete record and do not run for query predicates.
+
 ## Defects
 
 | Behavior | What to do for now | Issue |
 | --- | --- | --- |
 | Bumping `__schema_version__`, or changing only a validator, constraint, or default, gives `SchemaMismatch` on open. The plan says no manual review is needed, but it cannot execute. | Do not change these on a model that holds data. Use a new global and copy the data, or restore the old declaration. | [#2](https://github.com/jabez007/you-have-mumps-friend/issues/2) |
 | `insert_child` reads the whole aggregate, so its cost and its conflict rate grow with the aggregate. | Keep shared collections small, or model high-volume children as top-level records. | [#4](https://github.com/jabez007/you-have-mumps-friend/issues/4) |
-| `where` does not apply the model's configuration, such as `str_to_lower`, to filter values. | Pass values in their stored form. | [#5](https://github.com/jabez007/you-have-mumps-friend/issues/5) |
 | A too-small region gives a raw `%YDB-E-REC2BIG` error on first write. | [Create the region](guides/native-setup.md#create-a-database) with larger limits. | [#6](https://github.com/jabez007/you-have-mumps-friend/issues/6) |
 | A null collection on a path raises `StorageError` and not `NotFound`. | Check for null before you use the path. | [#8](https://github.com/jabez007/you-have-mumps-friend/issues/8) |
 | Migrating a model that another model references requires redefining the referring model too, and `Registry(NewTarget, OldReferrer)` gives a misleading error. | Redefine the referrer against the new target. | [#9](https://github.com/jabez007/you-have-mumps-friend/issues/9) |
