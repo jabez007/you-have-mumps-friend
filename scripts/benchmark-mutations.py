@@ -4,13 +4,10 @@
 import argparse
 import json
 import os
-import platform
-from pathlib import Path
 
 import benchmark_contention
 import benchmark_profiles
-import pydantic
-from benchmark_support import WORKLOADS, CountedStore, cleanup, measure, setup
+from benchmark_support import WORKLOADS, CountedStore, cleanup, environment, measure, setup
 
 from mccann_hub.yhmf import NativeStore
 
@@ -69,31 +66,6 @@ def profiles(db, args):
             )
         )
     return rows
-
-
-def environment():
-    import yottadb
-
-    cpuinfo = Path("/proc/cpuinfo")
-    cpu = platform.processor()
-    if cpuinfo.exists():
-        cpu = next(
-            (
-                line.split(":", 1)[1].strip()
-                for line in cpuinfo.read_text().splitlines()
-                if line.startswith("model name")
-            ),
-            cpu,
-        )
-    return {
-        "python": platform.python_version(),
-        "platform": platform.platform(),
-        "cpu_model": cpu,
-        "logical_cpus": os.cpu_count(),
-        "pydantic": pydantic.__version__,
-        "yottadb": yottadb.release(),
-        "source_commit": os.environ.get("GITHUB_SHA"),
-    }
 
 
 def main():

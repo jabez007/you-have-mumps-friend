@@ -1,10 +1,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Shared workloads and measurements for the disposable native benchmarks."""
 
+import os
+import platform
 import statistics
 import time
 from collections import Counter
 from decimal import Decimal
+from pathlib import Path as FilePath
+
+import pydantic
 
 from mccann_hub.yhmf import ChildField, Children, Database, Field, Model, Path, Reference, Registry
 from mccann_hub.yhmf.codecs import decode_key, encode_scalar
@@ -216,4 +221,29 @@ def measure(db, size, method, iterations, workload="unindexed"):
         "iterations": iterations,
         **latencies(elapsed),
         "operations_per_iteration": counts,
+    }
+
+
+def environment():
+    import yottadb
+
+    cpuinfo = FilePath("/proc/cpuinfo")
+    cpu = platform.processor()
+    if cpuinfo.exists():
+        cpu = next(
+            (
+                line.split(":", 1)[1].strip()
+                for line in cpuinfo.read_text().splitlines()
+                if line.startswith("model name")
+            ),
+            cpu,
+        )
+    return {
+        "python": platform.python_version(),
+        "platform": platform.platform(),
+        "cpu_model": cpu,
+        "logical_cpus": os.cpu_count(),
+        "pydantic": pydantic.__version__,
+        "yottadb": yottadb.release(),
+        "source_commit": os.environ.get("GITHUB_SHA"),
     }
