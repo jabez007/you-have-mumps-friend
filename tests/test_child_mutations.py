@@ -175,6 +175,28 @@ def test_child_delete_does_not_read_sibling_subtrees(store):
     assert deletes == [Path("^YHMFTestWarehouse", (b"s:W", b"bins", b"s:A", b"lots", b"s:0"))]
 
 
+@pytest.mark.parametrize("destination", ["A", "B"])
+def test_child_insertion_work_is_independent_of_flat_sibling_counts(store, destination):
+    observed = ObservedStore(store)
+    db = Database(observed, Registry(Product, Warehouse))
+    counts = []
+    for size in (1, 100, 999):
+        record = warehouse(size)
+        record.bins["B"] = Bin(id="B")
+        db.save(record)
+        observed.operations.clear()
+        db.insert_child(
+            Warehouse, "W", collection=("bins", destination, "lots"), record=Lot(id="new")
+        )
+        counts.append(len(observed.operations))
+        assert not any(b"s:0" in path.subscripts for _, path in observed.operations)
+        assert len(db.get(Warehouse, "W").bins[destination].lots) == (
+            size + 1 if destination == "A" else 1
+        )
+        assert db.check_indexes(Warehouse).issues == ()
+    assert counts[0] == counts[1] == counts[2]
+
+
 @pytest.mark.parametrize("nested", [False, True])
 @pytest.mark.parametrize("operation", ["insert_child", "save"])
 def test_child_insert_revalidates_copies_even_when_instance_revalidation_is_disabled(

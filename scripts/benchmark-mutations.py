@@ -6,6 +6,7 @@ import json
 import os
 
 import benchmark_contention
+import benchmark_insertions
 import benchmark_profiles
 from benchmark_support import WORKLOADS, CountedStore, cleanup, environment, measure, setup
 
@@ -80,6 +81,12 @@ def main():
         serial = serial_rows(db, args)
         contention = contention_rows(db, args)
         profiled = profiles(db, args)
+        insertions = [
+            benchmark_insertions.measure(db, size, method, args.iterations, pattern)
+            for size in sorted({min(size, 999) for size in args.sizes})
+            for pattern in ("target_collection", "unrelated_collection")
+            for method in ("direct", "insert_child", "replace")
+        ]
         print(
             "YHMF_BENCHMARK="
             + json.dumps(
@@ -90,6 +97,7 @@ def main():
                     "rows": serial,
                     "contention": contention,
                     "profiles": profiled,
+                    "insertions": insertions,
                 },
                 sort_keys=True,
             )

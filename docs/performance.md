@@ -73,6 +73,23 @@ by these measurements alone.
 
 ## Reproduce
 
+The development benchmark also reports `insertions`: 40 timed insertions after five
+warmups, for 1, 10, 100, and 999 existing flat lots. The final size leaves room for a
+new child under the 1,000-child limit. Patterns grow either the target collection or
+an unrelated collection under the same root. Cleanup is outside timing and counters;
+the final aggregate and indexes are checked independently of the timed interval.
+Methods compare direct node writes, `insert_child`, and atomic root read/save. The
+direct baseline maintains object/count markers but omits mapper validation, metadata,
+limits, and secondary integrity checks. No new native measurements are claimed here
+until this benchmark executes in CI.
+
+Insertion now counts flat child collections using their transactional c:N markers and
+declared field width. It descends only into variable-width owned containers when
+checking the 10,000-node budget. This avoids sibling reads for fixed-width collections
+without changing the layout. It trusts mapper-maintained counts; full reads still
+verify count/key agreement. This optimization does not establish a particular native
+conflict rate or make detached aggregate replacement safe against stale saves.
+
 Install a supported native runtime and run:
 
 ```sh

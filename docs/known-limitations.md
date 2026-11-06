@@ -31,11 +31,14 @@ Integers beyond Python's configured decimal conversion limit now raise `StorageE
 Native region-size errors now raise a chained `StorageError` naming `record_size`
 or `key_size`, issue [#6](https://github.com/jabez007/you-have-mumps-friend/issues/6).
 
+Child insertion counts fixed-width collections from their existing transactional
+markers, issue [#4](https://github.com/jabez007/you-have-mumps-friend/issues/4).
+Variable-width owned containers still require bounded traversal for node limits.
+
 ## Defects
 
 | Behavior | What to do for now | Issue |
 | --- | --- | --- |
-| `insert_child` reads the whole aggregate, so its cost and its conflict rate grow with the aggregate. | Keep shared collections small, or model high-volume children as top-level records. | [#4](https://github.com/jabez007/you-have-mumps-friend/issues/4) |
 | Swapping two unique values in one transaction raises `UniqueViolation`, because constraints apply after each write. | Move one value to a temporary value first. | [#23](https://github.com/jabez007/you-have-mumps-friend/issues/23) |
 
 ## Missing features

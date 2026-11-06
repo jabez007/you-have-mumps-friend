@@ -58,11 +58,18 @@ def _length(owner: Owner, field: FieldSpec, count: int) -> None:
 
 def _owned_nodes(store: Store, field: FieldSpec, path: Path) -> tuple[tuple[Path, ...], int]:
     if store.get(path) == b"n:":
+        if store.children(path, limit=1):
+            raise StorageError("Null owned value has unexpected descendants")
         return (), 0
     if field.kind == "embedded":
         require_object(store, path)
         return (path,), 0
     count = collection_count(store, path)
+    assert field.node is not None
+    if all(nested.node is None for nested in field.node.fields):
+        # c:N is the authoritative transactional count. Every fixed-width child
+        # contributes one object marker plus one value per declared leaf field.
+        return (), count * (1 + len(field.node.fields))
     keys = store.children(path, limit=MAX_CHILDREN + 1)
     if len(keys) != count:
         raise StorageError("Child collection count disagrees with its keys")
@@ -73,8 +80,8 @@ def _owned_nodes(store: Store, field: FieldSpec, path: Path) -> tuple[tuple[Path
 
 
 def _value_count(store: Store, spec: ModelSpec, root: Path, allowance: int) -> None:
-    # Count declared value nodes using ownership markers, not scalar reads or a
-    # reconstructed root model. No size metadata that old writers could stale.
+    # Fixed-width children use c:N without reading siblings. Only variable-width
+    # owned branches need traversal. This is a budget check, not a raw-data audit.
     count = 4  # Existing layout-one root metadata, checked before this traversal.
     pending = [(field, root.child(field.name.encode("ascii"))) for field in spec.fields]
     while pending:

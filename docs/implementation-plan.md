@@ -390,3 +390,19 @@ errors and TP signals keep their behavior. Do not change region configuration.
 Add isolated default-region subprocess tests on both native CI engines, alongside
 adapter regressions for code selection and unchanged unexpected errors. C901
 passes at ten before the change.
+
+### Child insertion budget design, issue 4
+
+The insertion path reads ownership markers to enforce the 10,000-node aggregate
+limit; it does not deserialize the full aggregate. Its flat child walks are still
+unnecessary. Reuse each collection's transactional c:N marker and its compiled
+FieldSpec to count fixed-width child subtrees by multiplication. Descend only into
+variable-width owned containers. Preserve the old layout, limits, validators, and
+secondary maintenance. Counts are authoritative mapper metadata, not a substitute
+for auditing arbitrary raw writes; full reads still check their enumerated keys.
+
+Compare adapter operations across flat collection sizes and preserve near-budget,
+malformed-marker, nullable, nested-container, and rollback regressions. Add native
+insertion benchmarks for growing target and unrelated collections, comparing direct
+node insertion, insert_child, and atomic whole replacement. No claim about block
+conflicts follows from operation counts. Existing C901 passes at ten.

@@ -20,6 +20,7 @@ def benchmarks():
             support=importlib.import_module("benchmark_support"),
             contention=importlib.import_module("benchmark_contention"),
             profiles=importlib.import_module("benchmark_profiles"),
+            insertions=importlib.import_module("benchmark_insertions"),
         )
 
 
@@ -105,3 +106,16 @@ def test_profile_output_is_separate_and_contains_framework_functions(benchmarks,
     assert result["iterations"] == 5
     assert any("mccann_hub/yhmf/" in row["function"] for row in result["top_cumulative"])
     assert all(row["total_calls"] > 0 for row in result["top_self"])
+
+
+@pytest.mark.parametrize("pattern", ["target_collection", "unrelated_collection"])
+@pytest.mark.parametrize("method", ["direct", "insert_child", "replace"])
+def test_insertion_benchmark_checks_state_and_excludes_cleanup(benchmarks, db, method, pattern):
+    row = benchmarks.insertions.measure(db, 3, method, 5, pattern)
+    assert row["iterations"] == 5
+    assert row["operations_per_iteration"]["attempts"] == 1
+    if method != "replace":
+        assert row["operations_per_iteration"].get("delete_tree", 0) == 0
+    root = db.get(benchmarks.support.Warehouse, "W")
+    assert len(root.bins["A"].lots) == 3
+    assert "new" not in root.bins["A"].lots
