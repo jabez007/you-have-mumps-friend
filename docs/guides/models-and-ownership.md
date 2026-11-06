@@ -37,8 +37,7 @@ or ambiguous primary keys.
 
 Models default to `extra="forbid"`.
 
-> **Warning:** Do not set `extra="allow"`. Extra values are not stored and read back
-> as missing. See [known limitations](../known-limitations.md).
+The registry rejects `extra="allow"`; only declared fields have storage locations.
 
 ## Choose the right write
 
@@ -84,6 +83,30 @@ db.insert(
 )
 assert db.get(Warehouse, 7).bins["A01"].lots["L-001"].quantity == Decimal("0")
 ```
+
+Read one collection without loading the warehouse:
+
+```python
+page = db.children(Warehouse, 7, collection=("bins", "A01", "lots"), limit=25)
+assert [lot.number for lot in page] == ["L-001"]
+assert db.count(Warehouse, 7, collection=("bins", "A01", "lots")) == 1
+assert db.children(
+    Warehouse, 7, collection=("bins", "A01", "lots"), after="L-001", limit=25
+) == []
+```
+
+`children` accepts limits from 1 through 1000 and returns complete child models in native
+key order. Pass the last returned child's key as `after`. Cursor types must match the
+child declaration; numeric-looking string keys remain strings. The cursor need not still
+exist. Pages run in separate transactions unless called inside the same `atomic` callback.
+Concurrent inserts before the cursor can be omitted, and inserts after it can appear;
+pages do not share a snapshot. Null collections and absent owners raise `NotFound`;
+empty collections return an empty page and count zero.
+
+`count` reads the transactional c:N marker, without enumerating keys or loading children.
+It is not an audit of raw writes. A page validates the selected children's presence,
+stored values, and identities. It does not run ancestor validators over unselected
+descendants. Use a complete root read when those application checks are required.
 
 To coordinate updates across an aggregate, edit the loaded aggregate and save its root
 inside [`atomic`](transactions.md). For direct changes to existing owned paths, use the

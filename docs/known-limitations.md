@@ -35,6 +35,10 @@ Child insertion counts fixed-width collections from their existing transactional
 markers, issue [#4](https://github.com/jabez007/you-have-mumps-friend/issues/4).
 Variable-width owned containers still require bounded traversal for node limits.
 
+`children` and `count` expose bounded owned-collection reads. Issue
+[#30](https://github.com/jabez007/you-have-mumps-friend/issues/30) remains open for the
+separate controlled raw-access interface. See [collection paging](guides/models-and-ownership.md).
+
 ## Defects
 
 | Behavior | What to do for now | Issue |

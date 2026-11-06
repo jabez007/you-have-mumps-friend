@@ -5,9 +5,11 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal
 
 from . import indexes
-from .codecs import Key, decode_key
-from .errors import NotFound, QueryError, StorageError
+from .codecs import Key, decode_key, encode_key
+from .errors import NotFound, QueryError, SchemaError, StorageError
 from .models import Model
+from .mutations import read_owner
+from .owned import OwnedPath, Owner, require_object, resolve_collection
 from .records import walk_values
 from .storage import Path
 
@@ -136,6 +138,49 @@ def scan[M: Model](
         tx._check_schema(spec)
         keys = tx.store.children(Path(spec.global_name), limit=limit, after=cursor)
         return [tx.get(model, decode_key(key)) for key in keys]
+
+    return db._run(read)
+
+
+def children(
+    db: "Database",
+    model: type[Model],
+    key: Key,
+    *,
+    collection: OwnedPath,
+    limit: int,
+    after: Key | None,
+) -> list[Model]:
+    _limit(limit)
+
+    def read(tx: "Database") -> list[Model]:
+        spec = tx.registry.spec(model)
+        owner, field, path, count = resolve_collection(tx, spec, key, collection)
+        assert field.node is not None and field.node.key_field is not None
+        annotation = field.node.model.model_fields[field.node.key_field].annotation
+        if after is not None and type(after) is not annotation:
+            raise SchemaError("Cursor key type does not match the child declaration")
+        cursor = b"" if after is None else encode_key(after)
+        keys = tx.store.children(path, limit=limit, after=cursor)
+        if len(keys) > count or (not cursor and len(keys) < limit and len(keys) != count):
+            raise StorageError("Collection count disagrees with its page")
+        result = []
+        for child_key in keys:
+            if type(decode_key(child_key)) is not annotation:
+                raise StorageError("Stored child key type disagrees with its declaration")
+            child = path.child(child_key)
+            require_object(tx.store, child)
+            relative = owner.relative + (field.name.encode("ascii"), child_key)
+            result.append(read_owner(tx.store, Owner(field.node, child, relative)))
+        return result
+
+    return db._run(read)
+
+
+def count_children(db: "Database", model: type[Model], key: Key, *, collection: OwnedPath) -> int:
+    def read(tx: "Database") -> int:
+        _, _, _, count = resolve_collection(tx, tx.registry.spec(model), key, collection)
+        return count
 
     return db._run(read)
 

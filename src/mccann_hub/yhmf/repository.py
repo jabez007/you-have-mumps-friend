@@ -29,7 +29,8 @@ from .maintenance import MigrationStatus, load_status, require_available
 from .migrations import MigrationPlan, build_plan
 from .models import Model
 from .owned import OwnedPath
-from .queries import IndexReport, Query, audit_indexes, scan
+from .queries import IndexReport, Query, audit_indexes, count_children, scan
+from .queries import children as read_children
 from .records import input_values, metadata, record_nodes, record_values
 from .registry import ModelSpec, Registry
 from .schemas import SchemaInspection, check_schema, inspect_schema, schema_path
@@ -135,6 +136,22 @@ class Database:
                 mutations.patch(tx, spec, key, at, changes)
 
         self._run(attempt)
+
+    def children(
+        self,
+        model: type[Model],
+        key: Key,
+        *,
+        collection: OwnedPath,
+        limit: int = 100,
+        after: Key | None = None,
+    ) -> list[Model]:
+        """Read one bounded child page in native key order without loading the root."""
+        return read_children(self, model, key, collection=collection, limit=limit, after=after)
+
+    def count(self, model: type[Model], key: Key, *, collection: OwnedPath) -> int:
+        """Read an owned collection's authoritative count marker, without a key scan."""
+        return count_children(self, model, key, collection=collection)
 
     def insert_child(
         self, model: type[Model], key: Key, *, collection: OwnedPath, record: Model
