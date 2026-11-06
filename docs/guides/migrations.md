@@ -15,8 +15,6 @@ The steps are:
 
 > **Warning:** The migration executor handles a small set of changes. See
 > [what can migrate today](#what-can-migrate-today) before you edit a model that holds data.
-> Bumping `__schema_version__` with no other change currently locks the model out, with no
-> way to migrate it. See [known limitations](../known-limitations.md).
 
 The examples share this setup:
 
@@ -58,7 +56,9 @@ next_db = Database(db.store, Registry(CatalogV2))
 | Add an owned container | No |
 | Remove or rename a field, or change a storage type | No |
 | Change a reference | No |
-| Change only a validator, constraint, or existing default | No, and the model locks |
+| Increase a root or owned `__schema_version__` | Yes, after record validation |
+| Change constraints, nullability, or an existing default | Yes, if stored values remain valid and unchanged |
+| Change custom validation and increase the owning revision | Yes, if stored values remain valid and unchanged |
 
 These operations apply to root fields and to fields inside existing embedded objects and
 children. Existing field values, owned trees, references, and retained index nodes stay
@@ -165,6 +165,10 @@ The two plan flags answer different questions:
 - `execution_supported` says whether the executor can run the plan structurally. Record
   validation still happens under maintenance, before any backfill.
 
+`execution_blockers` lists structural reasons the executor cannot run a plan, such as
+`unsupported_change:field_added:note`, without values. It also explains installation-only
+and no-op plans. The same list appears in serialized plan documents.
+
 ## Stop other clients first
 
 A running migration holds a maintenance gate that covers the whole database, not only the
@@ -214,8 +218,11 @@ An empty page advances the phase, and the cursor resets for the next pass. Addin
 that would exceed the [per-record limits](../reference/limits.md) fails validation without
 changing application data.
 
-An owned model's schema version can increase alongside additive changes. A decrease
-requires manual review, as a root version decrease does.
+Root and owned schema versions can increase without additive changes. A decrease
+requires manual review. Validation-only plans skip backfill: the executor validates,
+verifies, retags, and activates, preserving every field and index value. The historical
+`backfilled` counter counts records ready for verification, including those requiring no
+writes. Existing defaults remain stored values; new defaults apply to future inserts.
 
 ## Add a unique constraint
 
@@ -289,10 +296,19 @@ checkpoint commit together. A failed batch rolls back and leaves the gate held a
 preceding checkpoint, so partly migrated data never reaches callers. Normal status output
 leaves out record keys. `status.to_dict(include_cursor=True)` exposes the encoded cursor.
 
+For a validation-only plan, rejection during the initial validation pass instead marks
+the job aborted and restores source access atomically. This includes validators that
+would change existing field bytes. Storage faults remain resumable failures. Later passes
+keep maintenance held on failure; resume with the exact saved declarations. Automatic
+restoration never publishes partially retagged records.
+
 `abort_migration(migration_id)` restores source access until the first update batch or
 cleanup deletion commits, including after a validation failure. After that point, abort is
 refused, and recovery means resuming or restoring from a backup. The same applies to
 cleanup of orphan metadata in an empty application global.
+
+For validation-only jobs, manual abort is available during the initial validation pass.
+Once that pass finishes, the satisfied backfill counter requires the job to be resumed.
 
 Do not remove the gate or fingerprint barrier by hand. Completed and aborted job metadata
 stays available for inspection.
@@ -304,9 +320,9 @@ a custom validator or default factory changes, the rule is to bump the owning mo
 `__schema_version__`. Built-in constraints are recorded automatically, and unknown
 validation metadata is rejected.
 
-> **Warning:** No executor path handles a revision-only change yet, so following this rule
-> on a model with data currently locks that model out. See
-> [known limitations](../known-limitations.md).
+Keep the source and target declarations, review the plan, and use the migration methods
+above. A revision change permits validation and retagging; it does not authorize a
+transformation of existing values. Such transformations require an explicit data migration.
 
 [Schema compatibility](../schema-compatibility.md) and
 [ADR 0006](../adr/0006-canonical-schema-contracts.md) define the guarantees and limits,

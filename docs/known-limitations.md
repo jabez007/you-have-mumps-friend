@@ -17,11 +17,14 @@ Equality predicates now apply their owning declaration's configuration and const
 issue [#5](https://github.com/jabez007/you-have-mumps-friend/issues/5). Custom field and
 model validators still require a complete record and do not run for query predicates.
 
+Revision, constraint, nullability, and existing-default changes can now execute
+validation-only migrations, issue [#2](https://github.com/jabez007/you-have-mumps-friend/issues/2).
+Existing stored values must remain valid and unchanged.
+
 ## Defects
 
 | Behavior | What to do for now | Issue |
 | --- | --- | --- |
-| Bumping `__schema_version__`, or changing only a validator, constraint, or default, gives `SchemaMismatch` on open. The plan says no manual review is needed, but it cannot execute. | Do not change these on a model that holds data. Use a new global and copy the data, or restore the old declaration. | [#2](https://github.com/jabez007/you-have-mumps-friend/issues/2) |
 | `insert_child` reads the whole aggregate, so its cost and its conflict rate grow with the aggregate. | Keep shared collections small, or model high-volume children as top-level records. | [#4](https://github.com/jabez007/you-have-mumps-friend/issues/4) |
 | A too-small region gives a raw `%YDB-E-REC2BIG` error on first write. | [Create the region](guides/native-setup.md#create-a-database) with larger limits. | [#6](https://github.com/jabez007/you-have-mumps-friend/issues/6) |
 | A null collection on a path raises `StorageError` and not `NotFound`. | Check for null before you use the path. | [#8](https://github.com/jabez007/you-have-mumps-friend/issues/8) |

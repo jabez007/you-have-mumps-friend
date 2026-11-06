@@ -46,6 +46,15 @@ class _Binding:
     cleanup_roots: tuple[Path, ...]
 
 
+class _RecordRejected(MigrationError):
+    """Target validation cannot preserve a stored record without transforming it."""
+
+
+@dataclass(frozen=True)
+class _Rejected:
+    message: str
+
+
 def _bind(
     registry: Registry,
     source: type[Model],
@@ -67,7 +76,7 @@ def _bind(
     inspection = SchemaInspection(SchemaSnapshot(new.snapshot), SchemaSnapshot(old.snapshot), True)
     plan = build_plan(inspection)
     if not plan.execution_supported:
-        raise MigrationError("Migration supports scalar defaults and scalar index changes")
+        raise MigrationError("Unsupported migration: " + ", ".join(plan.execution_blockers))
     defaults = BackfillDefaults(new, plan)
     return _Binding(old, new, registry, plan, defaults, migration_cleanup.retired_roots(old, plan))
 
@@ -123,7 +132,7 @@ def _validate_models(binding: _Binding, values: dict[str, Any]) -> tuple[Model, 
         old = binding.source.model.model_validate(deepcopy(values))
         new = binding.target.model.model_validate(binding.defaults.apply(values))
     except ValidationError:
-        raise MigrationError(
+        raise _RecordRejected(
             "A stored record does not satisfy the migration model bindings"
         ) from None
     return old, new
@@ -143,14 +152,14 @@ def _prepare(store: Store, binding: _Binding, key: bytes, status: MigrationStatu
     values = record_values(binding.source, root, store)
     old, new = _validate_models(binding, values)
     if binding.target.path(getattr(new, binding.target.key_field)) != root:
-        raise MigrationError("Migration validation changed a record identity")
+        raise _RecordRejected("Migration validation changed a record identity")
     old_nodes = field_nodes(binding.source, root, old)
     new_nodes = field_nodes(binding.target, root, new)
     if any(
         new_nodes.get(path) != value or store.get(path) != value
         for path, value in old_nodes.items()
     ):
-        raise MigrationError("Migration validation would change an existing field")
+        raise _RecordRejected("Migration validation would change an existing field")
     additions = {path: value for path, value in new_nodes.items() if path not in old_nodes}
     _check_additions(store, additions, status.phase)
     old_entries = indexes.entries(binding.source, root, old)
@@ -221,7 +230,7 @@ def advance(
     if type(batch_size) is not int or not 1 <= batch_size <= MAX_BATCH_SIZE:
         raise MigrationError("Migration batch size must be between 1 and 100")
 
-    def attempt() -> MigrationStatus:
+    def attempt() -> MigrationStatus | _Rejected:
         status = load_status(store, migration_id)
         migration_jobs.require_schema_operation(store, status)
         saved = migration_jobs.saved_snapshots(store, status)
@@ -239,9 +248,27 @@ def advance(
             return _activate(store, status, manifests[1], binding.cleanup_roots)
         if status.phase == "cleanup":
             return migration_cleanup.advance(store, status, binding.cleanup_roots, limit=batch_size)
-        return _batch(store, binding, status, batch_size)
+        return _advance_batch(store, binding, status, batch_size)
 
-    return store.atomic(attempt)
+    result = store.atomic(attempt)
+    if isinstance(result, _Rejected):
+        raise MigrationError(result.message)
+    return result
+
+
+def _advance_batch(
+    store: Store, binding: _Binding, status: MigrationStatus, limit: int
+) -> MigrationStatus | _Rejected:
+    try:
+        return _batch(store, binding, status, limit)
+    except _RecordRejected as exc:
+        if status.phase != "validate" or not binding.plan.validation_only:
+            raise
+        # Validation-only preparation writes no reservations or application data.
+        # Commit the restored barrier with the validated read set, then raise
+        # outside TP. Restarts can therefore reconsider changed source records.
+        migration_jobs.abort_owned(store, status)
+        return _Rejected(str(exc))
 
 
 def _completed_binding(status: MigrationStatus, binding: _Binding) -> MigrationStatus:
@@ -266,6 +293,10 @@ def _batch(store: Store, binding: _Binding, status: MigrationStatus, limit: int)
         changes["cursor"] = keys[-1]
     else:
         changes.update(phase=_NEXT[status.phase], cursor=b"")
+        if status.phase == "validate" and binding.plan.validation_only:
+            # The historic counter tracks records ready for verification. No
+            # backfill is necessary for this plan, so mark that pass satisfied.
+            changes.update(phase="verify", backfilled=status.validated)
         if status.phase == "retag" and binding.cleanup_roots:
             changes["phase"] = "cleanup"
     updated = replace(status, **changes)

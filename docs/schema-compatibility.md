@@ -44,8 +44,11 @@ application revision; ordering alone cannot reveal those custom dependencies.
 
 The migration executor still validates every existing record under both bindings
 and rejects transformations of existing fields. A revision does not grant permission
-to overwrite data or make an unsupported migration executable. Pure validation-only
-migrations remain outside the current additive/index executor's scope.
+to overwrite data or make an unsupported migration executable. Validation-only migrations
+validate, verify, retag, and activate without changing field or index values. Target
+validation failure during the initial pass restores source access atomically; later
+storage or execution failures remain resumable under maintenance. See the
+[migration guide](guides/migrations.md).
 
 ## Existing databases
 

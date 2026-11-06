@@ -24,6 +24,14 @@ _STEP_ORDER = {
     "activate_schema": 100,
     "install_schema": 100,
 }
+_VALIDATION_CHANGES = {
+    "metadata_changed",
+    "schema_version_changed",
+    "owned_version_changed",
+    "validation_changed",
+    "default_changed",
+    "nullability_changed",
+}
 
 
 def _owned_paths(
@@ -40,7 +48,7 @@ def _owned_paths(
 def _supported_change(change: SchemaChange, nonscalar: set[tuple[str, ...]]) -> bool:
     if change.destructive or change.requires_manual_review:
         return False
-    if change.kind in {"metadata_changed", "schema_version_changed", "owned_version_changed"}:
+    if change.kind in _VALIDATION_CHANGES:
         return True
     if (
         change.kind not in {"field_added", "index_added", "index_changed", "index_removed"}
@@ -120,28 +128,48 @@ class MigrationPlan:
 
     @property
     def execution_supported(self) -> bool:
-        """Whether the plan fits scalar additions and index changes in existing owned trees."""
+        """Whether structural support exists; stored records still require validation."""
+        return not self.execution_blockers
+
+    @property
+    def execution_blockers(self) -> tuple[str, ...]:
+        """Value-free reasons a plan cannot execute, independent of manual review."""
         source = self.inspection.installed
-        if (
-            source is None
-            or source.layout_version != LAYOUT_VERSION
-            or self.requires_manual_review
-            or self.destructive
-        ):
-            return False
+        if source is None:
+            return ("no_installed_schema",)
+        if source.layout_version != LAYOUT_VERSION:
+            return ("unsupported_layout",)
+        if not self.changes:
+            return ("no_changes",)
+        restricted = tuple(
+            f"unsupported_change:{change.kind}:{'.'.join(change.path)}"
+            for change in self.changes
+            if change.requires_manual_review or change.destructive
+        )
+        if restricted:
+            return restricted
         document = self.inspection.declared.to_dict()
         nonscalar = _owned_paths(document.get("hierarchy", []))
         nonscalar.update(tuple(item["path"]) for item in document.get("references", []))
-        return any(
-            change.kind in {"field_added", "index_added", "index_changed", "index_removed"}
+        return tuple(
+            f"unsupported_change:{change.kind}:{'.'.join(change.path)}"
             for change in self.changes
-        ) and all(_supported_change(change, nonscalar) for change in self.changes)
+            if not _supported_change(change, nonscalar)
+        )
+
+    @property
+    def validation_only(self) -> bool:
+        """Whether execution preserves every field and index byte."""
+        return self.execution_supported and all(
+            change.kind in _VALIDATION_CHANGES for change in self.changes
+        )
 
     def to_dict(self, *, include_defaults: bool = False) -> dict[str, Any]:
         """Return a review document; literal defaults require an explicit opt-in."""
         return {
             "format_version": 1,
             "execution_supported": self.execution_supported,
+            "execution_blockers": list(self.execution_blockers),
             "status": self.inspection.status,
             "has_data": self.inspection.has_data,
             "source": _snapshot_summary(self.inspection.installed),

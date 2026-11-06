@@ -1,6 +1,7 @@
 {
   "format_version": 1,
   "execution_supported": true,
+  "execution_blockers": [],
   "status": "different",
   "has_data": true,
   "source": {
