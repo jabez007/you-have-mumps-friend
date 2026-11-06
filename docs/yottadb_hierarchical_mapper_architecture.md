@@ -13,7 +13,8 @@
 
 The distribution is `mccann-hub-yhmf`, imported under `mccann_hub.yhmf`.
 The [storage contract](storage-format.md) defines the prototype's concrete
-encodings. Examples below remain conceptual unless the README marks them implemented.
+encodings. The [documentation map](README.md) lists the guides for implemented
+behavior, and [known limitations](known-limitations.md) lists what is missing.
 
 ## 1. Vision
 
@@ -34,12 +35,19 @@ Developers should be able to define typed Python models with fields, validation,
 5. Define deterministic, versioned storage and key encodings.
 6. Add secondary indexes, bounded queries, and explainable query plans.
 7. Provide reviewable schema evolution and migrations.
-8. Preserve native M and YottaDB interoperability.
+8. Let plain M code read and write this data under a documented contract. This
+   is the project's main difference from an ORM on a SQL database. See section 11.
 9. Keep the persisted representation independent of Python to permit a future Go implementation.
+10. Narrow the migration maintenance gate to the migrating model. See section 10.
 
 ### Non-goals
 
-The framework will not initially recreate Odoo's entire ORM, object inheritance system, computed fields, record rules, or application framework.
+The framework will not initially recreate Odoo's record rules or application framework.
+
+Computed fields and model inheritance are in scope, because the inventory application
+needs them, but the framework will not copy their relational designs. Each one needs a
+design that fits globals, such as embedding or delegation in place of table-per-class
+inheritance.
 
 It will not use SQL as its primary persistence layer, automatically distribute transactions, or hide inefficient global scans behind convenient query expressions.
 
@@ -124,17 +132,20 @@ This guarantee covers mapper writes; raw writes must preserve the same contract.
 
 ## 6. Canonical global storage
 
-A proposed human-readable layout is:
+Layout one stores a record like this:
 
 ```text
-^Warehouse(7,"%m","type")="warehouse"
+^Warehouse(7,"%m","type")="Warehouse"
 ^Warehouse(7,"%m","schema")=1
-
-^Warehouse(7,"name")="Main"
-
-^Warehouse(7,"bins","A01","lots","L-001","product")="P42"
-^Warehouse(7,"bins","A01","lots","L-001","quantity")="12.50"
+^Warehouse(7,"name")="s:Main"
+^Warehouse(7,"bins","s:A01","lots","s:L-001","product")="r:s:P42"
+^Warehouse(7,"bins","s:A01","lots","s:L-001","quantity")="d:12.50"
 ```
+
+The [storage contract](storage-format.md) defines these encodings. Type tags make
+values self-describing, but M code must strip them before arithmetic, and tagged
+index values do not sort in numeric order. Section 16 asks whether a later
+layout should change this.
 
 Framework metadata uses reserved field names. Application-defined names must not collide with reserved names.
 
@@ -267,7 +278,14 @@ executor supports scalar literal-default backfills in existing owned trees, new 
 and index promotion, uniqueness downgrade, or removal. Job-scoped reservations detect
 duplicate values across validation batches before application data changes.
 It uses a maintenance gate and bounded checkpoints before
-atomic activation. Broader migration execution remains a later milestone.
+atomic activation. The gate currently blocks every model in the database. Broader migration execution
+remains a later milestone.
+
+Narrowing the gate to the migrating model is a goal, not a hard requirement. Odoo's
+[upgrade documentation](https://www.odoo.com/documentation/18.0/administration/upgrade.html)
+says a production database upgrade renders the database unavailable while it runs, so a
+database-wide gate is not clearly worse than that benchmark for a version upgrade. It is
+a poor fit for adding one field or index to one model. See [#21](https://github.com/jabez007/you-have-mumps-friend/issues/21).
 
 Production migrations must be reviewable, recoverable, and appropriately checkpointed.
 
@@ -277,11 +295,15 @@ Renaming a field or relocating a subtree must be treated as a physical data migr
 
 Direct access to YottaDB globals remains an explicit design goal.
 
-The framework will provide a controlled raw-access interface, but writes outside the mapper may bypass validation, indexes, and constraints.
+Plain M code must be able to read and write this data. Reads work today. Writes
+currently bypass validation, indexes, and constraints, as the
+[M access guide](guides/m-access.md) shows. The write contract must say which of
+these the framework can maintain for M writers, for example through triggers or a
+generated M interface, and what validation means when Pydantic cannot run. See [#25](https://github.com/jabez007/you-have-mumps-friend/issues/25).
 
-Such modifications require documented consistency procedures.
+The framework will also provide a controlled raw-access interface for Python.
 
-The storage format must also be usable by native M routines and, eventually, Go programs.
+The storage format must also be usable by Go programs eventually.
 
 The project will maintain golden storage fixtures and serialization contracts to make cross-language compatibility testable.
 
@@ -401,6 +423,14 @@ Performance benchmarks must distinguish database-engine performance from mapper 
 
 **D-009:** Ferro and Odoo are design references, not implementation dependencies.
 
+**D-010:** Plain M code is a supported reader and writer of framework data.
+
+**D-011:** Features borrowed from relational ORMs get hierarchy-native designs. The
+framework does not bend globals to imitate tables.
+
+**D-012:** A warehouse inventory application is the first proof of concept, and its
+needs set the order of feature work. Odoo is the benchmark for what it must do.
+
 ## 16. Outstanding architectural questions
 
 Before finalizing the public API, several questions need focused prototypes:
@@ -413,56 +443,20 @@ Before finalizing the public API, several questions need focused prototypes:
 6. Which YottaDB, Python, and Linux versions will CI officially support?
 7. What additional metadata would a native Go implementation need?
 8. What licensing guidance should the project provide for downstream applications?
+9. What should a per-model maintenance gate do at its edges, such as references and
+   multi-model transactions? See [#21](https://github.com/jabez007/you-have-mumps-friend/issues/21).
+10. Should a later storage layout use native M values and ordered index subscripts,
+    given the tradeoff against self-describing values? See [#24](https://github.com/jabez007/you-have-mumps-friend/issues/24).
 
-## 17. Immediate implementation direction
+## 17. Implementation status
 
-The repository now implements the storage contract and v0.1 model operations,
-plus a v0.2 prototype for references, indexes, and queries,
-described in the [README](../README.md). The public API is `mccann_hub.yhmf`.
-Owned children currently persist through their parent aggregate. The parent
-controls their lifecycle; direct child CRUD is a later extension. The test suite
-includes native rollback, forced restart, and process concurrency qualification.
-The [storage contract](storage-format.md) is authoritative for concrete encodings.
-Enforced references, reverse indexes, equality and unique indexes, and bounded
-query plans are implemented. Queries currently target owning roots; nested-field
-indexes can select those roots. Diagnostics audit expected secondary entries and
-claims by bounded record pages. A full reverse index audit, direct child queries,
-broader migrations, and Go interoperability remain later work.
-
-Read-only schema inspection now exposes installed and declared snapshots,
-including mismatched declarations, without changing schema or application data.
-Semantic snapshot comparisons and deterministic migration review plans are
-implemented, including nested fields, identity, relationships, and index
-definitions. Planning is read-only and does not inspect record values or prove
-data compatibility. An additive migration executor now supports scalar
-literal defaults, index additions, promotions, uniqueness downgrades, and removals
-at roots and inside existing embedded objects and child collections. Null owners
-remain null, and child identities and collection counts are preserved. Each
-parent tree commits atomically, and progress is checkpointed by parent. A database-wide
-maintenance gate, source fingerprint barrier, bounded transactional checkpoints,
-four validation/update/verification/metadata passes, bounded cleanup of retired
-index namespaces, and atomic activation
-keep partial results inaccessible. Failed batches resume from their preceding
-checkpoint. Abort is available before any update batch or cleanup deletion
-commits. New owned containers, field destruction, and reference migrations remain
-later work.
-
-Explicit rebuild plans now select declared root or nested equality and unique
-indexes without changing the schema. They use the same maintenance lifecycle,
-persisted selection, uniqueness preflight, bounded clearing and reconstruction,
-and verification. Record bytes, metadata, and the installed fingerprint are
-preserved; stale secondary entries are removed. The README records the fixed
-v0.3 scope and tested environments.
-
-Begin with a storage-contract prototype rather than a full ORM.
-
-Implement deterministic key encodings, native reads and writes, and golden fixture tests first. Then add the Pydantic model registry and explicit repository operations.
-
-Validate the transaction restart behavior and process-level concurrency model before implementing secondary indexes and a broader query language.
+The [changelog](../CHANGELOG.md) records what each release added, and
+[known limitations](known-limitations.md) lists what is missing. The
+[storage contract](storage-format.md) is authoritative for concrete encodings.
 
 **The measure of success is whether developers gain an approachable model layer without losing the control, performance characteristics, and transparency of MUMPS globals.**
 
 ---
 
-_Draft specification. The README identifies implemented behavior. Later milestones
-and APIs beyond that behavior remain design targets._
+_Draft specification. The [documentation map](README.md) lists implemented behavior.
+Later milestones and APIs beyond that behavior remain design targets._

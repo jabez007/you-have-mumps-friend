@@ -1,5 +1,10 @@
 # Integrity hardening and hierarchical mutations
 
+This is a historical log of the 0.3.1 to 0.5 work. It does not describe current
+plans. See the [changelog](../CHANGELOG.md) for what shipped and the
+[issue tracker](https://github.com/jabez007/you-have-mumps-friend/issues) for what
+comes next.
+
 The requested milestones replace the previous v0.4 Go interoperability scope.
 Go bindings and a shared-language runtime are deferred.
 

@@ -236,8 +236,8 @@ and validate the full node plan before modifying storage. Readers bound every
 collection traversal and reject records that exceed the node budget.
 
 Owned models cannot declare independent globals, and ownership declarations
-cannot be recursive. Child access currently goes through the loaded parent
-aggregate. Updating a parent replaces its entire subtree in one transaction.
+cannot be recursive. Saving a parent replaces its entire subtree in one
+transaction. [Direct owned mutations](#direct-owned-mutations) change part of it.
 
 ## Direct owned mutations
 
