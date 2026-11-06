@@ -55,6 +55,7 @@ class RendezvousStore(NativeStore):
             and len(path.subscripts) == 4
             and path.subscripts[1] == b"lots"
             and path.subscripts[-1] == b"note",
+            "crash_activation": path.global_name == "^YHMFSchema" and len(path.subscripts) == 1,
         }
         if self.waiting and guards.get(self.operation, False):
             self.rendezvous()
@@ -85,6 +86,12 @@ def run(operation, migration_id, kind="additive"):
             _removal_models["RelaxedWarehouse"],
             (_removal_models["RelatedTarget"],),
         ),
+        "rebuild": (_removal_models["Product"], _removal_models["Product"], ()),
+        "rebuild_nested": (
+            _removal_models["Warehouse"],
+            _removal_models["Warehouse"],
+            (_removal_models["RelatedTarget"],),
+        ),
     }[kind]
     store = RendezvousStore(operation, migration_id)
     db = Database(store, Registry(*related, target))
@@ -105,12 +112,17 @@ def run(operation, migration_id, kind="additive"):
 
             store.atomic(legacy)
         elif operation == "begin":
-            plan = db.plan_migration(target)
-            status = db.begin_migration(source, target, plan=plan)
+            if kind.startswith("rebuild"):
+                status = db.begin_index_rebuild(target, plan=db.plan_index_rebuild(target))
+            else:
+                status = db.begin_migration(source, target, plan=db.plan_migration(target))
             print(json.dumps(status.to_dict()), flush=True)
             return
         else:
-            status = db.advance_migration(migration_id, source, target, batch_size=1)
+            if kind.startswith("rebuild"):
+                status = db.advance_index_rebuild(migration_id, target, batch_size=1)
+            else:
+                status = db.advance_migration(migration_id, source, target, batch_size=1)
             print(json.dumps({**status.to_dict(), "reads": store.reads}), flush=True)
             return
         result = "committed"

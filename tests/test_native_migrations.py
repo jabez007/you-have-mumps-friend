@@ -573,3 +573,118 @@ def test_native_retirement_workers_share_record_and_cleanup_progress(retirement_
         assert db.store.children(orphan_root, limit=1) == ()
     status = advance_to(db, db.migration_status(status.migration_id), "complete", source, target)
     assert status.retagged == 3 and db.check_indexes(target).issues == ()
+
+
+@pytest.fixture
+def rebuild_db(retirement_db):
+    db, source, _, kind, _ = retirement_db
+    related = (_removal_models["RelatedTarget"],) if kind == "removal_nested" else ()
+    field = b"lots.serial" if related else b"sku"
+    key = source.__global__[1:].encode("ascii")
+    for global_name in ("^YHMFIndex", "^YHMFUnique"):
+        db.store.delete_tree(Path(global_name, (key,)))
+        db.store.set(Path(global_name, (key, field, b"orphan")), b"orphan")
+    return (
+        Database(db.store, Registry(*related, source)),
+        source,
+        "rebuild_nested" if related else "rebuild",
+    )
+
+
+def rebuild_advance_to(db, status, model, phase):
+    for _ in range(300):
+        if status.phase == phase:
+            return status
+        status = db.advance_index_rebuild(status.migration_id, model, batch_size=1)
+    raise AssertionError("Rebuild did not reach its target phase")
+
+
+@pytest.mark.parametrize("phase", ["validate", "clear_indexes", "backfill", "verify", "activate"])
+def test_native_rebuild_restarts_keep_original_schema_and_committed_checkpoint(
+    rebuild_db, monkeypatch, phase
+):
+    db, model, _ = rebuild_db
+    status = db.begin_index_rebuild(model, plan=db.plan_index_rebuild(model))
+    status = rebuild_advance_to(db, status, model, phase)
+    count = removed_count(db.store, status.migration_id)
+    checkpoints = []
+    original = db.store.set
+    yottadb = importlib.import_module("yottadb")
+
+    def restart_once(path, value):
+        original(path, value)
+        if path == job_path(status.migration_id):
+            checkpoints.append(value)
+            if len(checkpoints) == 1:
+                raise yottadb.YDBTPRestart()
+
+    monkeypatch.setattr(db.store, "set", restart_once)
+    updated = db.advance_index_rebuild(status.migration_id, model, batch_size=1)
+    monkeypatch.setattr(db.store, "set", original)
+    assert len(checkpoints) == 2 and checkpoints[0] == checkpoints[1]
+    assert db.migration_status(status.migration_id) == updated
+    assert removed_count(db.store, status.migration_id) == count + (phase == "clear_indexes")
+    completed = rebuild_advance_to(db, updated, model, "complete")
+    assert completed.validated == completed.backfilled == completed.verified == 3
+    assert completed.retagged == 0 and db.check_indexes(model).issues == ()
+    assert db.inspect_schema(model).installed.fingerprint == completed.source_fingerprint
+
+
+@pytest.mark.parametrize(
+    "operation,phase",
+    [
+        ("crash_reservation", "validate"),
+        ("crash_cleanup", "clear_indexes"),
+        ("crash_claim", "backfill"),
+        ("crash_activation", "activate"),
+    ],
+)
+def test_native_rebuild_process_death_preserves_checkpoint_and_resumes(
+    rebuild_db, operation, phase
+):
+    db, model, kind = rebuild_db
+    status = db.begin_index_rebuild(model, plan=db.plan_index_rebuild(model))
+    status = rebuild_advance_to(db, status, model, phase)
+    count = removed_count(db.store, status.migration_id)
+    process = worker(operation, status.migration_id, kind=kind)
+    try:
+        ready(process)
+        process.kill()
+        process.wait(timeout=5)
+    finally:
+        stop(process)
+    assert db.migration_status(status.migration_id) == status
+    assert removed_count(db.store, status.migration_id) == count
+    if phase == "validate":
+        assert db.store.children(job_path(status.migration_id).child(b"unique"), limit=10) == ()
+    if phase == "backfill":
+        for global_name in ("^YHMFIndex", "^YHMFUnique"):
+            assert (
+                db.store.children(Path(global_name, (model.__global__[1:].encode(),)), limit=1)
+                == ()
+            )
+    process = worker("resume", status.migration_id, kind=kind)
+    try:
+        stdout, stderr = process.communicate(timeout=20)
+        assert process.returncode == 0, stderr
+    finally:
+        stop(process)
+    completed = rebuild_advance_to(db, db.migration_status(status.migration_id), model, "complete")
+    assert completed.verified == 3 and completed.retagged == 0
+    assert db.check_indexes(model).issues == ()
+
+
+@pytest.mark.parametrize("phase", ["validate", "clear_indexes", "backfill"])
+def test_native_rebuild_workers_serialize_validation_clearing_and_construction(rebuild_db, phase):
+    db, model, kind = rebuild_db
+    status = db.begin_index_rebuild(model, plan=db.plan_index_rebuild(model))
+    status = rebuild_advance_to(db, status, model, phase)
+    summaries = migration_worker_race(status.migration_id, kind=kind)
+    if phase == "clear_indexes":
+        assert removed_count(db.store, status.migration_id) == 2
+    else:
+        counter = "validated" if phase == "validate" else "backfilled"
+        assert sorted(summary[counter] for summary in summaries) == [1, 2]
+    completed = rebuild_advance_to(db, db.migration_status(status.migration_id), model, "complete")
+    assert completed.verified == 3 and completed.retagged == 0
+    assert db.check_indexes(model).issues == ()

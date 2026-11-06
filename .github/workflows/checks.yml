@@ -18,8 +18,7 @@ jobs:
         run: |
           uv venv /tmp/yhmf-wheel --python 3.12
           uv pip install --python /tmp/yhmf-wheel/bin/python dist/*.whl
-          /tmp/yhmf-wheel/bin/python -I -c \
-            'import mccann_hub; from mccann_hub.yhmf import Database; assert mccann_hub.__file__ is None'
+          /tmp/yhmf-wheel/bin/python -I scripts/smoke-wheel.py
   native:
     strategy:
       fail-fast: false
