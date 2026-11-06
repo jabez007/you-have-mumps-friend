@@ -1,0 +1,322 @@
+{
+  "source_commit": "cbe64797753bd1ee6fdee57036674554a3c05b4a",
+  "ci_run": "https://github.com/jabez007/you-have-mumps-friend/actions/runs/42262595757",
+  "results": [
+    {
+      "indexed_quantity": false,
+      "platform": "Linux-6.8.0-1070-azure-x86_64-with-glibc2.35",
+      "pydantic": "2.14.3",
+      "python": "3.12.12",
+      "rows": [
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 2.01,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "set": 1.0
+          },
+          "p95_us": 3.1
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 90.59,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "get": 15.0,
+            "set": 1.0
+          },
+          "p95_us": 98.05
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 191.75,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "children": 4.0,
+            "delete_tree": 1.0,
+            "get": 46.0,
+            "set": 12.0
+          },
+          "p95_us": 200.86
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 2.06,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "set": 1.0
+          },
+          "p95_us": 2.34
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 89.9,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "get": 15.0,
+            "set": 1.0
+          },
+          "p95_us": 96.14
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 483.94,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "children": 4.0,
+            "delete_tree": 1.0,
+            "get": 100.0,
+            "set": 39.0
+          },
+          "p95_us": 488.5
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 2.07,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "set": 1.0
+          },
+          "p95_us": 2.36
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 89.93,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "get": 15.0,
+            "set": 1.0
+          },
+          "p95_us": 96.45
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 3321.32,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "children": 4.0,
+            "delete_tree": 1.0,
+            "get": 640.0,
+            "set": 309.0
+          },
+          "p95_us": 3402.67
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 1.96,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "set": 1.0
+          },
+          "p95_us": 2.36
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 87.94,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "get": 15.0,
+            "set": 1.0
+          },
+          "p95_us": 94.1
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 32465.63,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "children": 4.0,
+            "delete_tree": 1.0,
+            "get": 6040.0,
+            "set": 3009.0
+          },
+          "p95_us": 39848.16
+        }
+      ],
+      "warmup_iterations": 5,
+      "yottadb": "pywr v0.10.0 YottaDB r2.02 Linux x86_64"
+    },
+    {
+      "indexed_quantity": false,
+      "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+      "pydantic": "2.14.3",
+      "python": "3.12.3",
+      "rows": [
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 3.65,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "set": 1.0
+          },
+          "p95_us": 4.96
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 173.85,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "get": 15.0,
+            "set": 1.0
+          },
+          "p95_us": 203.03
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 348.49,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "children": 4.0,
+            "delete_tree": 1.0,
+            "get": 46.0,
+            "set": 12.0
+          },
+          "p95_us": 368.03
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 3.74,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "set": 1.0
+          },
+          "p95_us": 4.03
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 165.01,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "get": 15.0,
+            "set": 1.0
+          },
+          "p95_us": 196.21
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 951.45,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "children": 4.0,
+            "delete_tree": 1.0,
+            "get": 100.0,
+            "set": 39.0
+          },
+          "p95_us": 1006.95
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 3.6,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "set": 1.0
+          },
+          "p95_us": 4.06
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 165.22,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "get": 15.0,
+            "set": 1.0
+          },
+          "p95_us": 214.57
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 6027.68,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "children": 4.0,
+            "delete_tree": 1.0,
+            "get": 640.0,
+            "set": 309.0
+          },
+          "p95_us": 6554.32
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 3.44,
+          "method": "direct",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "set": 1.0
+          },
+          "p95_us": 4.2
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 154.13,
+          "method": "patch",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "get": 15.0,
+            "set": 1.0
+          },
+          "p95_us": 190.99
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 60318.86,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "children": 4.0,
+            "delete_tree": 1.0,
+            "get": 6040.0,
+            "set": 3009.0
+          },
+          "p95_us": 70299.68
+        }
+      ],
+      "warmup_iterations": 5,
+      "yottadb": "pywr v0.10.0 YottaDB r2.06 Linux x86_64"
+    }
+  ]
+}

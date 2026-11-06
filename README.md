@@ -39,7 +39,11 @@ and `delete` returns whether a record existed. Keys must match their declared ty
 `db.atomic(callback)` passes a transaction handle to the callback. The handle
 expires when the callback returns. Each restart creates a fresh handle and
 reconstructs records from storage. All standalone operations also use transactions.
-Nested `atomic` callbacks are rejected.
+Nested `atomic` callbacks are rejected. Native mapper and value-validation
+failures may also rerun the callback before being reported: the adapter revalidates
+through YottaDB's final stable TP attempt. Persistent errors still roll back and
+raise their original type. `RuntimeError` aborts and native control/error signals
+pass through. See [ADR 0005](docs/adr/0005-native-validation-restarts.md).
 If a backend write fails, the transaction must roll back even when the callback
 catches the exception. Later operations on that handle raise `TransactionError`.
 
@@ -155,7 +159,7 @@ def receive(tx):
 db.atomic(receive)
 ```
 
-The callback may restart. Keep external side effects outside it. Failed mutations
+The callback may restart. Keep external side effects outside it. Failed partial mutations
 make the transaction roll back even if the callback catches the exception.
 See [ADR 0004](docs/adr/0004-hierarchical-mutations.md) for validation and storage
 tradeoffs.
@@ -176,6 +180,9 @@ validated identity. It rejects existing child data and validates the complete
 new subtree. Deletion requires an existing keyed child, removes its subtree,
 releases its outgoing references and unique claims, and preserves siblings.
 Both update the collection count and enforce collection length constraints.
+Persistence revalidates plain declared owned data, so unchecked `model_copy`
+values cannot bypass constraints through `revalidate_instances="never"`. This
+also hardens existing whole-aggregate saves.
 They share the ancestor-validation restrictions of `patch`.
 
 Child insertion counts declared aggregate nodes through ownership markers and
@@ -567,6 +574,21 @@ requires resume or operator-managed restoration. Raw writers must remain stopped
 Rebuilding reverse-reference counts, repairing application records, and pruning
 historical maintenance metadata remain outside this operation.
 
+## v0.4 release scope
+
+Version `0.4.0` adds scalar/reference patches, owned-path reads, keyed child
+insertion and deletion, and atomic composition. It preserves layout one,
+whole-aggregate `save`, schema migrations, and existing index/reference identities.
+Unsafe ancestor validation is explicitly rejected. Child insertion retains a
+bounded aggregate size check; optimistic revisions, automatic change tracking,
+Go bindings, and the proposed successor fingerprint format remain deferred.
+
+Native qualification includes deterministic process races, forced restarts,
+rollback, index/reference checks, legacy migration compatibility, and the installed
+wheel workflow. [Measured native performance](docs/performance.md) shows constant
+patch node work as unrelated lot counts grow, with material framework overhead
+relative to direct native assignment.
+
 ## v0.3.1 hardening
 
 Version `0.3.1` rejects implicit installation over any unmanaged global data,
@@ -629,8 +651,9 @@ iterations. The quantity is unindexed so all three variants have equivalent
 secondary-entry work; separate correctness tests cover indexed mutations.
 Direct assignment measures a `NativeStore` transaction and scalar write. Results
 include Python and instrumentation overhead and describe a warm, uncontended
-microbenchmark rather than production throughput. Native results are required
-before making speed claims; in-memory operation counts establish work scope only.
+microbenchmark rather than production throughput. Results from both configured native environments are recorded in the
+[performance report](docs/performance.md). In-memory operation counts establish
+work scope only.
 
 ## Run native storage tests
 

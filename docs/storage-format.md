@@ -342,3 +342,10 @@ native order, strictly after the optional cursor. The limit is 1 through 10000.
 `NativeStore` calls YDBPython directly. `MemoryStore` supplies rollback for offline
 tests and supports the contract's integer and string collation. It does not model
 other native numeric forms, native transaction restarts, or interprocess access.
+
+
+Native application validation errors can arise before TP commit-time read-set
+validation. The native adapter requests restart for mapper and value-validation
+errors while `$trestart < 3`, then exposes persistent errors from the stable
+attempt. This changes no stored nodes or formats. Runtime aborts and native
+signals pass through. See [ADR 0005](adr/0005-native-validation-restarts.md).

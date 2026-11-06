@@ -345,6 +345,12 @@ replacements as unrelated hierarchy sizes grow.
 Go interoperability, general query expansion, automatic change tracking, and
 native performance extensions are deferred.
 
+Version 0.4.0 implements this milestone with explicit ancestor-validation limits
+and a bounded aggregate-size check for child insertion. Storage layout one and
+whole-aggregate operations remain compatible. See
+[ADR 0004](adr/0004-hierarchical-mutations.md) and the
+[native performance report](performance.md).
+
 ## 14. Testing strategy
 
 Testing will combine pure unit tests with integration tests against an actual YottaDB installation.

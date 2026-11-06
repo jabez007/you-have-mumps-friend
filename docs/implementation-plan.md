@@ -43,3 +43,29 @@ Collection counts, root record budgets, nested index locations, and parent delet
 must remain transactional. Snapshot representation changes must not silently
 reinterpret installed v0.3 metadata. In-memory tests cannot qualify native races
 or native performance.
+
+## Delivered boundaries
+
+The v0.3.1 milestone is independently reviewable at `08d2086`; its full CI run
+passed before v0.4 implementation started. A final maintenance review also applied
+the shared snapshot check to external reference targets in `3231e6e`.
+
+The v0.4 interface and validation policy are recorded in ADR 0004. Both native
+engines passed the mutation concurrency/restart suites and ran the benchmark.
+The performance report links the measured commit and CI evidence. Legacy schema
+identity generation remains unchanged; the proposed successor is deliberately not
+activated. Revision checking is deferred. No Go bindings, change-tracking layer,
+query expansion, or native extension was added.
+
+
+Final native qualification exposed a preexisting mixed-read error in competing
+rebuild workers. Adapter-level bounded revalidation in `0011974` protects CRUD
+and maintenance together; ADR 0005 records the reasoning and the deterministic
+regression. Persistent corruption remains an error and no quality threshold was
+changed.
+
+
+Persistence-input regressions also confirmed that disabling Pydantic instance
+revalidation could admit unchecked nested copies. `cbe6479` makes root save and
+child insertion share recursive plain input construction. All four public-path
+regressions fail with the old methods and pass with the fix.

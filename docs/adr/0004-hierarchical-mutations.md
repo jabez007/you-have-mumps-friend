@@ -91,3 +91,8 @@ process tests cover independent/same-field changes, unique claims, parent/child
 deletion, forced restarts, and atomic composition. Native benchmarks compare
 direct node assignment, framework patch, and whole-aggregate replacement; no
 in-memory latency is evidence of native performance.
+
+
+The dependency-compatibility CI matrix runs fingerprint and mutation validation
+regressions under Pydantic 2.12.0 and 2.14.3. This explicitly exercises the core
+schema inspection policy at both qualified dependency versions.
