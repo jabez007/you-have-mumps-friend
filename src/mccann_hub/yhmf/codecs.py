@@ -25,12 +25,19 @@ def canonical_json(value: Any) -> bytes:
     ).encode("ascii")
 
 
+def _utf8(value: str) -> bytes:
+    try:
+        return value.encode("utf-8")
+    except UnicodeEncodeError:
+        raise StorageError("Strings must contain valid UTF-8 text") from None
+
+
 def encode_key(value: Key) -> bytes:
     """Retain integer collation and distinguish every string from an integer."""
     if type(value) is int and abs(value) <= MAX_INTEGER_KEY:
         return str(value).encode("ascii")
     if type(value) is str:
-        return b"s:" + value.encode("utf-8")
+        return b"s:" + _utf8(value)
     raise StorageError("Keys must be strings or integers with at most 18 digits")
 
 
@@ -53,7 +60,7 @@ def encode_scalar(value: Scalar) -> bytes:
     if value is None:
         return b"n:"
     if type(value) is str:
-        return b"s:" + value.encode("utf-8")
+        return b"s:" + _utf8(value)
     if type(value) is bool:
         return b"b:1" if value else b"b:0"
     if type(value) is int:

@@ -155,3 +155,10 @@ Add migration interruption cases at installation and committed-batch boundaries
 alongside existing field/index/checkpoint/activation rollback cases. No production
 abstraction or public API change is planned unless a generated case proves a defect.
 The source complexity check remains at ten and passes before this phase.
+
+Phase 2 boundary testing confirmed that unpaired Unicode surrogates escaped from
+both scalar and key encoding as `UnicodeEncodeError`. Both minimal regressions
+failed before the fix. The shared UTF-8 encoder now raises a value-free
+`StorageError`; valid encodings and layout bytes are unchanged. Generated nested
+round trips also check Decimal scale, null/empty/missing distinctions, binary data,
+integer child identities, schema ordering, malformed bytes, and size/depth limits.

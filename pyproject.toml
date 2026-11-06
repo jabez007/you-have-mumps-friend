@@ -27,7 +27,7 @@ packages = ["src/mccann_hub"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--import-mode=importlib"
-markers = ["native: requires a configured, disposable YottaDB database"]
+markers = ["native: requires a configured, disposable YottaDB database", "adversarial: generated correctness and fault-injection workloads"]
 
 [tool.ruff]
 target-version = "py312"
