@@ -291,3 +291,27 @@ They do not measure insertion contention, crash recovery, cold caches, or sustai
 throughput. No fsync or journal setting is independently varied in this run. The
 existing patch contention tests exercise a different operation and cannot qualify
 concurrent insertion performance. Runner and engine effects are not isolated.
+
+### Registry compilation results
+
+The registry-owned policy and field adapters in `d19ccacfc18588d039e5c2618822f2a8ec927b2b`
+passed [CI run 42312775930](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42312775930).
+Both engines executed all mutation, contention, insertion, and profile workloads. The
+[complete output](benchmarks/native-compiled-declarations-2026-11-06.json) records the
+runtime environment and source commit. The profiles report zero `_has_functions` and
+`_nested_model_schema` calls during mutations; registration performs that classification.
+Field-adapter regression tests independently reject any compilation during database work.
+
+Median patch latency in microseconds at 1,000 lots, after five warmups and over 40 samples:
+
+| Engine | Unindexed | Equality | Unique | Reference |
+| --- | ---: | ---: | ---: | ---: |
+| r2.02 | 161.09 | 276.81 | 284.82 | 420.09 |
+| r2.06 | 108.16 | 198.26 | 198.93 | 297.75 |
+
+The r2.02 runner reported an AMD EPYC 7763 and the r2.06 runner an AMD EPYC 9V74. Earlier
+runs used different runner assignments. These samples do not isolate the latency effect
+of compilation or differences between engines. The evidence establishes eliminated
+repeated declaration work and preserved integrity, rather than a fixed speedup. Setup and
+registration costs are excluded; applications that recreate registries per request will
+pay those costs repeatedly. Live installed-schema checks still occur on every transaction.
