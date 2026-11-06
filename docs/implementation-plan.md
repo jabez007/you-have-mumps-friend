@@ -85,3 +85,39 @@ The optimized implementation passed 852 tests in each native environment, 443
 local tests, and the dependency compatibility checks. New-schema identities,
 optimistic revisions, path-construction optimization, and longer-running workload
 qualification remain separate follow-ups.
+
+## v0.5 implementation order
+
+1. Define format-two declarations from registry field metadata and codecs.
+   Reuse the existing declaration grammar and migration comparison module.
+   Canonical output omits Pydantic titles, definition names, and generated patterns.
+   Test golden bytes under Pydantic 2.12.0 and 2.14.3 before enabling the format.
+2. Bind validated legacy snapshots to registered models without replacing their
+   stored identity. Opening and writing a compatible legacy database preserves its
+   metadata and record fingerprints. New installations use format two. Reuse the
+   maintenance gate and saved manifests for legacy migration and rebuild recovery.
+   Verify corruption rejection, rollback, and concurrent initialization natively.
+3. Qualify Phase 1 independently, including packaging and both native CI engines.
+4. Add bounded Hypothesis codec, schema, and operation-sequence tests with a plain
+   Python reference state. Independently audit physical indexes and references.
+   Put longer generated sequences and native stress in separate CI profiles.
+   Add deterministic regressions for discovered defects and migration fault cases.
+5. Qualify Phase 2 independently before starting the example application.
+6. Build a warehouse inventory ledger with products, owned warehouse locations,
+   bins and balances, independent lots, and immutable movement records. Implement
+   receive, move, adjust, and bounded queries through the public interface.
+   Record concrete usability findings before adding targeted diagnostics or helpers.
+7. Measure inventory workflows using partial mutations and whole replacements.
+   Keep direct native comparisons to operations with equivalent integrity work.
+   Run full qualification and prepare v0.5.0 with compatibility and release notes.
+
+The format version, application schema revision, layout version, and codec version
+remain distinct. Custom validators and default factories require explicit
+application schema revisions when their behavior changes. Legacy metadata cannot
+reveal rules that its original representation omitted. Unknown formats and
+unrecognized constraints must fail safely. Existing date/time and compound-key
+limitations remain in place unless the example demonstrates a correctness need.
+
+No new dependency is planned. Hypothesis is already a development dependency.
+All source changes retain the configured complexity maximum of ten. The initial
+complexity check passed without over-threshold cleanup candidates.
