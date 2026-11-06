@@ -210,6 +210,7 @@ def advance(
 
     def attempt() -> MigrationStatus:
         status = load_status(store, migration_id)
+        migration_jobs.require_schema_operation(store, status)
         if status.phase == "complete":
             return _completed_binding(status, binding)
         if status.phase == "aborted":

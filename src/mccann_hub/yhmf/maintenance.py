@@ -11,7 +11,17 @@ from .errors import MaintenanceActive, MigrationError, StorageError
 from .storage import Path, Store
 
 GATE = Path("^YHMFMigration", (b"gate",))
-PHASES = ("validate", "backfill", "verify", "retag", "cleanup", "activate", "complete", "aborted")
+PHASES = (
+    "validate",
+    "clear_indexes",
+    "backfill",
+    "verify",
+    "retag",
+    "cleanup",
+    "activate",
+    "complete",
+    "aborted",
+)
 
 
 def job_path(migration_id: str) -> Path:
@@ -56,6 +66,7 @@ class MigrationStatus:
     verified: int = 0
     retagged: int = 0
     cursor: bytes = field(default=b"", repr=False)
+    operation_fingerprint: str | None = None
 
     def __post_init__(self) -> None:
         job_path(self.migration_id)
@@ -74,10 +85,17 @@ class MigrationStatus:
             raise StorageError("Invalid migration cursor")
         if self.cursor:
             decode_key(self.cursor)
+        if self.operation_fingerprint is not None and (
+            not isinstance(self.operation_fingerprint, str)
+            or not re.fullmatch(r"[0-9a-f]{64}", self.operation_fingerprint)
+        ):
+            raise StorageError("Invalid maintenance operation fingerprint")
 
     def to_dict(self, *, include_cursor: bool = False) -> dict[str, Any]:
         result = asdict(self)
         result.pop("cursor")
+        if self.operation_fingerprint is None:
+            result.pop("operation_fingerprint")
         if include_cursor:
             result["cursor"] = self.cursor.hex()
         return result

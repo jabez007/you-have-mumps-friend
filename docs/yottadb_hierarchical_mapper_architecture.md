@@ -316,6 +316,16 @@ Implement schema snapshots, schema comparisons, migration generation, migration 
 
 Acceptance requires interrupted-migration tests and schema compatibility tests.
 
+The v0.3 completion boundary is now fixed to schema inspection and comparisons,
+deterministic review plans, scalar-default additions in existing owned trees,
+scalar index additions, promotions, downgrades and removals, and explicit index
+rebuilds for an unchanged installed declaration. Jobs use maintenance ownership,
+bounded updates, atomic activation, safe early abort, and durable resume.
+Qualification includes native restart, process-death, concurrency, legacy-job
+compatibility, and installed-wheel tests. New owned containers, destructive
+record changes, reference migrations, and full reverse-reference repair belong
+to later milestones.
+
 ### v0.4 — Developer experience and interoperability
 
 Refine type support, diagnostics, performance, documentation, and tooling.
@@ -399,6 +409,13 @@ keep partial results inaccessible. Failed batches resume from their preceding
 checkpoint. Abort is available before any update batch or cleanup deletion
 commits. New owned containers, field destruction, and reference migrations remain
 later work.
+
+Explicit rebuild plans now select declared root or nested equality and unique
+indexes without changing the schema. They use the same maintenance lifecycle,
+persisted selection, uniqueness preflight, bounded clearing and reconstruction,
+and verification. Record bytes, metadata, and the installed fingerprint are
+preserved; stale secondary entries are removed. The README records the fixed
+v0.3 scope and tested environments.
 
 Begin with a storage-contract prototype rather than a full ORM.
 

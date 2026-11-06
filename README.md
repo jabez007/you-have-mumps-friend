@@ -403,6 +403,70 @@ Do not remove the gate or fingerprint barrier manually. Migration lifecycle
 methods require standalone calls outside `db.atomic`; each manages its own
 transaction. Completed and aborted job metadata remains available for inspection.
 
+## Rebuild existing indexes
+
+An explicit rebuild repairs equality entries and uniqueness claims from stored
+records while keeping the installed model declaration unchanged. It supports
+declared root and nested indexes, including reference equality indexes. The
+reverse-reference graph is checked through existing maintenance validation and
+is left unchanged.
+
+```python
+plan = db.plan_index_rebuild(CatalogProduct)  # All declared indexes by default.
+print(plan.to_json())
+assert plan.execution_supported
+status = db.begin_index_rebuild(CatalogProduct, plan=plan)
+job_id = status.migration_id
+while status.phase != "complete":
+    status = db.advance_index_rebuild(job_id, CatalogProduct, batch_size=25)
+```
+
+Use `fields=("sku",)` to select particular indexes, or dotted names such as
+`fields=("lots.serial", "lots.samples.reading")` for nested indexes. Selections
+must name distinct declared indexes. The review plan is deterministic and reads
+only schema metadata. It exposes no indexed values. A model with no indexes or
+a declaration that differs from the installed schema has an unsupported plan.
+
+Rebuilds use the same maintenance gate, schema barrier, `migration_status`, and
+`abort_migration` methods as schema migrations. The phases are `validate`,
+`clear_indexes`, `backfill`, `verify`, `activate`, and `complete`. Validation reads
+authoritative records and reserves selected unique values before any index is
+cleared. Conflicting values raise `UniqueViolation`; rebuilds never change field
+values or choose a surviving record. Missing or invalid record fields fail
+validation and are not filled from defaults.
+
+Clearing removes at most `batch_size` leaves per call from the selected equality
+and claim namespaces, including stale and orphan nodes. Backfill reconstructs
+selected entries in bounded parent pages, and verification checks rebuilt entries
+and claims. Unselected namespaces, record bytes, record metadata, and the schema
+snapshot and fingerprint are preserved. The `retagged` counter stays zero;
+`validated`, `backfilled`, and `verified` count parent records.
+
+Retain the job ID for recovery. Reconstruct a database with the same registry
+and resume with `advance_index_rebuild(job_id, model)`. The selection is persisted
+with a digest and cannot be changed during resume. Abort is available until the
+first committed clearing deletion or reconstruction batch. After that, recovery
+requires resume or operator-managed restoration. Raw writers must remain stopped.
+Rebuilding reverse-reference counts, repairing application records, and pruning
+historical maintenance metadata remain outside this operation.
+
+## v0.3 release scope
+
+The v0.3 scope is schema inspection and comparison, deterministic review plans,
+scalar-default additions in existing owned trees, scalar index additions,
+promotions, downgrades and removals, and explicit declared-index rebuilds.
+Maintenance jobs provide bounded updates, atomic activation, safe early abort,
+and interruption/resume. Storage layout version 1 and legacy format-one schema
+jobs remain supported. New owned containers, field deletion or relocation,
+storage-type changes, reference migrations, and default-factory backfills remain
+later work.
+
+Qualification runs the deterministic checks, installed-wheel checks, and native
+rollback, restart, process-death, and concurrency suites. The native CI matrix
+uses Python 3.12 with YottaDB r2.02 on Ubuntu 22.04 and r2.06 on Ubuntu 24.04.
+These results apply to those tested environments, not every accepted runtime or
+dependency version.
+
 ## Run development checks
 
 Install [uv](https://docs.astral.sh/uv/), then run:

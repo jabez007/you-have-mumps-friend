@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mccann-hub-yhmf"
-version = "0.3.0a5"
+version = "0.3.0rc1"
 description = "Explicit hierarchical persistence for YottaDB"
 readme = "README.md"
 license = "GPL-3.0-or-later"

@@ -4,7 +4,7 @@
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 
-from . import indexes, migration_executor, migration_jobs, references
+from . import index_rebuilds, indexes, migration_executor, migration_jobs, references
 from .codecs import Key
 from .errors import (
     AlreadyExists,
@@ -14,6 +14,7 @@ from .errors import (
     StorageError,
     TransactionError,
 )
+from .index_rebuilds import IndexRebuildPlan
 from .maintenance import MigrationStatus, load_status, require_available
 from .migrations import MigrationPlan, build_plan
 from .models import Model
@@ -246,3 +247,24 @@ class Database:
         """Release maintenance before any update batch or cleanup deletion commits."""
         self._migration_ready()
         return migration_jobs.abort(self.store, migration_id)
+
+    def plan_index_rebuild(
+        self, model: type[Model], *, fields: tuple[str, ...] | None = None
+    ) -> IndexRebuildPlan:
+        """Review declared index namespaces without scanning or changing records."""
+        spec = self.registry.spec(model)
+        return index_rebuilds.build_plan(spec, self.inspect_schema(model), fields=fields)
+
+    def begin_index_rebuild(self, model: type[Model], *, plan: IndexRebuildPlan) -> MigrationStatus:
+        """Claim maintenance for a reviewed rebuild of an unchanged installed schema."""
+        self._migration_ready()
+        return index_rebuilds.begin(self.store, self.registry, model, plan)
+
+    def advance_index_rebuild(
+        self, migration_id: str, model: type[Model], *, batch_size: int = 25
+    ) -> MigrationStatus:
+        """Commit one bounded rebuild batch or transition using the saved selection."""
+        self._migration_ready()
+        return index_rebuilds.advance(
+            self.store, self.registry, migration_id, model, batch_size=batch_size
+        )

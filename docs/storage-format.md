@@ -111,6 +111,16 @@ four record counters, and a hexadecimal encoded-key cursor. Status diagnostics
 omit the cursor unless explicitly requested. Each checkpoint belongs to the
 same transaction as its batch's data changes.
 
+Index rebuild jobs add an `operation_fingerprint` field to their format-one
+checkpoint. It is the lowercase SHA-256 hexadecimal digest of the canonical
+`"operation"` child, whose document has `format_version: 1`,
+`kind: "index_rebuild"`, and a sorted `fields` array of distinct declared index
+names. A missing operation and digest identify a legacy schema migration.
+Schema migrations continue writing the original checkpoint shape. Executors
+reject jobs of another kind, and selection bytes must match the stored digest.
+Older readers reject rebuild checkpoints rather than treating them as ordinary
+schema changes.
+
 Each job has `"source_snapshot"` and `"target_snapshot"` children containing
 the canonical schema bytes. The checkpoints progress through `validate`,
 `backfill`, `verify`, `retag`, optionally `cleanup`, then `activate` and `complete`. Each bounded pass stores
@@ -144,6 +154,24 @@ record counters are zero. Record counters are unchanged during cleanup.
 Activation rechecks that all retired namespaces are empty and returns to cleanup
 if they reappear. Other index namespaces and application globals are untouched.
 Older library versions that do not recognize this phase refuse to resume it.
+
+An unchanged-schema rebuild uses identical source and target snapshots and
+fingerprints. It progresses through `validate`, `clear_indexes`, `backfill`,
+`verify`, `activate`, and `complete`. Validation reads stored fields and record
+metadata, checks that revalidation preserves encoded field bytes, and reserves
+selected non-null unique values. Existing equality entries and claims are not
+required to be valid. Reference edges and target metadata use the existing
+maintenance checks; reverse-reference counts are not rebuilt.
+
+`clear_indexes` drains both `^YHMFIndex` and `^YHMFUnique` namespaces for each
+selected dotted field name, including orphan nodes. It uses the same bounded
+leaf deletion and `"cleaned_nodes"` counter as retirement cleanup. Backfill
+constructs selected entries from records and reservations, then verification
+checks the expected entries and claims. `validated`, `backfilled`, and `verified`
+count parents and must agree before activation. `retagged` remains zero because
+record metadata is unchanged. Activation restores the original installed
+fingerprint, completes the job, and removes the gate atomically. The installed
+snapshot bytes remain identical. Unselected namespaces are untouched.
 
 Logical migration paths contain field names only. Index namespaces join those
 names with dots, including the full path for nested additions and promotions.

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Explicit hierarchical persistence for YottaDB."""
 
+from .index_rebuilds import IndexRebuildPlan
 from .maintenance import MigrationStatus
 from .migrations import MigrationPlan, MigrationStep
 from .models import ChildField, Children, Field, Model, Reference
@@ -17,6 +18,7 @@ __all__ = [
     "Database",
     "Field",
     "IndexReport",
+    "IndexRebuildPlan",
     "MemoryStore",
     "MigrationPlan",
     "MigrationStatus",
@@ -33,4 +35,4 @@ __all__ = [
     "Store",
     "compare_schemas",
 ]
-__version__ = "0.3.0a5"
+__version__ = "0.3.0rc1"

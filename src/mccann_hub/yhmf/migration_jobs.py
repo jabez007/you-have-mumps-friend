@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Shared ownership, snapshots, activation, and abort for maintenance jobs."""
 
+import hashlib
 import uuid
 from collections.abc import Callable
 from dataclasses import replace
@@ -52,6 +53,9 @@ def begin(
             target.global_name,
             source.fingerprint.decode("ascii"),
             target.fingerprint.decode("ascii"),
+            operation_fingerprint=hashlib.sha256(operation).hexdigest()
+            if operation is not None
+            else None,
         )
         save_status(store, status)
         store.set(GATE, migration_id.encode("ascii"))
@@ -59,6 +63,14 @@ def begin(
         return status
 
     return store.atomic(claim)
+
+
+def require_schema_operation(store: Store, status: MigrationStatus) -> None:
+    if (
+        status.operation_fingerprint is not None
+        or store.get(job_path(status.migration_id).child(b"operation")) is not None
+    ):
+        raise MigrationError("This job requires its own maintenance executor")
 
 
 def manifests(store: Store, status: MigrationStatus) -> tuple[bytes, bytes]:
