@@ -318,3 +318,15 @@ Both native engines executed the controlled caught-signal tests and four-process
 counter regressions. Issues 1 and 7 are closed after that qualification. The
 configuration matrix for issue 3 has five failing-before-fix declaration regressions;
 all safe-option, rollback, and fingerprint checks pass under both Pydantic versions.
+
+### Field validation design, issue 5
+
+Mutation validation already combines a field's rebuilt annotation with its owner's
+Pydantic config, while indexed and primary-key query validation do not. Extract
+that existing adapter construction into the registry module, which owns field
+declarations, as a behavior-preserving refactor. Reference models keep their own
+config. Then make queries reuse the helper without forcing strict=True over the
+declaration. Preserve codecs, stored indexes, signatures, and schema identities.
+Single-field queries do not execute arbitrary cross-field model validators. Add
+regressions for string transforms, bounds, nonstrict fields, nested owners, primary
+keys, and nullable references before changing the query callers.

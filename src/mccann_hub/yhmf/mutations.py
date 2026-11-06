@@ -5,15 +5,13 @@ from collections.abc import Mapping
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any
 
-from pydantic import TypeAdapter
-
 from . import indexes, references
 from .codecs import Key, encode_key
 from .errors import MutationError, StorageError
 from .models import Model
 from .owned import OwnedPath, Owner, require_local_validation, resolve
 from .records import FieldValue, encode_leaf, node_values
-from .registry import FieldSpec, ModelSpec
+from .registry import FieldSpec, ModelSpec, field_adapter
 from .storage import Path
 
 if TYPE_CHECKING:
@@ -67,9 +65,7 @@ def _validated(
     old = node_values(selected, owner.path, tx.store)
     new = {}
     for field in selected:
-        annotation = owner.node.model.model_fields[field.name].rebuild_annotation()
-        config = None if field.kind == "reference" else owner.node.model.model_config
-        adapter = TypeAdapter(annotation, config=config)
+        adapter = field_adapter(owner.node.model, field.name)
         old[field.name] = adapter.validate_python(old[field.name])
         new[field.name] = adapter.validate_python(deepcopy(changes[field.name]))
     return old, new, selected

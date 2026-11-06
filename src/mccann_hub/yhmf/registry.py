@@ -8,6 +8,8 @@ from dataclasses import dataclass, replace
 from decimal import Decimal
 from typing import Any, Literal, Union, get_args, get_origin
 
+from pydantic import BaseModel, TypeAdapter
+
 from .canonical_schema import schema_bytes
 from .codecs import LAYOUT_VERSION
 from .errors import SchemaError
@@ -26,6 +28,17 @@ def scalar_type(annotation: Any) -> Any:
         if len(options) == 1:
             return options[0]
     return annotation
+
+
+def field_adapter(model: type[Model], name: str) -> TypeAdapter[Any]:
+    """Compile a field's declared rules and owner config without model validators."""
+    field = model.model_fields[name]
+    annotation = scalar_type(field.annotation)
+    # A Reference is itself a Pydantic model and owns its configuration. Pydantic
+    # rejects an adapter config override for BaseModel types.
+    owns_config = isinstance(annotation, type) and issubclass(annotation, BaseModel)
+    config = None if owns_config else model.model_config
+    return TypeAdapter(field.rebuild_annotation(), config=config)
 
 
 @dataclass(frozen=True)
