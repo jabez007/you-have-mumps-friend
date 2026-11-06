@@ -30,7 +30,7 @@ from .migrations import MigrationPlan, build_plan
 from .models import Model
 from .owned import OwnedPath
 from .queries import IndexReport, Query, audit_indexes, scan
-from .records import metadata, record_nodes, record_values
+from .records import input_values, metadata, record_nodes, record_values
 from .registry import ModelSpec, Registry
 from .schemas import SchemaInspection, check_schema, inspect_schema, schema_path
 from .storage import Path, Store
@@ -160,7 +160,7 @@ class Database:
 
     def _write[M: Model](self, record: M, *, insert: bool) -> M:
         spec = self.registry.spec(type(record))
-        values = {field.name: getattr(record, field.name) for field in spec.fields}
+        values = input_values(spec.fields, record)
         validated = type(record).model_validate(values)
         root = spec.path(getattr(validated, spec.key_field))
         nodes = record_nodes(spec, root, validated)

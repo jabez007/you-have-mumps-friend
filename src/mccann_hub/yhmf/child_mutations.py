@@ -16,7 +16,14 @@ from .owned import (
     require_object,
     resolve,
 )
-from .records import MAX_CHILDREN, MAX_RECORD_NODES, node_nodes, node_values, walk_values
+from .records import (
+    MAX_CHILDREN,
+    MAX_RECORD_NODES,
+    input_values,
+    node_nodes,
+    node_values,
+    walk_values,
+)
 from .registry import FieldSpec, ModelSpec
 from .storage import Path, Store
 
@@ -90,7 +97,9 @@ def _value_count(store: Store, spec: ModelSpec, root: Path, allowance: int) -> N
 def insert(tx: "Database", spec: ModelSpec, key: Key, collection: OwnedPath, record: Model) -> None:
     owner, field, path, count = _collection(tx, spec, key, collection)
     assert field.node is not None and field.node.key_field is not None
-    validated = field.node.model.model_validate(record)
+    if not isinstance(record, field.node.model):
+        raise MutationError("Inserted child type does not match its declared model")
+    validated = field.node.model.model_validate(input_values(field.node.fields, record))
     child_key = getattr(validated, field.node.key_field)
     if type(child_key) is not field.node.model.model_fields[field.node.key_field].annotation:
         raise MutationError("Child identity type does not match its declaration")

@@ -173,3 +173,37 @@ def test_child_delete_does_not_read_sibling_subtrees(store):
         if operation == "delete" and path.global_name == Warehouse.__global__
     ]
     assert deletes == [Path("^YHMFTestWarehouse", (b"s:W", b"bins", b"s:A", b"lots", b"s:0"))]
+
+
+@pytest.mark.parametrize("nested", [False, True])
+@pytest.mark.parametrize("operation", ["insert_child", "save"])
+def test_child_insert_revalidates_copies_even_when_instance_revalidation_is_disabled(
+    store, nested, operation
+):
+    from pydantic import ConfigDict
+
+    class ReusedLot(Lot):
+        model_config = ConfigDict(revalidate_instances="never")
+
+    class Group(Model):
+        id: str = Field(primary_key=True)
+        lots: Children[ReusedLot] = ChildField(key="id")
+
+    class Root(Model):
+        __global__ = "^YHMFTestWarehouse"
+        id: str = Field(primary_key=True)
+        lots: Children[ReusedLot] = ChildField(key="id")
+        groups: Children[Group] = ChildField(key="id")
+
+    db = Database(store, Registry(Product, Root))
+    db.insert(Root(id="W"))
+    invalid = ReusedLot(id="bad").model_copy(update={"quantity": Decimal("-1")})
+    collection = ("groups",) if nested else ("lots",)
+    record = Group(id="G", lots={"bad": invalid}) if nested else invalid
+    with pytest.raises(ValidationError):
+        if operation == "insert_child":
+            db.insert_child(Root, "W", collection=collection, record=record)
+        else:
+            root = Root(id="W").model_copy(update={collection[0]: {record.id: record}})
+            db.save(root)
+    assert db.get(Root, "W").lots == db.get(Root, "W").groups == {}

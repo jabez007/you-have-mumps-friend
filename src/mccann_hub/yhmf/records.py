@@ -14,7 +14,7 @@ from .codecs import (
     encode_scalar,
 )
 from .errors import StorageError
-from .models import Model
+from .models import Model, Reference
 from .registry import FieldSpec, ModelSpec, NodeSpec
 from .storage import MAX_VALUE_BYTES, Path, Store
 
@@ -22,6 +22,33 @@ type FieldValue = tuple[FieldSpec, tuple[bytes, ...], Any]
 
 MAX_CHILDREN = 1000
 MAX_RECORD_NODES = 10_000
+
+
+def input_values(fields: tuple[FieldSpec, ...], record: Model) -> dict[str, Any]:
+    """Force persistence validation from plain owned data without serializers."""
+    return {field.name: _input_field(field, getattr(record, field.name)) for field in fields}
+
+
+def _input_owner(fields: tuple[FieldSpec, ...], value: Any) -> Any:
+    if isinstance(value, Model):
+        return input_values(fields, value)
+    if isinstance(value, dict):
+        by_name = {field.name: field for field in fields}
+        return {
+            name: _input_field(by_name[name], item) if name in by_name else item
+            for name, item in value.items()
+        }
+    return value
+
+
+def _input_field(field: FieldSpec, value: Any) -> Any:
+    if field.kind == "reference" and isinstance(value, Reference):
+        return {"key": value.key}
+    if field.node is None or value is None:
+        return value
+    if field.kind == "children" and isinstance(value, dict):
+        return {key: _input_owner(field.node.fields, child) for key, child in value.items()}
+    return _input_owner(field.node.fields, value)
 
 
 def metadata(spec: ModelSpec) -> dict[bytes, bytes]:

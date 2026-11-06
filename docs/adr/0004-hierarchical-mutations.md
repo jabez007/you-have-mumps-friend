@@ -40,6 +40,12 @@ the same local-validation requirement. Core-schema function validators, includin
 Annotated validators, are detected. Reject unsupported dependency shapes with
 `MutationError`; callers can use full `get`/`save` inside `atomic`.
 
+Whole saves and child insertion normalize model instances recursively to plain
+declared field data before Pydantic validation. This keeps unchecked copies from
+bypassing constraints when a model sets `revalidate_instances="never"`. The shared
+record helper handles owned subtrees and references without invoking serializers;
+get and migration readers already reconstruct plain nested input from storage.
+
 Collection insertion/deletion validates collection length constraints against its
 new count. New child subtrees receive complete model validation. Deletion reads
 the affected subtree to release its outgoing references and indexed occurrences.
