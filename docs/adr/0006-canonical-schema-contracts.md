@@ -24,6 +24,9 @@ models and fields. Deterministic properties, required fields, and relationships
 exclude titles, docstrings, Python class names, source locations, and generated
 Decimal lexical patterns. Literal defaults preserve Decimal and byte values.
 Factories are described without execution. Unknown constraints fail registration.
+Mapper flags are produced from the compiled field specification. Raw false flags
+and an explicitly spelled default restriction cannot create a different contract
+for identical persistence behavior; presentation-only Field wrappers compare equal.
 
 Custom validator and factory function bodies are not reliably fingerprintable.
 Applications must advance the root or owned `__schema_version__` when those

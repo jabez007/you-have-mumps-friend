@@ -103,3 +103,33 @@ def test_dates_and_compound_keys_are_not_newly_supported():
 
     with pytest.raises(SchemaError, match="Primary keys"):
         Registry(Compound)
+
+
+def test_plain_defaults_and_presentation_only_field_wrappers_are_equivalent():
+    class Plain(Model):
+        __global__ = "^Example"
+        id: str = Field(primary_key=True)
+        value: int = 4
+
+    class Presented(Model):
+        __global__ = "^Example"
+        id: str = Field(primary_key=True)
+        value: int = Field(default=4, title="Value", index=False)
+
+    assert canonical(Plain) == canonical(Presented)
+
+
+def test_implicit_and_explicit_restrict_reference_policies_are_equivalent():
+    from mccann_hub.yhmf import Reference
+
+    class Implicit(Model):
+        __global__ = "^Example"
+        id: str = Field(primary_key=True)
+        product: Reference[Product]
+
+    class Explicit(Model):
+        __global__ = "^Example"
+        id: str = Field(primary_key=True)
+        product: Reference[Product] = Field(on_delete="restrict")
+
+    assert canonical(Implicit) == canonical(Explicit)

@@ -5,14 +5,14 @@
   "has_data": true,
   "source": {
     "global": "^YHMFTestProduct",
-    "fingerprint": "191f9f2da3b65fe863ad9f035d872e0eb11de83a8096f36d925b9d26646a4b6b",
+    "fingerprint": "d003fcf8be44432110c47b1ff60f01687ea23a73ac170eb9c927a3e749800121",
     "layout": 1,
     "version": 1,
     "key": "id"
   },
   "target": {
     "global": "^YHMFTestProduct",
-    "fingerprint": "8b9734a449f91858ab018bd2568be01ce83277ce5c6b2ec3ef60852b145b676e",
+    "fingerprint": "b6de6245bf9abca0663f468b12328e029db5f6c549cae86579382ca24e7d33f2",
     "layout": 1,
     "version": 2,
     "key": "id"

@@ -8,7 +8,7 @@ and uses codec version 1. The application revision is the owning model's positiv
 
 The registry produces sorted, compact ASCII JSON directly from typed declarations.
 The existing properties/hierarchy/reference grammar supports the existing migration
-inspector. Global names and owned field paths identify models. Field names identify
+inspector. Its codec/default markers and exact bound strings are YHMF-specific. Global names and owned field paths identify models. Field names identify
 stored values. Scalar codec names distinguish strings, integers, booleans, floats,
 Decimals, and bytes; key codecs also appear in reference declarations.
 
@@ -25,6 +25,10 @@ uses its own codecs. Unsupported validation metadata fails registration rather
 than silently losing a constraint. Dates, times, compound keys, recursive ownership,
 and arbitrary unions remain outside the supported type set.
 
+Mapper flags are compiled from registry semantics, rather than copied from raw
+Field metadata. Adding `Field()` only for presentation, spelling a default `restrict`
+policy explicitly, or supplying false index flags does not change the contract.
+
 ## Custom behavior needs an application revision
 
 Changing a validator's body, closure, dependencies, or external configuration cannot
@@ -33,6 +37,8 @@ Applications must bump the owning model's `__schema_version__` when such behavio
 changes persistence semantics. For owned models, bump that owned model's revision;
 its revision participates in the root hierarchy contract. Presence of custom
 validation is recorded, but its callable implementation is never hashed.
+Field reordering that changes a validator or factory's behavior also requires an
+application revision; ordering alone cannot reveal those custom dependencies.
 
 The migration executor still validates every existing record under both bindings
 and rejects transformations of existing fields. A revision does not grant permission
@@ -62,7 +68,8 @@ A format-only difference produces a no-op application migration plan. Consequent
 older clients can continue using their original identities, subject to their own
 legacy runtime checks.
 
-A genuine additive/index migration can activate a format-two target using the
+New format-two databases require v0.5 clients. Older clients reject those identities
+without modifying data. A genuine additive/index migration can activate a format-two target using the
 existing bounded maintenance executor. Old jobs resume their exact saved source
 and target snapshots, including a legacy target. Early abort, gate ownership,
 checkpoint integrity, and atomic activation retain their existing behavior.

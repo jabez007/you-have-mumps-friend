@@ -142,7 +142,7 @@ def _scalar(annotation: Any) -> dict[str, Any]:
     return {"codec": annotation.__name__, "type": mapping[annotation]}
 
 
-def _field(field: "FieldSpec", declaration: FieldInfo) -> dict[str, Any]:
+def _field(field: "FieldSpec", declaration: FieldInfo, *, primary: bool) -> dict[str, Any]:
     annotation = declaration.annotation
     nullable = get_origin(annotation) in (Union, types.UnionType) and type(None) in get_args(
         annotation
@@ -160,13 +160,30 @@ def _field(field: "FieldSpec", declaration: FieldInfo) -> dict[str, Any]:
     if nullable:
         result = {"anyOf": [result, {"type": "null"}]}
     result.update(_rules(declaration))
-    extra = declaration.json_schema_extra
-    if isinstance(extra, dict) and extra.get("yhmf"):
-        result["yhmf"] = extra["yhmf"]
+    if metadata := _mapper_metadata(field, primary):
+        result["yhmf"] = metadata
     if declaration.default_factory is not None:
         result["default_factory"] = True
     elif not declaration.is_required():
         result["default"] = _value(declaration.default)
+    return result
+
+
+def _mapper_metadata(field: "FieldSpec", primary: bool) -> dict[str, Any]:
+    # Compile actual registry semantics; spelling an implicit policy explicitly,
+    # or adding Field() solely for presentation, must not change identity.
+    result: dict[str, Any] = {
+        name: True
+        for name, present in (
+            ("primary_key", primary),
+            ("index", field.index),
+            ("unique", field.unique),
+        )
+        if present
+    }
+    if field.kind == "children":
+        assert field.node is not None
+        result["children_key"] = field.node.key_field
     return result
 
 
@@ -176,7 +193,9 @@ def _node(node: "NodeSpec") -> dict[str, Any]:
         "type": "object",
         "additionalProperties": False,
         "properties": {
-            field.name: _field(field, model.model_fields[field.name])
+            field.name: _field(
+                field, model.model_fields[field.name], primary=field.name == node.key_field
+            )
             for field in sorted(node.fields, key=lambda f: f.name)
         },
         "required": sorted(
