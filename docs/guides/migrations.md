@@ -250,6 +250,8 @@ activation.
 Reservations hold normalized values and owner identities inside framework metadata. They
 stay with completed and aborted jobs, use space in proportion to the new non-null unique
 values, and do not appear in normal status output.
+Use [job pruning](#retire-job-metadata) to remove them when recovery and audit retention
+no longer require the job.
 
 ## Downgrade or remove an index
 
@@ -319,6 +321,39 @@ Once that pass finishes, the satisfied backfill counter requires the job to be r
 
 Do not remove the gate or fingerprint barrier by hand. Completed and aborted job metadata
 stays available for inspection.
+
+## Retire job metadata
+
+Completed and aborted jobs retain snapshots, checkpoint keys, and uniqueness reservations.
+Reservations contain normalized indexed values and owning identities; snapshots can
+contain application defaults. Apply the application's retention policy to this metadata.
+Remove it explicitly after completion or safe abort:
+
+```python
+while not next_db.prune_migration(migration_id, batch_size=25):
+    pass
+assert next_db.prune_migration(migration_id)  # Already absent is complete.
+assert next_db.get(CatalogV2, "P1").note is None
+```
+
+Each call removes at most `batch_size` leaf nodes, including the checkpoint root last.
+The limit is 1 through 100. Call outside `atomic`; each batch owns its transaction.
+`False` means call again, and `True` means nothing remains. Interrupted calls roll back;
+committed partial pruning can be reopened with only the job ID and an empty Registry.
+An active job cannot be pruned, even if its checkpoint or gate is inconsistent. A
+terminal job may be pruned while an unrelated job holds maintenance.
+
+During retirement, `migration_status(id).pruning` is true. Resume and abort operations
+then raise `MigrationError` stating that metadata is being pruned. Older maintenance
+clients reject this optional checkpoint field. After retirement, status is unavailable.
+Application records, installed schemas, active indexes, references, and other jobs remain
+unchanged. This also retires terminal index-rebuild jobs.
+
+Keep the exact source and target classes for every unfinished migration. Schema snapshots
+cannot reconstruct arbitrary Python validators, so unfinished execution still requires
+those bindings. Once a job completes or is safely aborted, old classes can be removed from
+application migration code when the application's recovery policy permits. Pruning removes
+the durable job evidence; archive it first if required by that policy.
 
 ## Revise custom validation
 

@@ -44,6 +44,10 @@ reads, issue [#12](https://github.com/jabez007/you-have-mumps-friend/issues/12).
 [#16](https://github.com/jabez007/you-have-mumps-friend/issues/16) remains open for
 occurrence projections.
 
+`prune_migration` retires terminal job metadata and uniqueness reservations in bounded
+transactions, issue [#22](https://github.com/jabez007/you-have-mumps-friend/issues/22).
+Unfinished migrations still require exact Python source and target declarations.
+
 ## Defects
 
 | Behavior | What to do for now | Issue |
@@ -64,7 +68,6 @@ These features are not in version 0.5.0:
 - Access rules. [#19](https://github.com/jabez007/you-have-mumps-friend/issues/19)
 - Migrations that transform data, such as renames, removals, type changes, default
   factories, new owned containers, and reference changes. [#20](https://github.com/jabez007/you-have-mumps-friend/issues/20)
-- Pruning of completed migration jobs. Their reservations keep normalized unique values. [#22](https://github.com/jabez007/you-have-mumps-friend/issues/22)
 - Change tracking. `save` always rewrites the whole aggregate. [#27](https://github.com/jabez007/you-have-mumps-friend/issues/27)
 
 ## Operating limits

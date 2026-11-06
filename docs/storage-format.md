@@ -141,6 +141,12 @@ the canonical schema bytes. The checkpoints progress through `validate`,
 `backfill`, `verify`, `retag`, optionally `cleanup`, then `activate` and `complete`. Each bounded pass stores
 its last encoded record key as hexadecimal and resets it at the next phase.
 The counters are `validated`, `backfilled`, `verified`, and `retagged`.
+Normal checkpoints omit `pruning`. Explicit retirement of a terminal job adds
+`pruning: true` to its checkpoint, without changing application metadata. All job
+children are removed in bounded leaf batches, followed by the checkpoint root.
+Executors reject marked jobs even when their manifests have already been removed.
+Older maintenance readers reject the optional field; existing untouched checkpoints
+retain their original shape. No gate is claimed for terminal metadata retirement.
 Activation requires equal counters and publishes the target schema, completes
 the job, and removes the gate in one transaction. Before any update batch or cleanup deletion commits,
 abort can restore the source fingerprint and persist the `aborted` phase.

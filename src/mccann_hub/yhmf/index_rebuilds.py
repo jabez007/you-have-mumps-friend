@@ -111,6 +111,7 @@ def _saved_spec(spec: ModelSpec, snapshot: SchemaSnapshot) -> ModelSpec:
 
 
 def _selection(store: Store, status: MigrationStatus) -> tuple[str, ...]:
+    migration_jobs.require_retained(status)
     raw = store.get(job_path(status.migration_id).child(b"operation"))
     if raw is None or status.operation_fingerprint is None:
         raise MigrationError("Job is not an index rebuild")

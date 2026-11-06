@@ -67,6 +67,7 @@ class MigrationStatus:
     retagged: int = 0
     cursor: bytes = field(default=b"", repr=False)
     operation_fingerprint: str | None = None
+    pruning: bool = False
 
     def __post_init__(self) -> None:
         job_path(self.migration_id)
@@ -76,6 +77,10 @@ class MigrationStatus:
                 raise StorageError("Invalid migration fingerprint")
         if self.phase not in PHASES:
             raise StorageError("Invalid migration phase")
+        if type(self.pruning) is not bool or (
+            self.pruning and self.phase not in {"complete", "aborted"}
+        ):
+            raise StorageError("Invalid migration pruning state")
         counts = (self.validated, self.backfilled, self.verified, self.retagged)
         if any(type(value) is not int or value < 0 for value in counts):
             raise StorageError("Invalid migration counters")
@@ -96,6 +101,8 @@ class MigrationStatus:
         result.pop("cursor")
         if self.operation_fingerprint is None:
             result.pop("operation_fingerprint")
+        if not self.pruning:
+            result.pop("pruning")
         if include_cursor:
             result["cursor"] = self.cursor.hex()
         return result

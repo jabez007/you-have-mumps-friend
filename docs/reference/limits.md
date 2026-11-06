@@ -9,6 +9,7 @@
 | Records in one query page | 1 to 1000, default 100 | `MAX_QUERY_RECORDS`, `queries.py` |
 | Items in `get_many` or `resolve_many` | 0 to 1000, including duplicates | `MAX_QUERY_RECORDS`, `queries.py` |
 | Parents in one migration batch | 1 to 100 | `MAX_BATCH_SIZE`, `migration_executor.py` |
+| Leaves removed in one job-pruning batch | 1 to 100, default 25 | `prune`, `migration_jobs.py` |
 | Records in one adoption | 100 | `MAX_ADOPTION_RECORDS`, `adoption.py` |
 | Bytes in one node value, including the type tag | 32,766 | `MAX_VALUE_BYTES`, `storage.py` |
 | Digits in an integer key | 18, excluding the sign | `MAX_INTEGER_KEY`, `codecs.py` |

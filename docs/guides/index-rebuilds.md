@@ -74,3 +74,7 @@ recovery means resuming or restoring from a backup.
 
 A rebuild does not rebuild reverse-reference counts, repair application records, or prune
 historical maintenance metadata.
+
+After a job completes or is safely aborted, its retained metadata can be removed with
+[`prune_migration`](migrations.md#retire-job-metadata), using the same job ID. Pruning is
+explicit and never runs as part of an index rebuild.

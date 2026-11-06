@@ -334,6 +334,11 @@ class Database:
         self._migration_ready()
         return migration_jobs.abort(self.store, migration_id)
 
+    def prune_migration(self, migration_id: str, *, batch_size: int = 25) -> bool:
+        """Remove a terminal job in bounded batches; return True when nothing remains."""
+        self._migration_ready()
+        return migration_jobs.prune(self.store, migration_id, batch_size=batch_size)
+
     def plan_index_rebuild(
         self, model: type[Model], *, fields: tuple[str, ...] | None = None
     ) -> IndexRebuildPlan:

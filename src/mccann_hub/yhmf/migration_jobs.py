@@ -11,6 +11,7 @@ from .errors import MigrationError, StorageError
 from .maintenance import (
     GATE,
     MigrationStatus,
+    gate_owner,
     job_path,
     load_status,
     marker,
@@ -65,7 +66,13 @@ def begin(
     return store.atomic(claim)
 
 
+def require_retained(status: MigrationStatus) -> None:
+    if status.pruning:
+        raise MigrationError("Maintenance job metadata is being pruned")
+
+
 def require_schema_operation(store: Store, status: MigrationStatus) -> None:
+    require_retained(status)
     if (
         status.operation_fingerprint is not None
         or store.get(job_path(status.migration_id).child(b"operation")) is not None
@@ -74,6 +81,7 @@ def require_schema_operation(store: Store, status: MigrationStatus) -> None:
 
 
 def saved_snapshots(store: Store, status: MigrationStatus) -> tuple[bytes, bytes]:
+    require_retained(status)
     root = job_path(status.migration_id)
     source, target = (
         store.get(root.child(b"source_snapshot")),
@@ -111,6 +119,7 @@ def complete(store: Store, status: MigrationStatus, target: bytes) -> MigrationS
 
 def abort_owned(store: Store, status: MigrationStatus) -> MigrationStatus:
     """Restore source access inside the caller's transaction, before committed updates."""
+    require_retained(status)
     if status.phase == "aborted":
         return status
     if (
@@ -131,3 +140,27 @@ def abort_owned(store: Store, status: MigrationStatus) -> MigrationStatus:
 
 def abort(store: Store, migration_id: str) -> MigrationStatus:
     return store.atomic(lambda: abort_owned(store, load_status(store, migration_id)))
+
+
+def prune(store: Store, migration_id: str, *, batch_size: int) -> bool:
+    """Delete terminal job leaves in bounded transactions, including the root last."""
+    if type(batch_size) is not int or not 1 <= batch_size <= 100:
+        raise MigrationError("Pruning batch size must be between 1 and 100")
+    root = job_path(migration_id)
+
+    def attempt() -> bool:
+        if gate_owner(store) == migration_id:
+            raise MigrationError("Cannot prune an active maintenance job")
+        if store.get(root) is None:
+            if store.children(root, limit=1):
+                raise StorageError("Maintenance job has descendants without a checkpoint")
+            return True
+        status = load_status(store, migration_id)
+        if status.phase not in {"complete", "aborted"}:
+            raise MigrationError("Cannot prune an active maintenance job")
+        if not status.pruning:
+            save_status(store, replace(status, pruning=True))
+        migration_cleanup.delete_leaves(store, (root,), limit=batch_size)
+        return migration_cleanup.empty(store, (root,))
+
+    return store.atomic(attempt)
