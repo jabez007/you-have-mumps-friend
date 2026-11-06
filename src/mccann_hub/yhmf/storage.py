@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from threading import RLock
 from typing import Protocol, cast
 
-from .errors import StorageError
+from .errors import StorageError, YHMFError
 
 MAX_VALUE_BYTES = 32_766
 _GLOBAL = re.compile(r"\^[A-Za-z%][A-Za-z0-9]{0,30}\Z")
@@ -151,7 +151,18 @@ class NativeStore:
 
         def attempt() -> int:
             result.clear()
-            result.append(callback())
+            try:
+                result.append(callback())
+            except (self._ydb.YDBTPRestart, self._ydb.YDBTPRollback, self._ydb.YDBError):
+                raise
+            except (YHMFError, ValueError):
+                # TP validates its read set at commit. A validation failure can
+                # otherwise escape from mixed old/new blocks before that point.
+                # Native retry 3 holds referenced regions in a critical section;
+                # only expose a persistent application error from that attempt.
+                if int(self._ydb.get("$trestart")) < 3:
+                    raise self._ydb.YDBTPRestart() from None
+                raise
             return cast(int, self._ydb.YDB_OK)
 
         self._ydb.tp(attempt)

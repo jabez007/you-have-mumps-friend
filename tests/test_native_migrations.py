@@ -688,3 +688,23 @@ def test_native_rebuild_workers_serialize_validation_clearing_and_construction(r
     completed = rebuild_advance_to(db, db.migration_status(status.migration_id), model, "complete")
     assert completed.verified == 3 and completed.retagged == 0
     assert db.check_indexes(model).issues == ()
+
+
+def test_rebuild_worker_revalidates_a_stale_checkpoint_after_competitor_commits(rebuild_db):
+    db, model, kind = rebuild_db
+    status = db.begin_index_rebuild(model, plan=db.plan_index_rebuild(model))
+    status = rebuild_advance_to(db, status, model, "backfill")
+    processes = [worker("advance", status.migration_id, kind) for _ in range(2)]
+    try:
+        for process in processes:
+            ready(process)
+        # Both callbacks retain the same checkpoint. Finish one completely
+        # before allowing the other to read its now-published secondary nodes.
+        summaries = [result(process) for process in processes]
+    finally:
+        for process in processes:
+            stop(process)
+    assert sorted(item["backfilled"] for item in summaries) == [1, 2]
+    completed = rebuild_advance_to(db, db.migration_status(status.migration_id), model, "complete")
+    assert completed.verified == 3
+    assert db.check_indexes(model).issues == ()

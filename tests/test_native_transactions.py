@@ -103,3 +103,21 @@ def test_concurrent_processes_do_not_lose_updates_or_expose_torn_reads(db):
     assert db.get(Counter, 1).count == 160
     assert sum(summary["commits"] for summary in summaries) == 160
     assert sum(summary["attempts"] for summary in summaries) >= 160
+
+
+def test_persistent_native_validation_failure_reaches_stable_attempt_and_rolls_back(db):
+    yottadb = importlib.import_module("yottadb")
+    from mccann_hub.yhmf.errors import StorageError
+
+    attempts = []
+
+    def fail(tx):
+        tx.insert(Counter(id=1))
+        attempts.append(int(yottadb.get("$trestart")))
+        raise StorageError("persistent validation failure")
+
+    with pytest.raises(StorageError, match="persistent validation"):
+        db.atomic(fail)
+    assert attempts == [0, 1, 2, 3]
+    assert db.store.get(Path("^YHMFSchema", (b"YHMFTestCounter",))) is None
+    assert db.store.children(Path("^YHMFTestCounter"), limit=1) == ()
