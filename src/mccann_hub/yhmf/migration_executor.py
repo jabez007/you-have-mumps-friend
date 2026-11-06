@@ -1,33 +1,29 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Bounded scalar and index migrations behind an owned maintenance gate."""
 
-import uuid
 from copy import deepcopy
 from dataclasses import dataclass, replace
 from typing import Any
 
 from pydantic import ValidationError
 
-from . import indexes, migration_claims, migration_cleanup, references
+from . import indexes, migration_claims, migration_cleanup, migration_jobs, references
 from .codecs import decode_key
 from .errors import MigrationError, StorageError
 from .maintenance import (
-    GATE,
     MigrationStatus,
-    job_path,
     load_status,
-    marker,
-    require_available,
     require_owner,
     save_status,
 )
 from .migration_defaults import BackfillDefaults
+from .migration_records import check_metadata, field_nodes, validate_targets
 from .migrations import MigrationPlan, build_plan
 from .models import Model
-from .records import metadata, record_nodes, record_values
+from .records import metadata, record_values
 from .registry import ModelSpec, Registry
-from .schemas import SchemaInspection, SchemaSnapshot, inspect_schema, schema_path
-from .storage import MAX_VALUE_BYTES, Path, Store
+from .schemas import SchemaInspection, SchemaSnapshot
+from .storage import Path, Store
 
 MAX_BATCH_SIZE = 100
 _COUNTER = {
@@ -100,67 +96,12 @@ def begin(
 ) -> MigrationStatus:
     binding = _bind(registry, source, target)
     _check_review(binding, reviewed)
-    migration_id = uuid.uuid4().hex  # Stable across native transaction retries.
-
-    def claim() -> MigrationStatus:
-        require_available(store)
-        inspection = inspect_schema(store, binding.target)
-        if inspection.installed != binding.plan.inspection.installed:
-            raise MigrationError("Installed source changed since the plan was reviewed")
-        _check_new_indexes_empty(store, binding)
-        root = job_path(migration_id)
-        if store.get(root) is not None or store.children(root, limit=1):
-            raise MigrationError("Migration identifier is already in use")
-        for name, spec in (
-            (b"source_snapshot", binding.source),
-            (b"target_snapshot", binding.target),
-        ):
-            if len(spec.snapshot) > MAX_VALUE_BYTES:
-                raise StorageError("Migration snapshot exceeds the node limit")
-            store.set(root.child(name), spec.snapshot)
-        status = MigrationStatus(
-            migration_id,
-            binding.target.global_name,
-            binding.source.fingerprint.decode("ascii"),
-            binding.target.fingerprint.decode("ascii"),
-        )
-        save_status(store, status)
-        store.set(GATE, migration_id.encode("ascii"))
-        store.set(schema_path(status.global_name), marker(migration_id))
-        return status
-
-    return store.atomic(claim)
-
-
-def _check_manifests(store: Store, status: MigrationStatus) -> tuple[bytes, bytes]:
-    root = job_path(status.migration_id)
-    source = store.get(root.child(b"source_snapshot"))
-    target = store.get(root.child(b"target_snapshot"))
-    if source is None or target is None:
-        raise StorageError("Migration snapshots are incomplete")
-    for data, fingerprint in (
-        (source, status.source_fingerprint),
-        (target, status.target_fingerprint),
-    ):
-        snapshot = SchemaSnapshot(data)
-        if snapshot.global_name != status.global_name or snapshot.fingerprint != fingerprint:
-            raise StorageError("Migration snapshot does not match its checkpoint")
-    if store.get(schema_path(status.global_name).child(b"snapshot")) != source:
-        raise StorageError("Installed source snapshot changed during migration")
-    return source, target
-
-
-def _check_metadata(store: Store, spec: ModelSpec, root: Path) -> None:
-    if any(store.get(root.child(b"%m", key)) != value for key, value in metadata(spec).items()):
-        raise StorageError("A migration record has incompatible or incomplete metadata")
-
-
-def _field_nodes(spec: ModelSpec, root: Path, record: Model) -> dict[Path, bytes]:
-    return {
-        path: value
-        for path, value in record_nodes(spec, root, record).items()
-        if path.subscripts[len(root.subscripts)] != b"%m"
-    }
+    return migration_jobs.begin(
+        store,
+        binding.source,
+        binding.target,
+        preflight=lambda: _check_new_indexes_empty(store, binding),
+    )
 
 
 def _validate_models(binding: _Binding, values: dict[str, Any]) -> tuple[Model, Model]:
@@ -174,19 +115,6 @@ def _validate_models(binding: _Binding, values: dict[str, Any]) -> tuple[Model, 
     return old, new
 
 
-def _validate_targets(store: Store, binding: _Binding, links: frozenset[references.Link]) -> None:
-    references.replace(store, links, links)  # Validate existing edges without changing counts.
-    for link in links:
-        spec = binding.registry.spec(link.target_model)
-        if spec.global_name == binding.target.global_name:
-            # A retag batch may encounter an already-retagged self-reference.
-            fingerprint = store.get(link.target.child(b"%m", b"fingerprint"))
-            spec = binding.target if fingerprint == binding.target.fingerprint else binding.source
-        elif store.get(schema_path(spec.global_name)) != spec.fingerprint:
-            raise StorageError("A reference target has an incompatible installed schema")
-        _check_metadata(store, spec, link.target)
-
-
 @dataclass(frozen=True)
 class _Record:
     root: Path
@@ -197,13 +125,13 @@ class _Record:
 
 def _prepare(store: Store, binding: _Binding, key: bytes, status: MigrationStatus) -> _Record:
     root = binding.source.path(decode_key(key))
-    _check_metadata(store, binding.source, root)
+    check_metadata(store, binding.source, root)
     values = record_values(binding.source, root, store)
     old, new = _validate_models(binding, values)
     if binding.target.path(getattr(new, binding.target.key_field)) != root:
         raise MigrationError("Migration validation changed a record identity")
-    old_nodes = _field_nodes(binding.source, root, old)
-    new_nodes = _field_nodes(binding.target, root, new)
+    old_nodes = field_nodes(binding.source, root, old)
+    new_nodes = field_nodes(binding.target, root, new)
     if any(
         new_nodes.get(path) != value or store.get(path) != value
         for path, value in old_nodes.items()
@@ -216,7 +144,13 @@ def _prepare(store: Store, binding: _Binding, key: bytes, status: MigrationStatu
     transition = indexes.check_transition(
         store, old_entries, new_entries, updated=status.phase in {"verify", "retag"}
     )
-    _validate_targets(store, binding, references.links(binding.registry, binding.target, root, new))
+    validate_targets(
+        store,
+        binding.registry,
+        binding.source,
+        binding.target,
+        references.links(binding.registry, binding.target, root, new),
+    )
     if status.phase == "validate":
         migration_claims.reserve(store, status.migration_id, transition.claims)
     else:
@@ -258,13 +192,7 @@ def _activate(
         result = replace(status, phase="cleanup", cursor=b"")
         save_status(store, result)
         return result
-    root = schema_path(status.global_name)
-    store.set(root.child(b"snapshot"), target)
-    store.set(root, status.target_fingerprint.encode("ascii"))
-    completed = replace(status, phase="complete", cursor=b"")
-    save_status(store, completed)
-    store.delete_tree(GATE)
-    return completed
+    return migration_jobs.complete(store, status, target)
 
 
 def advance(
@@ -287,7 +215,7 @@ def advance(
         if status.phase == "aborted":
             raise MigrationError("Migration was aborted")
         require_owner(store, status)
-        manifests = _check_manifests(store, status)
+        manifests = migration_jobs.manifests(store, status)
         if manifests != (binding.source.snapshot, binding.target.snapshot):
             raise MigrationError("Resume bindings do not match the saved migration snapshots")
         _check_counts(status)
@@ -328,30 +256,3 @@ def _batch(store: Store, binding: _Binding, status: MigrationStatus, limit: int)
     _check_counts(updated)
     save_status(store, updated)
     return updated
-
-
-def abort(store: Store, migration_id: str) -> MigrationStatus:
-    def attempt() -> MigrationStatus:
-        status = load_status(store, migration_id)
-        if status.phase == "aborted":
-            return status
-        if (
-            status.phase == "complete"
-            or status.backfilled
-            or status.retagged
-            or migration_cleanup.removed_count(store, migration_id)
-        ):
-            raise MigrationError(
-                "Committed migration updates must be resumed; they cannot be aborted"
-            )
-        require_owner(store, status)
-        source, _ = _check_manifests(store, status)
-        store.set(
-            schema_path(status.global_name), SchemaSnapshot(source).fingerprint.encode("ascii")
-        )
-        result = replace(status, phase="aborted", cursor=b"")
-        save_status(store, result)
-        store.delete_tree(GATE)
-        return result
-
-    return store.atomic(attempt)

@@ -56,11 +56,9 @@ def _first_leaf(store: Store, root: Path) -> Path | None:
     return path if store.get(path) is not None else None
 
 
-def advance(
-    store: Store, status: MigrationStatus, roots: tuple[Path, ...], *, limit: int
-) -> MigrationStatus:
+def clear_batch(store: Store, migration_id: str, roots: tuple[Path, ...], *, limit: int) -> int:
     """Delete at most limit leaves; their absence is the durable traversal progress."""
-    count = removed_count(store, status.migration_id)
+    count = removed_count(store, migration_id)
     deleted = 0
     for root in roots:
         while deleted < limit:
@@ -73,11 +71,16 @@ def advance(
             break
     if deleted:
         store.set(
-            job_path(status.migration_id).child(b"cleaned_nodes"),
+            job_path(migration_id).child(b"cleaned_nodes"),
             str(count + deleted).encode("ascii"),
         )
-        result = status
-    else:
-        result = replace(status, phase="activate", cursor=b"")
+    return deleted
+
+
+def advance(
+    store: Store, status: MigrationStatus, roots: tuple[Path, ...], *, limit: int
+) -> MigrationStatus:
+    deleted = clear_batch(store, status.migration_id, roots, limit=limit)
+    result = status if deleted else replace(status, phase="activate", cursor=b"")
     save_status(store, result)
     return result

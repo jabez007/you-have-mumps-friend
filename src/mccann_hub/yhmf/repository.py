@@ -4,7 +4,7 @@
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 
-from . import indexes, migration_executor, references
+from . import indexes, migration_executor, migration_jobs, references
 from .codecs import Key
 from .errors import (
     AlreadyExists,
@@ -245,4 +245,4 @@ class Database:
     def abort_migration(self, migration_id: str) -> MigrationStatus:
         """Release maintenance before any update batch or cleanup deletion commits."""
         self._migration_ready()
-        return migration_executor.abort(self.store, migration_id)
+        return migration_jobs.abort(self.store, migration_id)
