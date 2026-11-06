@@ -23,6 +23,14 @@ keys, and YHMF stores each model's schema snapshot in one record. In a live test
 a one-field model fit, and the first write of a two-field model failed with
 `%YDB-E-REC2BIG`.
 
+NativeStore translates `REC2BIG` and `KEY2BIG` into `StorageError` with the affected
+`record_size` or `key_size` setting. The original driver exception remains in
+`error.__cause__`, including its `code()` and region diagnostics. This applies to
+schema metadata, application records, and indexes. Other engine errors propagate.
+YHMF does not resize a region automatically. See the driver's
+[exception contract](https://docs.yottadb.com/MultiLangProgGuide/pythonprogram.html#python-exception-handling)
+and [native size errors](https://docs.yottadb.com/MessageRecovery/errors.html#rec2big).
+
 Create the region with larger limits. These are the values that
 [`scripts/test-native.sh`](../../scripts/test-native.sh) uses:
 
@@ -41,6 +49,11 @@ EOF
 
 Keep `ydb_gbldir`, `ydb_routines`, and `LD_LIBRARY_PATH` set in every process that opens
 this database.
+
+Region record limits apply to the combined encoded key and value. A value near the
+mapper's maximum can still exceed the region's record limit. Reduce that payload or
+review the region configuration; the mapper's per-value limit is not a promise that
+every key/value combination fits a particular region.
 
 ## Connect from Python
 

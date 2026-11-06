@@ -379,3 +379,14 @@ through to the generic database-access error. Document explicit target rebinding
 and prove that unchanged target identities need no referrer migration. Resolving
 by global name would silently substitute Python validation behavior and requires
 a separate contract. No schema, layout, or API changes; C901 passes at ten.
+
+### Native region diagnostics, issue 6
+
+Extend NativeStore's existing call boundary, after its control-signal handler.
+Translate only YDB_ERR_REC2BIG and YDB_ERR_KEY2BIG by their documented numeric
+codes into StorageError with the setting name and setup guidance. Chain the
+original exception so callers retain code() and native diagnostics. Other engine
+errors and TP signals keep their behavior. Do not change region configuration.
+Add isolated default-region subprocess tests on both native CI engines, alongside
+adapter regressions for code selection and unchanged unexpected errors. C901
+passes at ten before the change.

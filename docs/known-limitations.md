@@ -28,12 +28,14 @@ descendants under a null marker still raise `StorageError`.
 Integers beyond Python's configured decimal conversion limit now raise `StorageError`
 (also a `ValueError`), issue [#10](https://github.com/jabez007/you-have-mumps-friend/issues/10).
 
+Native region-size errors now raise a chained `StorageError` naming `record_size`
+or `key_size`, issue [#6](https://github.com/jabez007/you-have-mumps-friend/issues/6).
+
 ## Defects
 
 | Behavior | What to do for now | Issue |
 | --- | --- | --- |
 | `insert_child` reads the whole aggregate, so its cost and its conflict rate grow with the aggregate. | Keep shared collections small, or model high-volume children as top-level records. | [#4](https://github.com/jabez007/you-have-mumps-friend/issues/4) |
-| A too-small region gives a raw `%YDB-E-REC2BIG` error on first write. | [Create the region](guides/native-setup.md#create-a-database) with larger limits. | [#6](https://github.com/jabez007/you-have-mumps-friend/issues/6) |
 | Swapping two unique values in one transaction raises `UniqueViolation`, because constraints apply after each write. | Move one value to a temporary value first. | [#23](https://github.com/jabez007/you-have-mumps-friend/issues/23) |
 
 ## Missing features

@@ -63,7 +63,7 @@ class Path:
 
 
 class Store(Protocol):
-    """Operations used by the mapper. Native errors propagate to the caller."""
+    """Mapper operations; native region-size errors become chained StorageErrors."""
 
     def get(self, path: Path) -> bytes | None: ...
     def set(self, path: Path, value: bytes) -> None: ...
@@ -188,6 +188,18 @@ class NativeStore:
             if state is not None:
                 state.signal = signal
             raise
+        except self._ydb.YDBError as error:
+            setting = {
+                self._ydb.YDB_ERR_REC2BIG: "record_size",
+                self._ydb.YDB_ERR_KEY2BIG: "key_size",
+            }.get(error.code())
+            if setting is None:
+                raise
+            raise StorageError(
+                f"YottaDB region {setting} is too small for the encoded node; "
+                "check region settings (qualified setup: key_size=1019, record_size=32767) "
+                "or reduce the encoded key/value size; see docs/guides/native-setup.md"
+            ) from error
 
     def atomic[T](self, callback: Callable[[], T]) -> T:
         if _native_attempt.get() is not None:
