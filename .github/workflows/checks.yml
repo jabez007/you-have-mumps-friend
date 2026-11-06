@@ -4,8 +4,8 @@ jobs:
   python:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.3
         with:
           version: "0.9.5"
       - run: uv sync --locked --python 3.12
@@ -25,8 +25,8 @@ jobs:
       matrix:
         pydantic: ["2.12.0", "2.14.3"]
     steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.3
         with:
           version: "0.9.5"
       - name: Qualify legacy fingerprints and mutation validation
@@ -52,8 +52,8 @@ jobs:
             archive: yottadb_r206_x8664_ubuntu2404_pro.tgz
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.3
         with:
           version: "0.9.5"
       - name: Install YottaDB on the disposable runner
