@@ -31,4 +31,5 @@ EOF
 if [[ "${YHMF_BENCHMARK:-0}" == "1" ]]; then
     "$project_dir/.venv/bin/python" "$project_dir/scripts/benchmark-mutations.py"
     (cd "$project_dir" && "$project_dir/.venv/bin/python" -m examples.inventory --native)
+    (cd "$project_dir" && "$project_dir/.venv/bin/python" -m scripts.benchmark_inventory)
 fi

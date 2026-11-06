@@ -145,3 +145,6 @@ competes to move 15 units twice from a balance of 20: only one command may commi
 - Building and checking a downstream package exposed mypy's namespace-root
   ambiguity. The project now checks both source and example with an explicit
   namespace base, while preserving the `mccann_hub` namespace package.
+
+See [inventory performance](../../docs/inventory-performance.md) for equivalent
+workflow benchmarks, the direct native lower bound, and measurement limitations.
