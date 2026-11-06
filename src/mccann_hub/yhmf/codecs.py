@@ -48,7 +48,7 @@ def decode_key(value: bytes) -> Key:
             return value[2:].decode("utf-8")
         except UnicodeDecodeError as exc:
             raise StorageError("Invalid UTF-8 key") from exc
-    if _INTEGER.fullmatch(value):
+    if len(value) <= 19 and _INTEGER.fullmatch(value):
         number = int(value)
         if abs(number) <= MAX_INTEGER_KEY:
             return number
@@ -64,7 +64,10 @@ def encode_scalar(value: Scalar) -> bytes:
     if type(value) is bool:
         return b"b:1" if value else b"b:0"
     if type(value) is int:
-        return b"i:" + str(value).encode("ascii")
+        try:
+            return b"i:" + str(value).encode("ascii")
+        except ValueError:
+            raise StorageError("Integer exceeds Python's decimal conversion limit") from None
     if type(value) is bytes:
         return b"x:" + base64.b64encode(value)
     if isinstance(value, Decimal) and value.is_finite():

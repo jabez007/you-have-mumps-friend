@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import json
+import sys
 from decimal import Decimal
 from pathlib import Path
 
@@ -75,3 +76,21 @@ def test_reject_corrupt_scalar(value):
 def test_reject_unsupported_scalars(value):
     with pytest.raises(StorageError):
         encode_scalar(value)
+
+
+@pytest.mark.parametrize("sign", [-1, 1])
+def test_integer_beyond_interpreter_conversion_limit_has_a_storage_error(sign):
+    previous = sys.get_int_max_str_digits()
+    try:
+        sys.set_int_max_str_digits(640)
+        with pytest.raises(StorageError) as error:
+            encode_scalar(sign * 10**5000)
+        assert isinstance(error.value, ValueError)
+        assert "5000" not in str(error.value)
+    finally:
+        sys.set_int_max_str_digits(previous)
+
+
+def test_oversized_numeric_key_never_escapes_as_plain_value_error():
+    with pytest.raises(StorageError):
+        decode_key(b"1" * 5000)

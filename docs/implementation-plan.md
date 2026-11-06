@@ -362,3 +362,11 @@ descendants means NotFound; null with descendants and malformed collection marke
 remain StorageError. Leave null collections null rather than creating owners.
 Exercise get, patch, insert_child, and delete_child with rollback assertions. No
 API, schema, or layout changes; configured C901 passes at ten.
+
+### Integer error design, issue 10
+
+The scalar codec is the existing error boundary for unsupported representations.
+Translate Python's decimal integer conversion limit into a value-free StorageError,
+preserving its ValueError inheritance. Reject oversized encoded keys before integer
+conversion. Keep current encodings, interpreter limits, and finite-number rules.
+Prove both codec failures and rollback of prior atomic writes. C901 passes at ten.
