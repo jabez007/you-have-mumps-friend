@@ -162,3 +162,44 @@ failed before the fix. The shared UTF-8 encoder now raises a value-free
 `StorageError`; valid encodings and layout bytes are unchanged. Generated nested
 round trips also check Decimal scale, null/empty/missing distinctions, binary data,
 integer child identities, schema ordering, malformed bytes, and size/depth limits.
+
+### Phase 2 qualification
+
+The codec fix (`c93778e`) and adversarial tests (`0b57ac0`) are independently
+committed. [CI run 42290473930](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42290473930)
+passed all six jobs: 916 tests in each native environment, 14 additional native
+stress cases per environment, 483 local tests, 146 selected tests per Pydantic
+version, and 19 cases in the separate memory adversarial stress job. The longer
+local state-machine run passed in 18.24 seconds; the complete routine local suite
+passed in 5.98 seconds. Ruff/complexity, format, strict mypy, packaging, isolated
+wheel smoke, and native benchmarks passed. No generated mutation integrity defect
+was found; the confirmed codec error boundary received minimal failing regressions.
+Phase 2 is complete before application implementation begins.
+
+### Phase 3 design note
+
+Use independent Product and Lot roots so inventory and historical movements can
+reference stable identities. A Warehouse owns Locations, which own Bins, which own
+Balances keyed by lot ID. A Balance also stores indexed product/lot references:
+the product reference is intentional denormalization for stock-by-product lookup.
+The application transaction verifies it against the Lot before any balance change.
+Movement roots preserve independent audit identity and indexed lot/product history.
+No root/ancestor validator will obstruct bounded owned mutations; the service
+transaction owns cross-record and cross-balance business invariants.
+
+Expose receive, move, and justified adjustment through a small example service
+using only public persistence APIs. Caller-supplied movement IDs stay stable across
+transaction restarts; duplicate IDs abort the complete transaction. Quantities
+must be finite and nonnegative in balances; movements may contain signed adjustment
+quantities. Use explicit location paths and plain UTC timestamp strings because
+date/time codecs remain unsupported. Include a memory demo and an opt-in native
+run against a configured database, with physical paths documented.
+
+First test the workflows on both adapters, including insufficient stock, failed
+ledger insertion, reference restrictions, rollback, and a native forced restart.
+Then record concrete ergonomics findings. Prefer a targeted missing-index diagnostic
+over new query/path frameworks. Benchmark equivalent adjustment/receive/move
+transactions using partial mutations versus grouped whole-aggregate replacement;
+report direct native leaf assignment only as a lower-bound workload without ledger
+or integrity work. Reuse existing measurement/counter helpers where appropriate.
+The source complexity baseline remains at ten; no new dependency is needed.
