@@ -1,15 +1,15 @@
 # YottaDB Hierarchical Model Framework
 
-**Architectural Specification — Draft v0.1**
+**Architectural specification: v0.5**
 
-**Date:** November 3, 2026
+**Date:** November 6, 2026
 
-**Status:** Prototype in progress
+**Status:** Implemented through v0.5 with the limitations below
 
 **License:** GPL-3.0-or-later
 
-**Language:** Python first, Go interoperability planned
-**Working name:** YottaDB Hierarchical Model Framework (YHMF)
+**Language:** Python; cross-language bindings deferred
+**Project:** You Have MUMPS, Friend (YHMF)
 
 The distribution is `mccann-hub-yhmf`, imported under `mccann_hub.yhmf`.
 The [storage contract](storage-format.md) defines the prototype's concrete
@@ -55,7 +55,7 @@ Runtime dependencies will undergo license compatibility review. Inspiration from
 
 ## 4. Developer model API
 
-The following API is conceptual:
+The implemented declarations use this API:
 
 ```python
 from decimal import Decimal
@@ -87,9 +87,11 @@ class Warehouse(Model):
     bins: Children[Bin] = ChildField(key="code")
 ```
 
-The framework will favor explicitly persisted, validated model objects.
+The framework persists explicitly validated model objects.
 
-Repository operations such as `db.get()`, `db.insert()`, `db.save()`, and `db.delete()` will be the initial foundation. Optional bound record proxies can later provide convenient hierarchical navigation.
+Repository operations include `get`, `insert`, whole-aggregate `save`, `delete`,
+scalar/reference `patch`, and keyed child insertion/deletion. Owned reads and
+mutations use explicit tuple paths; automatic tracking and bound proxies are deferred.
 
 Modifying a Pydantic object must not silently write to the database.
 
@@ -185,25 +187,24 @@ Domain logic will not be embedded in the database adapter.
 
 All record writes and their corresponding index updates must occur within one native YottaDB transaction.
 
-The initial public transaction API will use an explicit callback:
+The public transaction API uses an explicit callback:
 
 ```python
-def move_stock(tx):
-    lot = tx.get(
-        Lot,
-        parent=(Warehouse, 7, "A01"),
-        key="L-001",
-    )
-    tx.save(
-        lot.model_copy(
-            update={"quantity": lot.quantity - Decimal("2")}
-        )
-    )
+from typing import cast
 
-db.atomic(move_stock)
+def adjust_stock(tx):
+    at = ("bins", "A01", "lots", "L-001")
+    lot = cast(Lot, tx.get(Warehouse, 7, at=at))
+    tx.patch(Warehouse, 7, at=at, changes={"quantity": lot.quantity - Decimal("2")})
+
+db.atomic(adjust_stock)
 ```
 
-This API is illustrative.
+The [inventory application](../examples/inventory/README.md) demonstrates complete
+receive, transfer, and adjustment commands with exact arithmetic and ledger entries.
+Detached `save` remains last-writer-wins; read-modify-write safety requires reading
+inside the callback. Native validation errors are revalidated through the final
+stable TP attempt, as described in ADR 0005.
 
 YottaDB can restart a transaction and execute its callback again. Therefore:
 
@@ -217,26 +218,26 @@ The initial Python implementation will use process-based parallelism for databas
 
 ## 9. Indexing and querying
 
-Secondary indexes will be represented as native global cross-references.
+Secondary indexes are native global cross-references.
 
 Example:
 
 ```text
-^YHMFIndex("lot","product","P42",7,"A01","L-001")=""
+^YHMFIndex("Warehouse","bins.lots.product",value_token,7,location_digest)=location_json
 ```
 
-Index entries must contain sufficient information to resolve the full identity of a record.
+Value tokens and location digests use the encodings in the storage contract.
+Entries preserve root identity and the concrete owned occurrence path.
 
 Creating, modifying, or deleting an indexed value must update the index in the same transaction as the record.
 
 Unique constraints must explicitly define null handling, key normalization, and contention behavior.
 
-The query API will initially support direct-key lookup and bounded hierarchical traversal.
-
-Later releases will support equality-index queries and a query explanation mechanism:
+The query API supports direct keys, bounded hierarchical traversal, indexed equality,
+explicit bounded scans, and query explanation:
 
 ```python
-query = db.query(Lot).where(product="P42")
+query = db.query(Warehouse).where(**{"bins.lots.product": Reference[Product](key="P42")})
 print(query.explain())
 ```
 
@@ -360,9 +361,15 @@ maintenance resumes exact saved manifests. Custom validation and callable defaul
 changes require an owning application schema revision. See
 [ADR 0006](adr/0006-canonical-schema-contracts.md).
 
-After schema qualification, extend adversarial state-machine and native recovery
-testing, then build and measure a warehouse inventory ledger through public APIs.
-Each phase must pass its quality gates before the following phase begins.
+The schema phase passed native qualification before adversarial state-machine and
+recovery tests began. Those checks passed before the warehouse ledger implementation.
+The example uses public APIs, independent identities, explicit ownership, and atomic
+commands. Benchmarks compare equivalent partial and whole-replacement workflows;
+direct node assignment is reported separately as a lower bound. See
+[testing](testing.md), [the example](../examples/inventory/README.md), and
+[inventory measurements](inventory-performance.md). Missing-index diagnostics list
+usable equality paths. Indexed aggregate reads still materialize matching roots;
+optimistic revisions, occurrence projections, and broader migrations remain deferred.
 
 ## 14. Testing strategy
 

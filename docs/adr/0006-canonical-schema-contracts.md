@@ -1,6 +1,7 @@
 # ADR 0006: Canonical declarations with legacy storage identities
 
-Status: implementation decision for v0.5.
+Status: accepted and qualified for v0.5. See the
+[release evidence](../releases/0.5.0.md).
 
 ## Existing mechanisms and problem
 

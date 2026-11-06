@@ -583,6 +583,19 @@ requires resume or operator-managed restoration. Raw writers must remain stopped
 Rebuilding reverse-reference counts, repairing application records, and pruning
 historical maintenance metadata remain outside this operation.
 
+## v0.5 release scope
+
+Version `0.5.0` adds canonical schema format 2, compatible legacy bindings, generated
+mutation/integrity testing, and a runnable inventory ledger. Existing layout-one
+records, CRUD signatures, and legacy installed identities remain supported. Custom
+validation changes require explicit application schema revisions. Missing-index
+errors now list usable equality paths.
+
+See the [v0.5 delivery report](docs/releases/0.5.0.md),
+[schema compatibility policy](docs/schema-compatibility.md),
+[inventory example](examples/inventory/README.md), and
+[native inventory measurements](docs/inventory-performance.md).
+
 ## v0.4 release scope
 
 Version `0.4.0` adds scalar/reference patches, owned-path reads, keyed child

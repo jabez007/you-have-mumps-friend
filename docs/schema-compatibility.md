@@ -36,7 +36,9 @@ be reliably detected from Python metadata. The same applies to default factories
 Applications must bump the owning model's `__schema_version__` when such behavior
 changes persistence semantics. For owned models, bump that owned model's revision;
 its revision participates in the root hierarchy contract. Presence of custom
-validation is recorded, but its callable implementation is never hashed.
+validation visible in Pydantic field/decorator metadata is recorded, but callable
+implementations and arbitrary Python model hooks are never hashed. Changes to
+those hooks require an application revision too.
 Field reordering that changes a validator or factory's behavior also requires an
 application revision; ordering alone cannot reveal those custom dependencies.
 

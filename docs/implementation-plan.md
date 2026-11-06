@@ -203,3 +203,33 @@ transactions using partial mutations versus grouped whole-aggregate replacement;
 report direct native leaf assignment only as a lower-bound workload without ledger
 or integrity work. Reuse existing measurement/counter helpers where appropriate.
 The source complexity baseline remains at ten; no new dependency is needed.
+
+
+Phase 3 implementation slices are committed in `02f0c40` (application), `b2d7d16`
+(diagnostics), `fbdbc61` (shared benchmark reporting), and `86afd26` (equivalent
+native workflows). The final contract review added equivalent-Field/default-policy
+regressions in `74283d1` and retained both canonical and legacy comparison
+expectations in `3bba6bf`. Both new regressions failed before the producer compiled
+mapper flags from actual registry semantics. Legacy fixtures remain unchanged.
+The historical presentation comparison expectation was updated after its full-suite
+failure; both complete local Pydantic suites subsequently passed 514 tests.
+
+
+### Phase 3 completion
+
+[Final contract run 42294677787](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42294677787)
+passed all six jobs: 970 tests per native environment, 14 additional native stress
+cases per engine, 169 compatibility cases per Pydantic version, and the 19-case
+adversarial job. Both complete local Pydantic suites passed 514 tests. Ruff,
+formatting, complexity maximum ten, strict mypy for the library and example,
+packaging, and isolated v0.5.0 wheel smoke passed. Native tests verified double-spend
+prevention, forced workflow restart, and ledger/index rollback; the native demo
+and both benchmark runners completed on r2.02 and r2.06.
+
+The inventory benchmark's raw samples, node-operation counts, CPU/runtime metadata,
+and source commit are committed with the performance report. The runnable example,
+concrete ergonomics findings, compatibility policy, and evidence-based v0.6 priorities
+are documented in the v0.5.0 delivery report. All three implementation phases are
+complete. Version 0.5.0 preserves layout one, legacy identities, namespace, and GPL
+licensing, and adds no dependency. Release tags and package publication are separate
+repository operations.
