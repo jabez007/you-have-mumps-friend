@@ -199,3 +199,67 @@ def replace(store: Store, old: frozenset[Entry], new: frozenset[Entry]) -> None:
                 raise UniqueViolation("A unique index value is already claimed")
             store.set(entry.claim_path, entry.claim)
         store.set(entry.path, entry.location)
+
+
+@dataclass(frozen=True)
+class IndexTransition:
+    """Exact native nodes added, removed, or retained by a schema transition."""
+
+    additions: dict[Path, bytes]
+    removals: dict[Path, bytes]
+    retained: dict[Path, bytes]
+    claims: frozenset[Entry]
+
+
+def _entry_nodes(entries: frozenset[Entry]) -> dict[Path, bytes]:
+    nodes: dict[Path, bytes] = {}
+    for entry in entries:
+        expected = {entry.path: entry.location}
+        if entry.claim_path is not None:
+            expected[entry.claim_path] = entry.claim
+        for path, value in expected.items():
+            if path in nodes and nodes[path] != value:
+                raise UniqueViolation("Conflicting owners prevent index migration")
+            nodes[path] = value
+    return nodes
+
+
+def check_transition(
+    store: Store, old: frozenset[Entry], new: frozenset[Entry], *, updated: bool
+) -> IndexTransition:
+    """Validate both sides of a migration without changing retained identities."""
+    before, after = _entry_nodes(old), _entry_nodes(new)
+    shared = before.keys() & after.keys()
+    if any(before[path] != after[path] for path in shared):
+        raise StorageError("Index migration would change a retained node identity")
+    additions = {path: value for path, value in after.items() if path not in before}
+    removals = {path: value for path, value in before.items() if path not in after}
+    _check_transition_nodes(store, after if updated else before, removals if updated else additions)
+    if not updated and any(store.children(path, limit=1) for path in removals):
+        raise StorageError("An expected index leaf contains an unexpected subtree")
+    return IndexTransition(
+        additions,
+        removals,
+        {path: before[path] for path in shared},
+        frozenset(entry for entry in new if entry.claim_path in additions),
+    )
+
+
+def _check_transition_nodes(
+    store: Store, expected: dict[Path, bytes], absent: dict[Path, bytes]
+) -> None:
+    for path, value in expected.items():
+        if store.get(path) != value:
+            raise StorageError("An expected index entry or claim is missing or corrupt")
+    for path in absent:
+        if store.get(path) is not None or store.children(path, limit=1):
+            raise StorageError("An index entry or claim is not absent as expected")
+
+
+def apply_transition(store: Store, old: frozenset[Entry], new: frozenset[Entry]) -> None:
+    """Update only changed leaves inside the caller's migration transaction."""
+    transition = check_transition(store, old, new, updated=False)
+    for path in transition.removals:
+        store.delete_tree(path)
+    for path, value in transition.additions.items():
+        store.set(path, value)
