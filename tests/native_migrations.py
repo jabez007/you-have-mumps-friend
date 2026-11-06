@@ -16,6 +16,7 @@ _models = runpy.run_path(str(FilePath(__file__).with_name("migration_models.py")
 Product, ProductV2 = _models["Product"], _models["ProductV2"]
 _unique_models = runpy.run_path(str(FilePath(__file__).with_name("unique_migration_models.py")))
 _nested_models = runpy.run_path(str(FilePath(__file__).with_name("nested_migration_models.py")))
+_removal_models = runpy.run_path(str(FilePath(__file__).with_name("removal_migration_models.py")))
 
 
 class RendezvousStore(NativeStore):
@@ -58,6 +59,16 @@ class RendezvousStore(NativeStore):
         if self.waiting and guards.get(self.operation, False):
             self.rendezvous()
 
+    def delete_tree(self, path):
+        super().delete_tree(path)
+        guards = {
+            "crash_delete_entry": path.global_name == "^YHMFIndex",
+            "crash_delete_claim": path.global_name == "^YHMFUnique",
+            "crash_cleanup": path.global_name in {"^YHMFIndex", "^YHMFUnique"},
+        }
+        if self.waiting and guards.get(self.operation, False):
+            self.rendezvous()
+
 
 def run(operation, migration_id, kind="additive"):
     source, target, related = {
@@ -67,6 +78,12 @@ def run(operation, migration_id, kind="additive"):
             _nested_models["Warehouse"],
             _nested_models["WarehouseV2"],
             (_nested_models["Target"],),
+        ),
+        "removal": (_removal_models["Product"], _removal_models["RelaxedProduct"], ()),
+        "removal_nested": (
+            _removal_models["Warehouse"],
+            _removal_models["RelaxedWarehouse"],
+            (_removal_models["RelatedTarget"],),
         ),
     }[kind]
     store = RendezvousStore(operation, migration_id)

@@ -13,6 +13,7 @@ import pytest
 
 from mccann_hub.yhmf import Database, NativeStore, Path, Registry
 from mccann_hub.yhmf.maintenance import job_path
+from mccann_hub.yhmf.migration_cleanup import removed_count
 
 pytestmark = pytest.mark.native
 _WORKER = FilePath(__file__).with_name("native_migrations.py")
@@ -23,6 +24,7 @@ UniqueSource, UniqueTarget = _unique_models["Product"], _unique_models["UniquePr
 _nested_models = _models["_nested_models"]
 Warehouse, WarehouseV2 = _nested_models["Warehouse"], _nested_models["WarehouseV2"]
 RelatedTarget = _nested_models["Target"]
+_removal_models = _models["_removal_models"]
 
 
 @pytest.fixture
@@ -453,3 +455,121 @@ def test_native_worker_death_cannot_expose_a_partial_parent_tree(nested_db, oper
     assert nested_advance_to(db, current, "complete").retagged == 3
     assert db.get(WarehouseV2, "W2").header is None
     assert db.check_indexes(WarehouseV2).issues == ()
+
+
+@pytest.fixture(params=["removal", "removal_nested"])
+def retirement_db(db, request):
+    kind = request.param
+    names = (
+        Product.__global__,
+        Warehouse.__global__,
+        RelatedTarget.__global__,
+        "^YHMFSchema",
+        "^YHMFIndex",
+        "^YHMFUnique",
+        "^YHMFRef",
+        "^YHMFMigration",
+    )
+    for name in names:
+        db.store.delete_tree(Path(name))
+    if kind == "removal":
+        source, target, related = _removal_models["Product"], _removal_models["RelaxedProduct"], ()
+        records = [
+            source(id=f"P{i}", sku=sku, name="Main", locked=f"L{i}", price=Decimal(f"{i + 1}.00"))
+            for i, sku in enumerate(("private-A", "private-B", None))
+        ]
+    else:
+        source, target = _removal_models["Warehouse"], _removal_models["RelaxedWarehouse"]
+        related = (_removal_models["RelatedTarget"],)
+        records = _removal_models["nested_records"]()
+    old = Database(db.store, Registry(*related, source))
+    if related:
+        old.insert(related[0](id="T1"))
+    for record in records:
+        old.insert(record)
+    field = b"sku" if kind == "removal" else b"lots.serial"
+    orphan_root = Path("^YHMFUnique", (source.__global__[1:].encode("ascii"), field))
+    db.store.set(orphan_root.child(b"orphan-a"), b"orphan")
+    db.store.set(orphan_root.child(b"orphan-b"), b"orphan")
+    yield Database(db.store, Registry(*related, target)), source, target, kind, orphan_root
+    for name in names:
+        db.store.delete_tree(Path(name))
+
+
+@pytest.mark.parametrize("phase", ["backfill", "cleanup", "activate"])
+def test_native_retirement_restart_replays_removals_cleanup_and_checkpoint(
+    retirement_db, monkeypatch, phase
+):
+    db, source, target, _, _ = retirement_db
+    status = advance_to(db, start(db, source, target), phase, source, target)
+    original = db.store.set
+    before_count = removed_count(db.store, status.migration_id)
+    checkpoints = []
+    yottadb = importlib.import_module("yottadb")
+
+    def restart_once(path, value):
+        original(path, value)
+        if path == job_path(status.migration_id):
+            checkpoints.append(value)
+            if len(checkpoints) == 1:
+                raise yottadb.YDBTPRestart()
+
+    monkeypatch.setattr(db.store, "set", restart_once)
+    status = db.advance_migration(status.migration_id, source, target, batch_size=1)
+    monkeypatch.setattr(db.store, "set", original)
+    assert len(checkpoints) == 2 and checkpoints[0] == checkpoints[1]
+    assert removed_count(db.store, status.migration_id) == before_count + (phase == "cleanup")
+    status = advance_to(db, status, "complete", source, target)
+    assert status.retagged == 3 and db.check_indexes(target).issues == ()
+
+
+@pytest.mark.parametrize(
+    "operation,phase",
+    [
+        ("crash_delete_entry", "backfill"),
+        ("crash_delete_claim", "backfill"),
+        ("crash_cleanup", "cleanup"),
+    ],
+)
+def test_native_process_death_rolls_back_index_deletion_and_resumes(
+    retirement_db, operation, phase
+):
+    db, source, target, kind, orphan_root = retirement_db
+    status = advance_to(db, start(db, source, target), phase, source, target)
+    count = removed_count(db.store, status.migration_id)
+    process = worker(operation, status.migration_id, kind=kind)
+    try:
+        ready(process)
+        process.kill()
+        process.wait(timeout=5)
+    finally:
+        stop(process)
+    assert db.migration_status(status.migration_id) == status
+    assert removed_count(db.store, status.migration_id) == count
+    assert db.store.get(orphan_root.child(b"orphan-a")) == b"orphan"
+    if phase == "backfill":
+        assert db.store.get(orphan_root.child(b'v:"s:private-A"')) is not None
+    process = worker("resume", status.migration_id, kind=kind)
+    try:
+        stdout, stderr = process.communicate(timeout=20)
+        assert process.returncode == 0, stderr
+        assert json.loads(stdout)["phase"] == phase
+    finally:
+        stop(process)
+    status = advance_to(db, db.migration_status(status.migration_id), "complete", source, target)
+    assert status.retagged == 3 and db.check_indexes(target).issues == ()
+    assert db.store.children(orphan_root, limit=1) == ()
+
+
+@pytest.mark.parametrize("phase", ["backfill", "cleanup"])
+def test_native_retirement_workers_share_record_and_cleanup_progress(retirement_db, phase):
+    db, source, target, kind, orphan_root = retirement_db
+    status = advance_to(db, start(db, source, target), phase, source, target)
+    summaries = migration_worker_race(status.migration_id, kind=kind)
+    if phase == "backfill":
+        assert sorted(item["backfilled"] for item in summaries) == [1, 2]
+    else:
+        assert removed_count(db.store, status.migration_id) == 2
+        assert db.store.children(orphan_root, limit=1) == ()
+    status = advance_to(db, db.migration_status(status.migration_id), "complete", source, target)
+    assert status.retagged == 3 and db.check_indexes(target).issues == ()
