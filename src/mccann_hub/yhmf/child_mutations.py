@@ -37,7 +37,7 @@ def _collection(
     if type(collection) is not tuple or not collection:
         raise MutationError("Collection must be a nonempty owned field path")
     owner = resolve(tx, spec, key, collection[:-1], mutate=True)
-    require_local_validation(owner.node.model)
+    require_local_validation(owner.node)
     field = field_named(owner.node, collection[-1])
     if field.kind != "children":
         raise MutationError("Collection path must name a keyed Children field")

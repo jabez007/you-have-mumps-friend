@@ -6,9 +6,8 @@ from typing import TYPE_CHECKING
 
 from .codecs import Key, encode_key
 from .errors import MutationError, NotFound, StorageError
-from .models import Model
 from .records import MAX_CHILDREN
-from .registry import FieldSpec, ModelSpec, NodeSpec, supports_local_validation
+from .registry import FieldSpec, ModelSpec, NodeSpec
 from .storage import Path, Store
 
 if TYPE_CHECKING:
@@ -25,9 +24,9 @@ class Owner:
     relative: tuple[bytes, ...]
 
 
-def require_local_validation(model: type[Model]) -> None:
+def require_local_validation(node: NodeSpec) -> None:
     """Reject ancestor validation whose dependency on descendants is unknowable."""
-    if not supports_local_validation(model):
+    if not node.local_validation:
         raise MutationError(
             "Partial mutation cannot validate this owner's custom validators; "
             "use whole-aggregate save inside atomic"
@@ -79,11 +78,13 @@ def resolve(
     spec = tx._check_schema(spec)
     if not tx._exists(spec, root):
         raise NotFound("Root record does not exist")
-    owner = Owner(NodeSpec(spec.model, spec.key_field, spec.fields), root, ())
+    owner = Owner(
+        NodeSpec(spec.model, spec.key_field, spec.fields, spec.local_validation), root, ()
+    )
     remaining = at
     while remaining:
         if mutate:
-            require_local_validation(owner.node.model)
+            require_local_validation(owner.node)
         owner, remaining = _step(tx.store, owner, remaining)
     return owner
 

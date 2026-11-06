@@ -11,7 +11,7 @@ from .errors import MutationError, StorageError
 from .models import Model
 from .owned import OwnedPath, Owner, require_local_validation, resolve
 from .records import FieldValue, encode_leaf, node_values
-from .registry import FieldSpec, ModelSpec, field_adapter
+from .registry import FieldSpec, ModelSpec
 from .storage import Path
 
 if TYPE_CHECKING:
@@ -61,11 +61,12 @@ def _validated(
         new = {field.name: getattr(result, field.name) for field in fields}
         _identity(owner, old, new)
         return old, new, fields
-    require_local_validation(owner.node.model)
+    require_local_validation(owner.node)
     old = node_values(selected, owner.path, tx.store)
     new = {}
     for field in selected:
-        adapter = field_adapter(owner.node.model, field.name)
+        adapter = field.adapter
+        assert adapter is not None
         old[field.name] = adapter.validate_python(old[field.name])
         new[field.name] = adapter.validate_python(deepcopy(changes[field.name]))
     return old, new, selected

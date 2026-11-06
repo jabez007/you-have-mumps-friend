@@ -103,3 +103,17 @@ Disabling instance, default, or assignment validation does not bypass write-time
 validation. The mapper rebuilds plain owned input and validates it before writing.
 Setting `allow_inf_nan=True` does not permit nonfinite stored scalars. See the
 [configuration compatibility policy](../schema-compatibility.md#model-configuration-and-declared-data).
+
+## Keep registered declarations fixed
+
+A registry compiles field adapters and the partial-validation policy for each declared
+model. Reuse that registry during the application's lifetime. Do not modify annotations,
+configuration, validators, or field metadata after registration. A rebuilt Pydantic
+schema or changed model configuration raises `SchemaError` on access. Other in-place
+Python mutations are unsupported; they are not a schema-migration mechanism.
+
+For an application schema change, define a new model class and registry, then inspect
+and migrate the installed schema. Equal persistence fingerprints do not make Python
+validation behavior interchangeable: compiled rules belong to that registry's exact
+declarations. This compilation does not cache database state. Every transaction still
+checks the live installed schema snapshot and fingerprint.

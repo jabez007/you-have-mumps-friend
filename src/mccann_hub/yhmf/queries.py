@@ -9,7 +9,6 @@ from .codecs import Key, decode_key
 from .errors import NotFound, QueryError, StorageError
 from .models import Model
 from .records import walk_values
-from .registry import field_adapter
 from .storage import Path
 
 if TYPE_CHECKING:
@@ -54,7 +53,9 @@ class Query[M: Model]:
         name, value = next(iter(equals.items()))
         spec = self._db.registry.spec(self._model)
         if name == spec.key_field:
-            validated = field_adapter(self._model, name).validate_python(value)
+            field = next(field for field in spec.fields if field.name == name)
+            assert field.adapter is not None
+            validated = field.adapter.validate_python(value)
             spec.path(validated)
             return Query(self._db, self._model, field=name, value=validated)
         definitions = indexes.definitions(spec)

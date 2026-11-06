@@ -12,7 +12,7 @@ from .codecs import Scalar, encode_key, encode_scalar
 from .errors import SchemaError, StorageError, UniqueViolation
 from .models import Model, Reference
 from .records import FieldValue, walk_values
-from .registry import FieldSpec, ModelSpec, field_adapter
+from .registry import FieldSpec, ModelSpec
 from .storage import Path, Store
 
 
@@ -27,7 +27,8 @@ class Definition:
         return ".".join(self.path)
 
     def validate(self, value: Any) -> Any:
-        result = field_adapter(self.owner, self.field.name).validate_python(value)
+        assert self.field.adapter is not None
+        result = self.field.adapter.validate_python(value)
         if result is not None and self.field.target is not None:
             assert self.field.target_key is not None
             key_type = self.field.target.model_fields[self.field.target_key].annotation

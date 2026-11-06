@@ -68,8 +68,9 @@ including string normalization and strictness. A nested field uses its owned mod
 configuration. A primary-key predicate applies the same rules; `get` continues to use
 an exact stored key. Reference values keep the reference model's own configuration.
 
-Predicates validate one field. They do not run custom field validators or model validators
-that depend on a complete record. For those transformations, pass the stored value.
+Predicates validate one field, including its `Annotated` validation metadata. They do not
+run decorator-based `field_validator` methods or model validators that require a complete
+record. For those transformations, pass the stored value.
 
 ## Page through results
 

@@ -14,8 +14,8 @@ and owned models, issue [#3](https://github.com/jabez007/you-have-mumps-friend/i
 Supported format-two configuration overrides retain their installed identities.
 
 Equality predicates now apply their owning declaration's configuration and constraints,
-issue [#5](https://github.com/jabez007/you-have-mumps-friend/issues/5). Custom field and
-model validators still require a complete record and do not run for query predicates.
+issue [#5](https://github.com/jabez007/you-have-mumps-friend/issues/5). Decorator-based
+field and model validators do not run for query predicates; `Annotated` metadata does.
 
 Revision, constraint, nullability, and existing-default changes can now execute
 validation-only migrations, issue [#2](https://github.com/jabez007/you-have-mumps-friend/issues/2).

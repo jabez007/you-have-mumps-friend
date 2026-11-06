@@ -5,10 +5,11 @@ import hashlib
 import re
 import types
 from dataclasses import dataclass, replace
+from dataclasses import field as compiled_field
 from decimal import Decimal
 from typing import Any, Literal, Union, get_args, get_origin
 
-from pydantic import BaseModel, TypeAdapter
+from pydantic import BaseModel, ConfigDict, TypeAdapter
 
 from .canonical_schema import schema_bytes
 from .codecs import LAYOUT_VERSION
@@ -93,6 +94,7 @@ class FieldSpec:
     target_key: str | None = None
     index: bool = False
     unique: bool = False
+    adapter: TypeAdapter[Any] | None = compiled_field(default=None, repr=False, compare=False)
 
 
 @dataclass(frozen=True)
@@ -100,6 +102,7 @@ class NodeSpec:
     model: type[Model]
     key_field: str | None
     fields: tuple[FieldSpec, ...]
+    local_validation: bool = False
 
 
 @dataclass(frozen=True)
@@ -110,6 +113,7 @@ class ModelSpec:
     fields: tuple[FieldSpec, ...]
     snapshot: bytes
     fingerprint: bytes
+    local_validation: bool = False
 
     def path(self, key: Any) -> Path:
         from .codecs import encode_key
@@ -167,7 +171,12 @@ def _field_spec(model: type[Model], name: str, ancestors: tuple[type[Model], ...
     indexed, unique = bool(metadata.get("index")), bool(metadata.get("unique"))
     if (indexed or unique) and spec.kind not in {"scalar", "reference"}:
         raise SchemaError("Indexes require scalar or Reference fields")
-    return replace(spec, index=indexed or unique, unique=unique)
+    return replace(
+        spec,
+        index=indexed or unique,
+        unique=unique,
+        adapter=field_adapter(model, name) if spec.node is None else None,
+    )
 
 
 def _field_type_spec(
@@ -225,7 +234,7 @@ def _node_spec(
             raise SchemaError("Fields must have plain names without aliases")
     key = _key_field(model) if keyed else None
     fields = tuple(_field_spec(model, name, ancestors + (model,)) for name in model.model_fields)
-    return NodeSpec(model, key, fields)
+    return NodeSpec(model, key, fields, supports_local_validation(model))
 
 
 def _hierarchy(fields: tuple[FieldSpec, ...]) -> list[dict[str, Any]]:
@@ -323,7 +332,18 @@ def _make_spec(model: type[Model], *, legacy: bool = False) -> ModelSpec:
         node.fields,
         snapshot,
         hashlib.sha256(snapshot).hexdigest().encode("ascii"),
+        node.local_validation,
     )
+
+
+def _declaration_schemas(
+    model: type[Model], fields: tuple[FieldSpec, ...]
+) -> tuple[tuple[type[Model], Any, ConfigDict], ...]:
+    result = [(model, model.__pydantic_core_schema__, model.model_config.copy())]
+    for item in fields:
+        if item.node is not None:
+            result.extend(_declaration_schemas(item.node.model, item.node.fields))
+    return tuple(result)
 
 
 class Registry:
@@ -332,6 +352,7 @@ class Registry:
     def __init__(self, *models: type[Model]) -> None:
         self._specs: dict[type[Model], ModelSpec] = {}
         self._globals: dict[str, type[Model]] = {}
+        self._schemas: dict[type[Model], tuple[tuple[type[Model], Any, ConfigDict], ...]] = {}
         for model in models:
             self.register(model)
         self.validate_references()
@@ -349,16 +370,26 @@ class Registry:
 
     def register(self, model: type[Model]) -> ModelSpec:
         if model in self._specs:
-            return self._specs[model]
+            return self.spec(model)
         spec = _make_spec(model)
         if spec.global_name in self._globals:
             raise SchemaError("A global can belong to only one registered model")
         self._globals[spec.global_name] = model
         self._specs[model] = spec
+        self._schemas[model] = _declaration_schemas(model, spec.fields)
         return spec
 
     def spec(self, model: type[Model]) -> ModelSpec:
         try:
-            return self._specs[model]
+            spec = self._specs[model]
         except KeyError as exc:
             raise SchemaError("Register the model before database access") from exc
+        if any(
+            owner.__pydantic_core_schema__ is not schema or owner.model_config != config
+            for owner, schema, config in self._schemas[model]
+        ):
+            raise SchemaError(
+                "Model declaration changed or was rebuilt after registration; "
+                "create a fresh registry"
+            )
+        return spec
