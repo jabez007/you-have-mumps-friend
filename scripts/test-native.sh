@@ -25,6 +25,10 @@ change -region DEFAULT -key_size=1019 -record_size=32767
 exit
 EOF
 "$ydb_dist/mupip" create
+if [[ "${YHMF_JOURNALING:-0}" == "1" ]]; then
+    "$ydb_dist/mupip" set -journal="enable,on,before,file=$test_dir/test.mjl" -region '*'
+    test -f "$test_dir/test.mjl"
+fi
 "$project_dir/.venv/bin/python" -c 'import yottadb; print(yottadb.release())'
 "$project_dir/.venv/bin/pytest" "$project_dir/tests" "$@"
 

@@ -56,8 +56,8 @@ A patch changes scalar or `Reference` fields only. Changing keys or replacing ow
 subtrees through `changes` raises `MutationError`. Mutations never create missing
 objects or collections. A missing owner raises `NotFound`.
 
-> **Warning:** A null collection on the path currently raises `StorageError` instead of
-> `NotFound`. See [known limitations](../known-limitations.md).
+A null collection raises `NotFound`; malformed markers and unexpected descendants
+under a null marker still raise `StorageError`.
 
 ## Do arithmetic in a transaction
 
@@ -100,9 +100,10 @@ Both operations update the collection count and enforce collection length constr
 Persistence revalidates plain declared owned data, so unchecked `model_copy` values
 cannot bypass constraints through `revalidate_instances="never"`.
 
-> **Warning:** `insert_child` reads the whole aggregate on every call, because layout one
-> has no size counter. Its cost grows with the aggregate. Patches and child deletion do
-> not have this cost. See [known limitations](../known-limitations.md).
+Insertion checks the aggregate node budget from transactional ownership markers. Flat
+child collections use their count and declared width; variable-width owned containers
+require bounded traversal. It does not load the whole root model. See the
+[native insertion measurements](../performance.md#child-insertion-results).
 
 ## Which validators run
 

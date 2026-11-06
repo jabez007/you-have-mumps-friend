@@ -47,8 +47,12 @@ warehouse references are enforced, while location/bin strings preserve history.
 
 ```python
 from decimal import Decimal
-from examples.inventory import BinAddress, Inventory
+from examples.inventory import MODELS, BinAddress, Inventory
+from examples.inventory.__main__ import seed
+from mccann_hub.yhmf import Database, MemoryStore, Registry
 
+db = Database(MemoryStore(), Registry(*MODELS))
+seed(db)
 inventory = Inventory(db)
 dock = BinAddress("MAIN", "DOCK", "B1")
 storage = BinAddress("MAIN", "STORAGE", "B1")

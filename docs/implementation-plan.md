@@ -456,3 +456,19 @@ within that result. Empty batches are allowed but still respect active handles a
 maintenance. Native restarts reconstruct the attempt's cache. No metadata or layout
 change. Occurrence projection for issue 16 is a separate subsequent slice; keep that
 issue open until it ships. C901 passes at ten.
+
+### Qualification gaps, issue 34
+
+The preceding fixes supply the configuration matrix, caught-restart, default-region,
+and insertion benchmarks. Reuse test-native.sh for a second isolated database with
+before-image journaling enabled by an explicit environment flag; run the full native
+suite and benchmarks on both supported engines. Record the mode in benchmark output.
+This qualifies journal-enabled operations, not crash recovery or backup restoration.
+
+Run executable Python fences in isolated per-document namespaces through a small
+checker, preserving their document line numbers. Mark architectural sketches
+explicitly illustrative, and repair incomplete runnable examples. Test the checker
+through real documents and a deliberately failing example. CI runs it with the
+locked environment. Shell and M snippets retain their native integration harnesses.
+Make README file links absolute GitHub URLs and verify their local targets for the
+future PyPI long description. No runtime API or storage change; C901 passes at ten.

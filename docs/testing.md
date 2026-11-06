@@ -8,6 +8,7 @@ uv run ruff check .
 uv run ruff format --check .
 uv run mypy
 uv run pytest -m 'not native'
+uv run python -m scripts.check_doc_examples
 ```
 
 Ruff includes C901 with a maximum of ten. Existing codec properties retain their
@@ -68,6 +69,20 @@ The script creates and removes a disposable database. Native CI qualifies r2.02
 on Ubuntu 22.04 and r2.06 on Ubuntu 24.04. The memory adapter does not establish
 native conflict/restart behavior. Do not direct these tests at application data.
 
+CI also runs the full suite and benchmarks in a second disposable database with
+`YHMF_JOURNALING=1`. The harness enables before-image journaling with MUPIP before
+opening the driver; benchmark output records the mode. To reproduce:
+
+```sh
+YHMF_JOURNALING=1 YHMF_BENCHMARK=1 ydb_dist=/opt/yottadb/test \
+  bash scripts/test-native.sh -q
+```
+
+This exercises journal-enabled CRUD, migrations, rollbacks, and coordinated process
+tests. It does not test power loss, journal recovery, backup restoration, or replication.
+The default-region diagnostic test uses a separate default-sized region. For journal
+administration, see the [upstream guide](https://docs.yottadb.com/AdminOpsGuide/ydbjournal.html).
+
 Existing coordinated workers cover independent children/fields, unique contention,
 parent deletion, references, concurrent initialization, and forced restarts. New
 workers warm a legacy schema cache, pause inside an active transaction, then observe
@@ -82,3 +97,17 @@ completion and idempotent completed-job calls. Existing tests additionally injec
 failures during field backfills, index/unique maintenance, checkpoints, retagging,
 cleanup, and activation. These tests complement, rather than replace, actual native
 transaction and process tests.
+
+## Executable documentation
+
+The documentation checker executes every exact `python` fence in README, docs, and
+example READMEs, in document order. Each document gets a fresh Python namespace, and
+tracebacks retain its Markdown line numbers. Run it as a module from the repository
+root. Architecture sketches use `python illustrative` fences because they require
+application context or describe future work; they are not executed. Shell and M
+snippets are outside this Python checker and require their native harnesses.
+
+The offline test suite runs these same examples and verifies that README links are
+absolute or local anchors. GitHub file links are checked against local files, so the
+PyPI long description does not depend on repository-relative link resolution. This
+does not validate external website availability or qualify a package publication.

@@ -65,7 +65,7 @@ Runtime dependencies will undergo license compatibility review. Inspiration from
 
 The implemented declarations use this API:
 
-```python
+```python illustrative
 from decimal import Decimal
 from mccann_hub.yhmf import Model, Field, Children, ChildField, Reference
 
@@ -200,7 +200,7 @@ All record writes and their corresponding index updates must occur within one na
 
 The public transaction API uses an explicit callback:
 
-```python
+```python illustrative
 from typing import cast
 
 def adjust_stock(tx):
@@ -247,7 +247,7 @@ Unique constraints must explicitly define null handling, key normalization, and 
 The query API supports direct keys, bounded hierarchical traversal, indexed equality,
 explicit bounded scans, and query explanation:
 
-```python
+```python illustrative
 query = db.query(Warehouse).where(**{"bins.lots.product": Reference[Product](key="P42")})
 print(query.explain())
 ```

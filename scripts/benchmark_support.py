@@ -246,4 +246,5 @@ def environment():
         "pydantic": pydantic.__version__,
         "yottadb": yottadb.release(),
         "source_commit": os.environ.get("GITHUB_SHA"),
+        "journaling": os.environ.get("YHMF_JOURNALING", "0") == "1",
     }

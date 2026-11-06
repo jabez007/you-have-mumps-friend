@@ -13,6 +13,7 @@ jobs:
       - run: uv run ruff format --check .
       - run: uv run mypy
       - run: uv run pytest -m 'not native'
+      - run: uv run python -m scripts.check_doc_examples
       - run: uv build
       - name: Smoke test the installed wheel
         run: |
@@ -98,3 +99,9 @@ jobs:
           ydb_dist: /opt/yottadb/test
           YHMF_HYPOTHESIS_PROFILE: stress
           PYTHONHASHSEED: "0"
+      - name: Qualify native tests and benchmarks with before-image journaling
+        run: bash scripts/test-native.sh -q
+        env:
+          ydb_dist: /opt/yottadb/test
+          YHMF_JOURNALING: "1"
+          YHMF_BENCHMARK: "1"

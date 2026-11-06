@@ -8,8 +8,8 @@ relationships, indexes, and migrations. It does not treat the database as relati
 declare models with [Pydantic](https://docs.pydantic.dev/), and a warehouse's bins and lots
 live under the warehouse's own subscripts.
 
-**This is an early prototype, version 0.5.0.** The API and storage layout can change. It is
-not on PyPI yet, and it has much less than Odoo's ORM today. See
+**This is an early prototype; the latest release is 0.5.0.** These docs describe the
+development branch. The API and storage layout can change. It is not on PyPI yet. See
 [what works today](#what-works-today).
 
 ## Example
@@ -75,7 +75,7 @@ metadata nodes:
 - **Ownership is part of the data model.** Owned records are stored under their parent. A
   patch to one lot writes that lot's changed nodes, however many other lots exist.
 - **M code can reach the data.** A plain `zwrite` or `$order` loop sees every record. M can
-  also [write under limits](docs/guides/m-access.md#write-from-m), and safer M writes are
+  also [write under limits](https://github.com/jabez007/you-have-mumps-friend/blob/main/docs/guides/m-access.md#write-from-m), and safer M writes are
   a project goal.
 - **Queries have bounded plans.** A filter on an unindexed field raises `QueryError`, and
   `explain()` shows the plan. There is no fallback scan.
@@ -87,13 +87,13 @@ metadata nodes:
 | Area | Works today | Not yet |
 | --- | --- | --- |
 | Models | `str`, `int`, `bool`, `float`, `Decimal`, `bytes`, optional fields, embedded objects, keyed children | Dates, enums, lists, computed fields, inheritance |
-| Relationships | References with enforced targets and `restrict` on delete | Traversal, `set_null`, `cascade`, many-to-many |
-| Queries | One equality predicate on an index or key, unique indexes, paging | Range, prefix, sorting, several predicates |
+| Relationships | References with enforced targets, explicit resolution, bounded batch reads, and `restrict` on delete | `set_null`, `cascade`, many-to-many |
+| Queries | One equality predicate on an index or key, unique indexes, root and child paging, collection counts | Occurrence projections, range, prefix, sorting, several predicates |
 | Writes | Whole-record `save`, scalar `patch`, child insert and delete, restart-safe transactions | Change tracking, deferred unique checks |
-| Migrations | Add scalar fields with literal defaults, add or remove indexes, resume after interruption | Renames, removals, type changes. A migration blocks the whole database. |
+| Migrations | Scalar defaults, index changes, validation-only revisions, resume after interruption | Renames, removals, type changes. A migration blocks the whole database. |
 | M access | Read every node, write valid scalars | Writes that maintain indexes and references |
 
-[Known limitations](docs/known-limitations.md) lists current defects and their workarounds.
+[Known limitations](https://github.com/jabez007/you-have-mumps-friend/blob/main/docs/known-limitations.md) lists current defects and their workarounds.
 Read it before you build on this project.
 
 ## Try it
@@ -108,20 +108,20 @@ uv sync
 uv run python -m examples.inventory
 ```
 
-To use YHMF in your own project, follow [get started](docs/getting-started.md). To store data
-durably, follow [set up a YottaDB database](docs/guides/native-setup.md).
+To use YHMF in your own project, follow [get started](https://github.com/jabez007/you-have-mumps-friend/blob/main/docs/getting-started.md). To store data
+durably, follow [set up a YottaDB database](https://github.com/jabez007/you-have-mumps-friend/blob/main/docs/guides/native-setup.md).
 
 ## Documentation
 
-- [Get started](docs/getting-started.md): a short tutorial.
-- [Documentation map](docs/README.md): every guide, reference, and design record.
-- [Warehouse inventory example](examples/inventory/README.md): a complete application.
-- [Architecture](docs/yottadb_hierarchical_mapper_architecture.md): goals and open questions.
-- [Changelog](CHANGELOG.md) and [contributing](CONTRIBUTING.md).
+- [Get started](https://github.com/jabez007/you-have-mumps-friend/blob/main/docs/getting-started.md): a short tutorial.
+- [Documentation map](https://github.com/jabez007/you-have-mumps-friend/blob/main/docs/README.md): every guide, reference, and design record.
+- [Warehouse inventory example](https://github.com/jabez007/you-have-mumps-friend/blob/main/examples/inventory/README.md): a complete application.
+- [Architecture](https://github.com/jabez007/you-have-mumps-friend/blob/main/docs/yottadb_hierarchical_mapper_architecture.md): goals and open questions.
+- [Changelog](https://github.com/jabez007/you-have-mumps-friend/blob/main/CHANGELOG.md) and [contributing](https://github.com/jabez007/you-have-mumps-friend/blob/main/CONTRIBUTING.md).
 
 ## License
 
-YHMF is licensed under [GPL-3.0-or-later](LICENSE). The distribution is `mccann-hub-yhmf`,
+YHMF is licensed under [GPL-3.0-or-later](https://github.com/jabez007/you-have-mumps-friend/blob/main/LICENSE). The distribution is `mccann-hub-yhmf`,
 imported as `mccann_hub.yhmf`.
 
 YottaDB and YDBPython have separate upstream licenses. This repository does not provide legal
