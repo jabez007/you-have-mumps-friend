@@ -59,9 +59,14 @@ class Query[M: Model]:
             validated = TypeAdapter(annotation).validate_python(value, strict=True)
             spec.path(validated)
             return Query(self._db, self._model, field=name, value=validated)
-        definition = next((d for d in indexes.definitions(spec) if d.name == name), None)
+        definitions = indexes.definitions(spec)
+        definition = next((d for d in definitions if d.name == name), None)
         if definition is None:
-            raise QueryError("Equality queries require a declared index; no scan is implied")
+            available = ", ".join(sorted({spec.key_field, *(d.name for d in definitions)}))
+            raise QueryError(
+                f"Equality field {name!r} has no declared index; use one of: {available}; "
+                "no scan is implied"
+            )
         validated = definition.validate(value)
         indexes.index_root(spec, definition, validated)
         return Query(self._db, self._model, field=name, value=validated, definition=definition)

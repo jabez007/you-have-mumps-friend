@@ -222,3 +222,17 @@ def test_ledger_index_failure_rolls_back_balances_references_and_metadata(invent
             inventory.receive("01", "LOT-001", DOCK, Decimal(20), occurred_at=TIME)
     assert tripped
     assert dump(store, ROOTS) == before
+
+
+def test_missing_product_index_diagnostic_points_to_the_owned_declaration(inventory):
+    from mccann_hub.yhmf.errors import QueryError
+
+    with pytest.raises(QueryError) as error:
+        inventory.db.query(Warehouse).where(product="private-value-marker")
+    assert "locations.bins.balances.product" in str(error.value)
+    assert "private-value-marker" not in str(error.value)
+    query = inventory.db.query(Warehouse).where(
+        **{"locations.bins.balances.product": Reference[Product](key="WIDGET")}
+    )
+    assert query.explain().strategy == "equality_index"
+    assert query.explain().field == "locations.bins.balances.product"

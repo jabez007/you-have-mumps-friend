@@ -132,8 +132,10 @@ competes to move 15 units twice from a balance of 20: only one command may commi
   centralizes this application's location terminology without adding a framework
   path DSL. Typed reads still need casts because owned `get` returns `Model`.
 - A first attempt at `.where(product=...)` on Warehouse fails because the actual
-  indexed field is deeply owned. The current generic missing-index error does
-  not list the correct declaration path; a targeted diagnostic improvement follows.
+  indexed field is deeply owned. The missing-index error now lists the primary key
+  and actual indexed declaration paths, including the usable product path. This
+  improvement has a failing regression against the original generic message and
+  does not expose predicate values or add implicit scans.
 - `.explain()` identifies the chosen index and bound, but indexed aggregate reads
   still load unrelated balances. Occurrence projections are a measured follow-up,
   rather than an implicit change to query semantics.
