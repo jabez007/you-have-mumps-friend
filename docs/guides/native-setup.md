@@ -23,7 +23,7 @@ keys, and YHMF stores each model's schema snapshot in one record. In a live test
 a one-field model fit, and the first write of a two-field model failed with
 `%YDB-E-REC2BIG`.
 
-NativeStore translates `REC2BIG` and `KEY2BIG` into `StorageError` with the affected
+NativeStore translates `REC2BIG`, `KEY2BIG`, and `GVSUBOFLOW` into `StorageError` with the affected
 `record_size` or `key_size` setting. The original driver exception remains in
 `error.__cause__`, including its `code()` and region diagnostics. This applies to
 schema metadata, application records, and indexes. Other engine errors propagate.

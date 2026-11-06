@@ -36,7 +36,7 @@ try:
     store.set(Path("^YHMFTestStorage", (b"s:" + b"a" * 100,)), b"x")
 except StorageError as error:
     assert "key_size" in str(error), str(error)
-    assert error.__cause__.code() == yottadb.YDB_ERR_KEY2BIG
+    assert error.__cause__.code() == yottadb.YDB_ERR_GVSUBOFLOW
 else:
     raise AssertionError("Default region unexpectedly accepted the long key")
 print("default region: actionable errors and atomic rollback verified")
@@ -62,11 +62,12 @@ def test_default_region_reports_size_settings_and_leaves_no_partial_installation
         result = subprocess.run(
             [sys.executable, "-c", WORKLOAD],
             env=env,
-            check=True,
+            check=False,
             capture_output=True,
             text=True,
             timeout=60,
         )
+        assert result.returncode == 0, result.stderr
         assert "atomic rollback verified" in result.stdout
     finally:
         subprocess.run(

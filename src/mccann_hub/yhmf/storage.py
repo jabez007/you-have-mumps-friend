@@ -192,6 +192,7 @@ class NativeStore:
             setting = {
                 self._ydb.YDB_ERR_REC2BIG: "record_size",
                 self._ydb.YDB_ERR_KEY2BIG: "key_size",
+                self._ydb.YDB_ERR_GVSUBOFLOW: "key_size",
             }.get(error.code())
             if setting is None:
                 raise

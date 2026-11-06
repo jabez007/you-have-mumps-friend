@@ -18,9 +18,10 @@ class Engine(SignalEngine):
     YDBError = NativeError
     YDB_ERR_REC2BIG = 11
     YDB_ERR_KEY2BIG = 12
+    YDB_ERR_GVSUBOFLOW = 13
 
 
-@pytest.mark.parametrize("code,setting", [(11, "record_size"), (12, "key_size")])
+@pytest.mark.parametrize("code,setting", [(11, "record_size"), (12, "key_size"), (13, "key_size")])
 @pytest.mark.parametrize("method", ["get", "set", "delete_tree", "children"])
 def test_native_region_limit_errors_preserve_cause_and_name_the_setting(code, setting, method):
     store = native(Engine())
