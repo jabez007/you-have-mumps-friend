@@ -722,3 +722,9 @@ separately. A full rewrite removes obsolete fields/owned nodes; no staged copy o
 an aggregate is stored. Test each requested transformation with native interruption
 and resume, uniqueness, references, restarts, legacy metadata, determinism, corrupt
 digests, failed callbacks, and pruning. Existing C901 passes at ten.
+
+Transform preparation also exposed that Link equality included target Python class
+identity, despite unchanged native target, location, and edge bytes. The regression
+fails for equivalent target rebindings. Exclude that validation-only class from Link
+equality/hash before using distinct source/target bindings; keep all native identity
+fields and target validation intact. No storage or schema change.

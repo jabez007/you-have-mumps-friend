@@ -6,6 +6,7 @@ import json
 from collections import Counter
 from collections.abc import Iterable
 from dataclasses import dataclass
+from dataclasses import field as binding_field
 
 from .errors import ReferenceViolation, StorageError
 from .models import Model
@@ -20,7 +21,8 @@ def reference_root(target: Path) -> Path:
 
 @dataclass(frozen=True)
 class Link:
-    target_model: type[Model]
+    # Python bindings supply validation; edge identity is entirely native.
+    target_model: type[Model] = binding_field(compare=False)
     target: Path
     index_path: Path
     location: bytes

@@ -282,3 +282,34 @@ def test_abort_restores_record_and_reference_index_together(db):
         db.atomic(remove)
     assert inbound(db) == b"1"
     assert db.get(Order, 1).product == ref()
+
+
+def test_reverse_edge_identity_survives_equivalent_python_target_rebinding(store):
+    from mccann_hub.yhmf import references
+
+    class SameProduct(Product):
+        pass
+
+    class Source(Model):
+        __global__ = "^YHMFTestOrder"
+        id: int = Field(primary_key=True)
+        product: Reference[Product]
+
+    class SameOrder(Source):
+        product: Reference[SameProduct]
+
+    old_registry, new_registry = Registry(Product, Source), Registry(SameProduct, SameOrder)
+    old = Database(store, old_registry)
+    old.insert(Product(id="P42", name="Main"))
+    record = old.insert(Source(id=1, product=ref()))
+    old_spec, new_spec = old_registry.spec(Source), new_registry.spec(SameOrder)
+    root = old_spec.path(1)
+    before = references.links(old_registry, old_spec, root, record)
+    after = references.links(
+        new_registry, new_spec, root, SameOrder(id=1, product=Reference[SameProduct](key="P42"))
+    )
+    # Runtime declarations supply validation, not additional persisted identity.
+    assert before == after
+    store.atomic(lambda: references.replace(store, before, after))
+    assert inbound(old) == b"1"
+    assert Database(store, new_registry).resolve(Reference[SameProduct](key="P42")).name == "Main"
