@@ -8,6 +8,7 @@ Callable behavior is an application schema revision, never a Python code hash.
 import math
 import re
 import types
+from datetime import date, datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any, Union, cast, get_args, get_origin
 
@@ -22,6 +23,7 @@ from pydantic import (
 )
 from pydantic.fields import FieldInfo
 
+from . import temporal
 from .codecs import LAYOUT_VERSION, canonical_json
 from .errors import SchemaError
 from .models import Model, Reference
@@ -82,6 +84,8 @@ def _value(value: Any) -> Any:
         or (type(value) is float and math.isfinite(value))
     ):
         return value
+    if type(value) in (date, datetime):
+        return temporal.literal(value)
     if isinstance(value, Decimal):
         if not value.is_finite():
             raise SchemaError("Schema defaults and constraints must be finite")
@@ -96,7 +100,10 @@ def _value(value: Any) -> Any:
         return [_value(item) for item in value]
     if isinstance(value, dict):
         return _mapping(value)
-    raise SchemaError("Schema defaults and constraints require supported deterministic values")
+    raise SchemaError(
+        "Schema defaults and constraints require supported deterministic values "
+        "in finite canonical JSON"
+    )
 
 
 def _mapping(value: dict[Any, Any]) -> dict[str, Any]:
@@ -125,10 +132,17 @@ def _metadata(item: Any) -> dict[str, Any]:
     return {_RULES[key]: _value(value) for key, value in attributes.items() if value is not None}
 
 
-def _rules(field: FieldInfo) -> dict[str, Any]:
+def _rules(field: FieldInfo, *, temporal: bool = False) -> dict[str, Any]:
     result: dict[str, Any] = {}
     for item in field.metadata:
         result.update(_metadata(item))
+    if temporal:
+        if "multipleOf" in result:
+            raise SchemaError("Temporal fields do not support multiple_of")
+        for name in ("minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum"):
+            if name in result:
+                result["temporal_" + name] = result.pop(name)
+        return result
     for name in ("minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum", "multipleOf"):
         if name in result:
             result[name] = numeric_rule(result[name])
@@ -137,6 +151,12 @@ def _rules(field: FieldInfo) -> dict[str, Any]:
 
 def _scalar(annotation: Any) -> dict[str, Any]:
     mapping = {str: "string", int: "integer", bool: "boolean", float: "number"}
+    if annotation in (date, datetime):
+        return {
+            "codec": "date-v1" if annotation is date else "datetime-utc-v1",
+            "type": "string",
+            "format": "date" if annotation is date else "date-time",
+        }
     if annotation is Decimal:
         return {"codec": "decimal", "anyOf": [{"type": "number"}, {"type": "string"}]}
     if annotation is bytes:
@@ -161,7 +181,7 @@ def _field(field: "FieldSpec", declaration: FieldInfo, *, primary: bool) -> dict
         result = _scalar(annotation)
     if nullable:
         result = {"anyOf": [result, {"type": "null"}]}
-    result.update(_rules(declaration))
+    result.update(_rules(declaration, temporal=annotation in (date, datetime)))
     if metadata := _mapper_metadata(field, primary):
         result["yhmf"] = metadata
     if declaration.default_factory is not None:

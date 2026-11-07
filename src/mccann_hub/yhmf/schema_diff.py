@@ -268,15 +268,23 @@ class _Fields:
     def _types(self, kind: str, variants: list[Any], path: tuple[str, ...]) -> bytes:
         if kind != "scalar":
             return canonical_json(kind)
-        types = []
+        types: list[tuple[str, str | None] | tuple[str, str, str]] = []
         for variant in variants:
             name = variant.get("type")
             if not isinstance(name, str) or name not in {"string", "integer", "number", "boolean"}:
                 raise _Unsupported(path)
             format_name = variant.get("format")
-            if format_name is not None and (format_name != "binary" or name != "string"):
+            if format_name is not None and (
+                format_name not in {"binary", "date", "date-time"} or name != "string"
+            ):
                 raise _Unsupported(path)
-            types.append((name, format_name))
+            if format_name in {"date", "date-time"}:
+                codec = "date-v1" if format_name == "date" else "datetime-utc-v1"
+                if variant.get("codec", codec if self.legacy_comparison else None) != codec:
+                    raise _Unsupported(path)
+                types.append((name, format_name, codec))
+            else:
+                types.append((name, format_name))
         if len(types) > 1 and set(types) != {("number", None), ("string", None)}:
             raise _Unsupported(path)
         return canonical_json(sorted(types, key=canonical_json))

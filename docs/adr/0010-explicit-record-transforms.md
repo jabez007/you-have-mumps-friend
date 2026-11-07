@@ -1,6 +1,8 @@
 # ADR 0010: Pin named record transforms within maintenance jobs
 
-Status: implemented; native qualification required before closing issue 20.
+Status: accepted. [CI run 42326719789](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42326719789)
+passed both configured native engines, journaling modes, and stress jobs before
+issue 20 was closed.
 
 ## Existing mechanisms and problem
 

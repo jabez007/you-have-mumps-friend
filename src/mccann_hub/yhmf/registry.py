@@ -7,6 +7,7 @@ import types
 from collections.abc import Callable
 from dataclasses import dataclass, replace
 from dataclasses import field as compiled_field
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Any, Literal, Union, get_args, get_origin
 
@@ -21,7 +22,7 @@ from .selectors import ReferenceFactory, reference_factory
 from .storage import Path
 
 _NAME = re.compile(r"[A-Za-z][A-Za-z0-9_]*\Z")
-_SCALARS = {str, int, bool, float, Decimal, bytes}
+_SCALARS = {str, int, bool, float, Decimal, bytes, date, datetime}
 
 
 def scalar_type(annotation: Any) -> Any:
@@ -327,6 +328,8 @@ def _make_spec(model: type[Model], *, legacy: bool = False) -> ModelSpec:
         snapshot = (
             _legacy_snapshot(node, global_name) if legacy else schema_bytes(node, global_name)
         )
+    except SchemaError:
+        raise
     except (TypeError, ValueError) as exc:
         raise SchemaError("Model declarations must produce finite canonical JSON") from exc
     return ModelSpec(

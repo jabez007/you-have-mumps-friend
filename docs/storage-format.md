@@ -38,10 +38,31 @@ can be stricter; the engine's errors propagate.
 | Decimal | `d:` plus decimal representation with exponent and trailing zeros | `d:12.50` |
 | String | `s:` plus UTF-8 | `s:Main` |
 | Bytes | `x:` plus standard padded Base64 | `x:AP8=` |
+| Date | `D:` plus fixed-width Gregorian date | `D:2026-11-06` |
+| Datetime | `T:` plus fixed-width UTC instant with six fractional digits | `T:2026-11-06T12:00:00.000000Z` |
 
 Nonfinite numbers and unsupported types are rejected. Node values have a
 prototype limit of 32766 bytes, including the type tag. An absent node returns
 `None` from the storage adapter; a persisted null is the distinct value `n:`.
+
+Date values cover Python's calendar years 0001–9999. Datetimes require a timezone,
+normalize to UTC, and reject overflow during normalization. The original zone and
+fold presentation are not stored; the instant is preserved. Leap seconds and naive
+datetimes are unsupported. Reencoding rejects compact dates, alternative offsets,
+missing fractional digits, and other noncanonical stored forms.
+
+Within each temporal type, encoded payloads sort chronologically. They are tagged
+strings, not M numeric values; numeric coercion is not date arithmetic. Equality
+indexes normalize equivalent timezone offsets to the same instant. This does not
+add range-query APIs or change general index ordering.
+
+New temporal fields declare date-v1 or datetime-utc-v1 codecs in schema format two.
+Temporal bounds have temporal_minimum/maximum/exclusiveMinimum/exclusiveMaximum
+rules with canonical ISO values. Defaults use the same ISO values and existing strict
+JSON literal validation. Unknown temporal codecs fail comparison safely. Layout and
+global codec version remain one; all earlier scalar tags and schema bytes remain
+unchanged. Older clients reject these new declarations/tags rather than reinterpret
+them. Golden fixtures temporal-v1.json and temporal-schema-v1.json fix the contracts.
 Decoders reject invalid and noncanonical encodings.
 
 The [golden scalar fixtures](../tests/fixtures/scalars.json) contain literal

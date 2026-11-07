@@ -208,3 +208,33 @@ No dependency graph or stored rollup maintenance is implied. The inventory
 Warehouse.total_on_hand sums a loaded warehouse using a local Decimal context;
 loading that aggregate costs work proportional to its data. For targeted inventory
 queries, use indexed balance occurrences instead.
+
+## Calendar dates and UTC instants
+
+Use standard date and timezone-aware datetime values:
+
+```python
+from datetime import UTC, date, datetime
+from mccann_hub.yhmf import Database, Field, MemoryStore, Model, Registry
+
+
+class CalendarEntry(Model):
+    __global__ = "^CalendarEntry"
+    id: str = Field(primary_key=True)
+    day: date = Field(ge=date(2000, 1, 1), index=True)
+    instant: datetime | None = Field(default=None, unique=True)
+
+
+calendar = Database(MemoryStore(), Registry(CalendarEntry))
+calendar.insert(CalendarEntry(id="E", day=date(2026, 11, 6), instant=datetime(2026, 11, 6, 12, tzinfo=UTC)))
+assert calendar.query(CalendarEntry).where(day=date(2026, 11, 6)).all()[0].id == "E"
+assert calendar.get(CalendarEntry, "E").instant.tzinfo is UTC
+```
+
+Datetimes store UTC instants with microsecond precision. Naive values and instants
+outside years 0001–9999 after UTC conversion raise StorageError. Equivalent offsets
+share equality and uniqueness values. Reads return UTC, without the original zone
+or fold presentation. Use pure validators that accept this persisted representation.
+Date/datetime defaults and bounds must be representable; datetime bounds need a timezone.
+The new codecs do not change existing schema identities. Converting a stored string
+field requires an explicit named record transform.

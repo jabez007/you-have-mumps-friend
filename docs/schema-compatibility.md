@@ -22,8 +22,13 @@ use a typed `$map` sequence. Default factories are marked but never executed.
 Python class names, declaration order, titles, descriptions, source paths, custom
 JSON Schema hooks, and serialization hooks do not define persisted identity. YHMF
 uses its own codecs. Unsupported validation metadata fails registration rather
-than silently losing a constraint. Dates, times, compound keys, recursive ownership,
+than silently losing a constraint. Time-only values, compound keys, recursive ownership,
 and arbitrary unions remain outside the supported type set.
+
+Date and datetime fields use explicit date-v1 and datetime-utc-v1 codecs. UTC ISO
+values define their defaults and temporal bounds; no Pydantic JSON Schema output
+participates. Existing scalar declarations retain their exact bytes. A string-to-date
+or string-to-datetime conversion is a real type change requiring a named transform.
 
 Virtual properties and Pydantic computed fields are outside the stored contract.
 They add no nodes, indexes, defaults, or schema changes. A computed field may not

@@ -6,12 +6,14 @@ import binascii
 import json
 import math
 import re
+from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
-from typing import Any
+from typing import Any, cast
 
+from . import temporal
 from .errors import StorageError
 
-type Scalar = str | int | bool | float | Decimal | bytes | None
+type Scalar = str | int | bool | float | Decimal | bytes | date | datetime | None
 type Key = str | int
 LAYOUT_VERSION = 1
 MAX_INTEGER_KEY = 999_999_999_999_999_999
@@ -59,6 +61,8 @@ def encode_scalar(value: Scalar) -> bytes:
     """Encode one scalar without relying on its declared Python field type."""
     if value is None:
         return b"n:"
+    if type(value) in (date, datetime):
+        return temporal.encode(cast(date, value))
     if type(value) is str:
         return b"s:" + _utf8(value)
     if type(value) is bool:
@@ -100,6 +104,8 @@ def decode_scalar(value: bytes) -> Scalar:
             result = payload == b"1"
         elif tag == b"x":
             result = base64.b64decode(payload, validate=True)
+        elif tag in {b"D", b"T"}:
+            result = temporal.decode(tag, payload)
         else:
             result = _decode_number(tag, payload)
         if not separator or encode_scalar(result) != value:

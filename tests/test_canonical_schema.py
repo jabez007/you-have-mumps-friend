@@ -88,14 +88,13 @@ def test_callable_policy_requires_an_application_revision_and_never_runs_factori
     assert canonical(Custom) != before
 
 
-def test_dates_and_compound_keys_are_not_newly_supported():
-    class Unsupported(Model):
+def test_dates_have_framework_codecs_while_compound_keys_remain_unsupported():
+    class Calendar(Model):
         __global__ = "^Example"
         id: str = Field(primary_key=True)
         when: date
 
-    with pytest.raises(SchemaError, match="Unsupported field"):
-        Registry(Unsupported)
+    assert b'"codec":"date-v1"' in Registry(Calendar).spec(Calendar).snapshot
 
     class Compound(Model):
         __global__ = "^Example"

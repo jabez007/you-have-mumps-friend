@@ -48,6 +48,7 @@ jobs:
           tests/test_replacement_diffs.py
           tests/test_scoped_maintenance.py
           tests/test_transform_migrations.py
+          tests/test_temporal_fields.py
           tests/test_inventory_example.py
           tests/test_migration_execution.py tests/test_nested_migrations.py tests/test_index_rebuilds.py
           tests/test_partial_mutations.py tests/test_child_mutations.py -m 'not native' -q

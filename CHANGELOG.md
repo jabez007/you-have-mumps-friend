@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Adds versioned date and UTC datetime field codecs, canonical defaults/bounds,
+  equality/unique indexes, and literal-default migrations. Existing scalar contracts
+  remain unchanged; temporal type changes require an explicit migration.
+
 - Rejects registered root/owned global-name or revision mutation before access,
   preventing new records from mixing stale schema snapshots with changed metadata.
 
