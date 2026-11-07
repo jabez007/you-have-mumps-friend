@@ -17,6 +17,7 @@ def test_inventory_benchmark_workflows_verify_balances_ledger_indexes_and_refere
     result = measure(store, 3, method, workflow, 2)
     assert result["iterations"] == 2
     assert result["warehouse_schema_version"] == 3
+    assert result["movement_schema_version"] == 3
     assert len(result["samples_us"]) == 2
     assert result["operations_per_iteration"]["atomic"] == 1
     cleanup(store)
@@ -41,6 +42,7 @@ def test_partial_inventory_node_work_is_independent_of_unrelated_balances():
 def test_direct_quantity_lower_bound_is_explicitly_not_a_ledger_workflow():
     result = measure(CountedStore(MemoryStore()), 2, "direct_native", "quantity_node_only", 2)
     assert result["warehouse_schema_version"] == 1
+    assert result["movement_schema_version"] is None
     assert result["operations_per_iteration"] == {"atomic": 1, "attempts": 1, "get": 1, "set": 1}
     with pytest.raises(ValueError, match="lower bound"):
         operation(None, "direct_native", "receive")

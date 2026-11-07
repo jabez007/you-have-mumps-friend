@@ -192,6 +192,9 @@ def measure(store, size, method, workflow, iterations):
         "warehouse_schema_version": 1
         if method == "direct_native"
         else Warehouse.__schema_version__,
+        "movement_schema_version": None
+        if method == "direct_native"
+        else Movement.__schema_version__,
         "iterations": iterations,
         "warmup": WARMUP,
         **latencies(elapsed),

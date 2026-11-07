@@ -35,7 +35,61 @@ block and index contention can occur even without shared logical totals, and a r
 total is already shared across both locations. Compare all three layouts rather
 than attributing every retry to the owned field. These results do not predict a
 deployment's conflict rate or justify storing totals at every level. Raw native
-measurements will be linked after the new workload actually executes in CI.
+measurements are recorded below.
+
+## Qualified owned totals and contention
+
+[CI run 42391564712](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42391564712)
+qualified c51a7eed819ac2f256dcd964335a2342207cd3ac on r2.02 and r2.06, with
+journaling off and before-image journaling on. Each complete suite passed 2,372
+tests (200 skipped); each separate stress run passed 25 (four skipped). The
+[contention report](benchmarks/native-owned-sum-contention-2026-11-07.json) retains
+72 rows and all 4,320 timed commits. The
+[inventory report](benchmarks/native-inventory-location-totals-2026-11-07.json) retains
+84 rows and 2,520 samples. These workflow measurements use warehouse v3 and movement
+v2; they precede the movement-v3 timestamp index. New benchmark rows identify both
+schema revisions. Do not treat these as measurements of that later ledger index.
+
+The r2.02 runner used an AMD EPYC 9V74 and Python 3.12.12; r2.06 used an Intel Xeon
+Platinum 8370C and Python 3.12.3. Both used Pydantic 2.14.3. Different hosts and load
+prevent attributing differences to engine versions.
+
+For each row below, three bursts commit 180 increments. Each cell gives additional
+callback attempts / pooled median milliseconds. Retry counts are not the fraction
+of transactions that conflicted: one commit can retry more than once.
+
+| Engine | Journal | Locations | No totals | Root total | Root + owned totals |
+| --- | --- | --- | ---: | ---: | ---: |
+| r2.02 | Off | Same | 146 / 0.216 | 159 / 0.311 | 171 / 0.369 |
+| r2.02 | Off | Different | 163 / 0.216 | 165 / 0.329 | 170 / 0.390 |
+| r2.02 | Before-image | Same | 108 / 0.524 | 173 / 0.774 | 133 / 0.888 |
+| r2.02 | Before-image | Different | 113 / 0.483 | 152 / 0.779 | 128 / 0.888 |
+| r2.06 | Off | Same | 146 / 0.433 | 148 / 0.531 | 160 / 0.769 |
+| r2.06 | Off | Different | 156 / 0.403 | 148 / 0.530 | 153 / 0.643 |
+| r2.06 | Before-image | Same | 157 / 0.829 | 159 / 1.322 | 163 / 1.407 |
+| r2.06 | Before-image | Different | 164 / 0.832 | 145 / 1.196 | 162 / 1.470 |
+
+Totals increase measured latency here, while retry counts do not increase
+monotonically. Independent logical children already conflict on native blocks, and
+both total layouts share the root total. These results support treating totals as
+an explicit reporting/cost tradeoff, without predicting deployment conflict rates
+or claiming location totals alone cause every retry.
+
+With 250 lots per bin, equivalent warehouse-v3 transfers measured:
+
+| Engine | Journal | Partial median / p95 ms | Replace median / p95 ms |
+| --- | --- | ---: | ---: |
+| r2.02 | Off | 1.434 / 1.536 | 153.093 / 161.594 |
+| r2.02 | Before-image | 1.822 / 1.900 | 151.156 / 159.382 |
+| r2.06 | Off | 2.129 / 2.168 | 228.453 / 244.859 |
+| r2.06 | Before-image | 2.581 / 3.070 | 229.139 / 243.192 |
+
+Partial transfers use 139 gets, 36 sets, four child walks, and two index leaf
+deletions, unchanged as unrelated lots grow from 1 to 250. Replacement uses 11,949
+gets and 2,538 child walks at 250 lots; it writes the same changed nodes. This is
+evidence for bounded targeted work, not a whole-subtree deletion claim or a comparison
+with another database. Direct-native rows remain the frozen-v1 quantity-only lower
+bound, excluding ledger and invariant maintenance.
 
 ## Workload and method
 

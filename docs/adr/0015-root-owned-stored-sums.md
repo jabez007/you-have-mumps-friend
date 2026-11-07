@@ -80,3 +80,12 @@ Each stored ancestor is an intentional shared conflict point. Adding location su
 does not remove contention from an existing warehouse total, and an index can add
 its own shared blocks. Native comparisons must separate no totals, root-only totals,
 and root plus location totals. Avoid declaring totals at every level by default.
+
+[Native qualification 42391564712](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42391564712)
+passed both engines and journal modes, including owned-level restarts, concurrent
+writers, deletion races, uniqueness rollback, and historical warehouse recovery.
+[Measured comparisons](../inventory-performance.md#qualified-owned-totals-and-contention)
+retain all samples and report substantial native block conflicts even without totals.
+Latency increased with totals in that workload; retry counts were not monotonic.
+This supports explicit, measured placement of sums rather than automatic totals
+at every level. The inventory location total is a reporting example of that choice.
