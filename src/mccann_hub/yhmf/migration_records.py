@@ -31,6 +31,17 @@ def validate_targets(
     links: frozenset[references.Link],
 ) -> None:
     references.replace(store, links, links)
+    validate_target_metadata(store, registry, source, target, links)
+
+
+def validate_target_metadata(
+    store: Store,
+    registry: Registry,
+    source: ModelSpec,
+    target: ModelSpec,
+    links: frozenset[references.Link],
+) -> None:
+    """Check proposed targets without requiring their new reverse edges to exist yet."""
     for link in links:
         spec = registry.spec(link.target_model)
         if spec.global_name == target.global_name:

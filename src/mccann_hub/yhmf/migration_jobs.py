@@ -2,11 +2,14 @@
 """Shared ownership, snapshots, activation, and abort for maintenance jobs."""
 
 import hashlib
+import json
 import uuid
 from collections.abc import Callable
 from dataclasses import replace
+from typing import Any
 
 from . import migration_cleanup
+from .codecs import canonical_json
 from .errors import MigrationError, StorageError
 from .maintenance import (
     GATE,
@@ -78,6 +81,29 @@ def require_schema_operation(store: Store, status: MigrationStatus) -> None:
         or store.get(job_path(status.migration_id).child(b"operation")) is not None
     ):
         raise MigrationError("This job requires its own maintenance executor")
+
+
+def load_operation(store: Store, status: MigrationStatus) -> dict[str, Any]:
+    """Check the immutable custom operation before an executor interprets its fields."""
+    require_retained(status)
+    raw = store.get(job_path(status.migration_id).child(b"operation"))
+    if raw is None or status.operation_fingerprint is None:
+        raise MigrationError("This job requires its own maintenance executor")
+    if hashlib.sha256(raw).hexdigest() != status.operation_fingerprint:
+        raise StorageError("Maintenance operation selection does not match its checkpoint")
+    try:
+        document = json.loads(raw)
+        if (
+            not isinstance(document, dict)
+            or canonical_json(document) != raw
+            or type(document.get("format_version")) is not int
+            or document["format_version"] != 1
+            or type(document.get("kind")) is not str
+        ):
+            raise ValueError("Invalid operation header")
+    except (ValueError, TypeError, KeyError, RecursionError) as exc:
+        raise StorageError("Malformed maintenance operation selection") from exc
+    return document
 
 
 def saved_snapshots(store: Store, status: MigrationStatus) -> tuple[bytes, bytes]:

@@ -1,8 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Reviewable index reconstruction from authoritative records with an unchanged schema."""
 
-import hashlib
-import json
 from dataclasses import dataclass, field, replace
 from typing import Any
 
@@ -11,7 +9,7 @@ from pydantic import ValidationError
 from . import indexes, migration_claims, migration_cleanup, migration_jobs, references
 from .codecs import LAYOUT_VERSION, canonical_json, decode_key
 from .errors import MigrationError, SchemaMismatch, StorageError
-from .maintenance import MigrationStatus, job_path, load_status, require_owner, save_status
+from .maintenance import MigrationStatus, load_status, require_owner, save_status
 from .migration_records import check_metadata, field_nodes, validate_targets
 from .models import Model
 from .records import record_values
@@ -111,27 +109,16 @@ def _saved_spec(spec: ModelSpec, snapshot: SchemaSnapshot) -> ModelSpec:
 
 
 def _selection(store: Store, status: MigrationStatus) -> tuple[str, ...]:
-    migration_jobs.require_retained(status)
-    raw = store.get(job_path(status.migration_id).child(b"operation"))
-    if raw is None or status.operation_fingerprint is None:
+    if status.operation_fingerprint is None:
         raise MigrationError("Job is not an index rebuild")
-    if hashlib.sha256(raw).hexdigest() != status.operation_fingerprint:
-        raise StorageError("Rebuild selection does not match its checkpoint")
-    try:
-        document = json.loads(raw)
-        if (
-            canonical_json(document) != raw
-            or set(document) != {"format_version", "kind", "fields"}
-            or type(document["format_version"]) is not int
-            or document["format_version"] != 1
-            or document["kind"] != "index_rebuild"
-            or type(document["fields"]) is not list
-        ):
-            raise ValueError("Invalid rebuild operation")
-        fields = tuple(document["fields"])
-    except (ValueError, TypeError, KeyError, RecursionError) as exc:
-        raise StorageError("Malformed rebuild operation") from exc
-    return fields
+    document = migration_jobs.load_operation(store, status)
+    if (
+        set(document) != {"format_version", "kind", "fields"}
+        or document["kind"] != "index_rebuild"
+        or type(document["fields"]) is not list
+    ):
+        raise StorageError("Malformed rebuild operation")
+    return tuple(document["fields"])
 
 
 def _roots(spec: ModelSpec, plan: IndexRebuildPlan) -> tuple[Path, ...]:

@@ -691,3 +691,34 @@ serialized with other maintenance. Older clients still block globally and respec
 the same schema barrier. Unknown/corrupt active jobs fail closed for ordinary access.
 Test all edges, interrupted/resumed jobs, index rebuilds, and two-process unrelated
 CRUD with barriers on native. No metadata/layout change; existing C901 passes at ten.
+
+### Explicit record transforms, issue 20
+
+Reuse MigrationPlan, job snapshots/operation fingerprints, index-rebuild clearing,
+uniqueness reservations, counters, abort/pruning, and atomic activation. First share
+operation-document integrity checks and target-metadata validation in a refactor.
+Add an explicit named Transform(source -> target) to plan/begin/advance, with the
+same root global and key identity. Unknown formats, layout changes, and root-key
+changes remain blocked. The application owns the stable transform revision; never
+hash function bodies or silently select code from stored identifiers.
+
+Validate every source, target, old secondary entry, and proposed target reference.
+Reserve final unique claims across batches. Save per-record source/target node
+digests under hashed key addresses, including the full key to reject collisions.
+Backfill must reproduce both digests, detecting changed data and nondeterministic
+defaults before rewriting a record. Clear this model's indexes in bounded batches
+before transformation, allowing unique-value exchanges without temporary values.
+Then rewrite each record's target fields while maintaining reverse links/counts in
+that transaction. Keep source record metadata until verification and the ordinary
+retag pass. Activation publishes the target only after all counts agree.
+
+Abort is allowed before the first committed index deletion or record rewrite;
+afterward recovery requires resume or backup restore. The review document states
+that boundary. Transform exceptions roll back their batch and retain its checkpoint,
+never commit an error sentinel. Jobs carry the existing custom-operation marker,
+so older executors refuse them; ordinary databases are not converted on open.
+Source reference path bindings may differ from target bindings and must be compiled
+separately. A full rewrite removes obsolete fields/owned nodes; no staged copy of
+an aggregate is stored. Test each requested transformation with native interruption
+and resume, uniqueness, references, restarts, legacy metadata, determinism, corrupt
+digests, failed callbacks, and pruning. Existing C901 passes at ten.
