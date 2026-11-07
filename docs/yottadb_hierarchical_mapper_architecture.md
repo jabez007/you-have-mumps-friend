@@ -64,9 +64,10 @@ It will not introduce a shared Python/Go runtime prematurely.
 The framework's original source code will use **GPL-3.0-or-later**, with SPDX identifiers and a canonical license file.
 
 YottaDB and YDBPython publish AGPLv3 terms and separate upstream notices. The
-[component license page](licensing.md) links those sources. The project has not
-obtained counsel review and makes no deployment-specific representation about
-combining these components, proprietary applications, or network services.
+[component license page](licensing.md) links those sources. The project has had no
+legal review. It gives no guidance on combining these components, proprietary
+applications, or network services. See
+[#35](https://github.com/jabez007/you-have-mumps-friend/issues/35).
 
 Runtime dependencies will undergo license compatibility review. Inspiration from Odoo and Ferro does not authorize copying implementation code without checking its provenance and license.
 
@@ -516,7 +517,7 @@ Performance benchmarks must distinguish database-engine performance from mapper 
 
 **D-007:** Queries must have predictable, bounded execution plans.
 
-**D-008:** Original framework code is GPL-3.0-or-later.
+**D-008:** Original framework code, including generated M routines, is GPL-3.0-or-later.
 
 **D-009:** Ferro and Odoo are design references, not implementation dependencies.
 
@@ -539,7 +540,8 @@ Before finalizing the public API, several questions need focused prototypes:
 5. Should indexes be managed exclusively by the mapper, or can YottaDB triggers/AIM safely contribute?
 6. Which YottaDB, Python, and Linux versions will CI officially support?
 7. What additional metadata would a native Go implementation need?
-8. What licensing guidance should the project provide for downstream applications?
+8. Licensing guidance is resolved by [#35](https://github.com/jabez007/you-have-mumps-friend/issues/35):
+   publish component license facts and no guidance on downstream deployments.
 9. What should a per-model maintenance gate do at its edges, such as references and
    multi-model transactions? See [#21](https://github.com/jabez007/you-have-mumps-friend/issues/21).
 10. Record-value choice is resolved by [ADR 0012](adr/0012-retain-tagged-record-values.md):

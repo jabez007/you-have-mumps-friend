@@ -132,4 +132,4 @@ imported as `mccann_hub.yhmf`.
 
 YottaDB and YDBPython have separate upstream AGPLv3 notices. See the
 [component licenses](https://github.com/jabez007/you-have-mumps-friend/blob/main/docs/licensing.md)
-for their terms. This repository provides no legal advice or counsel-reviewed deployment guidance.
+for their terms. This repository gives no legal advice or deployment guidance.

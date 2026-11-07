@@ -30,7 +30,7 @@ New here? Start with [get started](getting-started.md), then read
 - [Known limitations](known-limitations.md)
 - [Storage format](storage-format.md): the byte contract for keys, values, and metadata.
 - [Schema compatibility](schema-compatibility.md): when a schema change is compatible.
-- [Component licenses](licensing.md): original source and upstream terms; legal review pending.
+- [Component licenses](licensing.md): the license of each component, with links to its terms.
 - [Changelog](../CHANGELOG.md)
 
 ## Understand the design
