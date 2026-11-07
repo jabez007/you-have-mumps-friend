@@ -182,3 +182,8 @@ ownednested
  write status,"|",$tlevel,!
  trollback
  quit
+temporal
+ new cfg
+ do config^YHMFTAPI(.cfg)
+ write $$valid^YHMFTAPI(^YHMFTestStorage("writerInput","day"),"day",.cfg),"|",$$valid^YHMFTAPI(^YHMFTestStorage("writerInput","instant"),"instant",.cfg),!
+ quit

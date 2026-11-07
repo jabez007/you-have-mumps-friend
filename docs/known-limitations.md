@@ -125,7 +125,7 @@ These features remain outside the current implementation:
   [ADR 0009](adr/0009-model-scoped-maintenance.md).
 - Raw M SET/KILL bypasses validation, indexes, references, and stored sums. Exported
   [schema-bound M routines](guides/m-access.md#export-an-explicit-m-writer) maintain
-  a qualified ASCII str/int/Decimal, finite str/int choice, and reference subset, with owning or
+  a qualified ASCII str/int/Decimal, finite str/int choice, date/UTC datetime, and reference subset, with owning or
   caller-participating transactions. Keyed hierarchies support leaf-child operations
   under existing roots, including exact stored sums. Whole aggregate construction,
   non-leaf mutations, embedded/nullable containers, custom validators, and temporal

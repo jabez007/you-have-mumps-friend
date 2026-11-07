@@ -4,6 +4,9 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Qualifies generated M date and UTC microsecond datetime inputs, exact calendar
+  bounds, and equality/unique indexes using the existing temporal-v1 bytes.
+
 - Qualifies generated M writers for finite ASCII string and 18-digit integer
   Enum/Literal domains, including owned children, equality/unique indexes, and
   bounded escaped constants. Existing choice storage and fingerprints are unchanged.

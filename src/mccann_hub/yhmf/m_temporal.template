@@ -1,0 +1,29 @@
+ ; SPDX-License-Identifier: GPL-3.0-or-later
+ ; temporal-v1 uses fixed-width ASCII dates and UTC microsecond instants.
+tvalid(value,field,cfg)
+ new good
+ if cfg("tag",field)="D",'$$calendar(value) quit 0
+ if cfg("tag",field)="T" do  quit:'$get(good) 0
+ . new clock
+ . set good=0
+ . if $zlength(value)'=27 quit
+ . if '$$calendar($extract(value,1,10)) quit
+ . if $extract(value,11)'="T"!($extract(value,27)'="Z") quit
+ . set clock=$extract(value,12,26)
+ . if clock'?2N1":"2N1":"2N1"."6N quit
+ . if +$extract(clock,1,2)>23!(+$extract(clock,4,5)>59)!(+$extract(clock,7,8)>59) quit
+ . set good=1
+ if $data(cfg("ge",field)),cfg("ge",field)]value quit 0
+ if $data(cfg("gt",field)),'(value]cfg("gt",field)) quit 0
+ if $data(cfg("le",field)),value]cfg("le",field) quit 0
+ if $data(cfg("lt",field)),'(cfg("lt",field)]value) quit 0
+ quit 1
+calendar(value)
+ new year,month,day,maximum
+ if $zlength(value)'=10 quit 0
+ if value'?4N1"-"2N1"-"2N quit 0
+ set year=+$extract(value,1,4),month=+$extract(value,6,7),day=+$extract(value,9,10)
+ if year<1!(month<1)!(month>12)!(day<1) quit 0
+ set maximum=$piece("31,28,31,30,31,30,31,31,30,31,30,31",",",month)
+ if month=2,year#4=0,(year#100'=0)!(year#400=0) set maximum=29
+ quit day'>maximum

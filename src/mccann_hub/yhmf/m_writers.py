@@ -19,6 +19,7 @@ def _template(name: str) -> tuple[str, str]:
     for marker, filename in (
         ("@MAINTENANCE@", "m_maintenance.template"),
         ("@DECIMAL@", "m_decimal.template"),
+        ("@TEMPORAL@", "m_temporal.template"),
         ("@SUMMATH@", "m_sum_math.template"),
         ("@SHA256@", "m_sha256.template"),
         ("@HIERARCHY@", "m_hierarchy.template"),

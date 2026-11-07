@@ -82,6 +82,7 @@ valid(value,field,cfg,stored)
  if $data(cfg("choicecount",field)),'$$choice(value,field,.cfg) quit 0
  if cfg("tag",field)="r" quit $$refvalid(value,field,.cfg)
  if cfg("tag",field)="d" quit $$dvalid(value,field,.cfg,+$get(stored))
+ if (cfg("tag",field)="D")!(cfg("tag",field)="T") quit $$tvalid(value,field,.cfg)
  if cfg("tag",field)="s" do  quit good
  . set good=($length(value)'<cfg("min",field))&($length(value)'>cfg("max",field))
  . for i=1:1:$length(value) if $ascii(value,i)>127 set good=0 quit
@@ -235,6 +236,7 @@ quote(value)
 @REFERENCES@
 @SCHEMA@
 @DECIMAL@
+@TEMPORAL@
 @SUMMATH@
 @SHA256@
 @HIERARCHY@

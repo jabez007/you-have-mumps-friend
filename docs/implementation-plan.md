@@ -1552,3 +1552,19 @@ and the existing benchmark archive. Report hot, cold, churn, Python controls, an
 shared/separate Product bursts without claiming that digest caching removes conflicts
 or improves cold hashing. The native matrix passed both engines, both journaling
 modes, and stress. No production change or additional abstraction is needed.
+
+### Qualify canonical M temporal scalars, issue 55
+
+Reuse temporal-v1 calendar/UTC codecs, canonical temporal bounds, scalar tags,
+quote/token encoding, old(), and existing transactional index maintenance. Add a
+small calendar validator for Gregorian years 0001–9999 and canonical UTC timestamps
+with exactly six fractional digits. Compare canonical temporal bounds lexically,
+without converting dates/timestamps to native numbers. M accepts canonical wire
+text only; Python retains its aware-offset normalization. Reject nullable, ordered,
+custom-validator, or additional temporal rules until separately qualified.
+
+Both flat and owned compilation use the same scalar rules. No schema, record, or
+index conversion occurs. Differential tests cover calendar extremes, leap centuries,
+UTC precision, exact bounds, unique rollback, existing Python offsets, and malformed
+stored values. Add generated valid date/instant cases. Configured C901 passes at ten
+before implementation; keep that threshold and add no alternative persistence codec.

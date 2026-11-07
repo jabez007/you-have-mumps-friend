@@ -62,7 +62,22 @@ def _decimal_config(name: str, rule: dict[str, Any]) -> list[str]:
     return result
 
 
+def _temporal_config(name: str, rule: dict[str, Any]) -> list[str]:
+    bounds = {"temporal_" + key: code for key, code in _BOUNDS.items()}
+    allowed = {"codec", "type", "format", "default", "default_factory", "yhmf", "strict", *bounds}
+    if rule.keys() - allowed:
+        raise SchemaError(f"M writer cannot enforce the temporal declaration of field {name!r}")
+    tag = "D" if rule["codec"] == "date-v1" else "T"
+    result = [_set("tag", name, value=tag)]
+    for constraint, code in bounds.items():
+        if constraint in rule:
+            result.append(_set(code, name, value=rule[constraint]))
+    return result
+
+
 def _scalar_config(name: str, rule: dict[str, Any], policy: dict[str, Any]) -> list[str]:
+    if rule.get("codec") in {"date-v1", "datetime-utc-v1"}:
+        return _temporal_config(name, rule)
     if rule.get("codec") == "decimal":
         return _decimal_config(name, rule)
     if rule.keys() - _RULES or rule.get("codec") not in {"str", "int"}:

@@ -376,8 +376,8 @@ Values outside that domain return unsupported. No schema or record conversion
 occurs. Unsupported Decimal constraints, including multiple_of and bounds finer
 than the unit precision, fail export rather than being ignored.
 
-Other scalar extensions remain separate: nullable values, date/time values,
-lists, non-ASCII strings, and arbitrary patterns still fail
+Other scalar extensions remain separate: nullable values, lists, non-ASCII
+strings, and arbitrary patterns still fail
 export. For owned trees, see [mutate a keyed hierarchy](#mutate-a-keyed-hierarchy).
 
 ## Finite string and integer choices
@@ -399,6 +399,23 @@ unsupported constraints still fail export. Python Enum fallback hooks are not ru
 Regenerate source to use this capability. Existing choice schemas and record/index
 bytes are unchanged. Changing an application's plain string field to a finite choice
 remains a schema change requiring its normal reviewed migration.
+
+## Calendar and UTC input contract
+
+Date fields accept YYYY-MM-DD in the proleptic Gregorian calendar, years 0001–9999.
+Datetime fields accept YYYY-MM-DDTHH:MM:SS.ffffffZ with exactly six fractional digits
+and UTC Z. Hours are 00–23; minutes and seconds are 00–59. Leap seconds, naive text,
+offset spellings, shortened dates, and variable fractional precision return invalid.
+Python still accepts representable aware offsets and stores their canonical UTC
+instant; M requires that canonical text as input. For example, use
+input("occurred_at")="2026-11-07T12:30:00.000000Z".
+
+Calendar/UTC bounds use exact lexical comparisons of canonical text. Equality and
+unique indexes use the existing temporal-v1 bytes, D: for dates and T: for instants.
+Existing Python temporal values can be replaced or deleted without conversion;
+invalid calendar/UTC stored text returns corrupt. Custom validators, nullable values,
+and ordered temporal indexes remain separately unqualified. Regenerate source for
+the new writer capability; schema snapshots and record/index layouts do not change.
 
 ## Raw writes from M
 
