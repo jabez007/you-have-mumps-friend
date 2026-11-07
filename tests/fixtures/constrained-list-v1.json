@@ -1,0 +1,141 @@
+{
+  "schema": {
+    "codec_version": 1,
+    "declaration": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "codec": "str",
+          "type": "string",
+          "yhmf": {
+            "primary_key": true
+          }
+        },
+        "labels": {
+          "codec": "scalar-list-v1",
+          "items": {
+            "codec": "str",
+            "maxLength": 8,
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "values": {
+          "codec": "scalar-list-v1",
+          "items": {
+            "anyOf": [
+              {
+                "codec": "int",
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "maximum": "1E2",
+            "minimum": "0"
+          },
+          "type": "array",
+          "yhmf": {
+            "index": true
+          }
+        }
+      },
+      "required": [
+        "id",
+        "labels",
+        "values"
+      ],
+      "type": "object"
+    },
+    "format_version": 2,
+    "global": "^YHMFTestProduct",
+    "key": "id",
+    "layout": 1,
+    "version": 1
+  },
+  "nodes": [
+    [
+      [
+        "%m",
+        "layout"
+      ],
+      "1"
+    ],
+    [
+      [
+        "%m",
+        "schema"
+      ],
+      "1"
+    ],
+    [
+      [
+        "%m",
+        "type"
+      ],
+      "YHMFTestProduct"
+    ],
+    [
+      [
+        "%m",
+        "fingerprint"
+      ],
+      "d4f7ae9c0a202a1acd866f0f10d5aebbc6cc884f7fd33f78fa253d1a88d0970a"
+    ],
+    [
+      [
+        "id"
+      ],
+      "s:A"
+    ],
+    [
+      [
+        "values"
+      ],
+      "l:3"
+    ],
+    [
+      [
+        "values",
+        "1"
+      ],
+      "i:0"
+    ],
+    [
+      [
+        "values",
+        "2"
+      ],
+      "n:"
+    ],
+    [
+      [
+        "values",
+        "3"
+      ],
+      "i:100"
+    ],
+    [
+      [
+        "labels"
+      ],
+      "l:2"
+    ],
+    [
+      [
+        "labels",
+        "1"
+      ],
+      "s:\u96ea"
+    ],
+    [
+      [
+        "labels",
+        "2"
+      ],
+      "s:x"
+    ]
+  ]
+}

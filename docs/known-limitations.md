@@ -82,7 +82,7 @@ deferred uniqueness is not supported. See [the example](guides/indexes-and-queri
 
 These features remain outside the current implementation:
 
-- Nested/model/reference lists, Annotated list-item declarations, arbitrary `dict`, and unions
+- Nested/model/reference lists, arbitrary `dict`, and ambiguous unions
   other than `| None`. [#44](https://github.com/jabez007/you-have-mumps-friend/issues/44)
 - Owned-level stored sums. [#41](https://github.com/jabez007/you-have-mumps-friend/issues/41)
   General computed callbacks and reference-based dependencies are outside that issue's scope.

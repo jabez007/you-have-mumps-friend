@@ -5,7 +5,7 @@ import sys
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path as FilePath
-from typing import Annotated, Literal
+from typing import Literal
 from uuid import UUID
 
 import pytest
@@ -227,7 +227,6 @@ def test_scalar_list_length_and_cross_field_validation_are_not_bypassed(store):
         list[list[int]],
         list[Reference[BudgetRoot]],
         list[BudgetChild],
-        list[Annotated[int, Field(ge=0)]],
     ],
 )
 def test_nested_or_unsupported_list_items_are_rejected(annotation):

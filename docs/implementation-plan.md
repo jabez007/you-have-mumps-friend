@@ -1272,6 +1272,24 @@ mypy probes must demonstrate field typos, wrong values, and wrong root types; na
 and memory tests compare keyword and typed queries. Existing touched functions pass
 the configured C901 maximum of ten; keep that threshold unchanged.
 
+### Container decisions and constrained list items, issue 44
+
+Scalar lists already validate through the owner's field adapter, encode individual
+tagged nodes, and include their item schema in migration validation comparisons.
+Accept Annotated scalar items by extracting their FieldInfo once through a shared
+scalar_lists helper. Reuse canonical rule compilation for their constraints; retain
+scalar-list-v1 bytes, bounds, equality semantics, and existing plain-list snapshots.
+Handle constraints inside and outside nullable item declarations consistently.
+No item codec or parallel validation path is needed.
+
+Keep nested lists, arbitrary maps, model/reference lists, and ambiguous unions
+rejected. Children with a declared wrapper model supplies keyed identity, ownership,
+validation, and reference semantics for concrete workloads. Record each decision in
+an ADR and improve rejection messages with that alternative. A new constrained item
+changes canonical metadata and requires explicit migration; test both validation
+failure recovery and a named correcting transform. Add a golden fixture and qualify
+it on both supported Pydantic versions. Existing touched functions pass C901 <= 10.
+
 Before reference support, share schema constants and M schema/record-metadata checks
 without changing their validation or stored bytes. This keeps source and referenced
 target bindings on the same implementation, including exact legacy snapshots.

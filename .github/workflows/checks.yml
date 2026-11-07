@@ -52,7 +52,7 @@ jobs:
           tests/test_inventory_timestamp_migration.py tests/test_inventory_warehouse_migration.py
           tests/test_uuid_fields.py
           tests/test_choice_fields.py
-          tests/test_scalar_lists.py
+          tests/test_scalar_lists.py tests/test_constrained_lists.py tests/test_query_fields.py
           tests/test_schema_variant_migrations.py
           tests/test_delete_policies.py
           tests/test_ordered_indexes.py tests/test_ordered_queries.py tests/test_query_intersections.py

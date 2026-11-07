@@ -20,6 +20,7 @@ from .choices import Choices, compile_choices
 from .codecs import LAYOUT_VERSION
 from .errors import SchemaError
 from .models import Children, Model, Reference
+from .scalar_lists import item_declaration
 from .schemas import canonical_json
 from .selectors import ReferenceFactory, reference_factory
 from .storage import Path
@@ -265,7 +266,10 @@ def _field_type_spec(
         return FieldSpec(name, "embedded", _node_spec(annotation, keyed=False, ancestors=ancestors))
     choices = compile_choices(annotation)
     if annotation not in _SCALARS and choices is None:
-        raise SchemaError("Unsupported field type; use scalar, Model, or Children[Model]")
+        raise SchemaError(
+            "Unsupported field type; use a nullable scalar, embedded Model, or "
+            "Children[Model] with declared key/value fields for mappings and variants"
+        )
     return FieldSpec(name, "scalar", choices=choices)
 
 
@@ -273,10 +277,15 @@ def _list_spec(annotation: Any, name: str) -> FieldSpec:
     args = get_args(annotation)
     if len(args) != 1:
         raise SchemaError("Scalar lists require an explicit item type")
-    item_type = scalar_type(args[0])
+    declaration, _ = item_declaration(args[0])
+    item_type = declaration.annotation
     choices = compile_choices(item_type)
     if item_type not in _SCALARS and choices is None:
-        raise SchemaError("Scalar list items require plain scalar or Enum/Literal types")
+        raise SchemaError(
+            "Scalar list items require scalar or Enum/Literal types, optionally Annotated "
+            "or nullable; use Children[Model] with declared fields for nested values "
+            "and references"
+        )
     return FieldSpec(name, "list", item=FieldSpec(name, "scalar", choices=choices))
 
 

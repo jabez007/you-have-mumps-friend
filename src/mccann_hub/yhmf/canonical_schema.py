@@ -29,6 +29,7 @@ from . import temporal
 from .codecs import LAYOUT_VERSION, canonical_json
 from .errors import SchemaError
 from .models import Model, Reference
+from .scalar_lists import item_declaration
 
 if TYPE_CHECKING:
     from .registry import FieldSpec, NodeSpec
@@ -211,15 +212,12 @@ def _scalar_field(field: "FieldSpec", annotation: Any) -> dict[str, Any]:
 
 
 def _list_schema(item: "FieldSpec", annotation: Any) -> dict[str, Any]:
-    item_type = get_args(annotation)[0]
-    nullable = get_origin(item_type) in (Union, types.UnionType) and type(None) in get_args(
-        item_type
-    )
-    if nullable:
-        item_type = next(value for value in get_args(item_type) if value is not type(None))
+    declaration, nullable = item_declaration(get_args(annotation)[0])
+    item_type = declaration.annotation
     result = item.choices.schema() if item.choices is not None else _scalar(item_type)
     if nullable:
         result = {"anyOf": [result, {"type": "null"}]}
+    result.update(_rules(declaration, temporal=item_type in (date, datetime)))
     return {"type": "array", "codec": "scalar-list-v1", "items": result}
 
 

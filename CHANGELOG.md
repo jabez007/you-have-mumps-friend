@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Accepts Annotated constraints on scalar-list items with canonical schema rules,
+  explicit migration checks, and unchanged scalar-list-v1 storage. Other container
+  declarations retain explicit owned-model alternatives.
+
 - Adds typed query fields, equality predicates, and explicit each() declaration
   selectors for nested collections. Existing keyword queries and storage stay intact.
 

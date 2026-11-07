@@ -93,8 +93,10 @@ subscripts 1 through N, each using its ordinary scalar tag. Order, duplicates, a
 null items are preserved; n: is a null list, l:0 is empty, and a missing field is
 corrupt. Lists have at most 1000 items and count toward the 10,000-node root budget.
 Reads verify the marker, consecutive canonical ordinals, and absence of nested item
-nodes. Only supported plain scalar and finite-choice items are accepted; nested
-containers, models, references, and Annotated item declarations are rejected.
+nodes. Supported scalar and finite-choice items may be nullable or Annotated with
+Pydantic constraints. Item rules are recorded in canonical metadata and run through
+the existing owner field adapter. Nested containers, models, and references use
+Children[Model] wrappers instead; see [ADR 0016](adr/0016-container-field-decisions.md).
 Whole-field constraints and custom validators still run through existing adapters.
 
 Equality indexes compare the complete ordered list using a canonical JSON array
@@ -104,6 +106,7 @@ key-size limits can reject long indexed lists even when the record itself fits.
 Patches compare field node maps, setting changed ordinals and deleting only removed
 ones. Net growth across a patch group is checked once per root before any writes.
 New list fields and item-type changes require an explicit named record transform;
+item-constraint changes require explicit validation migration or a correcting transform.
 there is no automatic list-default backfill in the initial implementation. Existing
 list-field validation/index revisions use ordinary migration validation. The golden
 scalar-list-v1.json fixture fixes schema and physical nodes without altering prior
