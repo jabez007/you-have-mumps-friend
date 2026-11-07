@@ -4,6 +4,9 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Detects missing or wrong-owner unique claims during root equality queries as well
+  as occurrence projections and writes.
+
 - Adds opt-in ordered-v1 index storage with native numeric/temporal ordering,
   escaped string values, explicit numeric limits, and nulls last. Reuses equality,
   uniqueness, patch, migration, and rebuild paths. Query range APIs remain separate.

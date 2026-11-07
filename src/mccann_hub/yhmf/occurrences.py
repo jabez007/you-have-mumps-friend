@@ -218,8 +218,7 @@ def _indexed(
     )
     if entry.path != path or entry.location != raw:
         raise StorageError("Index occurrence identity does not match its record")
-    if entry.claim_path is not None and tx.store.get(entry.claim_path) != entry.claim:
-        raise StorageError("Unique claim does not match its indexed occurrence")
+    indexes.validate_claim(tx.store, entry)
     cursor = encode_cursor(identity, path.subscripts[-2], path.subscripts[-1])
     return Occurrence(key, location.at, definition.name, record, cursor)
 
@@ -270,6 +269,7 @@ def validate_root(
     for entry in entries:
         if tx.store.get(entry.path) != entry.location or tx.store.children(entry.path, limit=1):
             raise StorageError("Index occurrence location is missing or corrupt")
+        indexes.validate_claim(tx.store, entry)
 
 
 def _inverse(

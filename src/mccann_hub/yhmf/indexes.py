@@ -147,12 +147,17 @@ def entries_at(spec: ModelSpec, root: Path, values: Iterable[FieldValue]) -> fro
     return frozenset(result)
 
 
+def validate_claim(store: Store, entry: Entry) -> None:
+    """Verify the exact owner of an expected unique occurrence without changing it."""
+    if entry.claim_path is not None and store.get(entry.claim_path) != entry.claim:
+        raise StorageError("Unique claim is missing or corrupt")
+
+
 def _validate_old(store: Store, old: frozenset[Entry]) -> None:
     for entry in old:
         if store.get(entry.path) != entry.location:
             raise StorageError("A secondary index entry is missing or corrupt")
-        if entry.claim_path is not None and store.get(entry.claim_path) != entry.claim:
-            raise StorageError("A unique index claim is missing or corrupt")
+        validate_claim(store, entry)
 
 
 @dataclass(frozen=True)

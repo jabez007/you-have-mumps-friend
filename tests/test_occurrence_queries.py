@@ -152,7 +152,9 @@ def test_occurrence_reads_do_not_bypass_validation_of_other_owner_fields(store):
     assert not any(method in {"set", "delete"} for method, _ in observed.operations)
 
 
-def test_occurrence_reads_check_the_unique_claim(store):
+@pytest.mark.parametrize("operation", ["all", "occurrences"])
+@pytest.mark.parametrize("damage", ["missing", "wrong_owner"])
+def test_indexed_reads_check_the_unique_claim(store, operation, damage):
     db, _ = setup(store)
     db.patch(Warehouse, "W0", at=("bins", "A", "lots", "0"), changes={"serial": "claimed"})
     spec = db.registry.spec(Warehouse)
@@ -160,6 +162,11 @@ def test_occurrence_reads_check_the_unique_claim(store):
     entry = next(
         e for e in indexes.entries(spec, root, db.get(Warehouse, "W0")) if e.claim_path is not None
     )
-    store.delete_tree(entry.claim_path)
+    if damage == "missing":
+        store.delete_tree(entry.claim_path)
+    else:
+        claim = json.loads(entry.claim)
+        claim[0] = "s:other"
+        store.set(entry.claim_path, json.dumps(claim, separators=(",", ":")).encode("ascii"))
     with pytest.raises(StorageError, match="Unique claim"):
-        db.query(Warehouse).where(**{"bins.lots.serial": "claimed"}).occurrences()
+        getattr(db.query(Warehouse).where(**{"bins.lots.serial": "claimed"}), operation)()

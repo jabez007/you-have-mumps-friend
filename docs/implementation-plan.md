@@ -936,3 +936,14 @@ executor. Rebuild reviews compare codec selections as well as fields/uniqueness.
 The existing rebuild review's tuple uniqueness membership can become quadratic for
 large declarations; no such overhead has been measured, so leave that cleanup out
 of this codec change.
+
+### Share concrete index validation before query expansion, issue 15
+
+Existing occurrence projection validates an indexed owner and unique claim; root
+equality validation checks exact occurrence sets but omits the corresponding unique
+claim. Reproduce the missing-claim difference through public all/occurrences calls.
+Centralize claim checking in indexes, reuse it for writes and both read shapes, and
+separate indexed-owner reading from cursor/projection construction. Preserve equality
+cursor bytes and bounded owner reads. This gives ordered scans the same deep read
+seam without a parallel integrity implementation. Add the deterministic regression
+before fixing it; existing C901 passes at ten.
