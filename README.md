@@ -74,9 +74,10 @@ metadata nodes:
 
 - **Ownership is part of the data model.** Owned records are stored under their parent. A
   patch to one lot writes that lot's changed nodes, however many other lots exist.
-- **M code can reach the data.** A plain `zwrite` or `$order` loop sees every record. For
-  flat models, YHMF [exports M routines](https://github.com/jabez007/you-have-mumps-friend/blob/main/docs/guides/m-access.md#export-an-explicit-m-writer)
-  that validate each write and update its indexes in one transaction.
+- **M code can reach the data.** A plain `zwrite` or `$order` loop sees every record. YHMF
+  [exports M routines](https://github.com/jabez007/you-have-mumps-friend/blob/main/docs/guides/m-access.md#export-an-explicit-m-writer)
+  for flat models and for the leaf children of keyed hierarchies. Each routine validates
+  its write and updates indexes, references, counts, and stored sums in one transaction.
   [Raw writes](https://github.com/jabez007/you-have-mumps-friend/blob/main/docs/guides/m-access.md#raw-writes-from-m)
   bypass those checks.
 - **Queries have bounded plans.** A filter on an unindexed field raises `QueryError`, and
@@ -92,12 +93,12 @@ for release boundaries.
 
 | Area | Works today | Not yet |
 | --- | --- | --- |
-| Models | Primitive scalars, dates, UTC datetimes, UUID values, Enum/Literal choices, scalar lists, optional fields, embedded objects, keyed children, Python field inheritance, virtual computed values, root Decimal stored sums | General compute callbacks, owned-level sums, shared-global variants |
+| Models | Primitive scalars, dates, UTC datetimes, UUID values, Enum/Literal choices, scalar lists, optional fields, embedded objects, keyed children, Python field inheritance, virtual computed values, root and owned Decimal stored sums | General compute callbacks, sums of derived sums, shared-global variants |
 | Relationships | Enforced references, explicit resolution, bounded inverse reads, owned many-to-many links, bounded `restrict`/`set_null`/`cascade` deletion | Unbounded or background cascades |
-| Queries | Indexed equality, bounded predicate intersections, ordered range/prefix/ascending reads, unique indexes, root and child paging, occurrence projections, collection counts | Descending order, ordered root cursors |
+| Queries | Indexed equality, bounded predicate intersections, ordered range/prefix reads in either direction, ordered root cursors, typed query fields, unique indexes, root and child paging, occurrence projections, collection counts | Filters on unindexed fields, by design |
 | Writes | Whole-record `save`, scalar `patch`, explicit `patch_many` groups, child insert and delete, restart-safe transactions | Change tracking, callback-wide deferred unique checks |
 | Migrations | Scalar defaults, index changes, validation-only revisions, explicit record transforms, resume after interruption, model-scoped access | Root identity/layout changes; only one maintenance job at a time |
-| M access | Read every node, generated writer routines for flat `str`/`int` models with equality and unique indexes | Generated writers for other scalar types, references, owned trees, and multi-record transactions |
+| M access | Read every node, generated writer routines for flat models with ASCII `str`, `int`, `Decimal`, and reference fields, leaf-child insert/patch/delete in keyed hierarchies, caller-transaction participants | Root and non-leaf hierarchy writes, other scalar types, embedded objects |
 
 [Known limitations](https://github.com/jabez007/you-have-mumps-friend/blob/main/docs/known-limitations.md) lists current defects and their workarounds.
 Read it before you build on this project.

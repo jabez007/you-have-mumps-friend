@@ -50,6 +50,10 @@ New here? Start with [get started](getting-started.md), then read
   - [0010 Explicit record transforms](adr/0010-explicit-record-transforms.md)
   - [0011 Bounded reference deletion](adr/0011-bounded-reference-deletion.md)
   - [0012 Tagged records and independent ordered indexes](adr/0012-retain-tagged-record-values.md)
+  - [0013 Schema-bound explicit M writers](adr/0013-explicit-m-writer-contract.md)
+  - [0014 Resumable adoption with an explicitly absent source schema](adr/0014-resumable-initial-adoption.md)
+  - [0015 Root-owned stored Decimal sums](adr/0015-root-owned-stored-sums.md)
+  - [0016 Constrained scalar lists and explicit owned containers](adr/0016-container-field-decisions.md)
 
 ## Check the evidence
 

@@ -78,6 +78,28 @@ Unique constraints apply immediately to ordinary operations. Use the explicit
 patch_many group to exchange unique values in one validated transition. Callback-wide
 deferred uniqueness is not supported. See [the example](guides/indexes-and-queries.md#exchange-unique-values).
 
+## Open defects
+
+- Generated M patch and delete return `corrupt` for a record whose stored values
+  Python accepts but the M input subset does not. Examples are a Decimal with more
+  trailing zeros than its `decimal_places`, such as `1.5000000` for six places, a
+  non-ASCII string, or an integer over 18 digits. The record is not damaged. Change
+  or delete it through Python. To keep Decimal results writable from M, quantize them
+  to the declared places before saving.
+  [#49](https://github.com/jabez007/you-have-mumps-friend/issues/49)
+- A failing M participant (`inserttx`, `patchchildtx`, and the other `*tx` entry
+  points) raises `%YDB-E-TRESTNOT` inside a plain `tstart`, instead of returning its
+  status. The transaction still rolls back. Start the caller's transaction with
+  `tstart ()` or `tstart ():serial`.
+  [#50](https://github.com/jabez007/you-have-mumps-friend/issues/50)
+- `all()` on an ordered selection raises `QueryError` above about 500 records with
+  distinct values, because each value costs two of the 1,000 index visits. Keep the
+  limit at 500 or less, or use `page()` and follow its cursor.
+  [#51](https://github.com/jabez007/you-have-mumps-friend/issues/51)
+- A descending ordered cursor is accepted by a query with a different lower bound.
+  Results stay inside the receiving query's range. Pass each cursor only to the query
+  that produced it. [#52](https://github.com/jabez007/you-have-mumps-friend/issues/52)
+
 ## Missing features
 
 These features remain outside the current implementation:
@@ -123,10 +145,22 @@ These features remain outside the current implementation:
   caller-participating transactions. Keyed hierarchies support leaf-child operations
   under existing roots, including exact stored sums. Whole aggregate construction,
   non-leaf mutations, embedded/nullable containers, custom validators, and temporal
-  scalar inputs remain outside this M contract. Unsupported declarations stay rejected.
+  scalar inputs remain outside this M contract
+  ([#53](https://github.com/jabez007/you-have-mumps-friend/issues/53),
+  [#54](https://github.com/jabez007/you-have-mumps-friend/issues/54),
+  [#55](https://github.com/jabez007/you-have-mumps-friend/issues/55)).
+  Unsupported declarations stay rejected.
   Read-only GlobalView mappings can project foreign globals without adopting them.
   Newly generated routines validate maintenance scope;
   older exported source retains its conservative global-gate check until regenerated.
+- Generated M writes are slower than the same Python writes. On one 12-core host, an
+  inventory balance insert and delete took 14.8 to 29.2 ms from M and 1.6 ms from
+  Python. The pure-M SHA-256 location digests take most of the M time. [#47](https://github.com/jabez007/you-have-mumps-friend/issues/47)
+- The inventory example stores every bin and balance under its warehouse root. Each
+  child insert walks the warehouse's locations and bins to check the 10,000-node root
+  budget, in Python and in M, so insert cost grows with the number of bins. By count of
+  declared nodes, a warehouse with 1,000 bins has room for about 1,380 balances.
+  [#48](https://github.com/jabez007/you-have-mumps-friend/issues/48)
 - Equality index tokens preserve typed equality, not numeric order. Opt-in ordered-v1
   indexes provide native numeric/temporal and escaped string ordering within their
   declared domains. M readers must follow the selected index codec; see

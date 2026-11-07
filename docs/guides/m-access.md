@@ -340,7 +340,7 @@ than the unit precision, fail export rather than being ignored.
 
 Other scalar extensions remain separate: nullable values, date/time values,
 Enum/Literal fields, lists, non-ASCII strings, and arbitrary patterns still fail
-export. Owned trees remain a separate extension.
+export. For owned trees, see [mutate a keyed hierarchy](#mutate-a-keyed-hierarchy).
 
 ## Raw writes from M
 
