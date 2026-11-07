@@ -244,12 +244,12 @@ def test_failed_m_child_changes_leave_all_data_and_metadata_unchanged(
 
 
 @pytest.mark.native
-def test_existing_whole_m_labels_refuse_hierarchical_replacement_without_changes(
+def test_hierarchical_labels_refuse_incomplete_insert_and_unsupported_replace(
     store, owned_writer
 ):
     _, run, _, _ = owned_writer
     before = dump(store, namespaces())
-    assert run("insert", {"id": "NEW"}) == "operation"
+    assert run("insert", {"id": "NEW"}) == "invalid"
     assert run("replace", {"id": "MAIN"}) == "operation"
     assert run("delete", {"id": "MAIN"}) == "operation"
     assert dump(store, namespaces()) == before
