@@ -888,3 +888,32 @@ and actual children after each run. Use only disposable native CI databases; nev
 assert a performance threshold or infer a block cause from retry counts alone.
 Preserve raw diagnostics for the eventual report. No mapper algorithm change is
 justified until these experiments identify a cause. Existing C901 passes at ten.
+
+### Versioned ordered equality indexes, first slice of issue 15
+
+Reuse FieldSpec, Definition/index_root, one Entry per field occurrence, uniqueness,
+normal secondary replacement, occurrence checks, rebuilds, and named transforms.
+Add explicit Field(ordered=True), implying an index and recording ordered-v1 in the
+field's index contract. Keep all existing equality-v1 schema bytes and value keys.
+Ordered fields use the same index/claim namespaces and entry identities, changing
+only their value subscript. This preserves the shared index maintenance machinery.
+
+Qualify native numeric keys for int/Decimal values with at most 18 significant digits
+and nonzero magnitudes from 1E-18 through values below 1E18. Reject values outside
+this initial domain before writes; never round or silently change collation. Dates
+and UTC datetimes use their existing fixed ISO encodings. String keys retain a
+nonnumeric prefix with order-preserving NUL/control-byte escaping; null sorts last.
+Initially reject float, bool, reference, and list ordering. Equality indexes remain
+available for their full existing domains. Compile choice-domain support explicitly.
+
+A new ordered index on a previously unindexed scalar can reuse normal additive
+migration. Changing an existing index's codec requires an explicit named transform,
+which already clears, rebuilds, verifies, retags, and activates safely. Ordinary
+rebuilds retain the installed codec, and review output must identify ordered codecs.
+Test exact encoding/order goldens, domain boundaries and Decimal contexts, nulls,
+Unicode/control strings, equality/uniqueness, patches, rollback/restarts, migration,
+rebuild recovery, and real native collation. Only then add bounded range/prefix/sorted
+and multi-predicate query plans; do not claim those APIs in this prerequisite slice.
+
+First extract the existing field-index declaration checks from _field_spec without
+changing behavior, keeping secondary declaration rules cohesive and C901 at ten.

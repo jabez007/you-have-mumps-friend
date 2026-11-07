@@ -183,15 +183,15 @@ def _field_spec(model: type[Model], name: str, ancestors: tuple[type[Model], ...
     choices = spec.choices if spec.item is None else spec.item.choices
     if choices is not None and choices.kind == "enum" and model.model_config.get("use_enum_values"):
         raise SchemaError("Enum fields do not support use_enum_values=True")
+    spec = _indexed_spec(spec, metadata)
+    return replace(spec, adapter=field_adapter(model, name) if spec.node is None else None)
+
+
+def _indexed_spec(spec: FieldSpec, metadata: dict[str, Any]) -> FieldSpec:
     indexed, unique = bool(metadata.get("index")), bool(metadata.get("unique"))
     if (indexed or unique) and spec.kind not in {"scalar", "list", "reference"}:
         raise SchemaError("Indexes require scalar, scalar list, or Reference fields")
-    return replace(
-        spec,
-        index=indexed or unique,
-        unique=unique,
-        adapter=field_adapter(model, name) if spec.node is None else None,
-    )
+    return replace(spec, index=indexed or unique, unique=unique)
 
 
 def _field_type_spec(
