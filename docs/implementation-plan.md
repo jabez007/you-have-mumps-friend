@@ -1188,3 +1188,22 @@ commit together, late uniqueness and invalid-input failures leave neither update
 unexpected errors abort, and forced/concurrent restarts recompute values. No record,
 index, schema, or Python signature changes. This deliberately covers flat models
 before the independent scalar/reference/hierarchy extensions.
+
+
+### Exact M Decimal scalars, first slice of issue 36
+
+Reuse the canonical Decimal field constraints, record encoding, and equality-index
+normalization. Factor the existing exact fixed-unit conversion out of rollups before
+using it to compile M bounds. Its bytes, numeric limits, and sum behavior do not
+change. The M wire subset is canonical finite Decimal text exactly representable
+in 1E-18 units with at most 40 unit digits, sharing the established rollup domain.
+Python retains its full supported Decimal domain. Do not use native floating
+arithmetic for coefficient comparisons, normalization, or bounds. Reject unsupported
+constraints at export and invalid/out-of-domain inputs before writes. Preserve raw
+canonical scale in record nodes and normalize equality tokens independently.
+
+Compare M/Python field validation at numeric boundaries, signed and scaled zero,
+precision/place constraints, and multiple Decimal contexts. Reuse the common M
+preflight for both transaction-owning and participating calls. Qualify literal
+record/index bytes, duplicate claims, old out-of-subset records, restart, and late
+rollback. Add more scalar types in subsequent demonstrated slices, not all at once.

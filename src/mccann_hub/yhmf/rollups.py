@@ -3,13 +3,15 @@
 
 from dataclasses import replace
 from decimal import Decimal
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from .codecs import decode_scalar, encode_scalar
+from .decimal_math import from_units as _decimal
+from .decimal_math import units as _units
 from .errors import SchemaError, StorageError
 from .models import Model
 from .records import FieldValue, walk_values
-from .storage import MAX_VALUE_BYTES, Path, Store
+from .storage import Path, Store
 
 if TYPE_CHECKING:
     from .registry import FieldSpec, NodeSpec
@@ -52,39 +54,6 @@ def compile_fields(node: "NodeSpec") -> "NodeSpec":
             else field
             for field in node.fields
         ),
-    )
-
-
-def _units(value: Decimal, *, source: bool) -> int:
-    if not isinstance(value, Decimal) or not value.is_finite():
-        raise StorageError("Stored sums require finite Decimal values")
-    sign, digits, exponent = value.as_tuple()
-    if len(digits) > MAX_VALUE_BYTES:
-        raise StorageError("Stored sum input exceeds its encoded size domain")
-    coefficient = "".join(map(str, digits)).rstrip("0")
-    if not coefficient:
-        return 0
-    power = int(exponent) + len(digits) - len(coefficient)
-    if source and (len(coefficient) > 18 or len(coefficient) + power > 18):
-        raise StorageError(
-            "decimal-sum-v1 inputs require 18 significant digits and magnitude below 1E18"
-        )
-    if power < -18 or len(coefficient) + power + 18 > 40:
-        raise StorageError(
-            "decimal-sum-v1 requires at most 18 fractional digits and 40 aggregate unit digits"
-        )
-    return (-1 if sign else 1) * int(coefficient) * cast(int, 10 ** (power + 18))
-
-
-def _decimal(units: int) -> Decimal:
-    text = str(abs(units))
-    if len(text) > 40:
-        raise StorageError("Stored sum exceeds its bounded aggregate domain")
-    coefficient = text.rstrip("0")
-    if not coefficient:
-        return Decimal(0)
-    return Decimal(
-        (int(units < 0), tuple(map(int, coefficient)), -18 + len(text) - len(coefficient))
     )
 
 

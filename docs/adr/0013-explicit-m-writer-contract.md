@@ -92,3 +92,8 @@ indexes, and status meanings remain compatible; only participants add transactio
 for missing context. The caller owns the outer restart point and must rebuild all
 database-derived inputs there. This extension initially composes supported flat
 models, independently of future hierarchical support.
+
+Scoped maintenance passed both engines, both journaling modes, and native stress in
+[CI 42379543484](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42379543484).
+The coordinated test restores its normal routine after the rendezvous; source
+replacement removes stale compiled objects before subsequent commands.
