@@ -5,13 +5,13 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal, cast
 
-from . import indexes, occurrences
+from . import index_scans, indexes, occurrences
 from .codecs import Key, decode_key, encode_key
 from .errors import NotFound, QueryError, SchemaError, StorageError
 from .models import Model, Reference
 from .mutations import read_owner
 from .owned import OwnedPath, Owner, require_object, resolve_collection
-from .registry import reference_target
+from .registry import reference_target, scalar_type
 from .storage import Path
 
 if TYPE_CHECKING:
@@ -27,10 +27,11 @@ def _limit(limit: int) -> None:
 
 @dataclass(frozen=True)
 class QueryPlan:
-    strategy: Literal["direct_key", "equality_index"]
+    strategy: Literal["direct_key", "equality_index", "ordered_index"]
     global_name: str
     field: str
     maximum_limit: int = MAX_QUERY_RECORDS
+    maximum_index_visits: int | None = None
 
 
 class Query[M: Model]:
@@ -42,12 +43,73 @@ class Query[M: Model]:
         field: str | None = None,
         value: Any = None,
         definition: indexes.Definition | None = None,
+        selection: index_scans.Selection | None = None,
     ) -> None:
         self._db = db
         self._model = model
         self._field = field
         self._value = value
         self._definition = definition
+        self._selection = selection
+
+    def _ordered(self, name: str) -> indexes.Definition:
+        self._db._ensure_active()
+        if self._field is not None:
+            raise QueryError("Specify one query selection")
+        definitions = indexes.definitions(self._db.registry.spec(self._model))
+        definition = next((d for d in definitions if d.name == name), None)
+        if definition is None or definition.field.index_codec != "ordered-v1":
+            raise QueryError(
+                f"Field {name!r} requires a declared ordered index; no scan is implied"
+            )
+        return definition
+
+    def _selected(self, selection: index_scans.Selection) -> "Query[M]":
+        return Query(
+            self._db,
+            self._model,
+            field=selection.definition.name,
+            definition=selection.definition,
+            selection=selection,
+        )
+
+    def range(
+        self, field: str, *, gt: Any = None, ge: Any = None, lt: Any = None, le: Any = None
+    ) -> "Query[M]":
+        definition = self._ordered(field)
+        if (gt is not None and ge is not None) or (lt is not None and le is not None):
+            raise QueryError("Use one lower and one upper range bound")
+        lower, upper = gt if gt is not None else ge, lt if lt is not None else le
+        if lower is None and upper is None:
+            raise QueryError("Specify at least one non-null range bound")
+        lower = definition.validate(lower) if lower is not None else None
+        upper = definition.validate(upper) if upper is not None else None
+        for value in (lower, upper):
+            if value is not None:
+                indexes.index_root(self._db.registry.spec(self._model), definition, value)
+        if (
+            lower is not None
+            and upper is not None
+            and index_scans.primitive(lower) > index_scans.primitive(upper)
+        ):
+            raise QueryError("Lower range bound exceeds upper bound")
+        return self._selected(
+            index_scans.Selection(definition, "range", lower, upper, gt is None, lt is None)
+        )
+
+    def prefix(self, field: str, text: str) -> "Query[M]":
+        definition = self._ordered(field)
+        choices = definition.field.choices
+        annotation = scalar_type(definition.owner.model_fields[definition.field.name].annotation)
+        if choices is not None:
+            annotation = type(choices.values[0])
+        if annotation is not str or type(text) is not str:
+            raise QueryError("Prefix queries require a string field and a literal string prefix")
+        indexes.index_root(self._db.registry.spec(self._model), definition, text)
+        return self._selected(index_scans.Selection(definition, "prefix", text=text))
+
+    def order_by(self, field: str) -> "Query[M]":
+        return self._selected(index_scans.Selection(self._ordered(field), "ordered"))
 
     def where(self, **equals: Any) -> "Query[M]":
         self._db._ensure_active()
@@ -78,6 +140,13 @@ class Query[M: Model]:
         if self._field is None:
             raise QueryError("Specify an indexed equality or primary key; use scan for enumeration")
         spec = self._db.registry.spec(self._model)
+        if self._selection is not None:
+            return QueryPlan(
+                "ordered_index",
+                spec.global_name,
+                self._field,
+                maximum_index_visits=index_scans.MAX_VISITS,
+            )
         strategy: Literal["direct_key", "equality_index"] = (
             "equality_index" if self._definition is not None else "direct_key"
         )
@@ -86,6 +155,10 @@ class Query[M: Model]:
     def all(self, *, limit: int = 100, after: Key | None = None) -> list[M]:
         _limit(limit)
         self.explain()
+        if self._selection is not None:
+            if after is not None:
+                raise QueryError("Ordered root reads use no key cursor; page with occurrences()")
+            return self._ordered_roots(limit)
 
         def read(tx: "Database") -> list[M]:
             spec = tx.registry.spec(self._model)
@@ -105,6 +178,33 @@ class Query[M: Model]:
             result = []
             for key in keys:
                 result.append(self._indexed_record(tx, key))
+            return result
+
+        return self._db._run(read)
+
+    def _ordered_roots(self, limit: int) -> list[M]:
+        assert self._selection is not None
+        selection = self._selection
+
+        def read(tx: "Database") -> list[M]:
+            spec = tx._check_schema(tx.registry.spec(self._model))
+            result, seen = [], set()
+            for value, path in index_scans.entries(
+                tx.store, spec, selection, after=None, budget=index_scans.Budget()
+            ):
+                key, _, _ = occurrences.read_indexed(
+                    tx, spec, selection.definition, indexes.normalized(value), path
+                )
+                if key in seen:
+                    continue
+                record = tx.get(self._model, key)
+                occurrences.validate_root(
+                    tx, spec, selection.definition, value, path.subscripts[-2], record
+                )
+                result.append(record)
+                seen.add(key)
+                if len(result) == limit:
+                    break
             return result
 
         return self._db._run(read)
@@ -131,6 +231,10 @@ class Query[M: Model]:
         definition = self._definition
 
         def read(tx: "Database") -> list[occurrences.Occurrence]:
+            if self._selection is not None:
+                return index_scans.page(
+                    tx, tx.registry.spec(self._model), self._selection, limit=limit, after=after
+                )
             return occurrences.page(
                 tx, tx.registry.spec(self._model), definition, self._value, limit=limit, after=after
             )

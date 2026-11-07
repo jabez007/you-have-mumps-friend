@@ -947,3 +947,24 @@ separate indexed-owner reading from cursor/projection construction. Preserve equ
 cursor bytes and bounded owner reads. This gives ordered scans the same deep read
 seam without a parallel integrity implementation. Add the deterministic regression
 before fixing it; existing C901 passes at ten.
+
+### Bounded ordered query walks, issue 15
+
+Reuse ordered-v1 value keys, Definition field adapters, native Store.children seeks,
+occurrences.entry_page/read_indexed, and existing root materialization/checks. Add
+range(field, gt/ge/lt/le), prefix(field, text), and ascending order_by(field). They
+require an ordered index and never scan the data global. Numeric/date ranges exclude
+null; sorting includes null last. Prefixes are literal stored-string prefixes, not
+complete field values, so length/pattern validators and normalization do not apply.
+Range endpoints are complete declared values and use the existing field adapter.
+
+Walk native value subscripts, then owner keys and concrete digests. Bound every call
+to 1000 combined value/occurrence visits and expose that bound through explain.
+Version-two, schema/query-scoped occurrence cursors carry the last value, root key,
+and digest. Preserve all equality cursor bytes and key-based pagination. Ordered
+all() returns distinct roots ranked by their first matching occurrence, with no
+key-based continuation; occurrences() provides resumable concrete owner pages.
+This avoids a misleading root-key cursor across differently ordered value groups or
+an unbounded cross-page duplicate set. Descending traversal and root-page cursors
+are deferred; no reverse in-memory sort masquerades as an index seek. Follow with
+bounded multi-predicate intersections as a separate slice. Existing C901 passes at ten.

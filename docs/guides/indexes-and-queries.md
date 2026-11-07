@@ -48,9 +48,8 @@ assert prices.query(PricePoint).where(price=Decimal("12.5")).all()[0].id == "A"
 assert prices.plan_index_rebuild(PricePoint).to_dict()["indexes"][0]["codec"] == "ordered-v1"
 ```
 
-This adds ordered physical index values while the current Python query interface
-still accepts equality predicates. It does not sort scan output or add a range API.
-M can walk the index's value subscripts in native order. Record scalar bytes and
+These physical index values support explicit range, literal-prefix, and ascending
+ordered queries. M can also walk the value subscripts in native order. Record scalar bytes and
 their precision/scale remain unchanged; unique claims use the same canonical index
 value as equality lookup. Noncanonical aliases cannot make separate valid claims.
 
@@ -71,6 +70,51 @@ Domain failures leave their checkpoint and barrier intact; inspect and explicitl
 abort an early additive job or correct its input/binding before resuming. Automatic
 abort retains its existing validation-only semantics. Ordinary index rebuilds
 preserve the installed codec and include it in their review output.
+
+## Range, prefix, and ascending order
+
+```python
+prices.insert(PricePoint(id="B", price=Decimal("25")))
+selected = prices.query(PricePoint).range("price", ge=Decimal("10"), lt=Decimal("20"))
+assert [point.id for point in selected.all()] == ["A"]
+assert selected.explain().strategy == "ordered_index"
+assert selected.explain().maximum_index_visits == 1000
+assert [point.id for point in prices.query(PricePoint).order_by("price").all()] == ["A", "B"]
+first = selected.occurrences(limit=1)[0]
+assert selected.occurrences(after=first.cursor) == []
+```
+
+range requires at least one endpoint; gt/ge and lt/le are exclusive/inclusive lower
+and upper bounds. Endpoints use the field's adapter, normalization, constraints, and
+ordered numeric limits. Numeric and date/time ranges follow native value order;
+ties follow native root-key order and location digest. Nulls are excluded from
+ranges and sort last in order_by. An inverted range fails clearly.
+
+prefix(field, text) requires an ordered string field and treats text as a literal
+prefix of the stored value. It intentionally does not apply full-value length,
+pattern, or normalization rules. For normalized fields, supply the stored prefix.
+An empty prefix includes every non-null string. Prefix and range reads seek directly
+in the declared index; they never enumerate the application global.
+
+All these calls bound execution to 1000 combined value-subscript and occurrence
+visits. Each value group costs one visit, and each concrete occurrence another.
+If this bound is exhausted before satisfying the requested limit or completing the
+walk, QueryError is raised and no incomplete result is returned as a success.
+Narrow the selection or use smaller occurrence pages. The result limit remains
+1–1000. Limits bound returned items; they do not authorize an unbounded search.
+
+Ordered all() returns distinct roots, ranked by the first matching occurrence, and
+materializes those complete aggregates. It starts from the beginning on each call
+and rejects key-based after cursors. Use occurrences(limit=..., after=...) for
+continuation and efficient child-owner projections. Its version-two cursor records
+the ordered value and concrete location, and is scoped to the schema and full
+selection. It remains usable when that value/owner has been deleted. Cursors expose
+encoded positions, are not encrypted, and do not freeze a snapshot across calls.
+
+Existing equality queries retain their root-key and version-one occurrence cursors.
+Descending order, root continuation in value order, and mixed predicates are not
+part of this slice. An unsupported plan fails rather than sorting an unbounded
+scan in Python.
 
 ## General index rules
 
@@ -146,7 +190,7 @@ contains the concrete path, such as `("bins", "A", "lots", "L1")`. `root_key` id
 the warehouse; `field` is the dotted indexed declaration. The indexed field's complete
 owner is validated. If that owner has descendants, its subtree is loaded too. An index
 on a root field therefore still loads that root. Primary-key lookups use `get` or `all`;
-occurrence projection requires an equality index.
+occurrence projection requires a declared index.
 
 Limits are 1 through 1000 occurrences, default 100. Order is native root-key order, then
 the stored location digest; it is not child-key or value order within a root. Pass the
@@ -172,7 +216,8 @@ It does not return the children themselves.
 
 ## Explain and check
 
-`explain` reports a `direct_key` or `equality_index` plan, without filter values.
+`explain` reports a `direct_key`, `equality_index`, or `ordered_index` plan without
+filter values, including the visit bound for an ordered walk.
 
 `check_indexes` checks expected secondary entries and unique claims for a bounded page
 of records:

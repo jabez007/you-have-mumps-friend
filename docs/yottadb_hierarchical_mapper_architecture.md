@@ -167,8 +167,8 @@ The [storage contract](storage-format.md) defines these encodings. Type tags mak
 values self-describing, and M code must strip them before arithmetic. Native semantic
 probes qualified this reader contract on both supported engines. ADR 0012 retains
 record layout one: untagged text still has the engine's arithmetic precision limits.
-Ordered indexes will have a separate explicit codec and migration contract under
-issue 15; existing equality tokens do not sort in numeric order.
+Ordered indexes have a separate explicit ordered-v1 codec and migration contract;
+existing equality tokens do not sort in numeric order.
 
 Framework metadata uses reserved field names. Application-defined names must not collide with reserved names.
 
@@ -268,7 +268,7 @@ Creating, modifying, or deleting an indexed value must update the index in the s
 Unique constraints must explicitly define null handling, key normalization, and contention behavior.
 
 The query API supports direct keys, bounded hierarchical traversal, indexed equality,
-explicit bounded scans, and query explanation:
+ordered range/prefix/ascending reads, explicit bounded scans, and query explanation:
 
 ```python illustrative
 query = db.query(Warehouse).where(**{"bins.lots.product": Reference[Product](key="P42")})
@@ -276,6 +276,12 @@ print(query.explain())
 ```
 
 A missing index must not silently cause an unbounded database scan. Applications may explicitly authorize a bounded scan when necessary.
+
+Ordered walks seek value subscripts directly, then root keys and concrete locations,
+with 1000 combined value/occurrence visits per call. Occurrence cursors are scoped to
+the installed schema and selection. Ordered root reads deduplicate roots within the
+bounded result; continuation uses concrete occurrences to avoid an unbounded root
+deduplication history. Equality cursors retain their existing formats and semantics.
 
 Joins, full-text search, complex aggregates, and arbitrary SQL compatibility remain outside the initial scope.
 
