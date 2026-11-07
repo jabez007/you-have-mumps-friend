@@ -13,6 +13,16 @@ write(operation,input)
  new cfg,values,status,key,$etrap
  if $tlevel quit "nested"
  set $etrap="if $tlevel trollback"
+ set status=$$prepare(operation,.input,.cfg,.values,.key)
+ if status'="ok" quit status
+ tstart ():serial
+ ; All database-derived state is recreated inside attempt after a restart.
+ set status=$$attempt(operation,key,.values,.cfg)
+ if status'="ok" trollback  quit status
+ tcommit
+ quit "ok"
+prepare(operation,input,cfg,values,key)
+ new status
  do config(.cfg)
  set status=$$input(operation,.input,.cfg,.values)
  if status'="ok" quit status
@@ -20,11 +30,6 @@ write(operation,input)
  if cfg("tag",cfg("key"))="s" set key="s:"_key
  if key[$char(0) quit "invalid_key"
  if cfg("dataOverhead")+(2*$zlength(key))>1019 quit "key_size"
- tstart ():serial
- ; All database-derived state is recreated inside attempt after a restart.
- set status=$$attempt(operation,key,.values,.cfg)
- if status'="ok" trollback  quit status
- tcommit
  quit "ok"
 input(operation,input,cfg,values)
  new field,status

@@ -1165,3 +1165,26 @@ corruption, abort/resume, forced restarts, and coordinated unrelated writers aga
 actual YottaDB. Existing C901 passes with the configured maximum of ten; no Python
 function needs a higher limit. Run full local quality/packaging checks and qualify
 both supported native engines in CI before closing the issue.
+
+### Caller-owned M transactions, issue 39
+
+The existing writer owns a TP, validates complete input, then invokes attempt with
+fresh database-derived locals after every restart. Python atomic marks failed writes
+rollback-only. Reuse that M attempt and preflight; do not add a parallel index or
+transaction framework. First extract preparation without changing existing behavior
+and commit that refactor independently.
+
+Add inserttx/replacetx/deletetx entry points for an existing caller transaction.
+A missing transaction returns transaction without writing. Any validation/status
+failure in a participant aborts the entire active transaction, as does an unexpected
+engine error before propagation. This explicit abort policy prevents committing a
+successful first operation after a failed second one. A successful participant
+leaves the caller's transaction open and never commits it. Existing entry points
+continue owning one TP and returning nested without changing the caller's TP.
+
+The caller owns the outer restart point, must recompute database-derived values
+inside it, and must avoid external effects in retryable code. Prove two globals
+commit together, late uniqueness and invalid-input failures leave neither update,
+unexpected errors abort, and forced/concurrent restarts recompute values. No record,
+index, schema, or Python signature changes. This deliberately covers flat models
+before the independent scalar/reference/hierarchy extensions.
