@@ -873,3 +873,18 @@ choose whether a record-layout conversion is justified. Ordered index encoding i
 an independent persistence contract; investigate it separately rather than making
 range queries depend on replacing record scalars. No performance claim follows from
 these semantic probes. Python C901 remains at ten; no application API changes.
+
+### Attribute insertion conflicts with native evidence, issue 32
+
+The fixed-width child budget path from issue 4 already avoids sibling reads. Reuse
+public insert_child and the repository's process rendezvous convention. Compare
+compact independent parents with identical declarations whose padding separates
+native data blocks. Hold two transactions after their count reads, commit one, then
+release the other. Record attempt counts and logical read/write intersections, plus
+read-only DSE FIND results for counts, metadata, and schema keys before/after. Capture
+native GVSTAT and TP block-modification counters around each experiment. Separately
+run four-process bursts on separate parents and one shared parent. Validate counts
+and actual children after each run. Use only disposable native CI databases; never
+assert a performance threshold or infer a block cause from retry counts alone.
+Preserve raw diagnostics for the eventual report. No mapper algorithm change is
+justified until these experiments identify a cause. Existing C901 passes at ten.
