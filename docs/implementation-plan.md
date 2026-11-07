@@ -618,3 +618,20 @@ staleness semantics. Demonstrate an uncached Warehouse.total_on_hand with exact 
 Decimal arithmetic. Verify canonical/legacy compatibility, nested patches, save,
 index/query refusal, and no persistence-time evaluation. Stored rollups stay open
 pending the independent-writer contract in issue 25. Existing C901 passes at ten.
+
+### Explicit grouped patches, issue 23
+
+indexes.replace already releases all removed claims before claiming new values.
+Extract mutation preparation from its writes in a separate behavior-preserving
+commit, retaining field/model validation and changed-node selection. Then expose
+Patch and patch_many for 1–100 explicit scalar/reference owner changes. Prepare
+the whole group against current transaction state, reject duplicate owner addresses,
+combine normal secondary entries, and apply one index/reference transition before
+writing changed nodes. This permits swaps without deferring constraints across an
+arbitrary callback. Reads before/after the call see complete valid states; no user
+callback runs between group writes. All errors poison the active write transaction.
+Group input is copied before retries. Reuse existing single-patch preparation and
+index/reference builders, not a deferred-constraint subsystem. Ancestor validation,
+bounded ownership reads, layout, and schema identities stay unchanged. Test swaps,
+duplicates, invalid groups, rollback, references, bounded work, restarts, and an
+independent native claimant. Existing C901 passes at ten.

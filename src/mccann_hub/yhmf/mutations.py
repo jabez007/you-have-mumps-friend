@@ -3,6 +3,7 @@
 
 from collections.abc import Mapping
 from copy import deepcopy
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from . import indexes, references
@@ -102,9 +103,19 @@ def replace_secondary(
     )
 
 
-def patch(
+@dataclass(frozen=True)
+class PreparedPatch:
+    spec: ModelSpec
+    root: Path
+    before: tuple[FieldValue, ...]
+    after: tuple[FieldValue, ...]
+    writes: tuple[tuple[Path, bytes], ...]
+
+
+def prepare_patch(
     tx: "Database", spec: ModelSpec, key: Key, at: OwnedPath, changes: Mapping[str, Any]
-) -> None:
+) -> PreparedPatch:
+    """Validate one owner and prepare its exact delta without persisting it."""
     owner = resolve(tx, spec, key, at, mutate=True)
     selected = _fields(owner, changes)
     old, new, fields = _validated(tx, owner, selected, changes)
@@ -114,8 +125,17 @@ def patch(
         if encode_leaf(field, old[field.name]) != encode_leaf(field, new[field.name])
     )
     before, after = _occurrences(owner, changed, old), _occurrences(owner, changed, new)
-    replace_secondary(tx, spec, spec.path(key), before, after)
-    for field in changed:
-        tx.store.set(
-            owner.path.child(field.name.encode("ascii")), encode_leaf(field, new[field.name])
-        )
+    writes = tuple(
+        (owner.path.child(field.name.encode("ascii")), encode_leaf(field, new[field.name]))
+        for field in changed
+    )
+    return PreparedPatch(spec, spec.path(key), before, after, writes)
+
+
+def patch(
+    tx: "Database", spec: ModelSpec, key: Key, at: OwnedPath, changes: Mapping[str, Any]
+) -> None:
+    prepared = prepare_patch(tx, spec, key, at, changes)
+    replace_secondary(tx, spec, prepared.root, prepared.before, prepared.after)
+    for path, value in prepared.writes:
+        tx.store.set(path, value)
