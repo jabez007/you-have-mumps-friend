@@ -3,10 +3,10 @@
 
 from typing import TYPE_CHECKING
 
+from . import secondary
 from .codecs import Key, encode_key
 from .errors import AlreadyExists, MutationError, StorageError
 from .models import Model
-from .mutations import replace_secondary
 from .owned import (
     OwnedPath,
     check_collection_length,
@@ -44,7 +44,7 @@ def insert(tx: "Database", spec: ModelSpec, key: Key, collection: OwnedPath, rec
     require_capacity(tx.store, spec, spec.path(key), MAX_RECORD_NODES - len(nodes))
     relative = owner.relative + (field.name.encode("ascii"), encode_key(child_key))
     new = tuple(walk_values(field.node.fields, validated, relative))
-    replace_secondary(tx, spec, spec.path(key), (), new)
+    secondary.replace(tx, (secondary.Change(spec, spec.path(key), (), new),))
     for node, value in nodes.items():
         tx.store.set(node, value)
     tx.store.set(path, b"c:" + str(count + 1).encode("ascii"))
@@ -67,6 +67,6 @@ def delete(tx: "Database", spec: ModelSpec, key: Key, at: OwnedPath) -> None:
     check_collection_length(owner, field, count - 1)
     relative = owner.relative + (field.name.encode("ascii"), encode_key(child_key))
     old = tuple(walk_values(field.node.fields, record, relative))
-    replace_secondary(tx, spec, spec.path(key), old, ())
+    secondary.replace(tx, (secondary.Change(spec, spec.path(key), old, ()),))
     tx.store.delete_tree(child)
     tx.store.set(path, b"c:" + str(count - 1).encode("ascii"))

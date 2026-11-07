@@ -1065,3 +1065,17 @@ injection, reopening on every batch, wrong-executor/unknown-checkpoint rejection
 uniqueness/reference failures, native restarts, and concurrent initialization tests.
 First extract the existing digest and adoption preflight/read seams without changing
 behavior. Current C901 passes at ten; preserve all existing migration/adoption tests.
+
+### Shared secondary transitions before stored rollups, issue 17
+
+Search found ordinary patch/child mutations using mutations.replace_secondary, while
+patch groups and policy deletions independently compose the same reference/index
+unions. Stored totals need one final delta per surviving root, including grouped
+changes and cascade-deleted children. Adding a sum callback to each caller would
+spread the invariant across three paths. First extract one secondary transition
+module that accepts explicit before/after field occurrences and deleted root paths.
+Keep existing validation, unique-claim unions, reference restrictions, node-budget
+checks, physical writes, and transaction boundaries. This is an internal seam only;
+public APIs and bytes remain unchanged. Then extend that seam with root-local stored
+sum preparation. Existing Ruff/C901 passes at ten; the long deletion apply method
+is a cohesion cleanup candidate addressed by removing its repeated secondary logic.

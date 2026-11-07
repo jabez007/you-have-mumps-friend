@@ -6,7 +6,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from . import indexes, references
+from . import secondary
 from .codecs import Key, encode_key
 from .errors import MutationError, StorageError
 from .models import Model
@@ -97,22 +97,6 @@ def _occurrences(
     )
 
 
-def replace_secondary(
-    tx: "Database",
-    spec: ModelSpec,
-    root: Path,
-    old: tuple[FieldValue, ...],
-    new: tuple[FieldValue, ...],
-) -> None:
-    old_links = references.links_at(tx.registry, spec, root, old)
-    new_links = references.links_at(tx.registry, spec, root, new)
-    tx._check_reference_targets(new_links)
-    references.replace(tx.store, old_links, new_links)
-    indexes.replace(
-        tx.store, indexes.entries_at(spec, root, old), indexes.entries_at(spec, root, new)
-    )
-
-
 @dataclass(frozen=True)
 class PreparedPatch:
     spec: ModelSpec
@@ -181,5 +165,5 @@ def patch(
 ) -> None:
     prepared = prepare_patch(tx, spec, key, at, changes)
     require_growth(tx.store, ((spec, prepared.root, prepared.growth),))
-    replace_secondary(tx, spec, prepared.root, prepared.before, prepared.after)
+    secondary.replace(tx, (secondary.Change(spec, prepared.root, prepared.before, prepared.after),))
     prepared.apply_nodes(tx.store)

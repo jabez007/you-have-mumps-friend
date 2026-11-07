@@ -4,7 +4,7 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from . import indexes, mutations, occurrences, references
+from . import mutations, occurrences, references, secondary
 from .codecs import Key, decode_key
 from .errors import (
     MaintenanceActive,
@@ -221,60 +221,24 @@ class _Plan:
     def apply(self) -> None:
         patches, counts = self.nulls(), self.collection_counts()
         units = tuple(self.units.values())
-        old_links = frozenset(
-            link
-            for unit in units
-            for link in references.links_at(
-                self.tx.registry,
+        roots = frozenset(unit.owner.path for unit in units if not unit.at)
+        changes = tuple(
+            secondary.Change(
                 unit.spec,
                 unit.spec.path(unit.key),
-                walk_values(unit.owner.node.fields, unit.record, unit.owner.relative),
+                tuple(walk_values(unit.owner.node.fields, unit.record, unit.owner.relative)),
+                (),
             )
-        )
-        old_entries = frozenset(
-            entry
             for unit in units
-            for entry in indexes.entries_at(
-                unit.spec,
-                unit.spec.path(unit.key),
-                walk_values(unit.owner.node.fields, unit.record, unit.owner.relative),
-            )
+        ) + tuple(
+            secondary.Change(patch.spec, patch.root, patch.before, patch.after) for patch in patches
         )
-        old_links |= frozenset(
-            link
-            for patch in patches
-            for link in references.links_at(self.tx.registry, patch.spec, patch.root, patch.before)
-        )
-        new_links = frozenset(
-            link
-            for patch in patches
-            for link in references.links_at(self.tx.registry, patch.spec, patch.root, patch.after)
-        )
-        old_entries |= frozenset(
-            entry
-            for patch in patches
-            for entry in indexes.entries_at(patch.spec, patch.root, patch.before)
-        )
-        new_entries = frozenset(
-            entry
-            for patch in patches
-            for entry in indexes.entries_at(patch.spec, patch.root, patch.after)
-        )
-        roots = {unit.owner.path for unit in units if not unit.at}
-        if any(link.target in roots for link in new_links):
-            raise ReferenceViolation(
-                "A surviving validator retained a reference to a deleted target"
-            )
         require_growth(
             self.tx.store,
             [(patch.spec, patch.root, patch.growth) for patch in patches]
             + [(unit.spec, unit.spec.path(unit.key), -len(unit.nodes)) for unit in units],
         )
-        self.tx._check_reference_targets(new_links)
-        references.replace(self.tx.store, old_links, new_links)
-        for root in roots:
-            references.restrict_delete(self.tx.store, root)
-        indexes.replace(self.tx.store, old_entries, new_entries)
+        secondary.replace(self.tx, changes, deleting_roots=roots)
         for patch in patches:
             patch.apply_nodes(self.tx.store)
         for unit in units:
