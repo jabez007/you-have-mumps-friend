@@ -220,3 +220,20 @@ memoization, including cold misses and a working set above the entry cap. Separa
 products versus one shared product expose reverse-count contention alongside native
 block conflicts. Raw samples, hash calls, and TP attempts separate latency gains
 from retry counts. No native hashing dependency or new persisted hash format is added.
+
+
+## Qualified scalar extensions, issue 55
+
+Extend the shared scalar compiler and validation seam, preserving schema and codec
+bytes. Finite str/int domains use exact primitive membership, bounded to 256 members
+and 32,764 bytes of escaped scalar JSON. Calendar dates and UTC microsecond instants
+use temporal-v1 tags and exact Gregorian/lexical validation. Python validators and
+unsupported constraints remain rejected; no application code runs in M.
+
+Nullable qualified scalars use input(field,"%null")=1 with no scalar/other children.
+Internally distinguish null from a tagged non-null payload so strings never become
+sentinels. Persist the existing n: node; keep its equality index and omit its unique
+claim, as Python does. Missing complete-record input is still invalid. References,
+containers, lists, boolean choices, and other unqualified families remain rejected.
+Qualification includes native differential, failure, rollback, and restart tests.
+Regenerate source for these capabilities without database conversion.

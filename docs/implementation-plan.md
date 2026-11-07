@@ -1568,3 +1568,20 @@ index conversion occurs. Differential tests cover calendar extremes, leap centur
 UTC precision, exact bounds, unique rollback, existing Python offsets, and malformed
 stored values. Add generated valid date/instant cases. Configured C901 passes at ten
 before implementation; keep that threshold and add no alternative persistence codec.
+
+### Qualify explicit nullable M scalars, issue 55
+
+Reuse the shared field compiler, scalar codecs, input/old readers, and index claim
+transitions. Distinguish null structurally: input(field,"%null")=1 with no scalar
+value or other descendants. Ordinary scalar input remains unchanged, including empty
+strings and literal "n:". Internally tag nullable wire values before persistence;
+unwrap only at codec boundaries. Missing required input stays invalid and Python
+factories/defaults are not evaluated. Stored null stays exactly n:.
+
+Compile nullable forms of already qualified scalars and finite choices. References,
+containers, lists, and unqualified scalar families remain rejected. Null has ordinary
+equality entries but no unique claim, matching indexes.entries; multiple nulls are
+allowed. Test null/value transitions, exact nodes/indexes, uniqueness rollback,
+ambiguous-looking strings, malformed null shapes, and owned patches/restarts. There
+is no stored-format change. Configured C901 passes at ten before this change; extend
+existing seams without another index or nullable serialization subsystem.

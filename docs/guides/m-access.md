@@ -121,7 +121,7 @@ and scalar integer domains. An existing record outside the M stored-value domain
 returns unsupported without changes. Use Python for those records.
 
 Export rejects custom Python validators, unsupported constraints or normalization,
-nullable values, embedded objects, scalar lists, ordered
+embedded objects, scalar lists, ordered
 indexes, and more than 16 fields per owner. Keyed trees have the separate operations
 below. The generator does not silently omit rules. Every inserted flat/leaf field
 must be supplied even if Python declares a default; defaults/factories are not run.
@@ -376,8 +376,8 @@ Values outside that domain return unsupported. No schema or record conversion
 occurs. Unsupported Decimal constraints, including multiple_of and bounds finer
 than the unit precision, fail export rather than being ignored.
 
-Other scalar extensions remain separate: nullable values, lists, non-ASCII
-strings, and arbitrary patterns still fail
+Other scalar extensions remain separate: lists, non-ASCII strings, and arbitrary
+patterns still fail
 export. For owned trees, see [mutate a keyed hierarchy](#mutate-a-keyed-hierarchy).
 
 ## Finite string and integer choices
@@ -392,8 +392,7 @@ The same rules apply to owned-child insert/patch/delete.
 Each exported domain is limited to 256 distinct members and 32,764 bytes of escaped
 scalar JSON. All members must fit the ASCII string or canonical signed 18-digit
 integer domain; unsupported members reject the entire export. Controls and long
-options are escaped and chunked in generated source. Boolean and nullable choices
-remain unqualified. Custom validators, Enum core-schema validation hooks, and
+options are escaped and chunked in generated source. Boolean choices remain unqualified. Custom validators, Enum core-schema validation hooks, and
 unsupported constraints still fail export. Python Enum fallback hooks are not run.
 
 Regenerate source to use this capability. Existing choice schemas and record/index
@@ -413,9 +412,25 @@ input("occurred_at")="2026-11-07T12:30:00.000000Z".
 Calendar/UTC bounds use exact lexical comparisons of canonical text. Equality and
 unique indexes use the existing temporal-v1 bytes, D: for dates and T: for instants.
 Existing Python temporal values can be replaced or deleted without conversion;
-invalid calendar/UTC stored text returns corrupt. Custom validators, nullable values,
-and ordered temporal indexes remain separately unqualified. Regenerate source for
+invalid calendar/UTC stored text returns corrupt. Custom validators and ordered temporal indexes remain separately unqualified. Regenerate source for
 the new writer capability; schema snapshots and record/index layouts do not change.
+
+## Explicit nullable scalar inputs
+
+For a qualified nullable scalar or choice, pass input("field","%null")=1 to write
+None. The field must have no scalar value and no other children; the flag must be
+exactly "1". Non-null input stays input("field")=value. Empty strings, "n:", "v:",
+and "%null" are ordinary string values, never null sentinels. Omitted fields remain
+invalid for insert/replace, even when the Python declaration defaults to None.
+A patch can omit unrelated fields.
+
+Nullable inputs retain the existing n: null node. Null equality entries remain
+queryable, and null unique fields have no claim, permitting multiple nulls. Changes
+between null and a value maintain the same indexes and claims as Python within the
+transaction, including rollback and restart. Invalid null shapes return invalid;
+malformed stored shapes remain corrupt. This applies to flat and owned scalar fields.
+Nullable references, containers, lists, and unqualified scalar families still fail
+export. No stored metadata or data conversion is needed; regenerate M source.
 
 ## Raw writes from M
 

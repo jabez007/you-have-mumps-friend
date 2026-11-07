@@ -67,9 +67,13 @@ input(operation,input,cfg,values)
  . if operation="delete",field'=cfg("key") set status="invalid" quit
  . if operation="patch",field=cfg("key") set status="invalid" quit
  . if $data(cfg("derived",field)) set status="invalid" quit
- . if $data(input(field))'=1 set status="invalid" quit
+ . if $data(input(field))'=1 do  quit
+ . . if '$get(cfg("nullable",field))!($data(input(field))'=10) set status="invalid" quit
+ . . if $data(input(field,"%null"))'=1!(($get(input(field,"%null"))_"x")'="1x") set status="invalid" quit
+ . . if $order(input(field,""))'="%null"!($order(input(field,"%null"))'="") set status="invalid" quit
+ . . set values(field)="n:"
  . if '$$valid(input(field),field,.cfg) set status="invalid" quit
- . set values(field)=input(field)
+ . set values(field)=$select($get(cfg("nullable",field)):"v:",1:"")_input(field)
  if status'="ok" quit status
  if operation="delete" quit $select($data(values(cfg("key"))):"ok",1:"invalid")
  if operation="patch" quit $select($data(values):"ok",1:"invalid")
@@ -152,11 +156,11 @@ indexbefore(operation,key,values,old,cfg)
  . set token=$$token(old(field),field,.cfg),index=$name(^YHMFIndex(cfg("global"),name,token,key,cfg("digest",field)))
  . set claim="["_$$quote(key)_","_cfg("location",field)_"]"
  . if $data(@index)'=1!($get(@index)'=cfg("location",field)) set status="corrupt" quit
- . if cfg("unique",field),$get(^YHMFUnique(cfg("global"),name,token))'=claim set status="corrupt" quit
- . if cfg("unique",field),$data(^YHMFUnique(cfg("global"),name,token))'=1 set status="corrupt" quit
+ . if $$hasclaim(old(field),field,.cfg),$get(^YHMFUnique(cfg("global"),name,token))'=claim set status="corrupt" quit
+ . if $$hasclaim(old(field),field,.cfg),$data(^YHMFUnique(cfg("global"),name,token))'=1 set status="corrupt" quit
  . if operation="replace",$$token(old(field),field,.cfg)=$$token(values(field),field,.cfg) quit
  . kill @index
- . if cfg("unique",field) kill ^YHMFUnique(cfg("global"),name,token)
+ . if $$hasclaim(old(field),field,.cfg) kill ^YHMFUnique(cfg("global"),name,token)
  quit status
 indexafter(operation,key,values,old,cfg)
  new field,status,token,index,claim,name
@@ -166,14 +170,14 @@ indexafter(operation,key,values,old,cfg)
  . for  set field=$order(cfg("index",field)) quit:field=""  do  quit:status'="ok"
  . . set name=$get(cfg("indexname",field),field)
  . . if operation="replace",$$token(old(field),field,.cfg)=$$token(values(field),field,.cfg) quit
- . . if cfg("tag",field)'="d",cfg("overhead",field)+(2*$zlength(key))+(2*$zlength(values(field)))+8>1019 set status="key_size" quit
+ . . if cfg("tag",field)'="d",cfg("overhead",field)+(2*$zlength(key))+(2*$zlength($$payload(values(field),field,.cfg)))+8>1019 set status="key_size" quit
  . . set token=$$token(values(field),field,.cfg)
  . . if cfg("overhead",field)+(2*$zlength(key))+(2*$zlength(token))>1019 set status="key_size" quit
  . . set claim="["_$$quote(key)_","_cfg("location",field)_"]"
- . . if cfg("unique",field),$data(^YHMFUnique(cfg("global"),name,token)) set status="unique" quit
+ . . if $$hasclaim(values(field),field,.cfg),$data(^YHMFUnique(cfg("global"),name,token)) set status="unique" quit
  . . if $data(^YHMFIndex(cfg("global"),name,token,key,cfg("digest",field))) set status="corrupt" quit
  . . set ^YHMFIndex(cfg("global"),name,token,key,cfg("digest",field))=cfg("location",field)
- . . if cfg("unique",field) set ^YHMFUnique(cfg("global"),name,token)=claim
+ . . if $$hasclaim(values(field),field,.cfg) set ^YHMFUnique(cfg("global"),name,token)=claim
  quit status
 old(root,cfg,values)
  new field,part,raw,status
@@ -188,6 +192,7 @@ old(root,cfg,values)
  for  set field=$order(cfg("tag",field)) quit:field=""  do  quit:status'="ok"
  . if $data(@root@(field))'=1 set status="corrupt" quit
  . set raw=@root@(field)
+ . if $get(cfg("nullable",field)),raw="n:" set values(field)="n:" quit
  . if $extract(raw,1,2)'=(cfg("tag",field)_":") set status="corrupt" quit
  . set part=$extract(raw,3,$length(raw))
  . if cfg("tag",field)="r",cfg("targets",cfg("ref",field),"keytag")="s" do  quit:status'="ok"
@@ -195,7 +200,7 @@ old(root,cfg,values)
  . . set part=$extract(part,3,$length(part))
  . set status=$$storedscalar(part,field,.cfg)
  . if status'="ok" quit
- . set values(field)=part
+ . set values(field)=$select($get(cfg("nullable",field)):"v:",1:"")_part
  quit status
 storedscalar(value,field,cfg)
  new tag,magnitude,number,index,ascii
@@ -213,10 +218,17 @@ storedscalar(value,field,cfg)
  if tag="d",'$$decimal(value,.number) quit $select($get(number("outside")):"unsupported",1:"corrupt")
  if cfg("tag",field)="r",value[$char(0) quit "unsupported"
  quit $select($$valid(value,field,.cfg,1):"ok",1:"corrupt")
+hasclaim(value,field,cfg)
+ quit cfg("unique",field)&'($get(cfg("nullable",field))&(value="n:"))
+payload(value,field,cfg)
+ quit $select($get(cfg("nullable",field)):$extract(value,3,$length(value)),1:value)
 token(value,field,cfg)
- if cfg("tag",field)="d" quit "v:"_$$quote($$dtoken(value))
+ if $get(cfg("nullable",field)),value="n:" quit "v:"_$$quote("n:")
+ if cfg("tag",field)="d" quit "v:"_$$quote($$dtoken($$payload(value,field,.cfg)))
  quit "v:"_$$quote($$scalar(value,field,.cfg))
 scalar(value,field,cfg)
+ if $get(cfg("nullable",field)),value="n:" quit "n:"
+ set value=$$payload(value,field,.cfg)
  if cfg("tag",field)="r" quit "r:"_$$refkey(value,field,.cfg)
  quit cfg("tag",field)_":"_value
 quote(value)

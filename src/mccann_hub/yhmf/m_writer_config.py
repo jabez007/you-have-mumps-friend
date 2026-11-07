@@ -181,6 +181,14 @@ def _reference_config(
     ]
 
 
+def _nullable_rule(field: FieldSpec, rule: dict[str, Any]) -> tuple[dict[str, Any], bool]:
+    options = rule.get("anyOf", [])
+    nullable = field.kind == "scalar" and len(options) == 2 and options[1] == {"type": "null"}
+    if not nullable:
+        return rule, False
+    return {**options[0], **{key: value for key, value in rule.items() if key != "anyOf"}}, True
+
+
 def _field_config(
     node: NodeSpec,
     global_name: str,
@@ -190,6 +198,7 @@ def _field_config(
     targets: dict[type, ModelSpec],
 ) -> list[str]:
     field = next(field for field in node.fields if field.name == name)
+    rule, nullable = _nullable_rule(field, rule)
     if field.kind not in {"scalar", "reference"} or field.index_codec != "equality-v1":
         raise SchemaError(f"M writer does not support field {name!r}")
     result = (
@@ -199,6 +208,8 @@ def _field_config(
         if field.choices is not None
         else _scalar_config(name, rule, policy)
     )
+    if nullable:
+        result.append(_set("nullable", name, value="1"))
     if field.index or field.kind == "reference":
         location = canonical_json([name])
         digest = hashlib.sha256(location).hexdigest()

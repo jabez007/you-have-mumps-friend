@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Adds explicit structured null input for qualified M scalars and choices. Null
+  equality entries and absent unique claims match Python, without text sentinels
+  or stored-format changes. Missing full-record inputs remain invalid.
+
 - Qualifies generated M date and UTC microsecond datetime inputs, exact calendar
   bounds, and equality/unique indexes using the existing temporal-v1 bytes.
 
