@@ -348,10 +348,31 @@ def test_owned_collection_limits_preserve_all_values_on_insertion_and_deletion(
 
 @pytest.mark.native
 def test_owned_insertion_honors_the_same_root_node_budget_as_python(store, variant_writer):
-    db, run, _, _ = variant_writer(
-        Warehouse,
-        warehouse_values({f"D{i}": "1" for i in range(1000)}, {f"S{i}": "1" for i in range(995)}),
-    )
+    db, run, _, _ = variant_writer(Warehouse)
+    # A single aggregate insert exhausts the default native TP buffers first.
+    # Reach the mapper node boundary through bounded public transactions.
+    for location, size in (("DOCK", 1000), ("STORAGE", 995)):
+        for offset in range(0, size, 50):
+            records = tuple(
+                Balance(
+                    id=f"B{i}",
+                    lot=Reference[Lot](key="LOT-001"),
+                    product=Reference[Product](key="WIDGET"),
+                    quantity=Decimal(1),
+                )
+                for i in range(offset, min(offset + 50, size))
+            )
+
+            def insert_batch(tx, records=records, location=location):
+                for record in records:
+                    tx.insert_child(
+                        Warehouse,
+                        "MAIN",
+                        collection=("locations", location, "bins", "B1", "balances"),
+                        record=record,
+                    )
+
+            db.atomic(insert_batch)
     before = dump(store, namespaces())
     assert (
         run(
