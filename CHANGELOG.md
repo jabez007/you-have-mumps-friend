@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Scopes newly exported M writers to the affected maintenance model after validating
+  the live checkpoint and barrier. Corrupt or unknown state blocks every write;
+  earlier exported routines retain their conservative check until regenerated.
+
 - Adds an indexed stored warehouse total beside the inventory example's virtual
   total, an explicit resumable warehouse-v1 upgrade, grouped existing-balance
   transfers, and clearly versioned inventory benchmark fixtures.

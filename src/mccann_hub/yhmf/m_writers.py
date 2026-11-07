@@ -140,4 +140,5 @@ def source(spec: ModelSpec, name: str) -> str:
         + template.replace("@GLOBAL@", spec.global_name)
         .replace("@KEY@", _literal(spec.key_field))
         .replace("@CONFIG@", "\n".join(config))
+        .replace("@MAINTENANCE@", files(__package__).joinpath("m_maintenance.template").read_text())
     )

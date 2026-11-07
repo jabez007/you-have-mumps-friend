@@ -1142,3 +1142,26 @@ older benchmark, and state that the v1 quantity-only baseline omits v2 guarantee
 Refresh the limits and current architecture notes where their earlier adoption,
 M-writer, ordered-index, and stored-computation descriptions became stale. No
 runtime contract changes are needed in this qualification/documentation slice.
+
+### Reviewed follow-ups 36–46 and scoped M maintenance, issue 40
+
+The approved order starts with scoped maintenance, caller-owned M transactions,
+Decimal codecs, references, and hierarchical writers. Typed queries and bounded
+reverse/root pagination can ship independently. Owned sums, container support,
+revisions, and concurrent jobs require the reviewed design or measurement gates.
+The last two may end with explicit deferral rather than speculative machinery.
+
+For issue 40, reuse the gate, format-one/two checkpoints, and schema barrier from
+maintenance.require_available. Generate a bounded reader of the existing flat,
+canonical checkpoint grammar in the M template, not a second job lifecycle or a
+process-local scope cache. Validate the complete checkpoint and barrier in the
+write transaction before permitting unrelated globals. Unknown formats, malformed
+values, terminal jobs, and missing ownership fail closed. Existing exported source
+keeps its conservative gate check until regenerated. No persisted bytes or public
+Python signatures change. Root/reference maintenance will reuse this M check.
+
+Check source export without mutation, both checkpoint formats and operations,
+corruption, abort/resume, forced restarts, and coordinated unrelated writers against
+actual YottaDB. Existing C901 passes with the configured maximum of ten; no Python
+function needs a higher limit. Run full local quality/packaging checks and qualify
+both supported native engines in CI before closing the issue.

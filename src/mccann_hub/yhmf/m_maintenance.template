@@ -1,0 +1,99 @@
+ ; Existing canonical checkpoint formats only. Unknown state blocks every writer.
+available(global)
+ new gate,job,raw
+ if '$data(^YHMFMigration("gate")) quit 1
+ if $data(^YHMFMigration("gate"))'=1 quit 0
+ set gate=^YHMFMigration("gate")
+ if '$$hex(gate,32) quit 0
+ if $data(^YHMFMigration("jobs",gate))#2'=1 quit 0
+ set raw=^YHMFMigration("jobs",gate)
+ if '$$checkpoint(raw,.job) quit 0
+ if job("migration_id")'=gate quit 0
+ if $get(^YHMFSchema($extract(job("global_name"),2,99)))'=("migration:"_gate) quit 0
+ quit $extract(job("global_name"),2,99)'=global
+checkpoint(raw,job)
+ new i,part,name,value,previous,good,source,operation
+ kill job
+ if $zlength(raw)>32766 quit 0
+ if $extract(raw)'="{"!($extract(raw,$length(raw))'="}") quit 0
+ set raw=$extract(raw,2,$length(raw)-1),previous="",good=1
+ if $length(raw,",")<11!($length(raw,",")>13) quit 0
+ for i=1:1:$length(raw,",") do  quit:'good
+ . set part=$piece(raw,",",i),name=$piece(part,":",1),value=$piece(part,":",2,999)
+ . if '$$quoted(name) set good=0 quit
+ . set name=$extract(name,2,$length(name)-1)
+ . if name'?1.32(1L,1"_") set good=0 quit
+ . if "|backfilled|cursor|format_version|global_name|migration_id|operation_fingerprint|phase|pruning|retagged|source_fingerprint|target_fingerprint|validated|verified|"'[("|"_name_"|") set good=0 quit
+ . if name']previous set good=0 quit
+ . set previous=name,job(name)=value
+ if 'good quit 0
+ for name="cursor","global_name","migration_id","phase","target_fingerprint" do  quit:'good
+ . if '$$quoted($get(job(name))) set good=0 quit
+ . set job(name)=$extract(job(name),2,$length(job(name))-1)
+ if 'good quit 0
+ for name="backfilled","retagged","validated","verified" if '$$natural($get(job(name))) set good=0
+ if 'good quit 0
+ if $$less(job("validated"),job("backfilled"))!$$less(job("backfilled"),job("verified"))!$$less(job("verified"),job("retagged")) quit 0
+ if $get(job("format_version"))'=1,$get(job("format_version"))'=2 quit 0
+ if '$$hex(job("migration_id"),32)!('$$hex(job("target_fingerprint"),64)) quit 0
+ set source=$get(job("source_fingerprint")),operation=$get(job("operation_fingerprint"),"null")
+ if source="null",(job("format_version")'=2)!(operation="null") quit 0
+ if source'="null",job("format_version")'=1 quit 0
+ if source'="null",'$$fingerprint(source) quit 0
+ if operation'="null",'$$fingerprint(operation) quit 0
+ if $data(job("pruning")),job("pruning")'="false" quit 0
+ if job("phase")'?1.32(1L,1"_") quit 0
+ if "|validate|clear_indexes|backfill|verify|retag|cleanup|activate|"'[("|"_job("phase")_"|") quit 0
+ if '$$global(job("global_name")) quit 0
+ quit $$cursor(job("cursor"))
+quoted(value)
+ if $length(value)<2 quit 0
+ if $extract(value)'=$char(34)!($extract(value,$length(value))'=$char(34)) quit 0
+ set value=$extract(value,2,$length(value)-1)
+ quit (value'[$char(34))&(value'[$char(92))
+natural(value)
+ if value="0" quit 1
+ if value'?1.32766N quit 0
+ quit $extract(value)'="0"
+less(left,right)
+ if $length(left)'=$length(right) quit $length(left)<$length(right)
+ quit right]left
+hex(value,length)
+ if $data(length),$length(value)'=length quit 0
+ quit $translate(value,"0123456789abcdef")=""
+fingerprint(value)
+ if '$$quoted(value) quit 0
+ quit $$hex($extract(value,2,$length(value)-1),64)
+global(value)
+ if $extract(value)'="^"!($length(value)>32) quit 0
+ if $extract(value,1,3)="^%Y" quit 0
+ quit $extract(value,2,99)?1(1A,1"%")0.30AN
+cursor(value)
+ new i,bytes,high,low
+ if '$$hex(value)!($length(value)#2) quit 0
+ set bytes=""
+ for i=1:2:$length(value) do
+ . set high=$find("0123456789abcdef",$extract(value,i))-2,low=$find("0123456789abcdef",$extract(value,i+1))-2
+ . set bytes=bytes_$zchar(high*16+low)
+ if bytes="" quit 1
+ if $zextract(bytes,1,2)="s:" quit $$utf8($zextract(bytes,3,$zlength(bytes)))
+ if $length(bytes)>19 quit 0
+ if (bytes'?1.18N)&(bytes'?1"-"1.18N) quit 0
+ quit bytes=+bytes
+utf8(value)
+ new i,j,code,size,low,high,good
+ set i=1,good=1
+ for  quit:i>$zlength(value)  quit:'good  do
+ . set code=$zascii(value,i),i=i+1
+ . if code<128 quit
+ . if code<194!(code>244) set good=0 quit
+ . set size=$select(code<224:1,code<240:2,1:3),low=128,high=191
+ . if code=224 set low=160
+ . if code=237 set high=159
+ . if code=240 set low=144
+ . if code=244 set high=143
+ . for j=1:1:size do  quit:'good
+ . . set code=$zascii(value,i),i=i+1
+ . . if code<low!(code>high) set good=0 quit
+ . . set low=128,high=191
+ quit good

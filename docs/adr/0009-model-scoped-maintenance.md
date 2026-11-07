@@ -58,3 +58,9 @@ A deterministic native test releases an unrelated writer and a migration worker
 after both reach transaction barriers; the writer completes 100 indexed updates
 while maintenance remains active. Existing interruption, restart, abort, and recovery
 tests remain required. No native result is implied by the offline tests.
+
+Generated M writers now follow this rule using a bounded reader of the existing
+canonical flat checkpoint grammar. It validates fields, domains, ordering, supported
+formats, active phase, identity, and the owning schema barrier. Unknown fields/formats
+fail closed. No job metadata changes or process-local scope caches are introduced.
+Earlier exported routines keep their conservative global gate behavior.

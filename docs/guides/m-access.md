@@ -132,8 +132,11 @@ to data, equality entries, and unique claims commit or roll back together. Exist
 records and expected claim ownership are checked before replacement/deletion. A
 failed uniqueness claim cannot leave released old claims. Delete conservatively
 refuses any incoming reference namespace, including sources with cascade/set_null
-policies; Python handles those policies. Any maintenance gate blocks the initial M
-API, even if it belongs to an unrelated model.
+policies; Python handles those policies. Newly exported routines validate the live
+maintenance checkpoint and its schema barrier in the write transaction. They block
+the affected model while unrelated writes can proceed. Corrupt or unknown checkpoint
+formats fail closed. Existing exported routines retain their conservative global
+gate check until regenerated; their installed schema bindings do not change.
 
 The returned status is ok, exists, missing, invalid, invalid_key, key_size, schema,
 unmanaged, maintenance, corrupt, unique, references, or nested. Failure statuses

@@ -32,3 +32,7 @@ caught
  set $etrap="write ""error|"",$tlevel,! set $ecode="""" halt"
  write $$insert^YHMFTAPI(.input),!
  quit
+checkpoint
+ new job
+ write $$checkpoint^YHMFTAPI(^YHMFTestStorage("writerInput","raw"),.job),!
+ quit

@@ -57,7 +57,7 @@ valid(value,field,cfg)
  quit 1
 attempt(operation,key,values,cfg)
  new old,field,status,install,root,claim,token,index
- if $data(^YHMFMigration("gate")) quit "maintenance"
+ if '$$available(cfg("global")) quit "maintenance"
  set install=0,root=$name(@GLOBAL@(key))
  if '$data(^YHMFSchema(cfg("global"))) do  quit:status'="ok" status
  . set status="ok"
@@ -143,6 +143,7 @@ quote(value)
  . if (code<32)!(code=127) set out=out_"\u00"_$extract("0123456789abcdef",(code\16)+1)_$extract("0123456789abcdef",(code#16)+1) quit
  . set out=out_char
  quit out_$char(34)
+@MAINTENANCE@
 config(cfg)
 @CONFIG@
  quit

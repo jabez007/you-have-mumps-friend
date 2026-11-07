@@ -43,9 +43,12 @@ under a scalar input fail. Preserve existing layout/metadata/index bytes exactly
 
 Updates validate the existing record and its expected index/claim identities before
 releasing/reclaiming changed entries. Delete conservatively refuses any inbound
-reference namespace; it does not execute Python cascade/set_null policies. A
-maintenance gate blocks M writes conservatively even for unrelated models. Unexpected
-native errors roll back the owned TP and propagate to the caller's handler.
+reference namespace; it does not execute Python cascade/set_null policies. Newly
+exported routines validate both existing checkpoint formats and barrier ownership
+inside the write transaction, blocking only the affected model. Unknown/corrupt
+state blocks all writes. Earlier exported routines keep the global block until
+regenerated. Unexpected native errors roll back the owned TP and propagate to the
+caller's handler.
 
 Owned trees, references as fields, ordered indexes, scalar lists, stored rollups,
 custom validators, nullable values, non-ASCII input, and multi-record M transactions
