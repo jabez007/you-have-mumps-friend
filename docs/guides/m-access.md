@@ -121,7 +121,7 @@ and scalar integer domains. An existing record outside the M stored-value domain
 returns unsupported without changes. Use Python for those records.
 
 Export rejects custom Python validators, unsupported constraints or normalization,
-nullable values, embedded objects, scalar lists, choices, ordered
+nullable values, embedded objects, scalar lists, ordered
 indexes, and more than 16 fields per owner. Keyed trees have the separate operations
 below. The generator does not silently omit rules. Every inserted flat/leaf field
 must be supplied even if Python declares a default; defaults/factories are not run.
@@ -377,8 +377,28 @@ occurs. Unsupported Decimal constraints, including multiple_of and bounds finer
 than the unit precision, fail export rather than being ignored.
 
 Other scalar extensions remain separate: nullable values, date/time values,
-Enum/Literal fields, lists, non-ASCII strings, and arbitrary patterns still fail
+lists, non-ASCII strings, and arbitrary patterns still fail
 export. For owned trees, see [mutate a keyed hierarchy](#mutate-a-keyed-hierarchy).
+
+## Finite string and integer choices
+
+String and integer Enum/Literal fields accept their exact primitive values, using
+ordinary scalar record tags and equality/unique indexes. Enum member names and
+aliases are not wire values. For example, Literal["receive", "move", "adjust"]
+accepts input("kind")="receive" and rejects "unknown" with invalid. Existing
+out-of-domain stored members return corrupt; failed calls leave all state intact.
+The same rules apply to owned-child insert/patch/delete.
+
+Each exported domain is limited to 256 distinct members and 32,764 bytes of escaped
+scalar JSON. All members must fit the ASCII string or canonical signed 18-digit
+integer domain; unsupported members reject the entire export. Controls and long
+options are escaped and chunked in generated source. Boolean and nullable choices
+remain unqualified. Custom validators, Enum core-schema validation hooks, and
+unsupported constraints still fail export. Python Enum fallback hooks are not run.
+
+Regenerate source to use this capability. Existing choice schemas and record/index
+bytes are unchanged. Changing an application's plain string field to a finite choice
+remains a schema change requiring its normal reviewed migration.
 
 ## Raw writes from M
 

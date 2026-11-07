@@ -1525,3 +1525,21 @@ and block contention. Keep setup, compilation, and coordinated start outside tim
 Verify quantities, totals, indexes, and reverse references after each case. Report
 raw samples and environment with native r2.02/r2.06, journaling off/on. A C call-out
 is deferred unless the cold-path measurements justify its added dependency.
+
+### Qualify finite M choice domains, issue 55
+
+Reuse Choices, canonical scalar encoding, the shared field compiler, valid(), old(),
+and existing equality/unique index maintenance. Accept string and integer Enum and
+Literal declarations by compiling their exact primitive domain alongside the existing
+scalar rules. Runtime membership uses the same escaped scalar JSON as equality tokens;
+chunk constants to keep generated M lines bounded, including controls and long options.
+The field compiler remains the single validation seam for flat and owned writers.
+
+Bound each exported domain to 256 members and 32,764 encoded bytes. Reject the whole
+export for Unicode, wider integers, booleans, nullable choices, unsupported constraints,
+or custom validators until those domains are separately qualified. Membership does not
+call Python Enum fallback hooks. No schema, record, index, or fingerprint bytes change;
+applications regenerate source to use the additional writer capability. Preserve existing
+Python choice behavior. Test byte equality, membership failures, unique rollback, stored
+invalid members, escaping, and export bounds on both native engines. Configured C901
+passes at ten before this change; no threshold increase or unrelated cleanup is needed.

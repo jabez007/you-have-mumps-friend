@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Qualifies generated M writers for finite ASCII string and 18-digit integer
+  Enum/Literal domains, including owned children, equality/unique indexes, and
+  bounded escaped constants. Existing choice storage and fingerprints are unchanged.
+
 - Memoizes exact M location digests in a process-local cache capped at 128 entries.
   SHA-256 bytes and storage identities are unchanged. Metadata and transaction state
   remain live-validated. Native benchmark controls compare warm, cold, eviction, and

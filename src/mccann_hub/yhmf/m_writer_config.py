@@ -5,7 +5,7 @@ import hashlib
 from decimal import Decimal
 from typing import Any
 
-from .codecs import canonical_json
+from .codecs import canonical_json, encode_scalar
 from .decimal_math import units
 from .errors import SchemaError
 from .models import Model, Reference
@@ -90,6 +90,40 @@ def _scalar_config(name: str, rule: dict[str, Any], policy: dict[str, Any]) -> l
     return result
 
 
+def _choice_config(field: FieldSpec, rule: dict[str, Any], policy: dict[str, Any]) -> list[str]:
+    assert field.choices is not None
+    values = field.choices.values
+    primitive = type(values[0])
+    if primitive not in {str, int} or any(
+        (not value.isascii() or len(value) > 32764)
+        if isinstance(value, str)
+        else len(str(abs(value))) > 18
+        for value in values
+    ):
+        raise SchemaError("M choices require ASCII strings or canonical 18-digit integers")
+    encoded = [
+        canonical_json(encode_scalar(value).decode("ascii")).decode("ascii") for value in values
+    ]
+    if len(values) > 256 or sum(map(len, encoded)) > 32764:
+        raise SchemaError("M choice domains require at most 256 members and 32764 encoded bytes")
+    scalar_rule = {key: value for key, value in rule.items() if key not in {"enum", "codec"}}
+    scalar_rule["codec"] = primitive.__name__
+    result = _scalar_config(field.name, scalar_rule, policy)
+    result.append(_set("choicecount", field.name, value=str(len(values))))
+    for ordinal, value in enumerate(encoded, 1):
+        for offset in range(0, len(value), 256):
+            result.append(
+                _set(
+                    "choice",
+                    field.name,
+                    str(ordinal),
+                    str(offset // 256 + 1),
+                    value=value[offset : offset + 256],
+                )
+            )
+    return result
+
+
 def _reference_config(
     model: type[Model],
     global_name: str,
@@ -141,15 +175,13 @@ def _field_config(
     targets: dict[type, ModelSpec],
 ) -> list[str]:
     field = next(field for field in node.fields if field.name == name)
-    if (
-        field.kind not in {"scalar", "reference"}
-        or field.choices is not None
-        or field.index_codec != "equality-v1"
-    ):
+    if field.kind not in {"scalar", "reference"} or field.index_codec != "equality-v1":
         raise SchemaError(f"M writer does not support field {name!r}")
     result = (
         _reference_config(node.model, global_name, field, rule, targets)
         if field.kind == "reference"
+        else _choice_config(field, rule, policy)
+        if field.choices is not None
         else _scalar_config(name, rule, policy)
     )
     if field.index or field.kind == "reference":

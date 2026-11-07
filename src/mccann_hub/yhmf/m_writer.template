@@ -79,6 +79,7 @@ input(operation,input,cfg,values)
 valid(value,field,cfg,stored)
  new i,good
  if $zlength(value)>32764 quit 0
+ if $data(cfg("choicecount",field)),'$$choice(value,field,.cfg) quit 0
  if cfg("tag",field)="r" quit $$refvalid(value,field,.cfg)
  if cfg("tag",field)="d" quit $$dvalid(value,field,.cfg,+$get(stored))
  if cfg("tag",field)="s" do  quit good
@@ -92,6 +93,14 @@ valid(value,field,cfg,stored)
  if $data(cfg("le",field)),value>cfg("le",field) quit 0
  if $data(cfg("lt",field)),value'<cfg("lt",field) quit 0
  quit 1
+choice(value,field,cfg)
+ new ordinal,piece,expected,encoded,good
+ set encoded=$$quote(cfg("tag",field)_":"_value),good=0
+ for ordinal=1:1:cfg("choicecount",field) do  quit:good
+ . set expected="",piece=0
+ . for  set piece=$order(cfg("choice",field,ordinal,piece)) quit:piece=""  set expected=expected_cfg("choice",field,ordinal,piece)
+ . if encoded=expected set good=1
+ quit good
 attempt(operation,key,values,cfg,previous)
  new old,field,status,install,root,recordkey
  if '$$available(cfg("global")) quit "maintenance"
