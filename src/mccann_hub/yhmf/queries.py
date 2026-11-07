@@ -5,14 +5,13 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal, cast
 
-from . import indexes
+from . import indexes, occurrences
 from .codecs import Key, decode_key, encode_key
 from .errors import NotFound, QueryError, SchemaError, StorageError
 from .maintenance import require_available
 from .models import Model, Reference
 from .mutations import read_owner
 from .owned import OwnedPath, Owner, require_object, resolve_collection
-from .records import walk_values
 from .registry import reference_target
 from .storage import Path
 
@@ -101,6 +100,8 @@ class Query[M: Model]:
                     return []
             cursor = spec.path(after).subscripts[0] if after is not None else b""
             root = indexes.index_root(spec, self._definition, self._value)
+            if tx.store.get(root) is not None:
+                raise StorageError("Unexpected value at an equality-index namespace")
             keys = tx.store.children(root, limit=limit, after=cursor)
             result = []
             for key in keys:
@@ -115,14 +116,27 @@ class Query[M: Model]:
         except NotFound as exc:
             raise StorageError("Index points to a missing record") from exc
         assert self._definition is not None
-        expected = indexes.normalized(self._value)
-        matches = any(
-            field is self._definition.field and indexes.normalized(value) == expected
-            for field, _, value in walk_values(tx.registry.spec(self._model).fields, record)
+        occurrences.validate_root(
+            tx, tx.registry.spec(self._model), self._definition, self._value, key, record
         )
-        if not matches:
-            raise StorageError("Index value does not match its record")
         return record
+
+    def occurrences(
+        self, *, limit: int = 100, after: str | None = None
+    ) -> list[occurrences.Occurrence]:
+        """Return complete owners of equality occurrences at their concrete paths."""
+        _limit(limit)
+        self.explain()
+        if self._definition is None:
+            raise QueryError("Occurrence projection requires an equality index")
+        definition = self._definition
+
+        def read(tx: "Database") -> list[occurrences.Occurrence]:
+            return occurrences.page(
+                tx, tx.registry.spec(self._model), definition, self._value, limit=limit, after=after
+            )
+
+        return self._db._run(read)
 
 
 def scan[M: Model](

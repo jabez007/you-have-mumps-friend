@@ -5,6 +5,7 @@ from .index_rebuilds import IndexRebuildPlan
 from .maintenance import MigrationStatus
 from .migrations import MigrationPlan, MigrationStep
 from .models import ChildField, Children, Field, Model, Reference
+from .occurrences import Occurrence
 from .queries import IndexReport, QueryPlan
 from .registry import Registry
 from .repository import Database
@@ -25,6 +26,7 @@ __all__ = [
     "MigrationStep",
     "Model",
     "NativeStore",
+    "Occurrence",
     "Path",
     "QueryPlan",
     "Registry",

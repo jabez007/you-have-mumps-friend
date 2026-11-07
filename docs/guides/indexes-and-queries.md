@@ -86,6 +86,37 @@ assert [product.id for product in db.scan(CatalogProduct, limit=25)] == ["P1"]
 
 ## Query inside owned trees
 
+`all()` returns each matching root once. Use `occurrences()` to read the complete owner
+of each indexed occurrence, without loading its unrelated ancestors or siblings:
+
+```python
+hits = query.occurrences(limit=25)
+assert len(hits) == 1 and hits[0].root_key == "P1"
+assert hits[0].at == ()  # This index is on the root CatalogProduct model.
+assert hits[0].record.price == Decimal("12.50")
+assert query.occurrences(limit=25, after=hits[-1].cursor) == []
+```
+
+For an owned field such as `bins.lots.quantity`, `record` is its Lot owner and `at`
+contains the concrete path, such as `("bins", "A", "lots", "L1")`. `root_key` identifies
+the warehouse; `field` is the dotted indexed declaration. The indexed field's complete
+owner is validated. If that owner has descendants, its subtree is loaded too. An index
+on a root field therefore still loads that root. Primary-key lookups use `get` or `all`;
+occurrence projection requires an equality index.
+
+Limits are 1 through 1000 occurrences, default 100. Order is native root-key order, then
+the stored location digest; it is not child-key or value order within a root. Pass the
+last result's opaque `cursor` to continue. Cursors belong to one installed schema and
+predicate, and a deleted cursor occurrence does not prevent continuation. They contain
+encoded record positions, are not encrypted, and do not provide a snapshot across calls.
+Concurrent insertions before a cursor can be omitted and later insertions can appear.
+For a shared snapshot, page inside one `atomic` callback.
+
+Every projection checks the exact location and its digest, owner identity, field value,
+equality entry, and applicable unique claim. A stale entry cannot be justified by another
+matching child under the same root. Root queries also verify their concrete equality
+entries. Corruption raises `StorageError`; neither interface repairs data during a read.
+
 Use dotted declaration paths such as `lines.product`, passed as a dictionary to `where`:
 
 ```text

@@ -40,9 +40,10 @@ Variable-width owned containers still require bounded traversal for node limits.
 separate controlled raw-access interface. See [collection paging](guides/models-and-ownership.md).
 
 Explicit `resolve`, `resolve_many`, and `get_many` provide bounded transactional target
-reads, issue [#12](https://github.com/jabez007/you-have-mumps-friend/issues/12). Issue
-[#16](https://github.com/jabez007/you-have-mumps-friend/issues/16) remains open for
-occurrence projections.
+reads, issue [#12](https://github.com/jabez007/you-have-mumps-friend/issues/12).
+Indexed `occurrences` read matching owned models directly, issue
+[#16](https://github.com/jabez007/you-have-mumps-friend/issues/16), with scoped occurrence
+cursors and exact location validation. Existing root queries retain their interface.
 
 `prune_migration` retires terminal job metadata and uniqueness reservations in bounded
 transactions, issue [#22](https://github.com/jabez007/you-have-mumps-friend/issues/22).
@@ -64,7 +65,6 @@ These features are not in version 0.5.0:
 - `set_null` and `cascade` ([#13](https://github.com/jabez007/you-have-mumps-friend/issues/13)), and many-to-many
   and inverse relations ([#14](https://github.com/jabez007/you-have-mumps-friend/issues/14)).
 - Range, prefix, sorted, and multi-predicate queries. [#15](https://github.com/jabez007/you-have-mumps-friend/issues/15)
-- Queries that return owned children. Queries return whole owning roots. [#16](https://github.com/jabez007/you-have-mumps-friend/issues/16)
 - Access rules. [#19](https://github.com/jabez007/you-have-mumps-friend/issues/19)
 - Migrations that transform data, such as renames, removals, type changes, default
   factories, new owned containers, and reference changes. [#20](https://github.com/jabez007/you-have-mumps-friend/issues/20)

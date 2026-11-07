@@ -504,3 +504,27 @@ declarations until completion or safe abort; then retire them and the job accord
 to the application's audit policy. Test bounds, active rejection, reservations,
 resume/idempotence, rollback, and index-rebuild jobs on both adapters. C901 passes
 at ten before implementation.
+
+### Indexed occurrence projections, issue 16
+
+Equality leaves already contain canonical concrete locations keyed by root and
+location digest. Reuse those bytes, typed owned paths, get(at=...), codecs, and
+index entry builders. Add query.occurrences(limit=100, after=token) returning
+Occurrence(root_key, at, field, record, cursor). Each record is the complete model
+owning the indexed field. Indexed leaf balances therefore avoid loading unrelated
+warehouses; an index on a root field still returns its complete root owner.
+
+Page in existing native root-key order, then digest order, without new indexes.
+Opaque versioned cursors bind to the installed fingerprint and normalized predicate.
+They are bounded position tokens, not encrypted identifiers or snapshot guarantees.
+Deleted cursor entries remain usable; separate pages can see intervening writes.
+Keep direct-key lookups on get/all rather than invent occurrence cursors for them.
+
+A small occurrence module owns bounded entry traversal and location decoding, also
+needed by reverse-reference reads. Validate canonical location bytes, digest, exact
+declaration path, owner identity, selected field bytes, and the actual index entry.
+Do not accept another matching child as evidence for a forged occurrence. Strengthen
+root query entry checks through the same existing entry builders. Preserve root
+query signatures, storage layout, and fingerprints. Tests cover bounded reads,
+pagination/cursor scope, corruption, rollback, native adapters, and inventory paths.
+Existing C901 passes at ten; keep parsing and traversal responsibilities separate.

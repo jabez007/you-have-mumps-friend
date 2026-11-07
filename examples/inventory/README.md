@@ -114,6 +114,21 @@ query = db.query(Warehouse).where(
 print(query.explain())
 ```
 
+Read matching balances directly when a complete warehouse is unnecessary:
+
+```python
+matches = query.occurrences(limit=25)
+assert len(matches) == 2
+assert all(hit.record.product.key == "WIDGET" for hit in matches)
+assert {hit.at[1] for hit in matches} == {"DOCK", "STORAGE"}
+assert query.occurrences(limit=25, after=matches[-1].cursor) == []
+```
+
+Each result contains a validated Balance, its warehouse `root_key`, and the concrete
+`at` path. This preserves the original `stock_by_product` root-page interface while
+providing a public query alternative that reads only matching balance owners. Its cursor
+pages occurrences rather than warehouses. See the [query contract](../../docs/guides/indexes-and-queries.md).
+
 ## Native inspection
 
 The demo exposes ordinary nodes such as:
