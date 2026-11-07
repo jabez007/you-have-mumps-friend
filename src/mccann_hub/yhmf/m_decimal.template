@@ -52,6 +52,7 @@ digits(number,count,power)
 dvalid(value,field,cfg)
  new number,comparison
  if '$$decimal(value,.number) quit 0
+ if $get(cfg("source",field)),$$sourceunits(value)="invalid" quit 0
  if $data(cfg("digits",field)),number("digits")>cfg("digits",field) quit 0
  if $data(cfg("places",field)),number("places")>cfg("places",field) quit 0
  if $data(cfg("digits",field)),$data(cfg("places",field)),number("whole")>$select(cfg("digits",field)>cfg("places",field):cfg("digits",field)-cfg("places",field),1:0) quit 0

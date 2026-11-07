@@ -4,6 +4,11 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Adds transactional M leaf-child insertion, scalar/reference patching, deletion,
+  and caller participants for keyed hierarchies. Existing index/reference layouts,
+  collection counts, and exact root/owned sums are maintained together; Python keeps
+  aggregate creation/replacement and unsupported validation contracts.
+
 - Adds the inventory movement timestamp index in schema revision three, enabling
   bounded newest-first reports. Frozen v2 bindings and its original UTC transform
   remain available; v2-to-v3 uses an explicit additive index migration.

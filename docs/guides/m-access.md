@@ -121,8 +121,9 @@ and scalar integer domains. An existing record outside the M value subset cannot
 be changed/deleted with this routine. Use Python for those records.
 
 Export rejects custom Python validators, unsupported constraints or normalization,
-nullable values, owned trees, scalar lists, choices, ordered
-indexes, and more than 16 fields. It does not silently omit these rules. Every field
+nullable values, embedded objects, scalar lists, choices, ordered
+indexes, and more than 16 fields per owner. Keyed trees have the separate operations
+below. The generator does not silently omit rules. Every inserted flat/leaf field
 must be supplied even if Python declares a default; defaults/factories are not run.
 M does not distinguish Python runtime types, so the declaration determines how each
 canonical textual input is encoded. This is validation of the declared M subset,
@@ -152,9 +153,70 @@ reported as success or silently converted into a validation failure.
 The [ADR](../adr/0013-explicit-m-writer-contract.md) records the trigger comparison
 and initial contract. No trigger is installed by export or generated CRUD. Do not
 combine these writers with external triggers that mutate managed data/indexes.
-Hierarchical writers require further design. Since this generator rejects owned
-trees, it cannot update stored-rollup inputs.
 Raw writes remain outside the managed guarantees and are not an authorization path.
+
+## Mutate a keyed hierarchy
+
+Warehouse exports a routine for leaf children under an already managed hierarchy:
+
+```python
+from examples.inventory import MODELS, Warehouse
+
+inventory = Database(MemoryStore(), Registry(*MODELS))
+warehouse_source = inventory.m_routine(Warehouse, name="WarehouseAPI")
+assert "insertchild(rootkey,path,input)" in warehouse_source
+```
+
+Create the root, locations, bins, products, and lots through Python first. Paths are
+local M arrays alternating declared collection names and plain child keys. Insert
+addresses a collection; patch/delete address a child. Supply complete inserted leaf
+fields, or only changed scalar/reference fields for a patch:
+
+```mumps
+ new path,input,status
+ set path(1)="locations",path(2)="DOCK",path(3)="bins",path(4)="B1",path(5)="balances"
+ set input("id")="LOT-001",input("lot")="LOT-001",input("product")="WIDGET",input("quantity")="2.50"
+ set status=$$insertchild^WarehouseAPI("MAIN",.path,.input)
+ if status'="ok" quit
+ set path(6)="LOT-001"
+ kill input
+ set input("quantity")="3.75"
+ set status=$$patchchild^WarehouseAPI("MAIN",.path,.input)
+ if status'="ok" quit
+ set status=$$deletechild^WarehouseAPI("MAIN",.path)
+```
+
+These calls check live root schema/metadata, ancestor identities and markers, then
+operate on that leaf and its affected bookkeeping. Insertion bounds collection
+counts and root nodes using fixed-width c:N counts; only variable-width structural
+branches require traversal. Patches do not load sibling quantities. Index names,
+concrete locations, reverse entries/counts, and every affected stored ancestor sum
+use the existing Python storage identities in one TP. Unchanged references are not
+resolved during scalar patches. A numerically unchanged quantity leaves total/index
+nodes untouched. Decimal wire limits, including raw precision constraints, also apply
+to generated sum values; exact fixed-unit arithmetic never rounds to M's numeric precision.
+
+insertchildtx, patchchildtx, and deletechildtx participate in an existing caller TP.
+Success leaves it open; any failure aborts all its levels, including earlier flat or
+child participants. Read dependent business values inside the caller's restart point.
+Each operation enforces its own immediate constraints; the API does not coalesce a
+group's net-zero totals or defer uniqueness across calls. Python patch_many remains
+the grouped mutation interface.
+
+Hierarchical whole insert/replace/delete labels return operation without writes.
+Non-leaf child insertion/deletion, embedded or nullable containers, and custom Python
+validators remain unsupported. Supplier still fails export because SupplierProduct
+has a custom model validator. Up to 64 keyed declarations with 16 fields per owner
+are supported. New statuses include operation, invalid_path, collection_limit, and
+node_budget, alongside the ordinary statuses above and transaction for a participant
+without a TP. Failed operations leave data, metadata, totals, counts, and indexes intact.
+
+Regenerate source after schema changes; old bindings fail rather than bypass new
+totals. No layout conversion or root metadata installation occurs through child
+operations. M enforces declared model rules, not inventory service rules or ledger
+workflows. The complete inventory ledger still needs unsupported M temporal/embedded
+types and application business checks. Root creation/replacement remains a Python
+operation.
 
 ## Compose writes in a caller transaction
 

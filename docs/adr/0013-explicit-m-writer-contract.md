@@ -143,3 +143,37 @@ M deletes remain restrict-only regardless of declared Python policies. Positive
 incoming counts block deletion; corrupt metadata fails closed. A valid zero-count
 namespace can be removed on deletion, matching the established Python lifecycle.
 No persisted layout or metadata conversion is introduced.
+
+## Keyed ownership and stored sums, issue 38
+
+Export keyed trees using the same field constants, scalar codecs, schema bindings,
+TP policy, index transitions, and reference maintenance. insertchild/patchchild/
+deletechild address leaf children beneath an already managed root, with matching
+tx participants. Whole hierarchical labels return operation; Python creates and
+replaces aggregates. Embedded/nullable containers and custom validators remain
+rejected, including SupplierProduct. This is an explicit supported subset rather
+than an incomplete aggregate serializer.
+
+Each retry resolves root metadata, ancestry, counts, and identities anew. Changed
+fields contribute ordinary dotted-name indexes and concrete reverse locations.
+Scalar patches avoid unrelated reference target/count reads. Capacity checks reuse
+the fixed-width c:N approach from record_budget, traversing only bounded structural
+branches. Child markers/counts and affected ancestor sums commit with the leaf.
+
+Concrete locations retain SHA-256 of canonical JSON. A bounded implementation of
+[FIPS 180-4](https://csrc.nist.gov/pubs/fips/180-4/final) uses YottaDB byte/bit
+intrinsics and exact 32-bit words, without a new plugin or native extension. It is
+an internal identity implementation, not a cryptographic certification claim.
+Known vectors, padding boundaries, binary/UTF-8 bytes, and seeded cases are compared
+with hashlib on native. Existing flat digests remain unchanged.
+
+Sum deltas retain decimal-sum-v1's 18-significant-digit source and 40-unit-digit
+aggregate domains. Signed digit arithmetic and canonical Decimal text match Python
+without native precision loss. Target constraints and normal indexes are reused.
+Raw M precision limits also apply to generated sum text, preserving the qualified
+subset. Per-call immediate constraints remain explicit; caller composition does
+not provide Python patch_many's net-zero coalescing or deferred group claims.
+
+New managed child operations require existing metadata and never adopt raw data.
+No schema/layout bytes change. Existing flat APIs retain their behavior; older
+source must be regenerated for these capabilities and rejects changed bindings.

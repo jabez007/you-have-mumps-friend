@@ -1,0 +1,216 @@
+ ; SPDX-License-Identifier: GPL-3.0-or-later
+ ; Leaf child operations under an already managed root; paths alternate names/keys.
+insertchild(rootkey,path,input)
+ quit $$owned("insert",rootkey,.path,.input,0)
+patchchild(rootkey,path,input)
+ quit $$owned("patch",rootkey,.path,.input,0)
+deletechild(rootkey,path)
+ new input
+ quit $$owned("delete",rootkey,.path,.input,0)
+insertchildtx(rootkey,path,input)
+ quit $$owned("insert",rootkey,.path,.input,1)
+patchchildtx(rootkey,path,input)
+ quit $$owned("patch",rootkey,.path,.input,1)
+deletechildtx(rootkey,path)
+ new input
+ quit $$owned("delete",rootkey,.path,.input,1)
+owned(operation,rootkey,path,input,participant)
+ new cfg,wire,parts,node,status,$etrap
+ if participant,'$tlevel quit "transaction"
+ if 'participant,$tlevel quit "nested"
+ set $etrap="if $tlevel trollback"
+ set status=$$hprepare(operation,rootkey,.path,.input,.cfg,.wire,.parts,.node)
+ if status'="ok" do  quit status
+ . if participant trollback
+ if participant do  quit status
+ . set status=$$hattempt(operation,rootkey,.parts,node,.wire,.cfg)
+ . if status'="ok" trollback
+ tstart ():serial
+ set status=$$hattempt(operation,rootkey,.parts,node,.wire,.cfg)
+ if status'="ok" trollback  quit status
+ tcommit
+ quit "ok"
+hkey(value,cfg)
+ if value[$char(0) quit "invalid"
+ if '$$valid(value,cfg("key"),.cfg) quit "invalid"
+ quit $select(cfg("tag",cfg("key"))="s":"s:",1:"")_value
+hprepare(operation,rootkey,path,input,cfg,wire,parts,node)
+ new local,index,count,position,field,key,status,maximum
+ do config(.cfg)
+ if '$get(cfg("hierarchy")) quit "operation"
+ merge local=cfg("nodes","")
+ set key=$$hkey(rootkey,.local)
+ if key="invalid" quit "invalid_key"
+ set parts(0)=key,node="",index="",count=0,status="ok"
+ if $data(path)#2 quit "invalid_path"
+ for  set index=$order(path(index)) quit:index=""  do  quit:status'="ok"
+ . set count=count+1
+ . if index'=count!($data(path(index))'=1) set status="invalid_path"
+ if status'="ok" quit status
+ if count<1!(count>29) quit "invalid_path"
+ if (operation="insert")'=(count#2=1) quit "invalid_path"
+ for position=1:2:count do  quit:status'="ok"
+ . set field=path(position)
+ . if '$data(cfg("nodes",node,"children",field)) set status="invalid_path" quit
+ . set parts(position)=field,node=cfg("nodes",node,"children",field)
+ . if position=count quit
+ . kill local merge local=cfg("nodes",node)
+ . set key=$$hkey(path(position+1),.local)
+ . if key="invalid" set status="invalid_key" quit
+ . set parts(position+1)=key
+ if status'="ok" quit status
+ if 'cfg("nodes",node,"leaf") quit "operation"
+ kill local
+ do hconfig(.cfg,node,.parts,.local)
+ set local("partial")=(operation="patch")
+ if operation="delete" set wire(local("key"))=path(count)
+ else  set status=$$input(operation,.input,.local,.wire)
+ if status'="ok" quit status
+ if operation="patch" set wire(local("key"))=path(count)
+ if operation="insert" set parts(count+1)=$$hkey(wire(local("key")),.local)
+ set maximum=0,field=""
+ for  set field=$order(local("tag",field)) quit:field=""  do
+ . if $zlength(field)>maximum set maximum=$zlength(field)
+ . if operation="patch",field'=local("key"),$data(wire(field)) set local("changed",field)=1
+ if '$$hbound(cfg("global"),.parts,maximum) quit "key_size"
+ if operation'="delete",'$$refbound(parts(0),.wire,.local) quit "key_size"
+ quit "ok"
+hbound(global,parts,maximum)
+ new size,index,count
+ set size=$length(global)+3,index="",count=0
+ for  set index=$order(parts(index)) quit:index=""  set size=size+(2*$zlength(parts(index)))+2,count=count+1
+ if count+1>31!(size+(2*maximum)+2>1019) quit 0
+ quit $length(global)+3+(2*$zlength(parts(0)))+32'>1019
+hconfig(rootcfg,node,parts,cfg)
+ new name
+ merge cfg=rootcfg("nodes",node)
+ for name="global","fingerprint","snapshot" set cfg(name)=rootcfg(name)
+ merge cfg("meta")=rootcfg("meta"),cfg("targets")=rootcfg("targets")
+ set cfg("owned")=1,cfg("recordkey")=parts(0)
+ quit
+haddress(global,parts,depth)
+ new root,index,name
+ set name="^"_global,root=$name(@name@(parts(0)))
+ for index=1:1:depth set root=$name(@root@(parts(index)))
+ quit root
+hattempt(operation,rootkey,parts,node,wire,rootcfg)
+ new cfg,values,previous,status,parent,count,depth,field,internal
+ do hconfig(.rootcfg,node,.parts,.cfg)
+ merge values=wire
+ set depth=$order(parts(""),-1),cfg("address")=$$haddress(rootcfg("global"),.parts,depth)
+ set cfg("partial")=(operation="patch"),field=""
+ for  set field=$order(cfg("tag",field)) quit:field=""  do
+ . if operation="patch",field'=cfg("key"),$data(wire(field)) set cfg("changed",field)=1
+ . if operation="patch",'$data(cfg("changed",field)) kill cfg("index",field)
+ . if operation="patch",'$data(cfg("changed",field)) quit
+ . if $data(cfg("index",field))!$data(cfg("ref",field)) set status=$$hwhere(.parts,depth,field,.cfg)
+ if $get(status,"ok")'="ok" quit status
+ set status=$$hresolve(operation,rootkey,.parts,.rootcfg,.parent,.count)
+ if status'="ok" quit status
+ if operation="insert" do  quit:status'="ok" status
+ . new used
+ . set used=4,status=$$hcapacity($$haddress(rootcfg("global"),.parts,0),"",.rootcfg,10000-cfg("width")-1,.used)
+ ; YHMF owned checkpoint: ancestry is resolved before leaf/index updates.
+ set internal=$select(operation="patch":"replace",1:operation)
+ set status=$$attempt(internal,parts(depth),.values,.cfg,.previous)
+ if status'="ok" quit status
+ set status=$$hsums(internal,node,.parts,.values,.previous,.cfg,.rootcfg)
+ if status'="ok" quit status
+ if operation="insert" set @parent="c:"_(count+1)
+ if operation="delete" set @parent="c:"_(count-1)
+ ; YHMF owned mutation complete: source, totals, counts, and indexes await commit.
+ quit "ok"
+hwhere(parts,depth,field,cfg)
+ new location,index
+ if depth=0 quit "ok"
+ set location="["
+ for index=1:1:depth set location=location_$$quote(parts(index))_","
+ set location=location_$$quote(field)_"]",cfg("location",field)=location,cfg("digest",field)=$$sha256(location)
+ quit $select(cfg("digest",field)="":"key_size",1:"ok")
+hcount(path,cfg,field,count)
+ new marker
+ set marker=$get(@path)
+ if $extract(marker,1,2)'="c:" quit "corrupt"
+ set count=$extract(marker,3,$length(marker))
+ if '$$natural(count)!($length(count)>4) quit "corrupt"
+ if count<cfg("minchildren",field)!(count>cfg("maxchildren",field)) quit "corrupt"
+ quit "ok"
+hresolve(operation,rootkey,parts,cfg,parent,count)
+ new root,node,local,status,position,depth,field,key,child
+ if '$$available(cfg("global")) quit "maintenance"
+ if '$$schema(cfg("global"),cfg("fingerprint"),cfg("snapshot")) quit "schema"
+ set root=$$haddress(cfg("global"),.parts,0),node=""
+ if '$data(@root) quit "missing"
+ set status=$$recordmeta(root,.cfg)
+ if status'="ok" quit status
+ if $get(@root@(cfg("key")))'=(cfg("nodes","","tag",cfg("key"))_":"_rootkey) quit "corrupt"
+ set depth=$order(parts(""),-1)
+ for position=1:2:depth do  quit:status'="ok"
+ . kill local merge local=cfg("nodes",node)
+ . set field=parts(position),parent=$name(@root@(field)),status=$$hcount(parent,.local,field,.count)
+ . if status'="ok" quit
+ . set node=local("children",field),child=$name(@parent@(parts(position+1)))
+ . if position+1=depth,operation="insert" do  quit
+ . . if $data(@child) set status="exists" quit
+ . . if count+1>local("maxchildren",field) set status="collection_limit"
+ . if '$data(@child) set status="missing" quit
+ . if $get(@child)'="o:1"!(count=0) set status="corrupt" quit
+ . set key=cfg("nodes",node,"key")
+ . if $get(@child@(key))'=(cfg("nodes",node,"tag",key)_":"_$select(cfg("nodes",node,"tag",key)="s":$extract(parts(position+1),3,$length(parts(position+1))),1:parts(position+1))) set status="corrupt" quit
+ . if position+1=depth,operation="delete",count-1<local("minchildren",field) set status="collection_limit" quit
+ . set root=child
+ quit status
+hcapacity(root,node,cfg,allowance,used)
+ new field,local,parent,count,status,key,seen,child,next
+ merge local=cfg("nodes",node)
+ set used=used+local("width"),status="ok",field=""
+ if used>allowance quit "node_budget"
+ for  set field=$order(local("children",field)) quit:field=""  do  quit:status'="ok"
+ . set parent=$name(@root@(field)),status=$$hcount(parent,.local,field,.count)
+ . if status'="ok" quit
+ . set next=local("children",field)
+ . if cfg("nodes",next,"leaf") do  quit
+ . . set used=used+(count*(cfg("nodes",next,"width")+1))
+ . . if used>allowance set status="node_budget"
+ . set key="",seen=0
+ . for  set key=$order(@parent@(key)) quit:key=""  do  quit:status'="ok"
+ . . set seen=seen+1,child=$name(@parent@(key)),used=used+1
+ . . if seen>count!($get(@child)'="o:1") set status="corrupt" quit
+ . . set status=$$hcapacity(child,next,.cfg,allowance,.used)
+ . if seen'=count,status="ok" set status="corrupt"
+ quit status
+hsums(operation,node,parts,values,previous,cfg,rootcfg)
+ new ordinal,target,field,source,old,new,delta,total,raw,path,status,local,before,after,depth
+ set ordinal="",status="ok"
+ for  set ordinal=$order(rootcfg("sumtargets",ordinal)) quit:ordinal=""  do  quit:status'="ok"
+ . if rootcfg("sumtargets",ordinal,"sourceOwner")'=node quit
+ . set source=rootcfg("sumtargets",ordinal,"sourceField")
+ . if $get(cfg("partial")),'$data(cfg("changed",source)) quit
+ . set old="0",new="0"
+ . if operation'="insert" set old=$$sourceunits(previous(source))
+ . if operation'="delete" set new=$$sourceunits(values(source))
+ . if old="invalid"!(new="invalid") set status="corrupt" quit
+ . set delta=$$dadd(new,$select(old="0":"0",$extract(old)="-":$extract(old,2,$length(old)),1:"-"_old))
+ . if delta="0" quit
+ . set target=rootcfg("sumtargets",ordinal,"owner"),field=rootcfg("sumtargets",ordinal,"field"),depth=rootcfg("sumtargets",ordinal,"depth")
+ . set path=$name(@($$haddress(rootcfg("global"),.parts,depth))@(field)),raw=$get(@path)
+ . if $data(@path)'=1!($extract(raw,1,2)'="d:") set status="corrupt" quit
+ . kill local,before,after merge local=rootcfg("nodes",target)
+ . set local("global")=rootcfg("global"),before(field)=$extract(raw,3,$length(raw))
+ . if '$$dvalid(before(field),field,.local) set status="corrupt" quit
+ . new number
+ . if '$$decimal(before(field),.number) set status="corrupt" quit
+ . set total=$$dadd(number("units"),delta)
+ . if total="invalid" set status="invalid" quit
+ . set after(field)=$$fromunits(total)
+ . if '$$dvalid(after(field),field,.local) set status="invalid" quit
+ . kill local("index")
+ . if $data(rootcfg("nodes",target,"index",field)) set local("index",field)=1
+ . set status=$$hwhere(.parts,depth,field,.local)
+ . if status'="ok" quit
+ . set status=$$indexbefore("replace",parts(0),.after,.before,.local)
+ . if status'="ok" quit
+ . set status=$$indexafter("replace",parts(0),.after,.before,.local)
+ . if status'="ok" quit
+ . set @path="d:"_after(field)
+ quit status

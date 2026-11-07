@@ -14,8 +14,9 @@ refvalid(value,field,cfg)
  quit (value?1.18N)!(value?1"-"1.18N)
 refbound(key,values,cfg)
  new field,encoded
- set field=""
+ set field="",encoded=""
  for  set field=$order(cfg("ref",field)) quit:field=""  do  quit:encoded="invalid"
+ . if $get(cfg("partial")),'$data(cfg("changed",field)) quit
  . set encoded=$$refkey(values(field),field,.cfg)
  . if cfg("refOverhead",field)+(2*$zlength(key))+(2*$zlength(encoded))>1019 set encoded="invalid"
  quit $get(encoded)'="invalid"
@@ -45,6 +46,7 @@ refchange(operation,key,values,old,cfg)
  new field,status,before,after,removed,added,deltas,counts,root,next,count,present
  set field="",status="ok"
  for  set field=$order(cfg("ref",field)) quit:field=""  do  quit:status'="ok"
+ . if $get(cfg("partial")),'$data(cfg("changed",field)) quit
  . if operation'="delete" set status=$$reftarget(values(field),field,.cfg)
  . if status'="ok" quit
  . set before="",after=""

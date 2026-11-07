@@ -9,8 +9,6 @@ import pytest
 from pydantic import AfterValidator, ConfigDict, create_model
 
 from mccann_hub.yhmf import (
-    ChildField,
-    Children,
     Database,
     Field,
     Model,
@@ -66,7 +64,7 @@ def test_export_rejects_invalid_routine_names(store, name):
         "ordered",
         "hook",
         "normalization",
-        "children",
+        "embedded",
         "many",
         "wrong_constraint",
     ],
@@ -82,7 +80,7 @@ def test_unsupported_writer_contracts_fail_at_export(store, kind):
         "ordered": (str, Field(ordered=True)),
         "hook": (Annotated[str, AfterValidator(lambda value: value)], Field()),
         "normalization": (str, Field()),
-        "children": (Children[Item], ChildField(key="id")),
+        "embedded": (Item, Field()),
         "many": (str, Field()),
         "wrong_constraint": (str, Field(ge=1)),
     }

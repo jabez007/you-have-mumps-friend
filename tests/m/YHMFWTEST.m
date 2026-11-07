@@ -89,3 +89,32 @@ sources
  set key=""
  for  set key=$order(^YHMFTestStorage("writerInput",key)) quit:key=""  write $$sourceunits^YHMFTAPI(^YHMFTestStorage("writerInput",key)),!
  quit
+ownedpath(path,input,insert)
+ new count,key
+ merge input=^YHMFTestStorage("writerInput")
+ set path(1)="locations",path(2)=$get(input("_location"),"DOCK"),path(3)="bins",path(4)=$get(input("_bin"),"B1"),path(5)="balances"
+ if 'insert set path(6)=$get(input("_key"),"LOT-001")
+ set key=""
+ for  set key=$order(input(key)) quit:key=""  if $extract(key)="_" kill input(key)
+ quit
+ownedinsert
+ new input,path
+ do ownedpath(.path,.input,1)
+ write $$insertchild^YHMFTAPI("MAIN",.path,.input),!
+ quit
+ownedpatch
+ new input,path
+ do ownedpath(.path,.input,0)
+ write $$patchchild^YHMFTAPI("MAIN",.path,.input),!
+ quit
+owneddelete
+ new input,path
+ do ownedpath(.path,.input,0)
+ write $$deletechild^YHMFTAPI("MAIN",.path),!
+ quit
+ownedcaught
+ new input,path,$etrap
+ do ownedpath(.path,.input,0)
+ set $etrap="write ""error|"",$tlevel,! set $ecode="""" halt"
+ write $$patchchild^YHMFTAPI("MAIN",.path,.input),!
+ quit

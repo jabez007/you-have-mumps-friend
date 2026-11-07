@@ -40,6 +40,7 @@ write(operation,input)
  quit "ok"
 prepare(operation,input,cfg,values,key)
  do config(.cfg)
+ if $get(cfg("hierarchy")) quit "operation"
  quit $$preflight(operation,.input,.cfg,.values,.key)
 preflight(operation,input,cfg,values,key)
  new status
@@ -58,11 +59,14 @@ input(operation,input,cfg,values)
  for  set field=$order(input(field)) quit:field=""  do  quit:status'="ok"
  . if '$data(cfg("tag",field)) set status="invalid" quit
  . if operation="delete",field'=cfg("key") set status="invalid" quit
+ . if operation="patch",field=cfg("key") set status="invalid" quit
+ . if $data(cfg("derived",field)) set status="invalid" quit
  . if $data(input(field))'=1 set status="invalid" quit
  . if '$$valid(input(field),field,.cfg) set status="invalid" quit
  . set values(field)=input(field)
  if status'="ok" quit status
  if operation="delete" quit $select($data(values(cfg("key"))):"ok",1:"invalid")
+ if operation="patch" quit $select($data(values):"ok",1:"invalid")
  set field=""
  for  set field=$order(cfg("tag",field)) quit:field=""  if '$data(values(field)) set status="invalid"
  quit status
@@ -82,12 +86,13 @@ valid(value,field,cfg)
  if $data(cfg("le",field)),value>cfg("le",field) quit 0
  if $data(cfg("lt",field)),value'<cfg("lt",field) quit 0
  quit 1
-attempt(operation,key,values,cfg)
- new old,field,status,install,root
+attempt(operation,key,values,cfg,previous)
+ new old,field,status,install,root,recordkey
  if '$$available(cfg("global")) quit "maintenance"
- set install=0,root=$name(@GLOBAL@(key))
+ set install=0,root=$get(cfg("address"),$name(@GLOBAL@(key))),recordkey=$get(cfg("recordkey"),key)
  if '$data(^YHMFSchema(cfg("global"))) do  quit:status'="ok" status
  . set status="ok"
+ . if $get(cfg("owned")) set status="schema" quit
  . if operation'="insert" set status="schema" quit
  . if $data(@GLOBAL@)!$data(^YHMFIndex(cfg("global")))!$data(^YHMFUnique(cfg("global")))!$data(^YHMFRef(cfg("global"))) set status="unmanaged" quit
  . set install=1
@@ -97,59 +102,71 @@ attempt(operation,key,values,cfg)
  if operation'="insert" do  quit:status'="ok" status
  . set status=$$old(root,.cfg,.old)
  . if status="ok",old(cfg("key"))'=values(cfg("key")) set status="corrupt"
- if operation="delete" do  quit:status'="ok" status
+ if $get(cfg("partial")) do
+ . set field=""
+ . for  set field=$order(old(field)) quit:field=""  if '$data(values(field)) set values(field)=old(field)
+ kill previous
+ if operation'="insert" merge previous=old
+ if operation="delete",'$get(cfg("owned")) do  quit:status'="ok" status
  . set status=$$incoming(cfg("global"),key)
  ; YHMF writer checkpoint: native tests can pause this attempt before index writes.
- set status=$$indexbefore(operation,key,.values,.old,.cfg)
+ set status=$$indexbefore(operation,recordkey,.values,.old,.cfg)
  if status'="ok" quit status
- set status=$$indexafter(operation,key,.values,.old,.cfg)
+ set status=$$indexafter(operation,recordkey,.values,.old,.cfg)
  if status'="ok" quit status
  if install set ^YHMFSchema(cfg("global"))=cfg("fingerprint"),^YHMFSchema(cfg("global"),"snapshot")=cfg("snapshot")
  if operation="delete" do  quit status
- . set status=$$refchange(operation,key,.values,.old,.cfg)
- . if status="ok" kill ^YHMFRef(cfg("global"),key),@root
+ . set status=$$refchange(operation,recordkey,.values,.old,.cfg)
+ . if status="ok" do
+ . . if '$get(cfg("owned")) kill ^YHMFRef(cfg("global"),recordkey)
+ . . kill @root
  if operation="insert" do
+ . if $get(cfg("owned")) set @root="o:1" quit
  . set field=""
  . for  set field=$order(cfg("meta",field)) quit:field=""  set @root@("%m",field)=cfg("meta",field)
  set field=""
  for  set field=$order(values(field)) quit:field=""  if $get(@root@(field))'=$$scalar(values(field),field,.cfg) set @root@(field)=$$scalar(values(field),field,.cfg)
- quit $$refchange(operation,key,.values,.old,.cfg)
+ quit $$refchange(operation,recordkey,.values,.old,.cfg)
 indexbefore(operation,key,values,old,cfg)
- new field,status,token,index,claim
+ new field,status,token,index,claim,name
  set status="ok",field=""
  for  set field=$order(cfg("index",field)) quit:field=""  do  quit:status'="ok"
  . if operation="insert" quit
- . set token=$$token(old(field),field,.cfg),index=$name(^YHMFIndex(cfg("global"),field,token,key,cfg("digest",field)))
+ . set name=$get(cfg("indexname",field),field)
+ . set token=$$token(old(field),field,.cfg),index=$name(^YHMFIndex(cfg("global"),name,token,key,cfg("digest",field)))
  . set claim="["_$$quote(key)_","_cfg("location",field)_"]"
  . if $data(@index)'=1!($get(@index)'=cfg("location",field)) set status="corrupt" quit
- . if cfg("unique",field),$get(^YHMFUnique(cfg("global"),field,token))'=claim set status="corrupt" quit
- . if cfg("unique",field),$data(^YHMFUnique(cfg("global"),field,token))'=1 set status="corrupt" quit
+ . if cfg("unique",field),$get(^YHMFUnique(cfg("global"),name,token))'=claim set status="corrupt" quit
+ . if cfg("unique",field),$data(^YHMFUnique(cfg("global"),name,token))'=1 set status="corrupt" quit
  . if operation="replace",$$token(old(field),field,.cfg)=$$token(values(field),field,.cfg) quit
  . kill @index
- . if cfg("unique",field) kill ^YHMFUnique(cfg("global"),field,token)
+ . if cfg("unique",field) kill ^YHMFUnique(cfg("global"),name,token)
  quit status
 indexafter(operation,key,values,old,cfg)
- new field,status,token,index,claim
+ new field,status,token,index,claim,name
  set status="ok"
  if operation'="delete" do  quit:status'="ok" status
  . set field=""
  . for  set field=$order(cfg("index",field)) quit:field=""  do  quit:status'="ok"
+ . . set name=$get(cfg("indexname",field),field)
  . . if operation="replace",$$token(old(field),field,.cfg)=$$token(values(field),field,.cfg) quit
  . . if cfg("tag",field)'="d",cfg("overhead",field)+(2*$zlength(key))+(2*$zlength(values(field)))+8>1019 set status="key_size" quit
  . . set token=$$token(values(field),field,.cfg)
  . . if cfg("overhead",field)+(2*$zlength(key))+(2*$zlength(token))>1019 set status="key_size" quit
  . . set claim="["_$$quote(key)_","_cfg("location",field)_"]"
- . . if cfg("unique",field),$data(^YHMFUnique(cfg("global"),field,token)) set status="unique" quit
- . . if $data(^YHMFIndex(cfg("global"),field,token,key,cfg("digest",field))) set status="corrupt" quit
- . . set ^YHMFIndex(cfg("global"),field,token,key,cfg("digest",field))=cfg("location",field)
- . . if cfg("unique",field) set ^YHMFUnique(cfg("global"),field,token)=claim
+ . . if cfg("unique",field),$data(^YHMFUnique(cfg("global"),name,token)) set status="unique" quit
+ . . if $data(^YHMFIndex(cfg("global"),name,token,key,cfg("digest",field))) set status="corrupt" quit
+ . . set ^YHMFIndex(cfg("global"),name,token,key,cfg("digest",field))=cfg("location",field)
+ . . if cfg("unique",field) set ^YHMFUnique(cfg("global"),name,token)=claim
  quit status
 old(root,cfg,values)
  new field,part,raw,status
- set status=$$recordmeta(root,.cfg)
+ set status="ok"
+ if $get(cfg("owned")) set status=$select($get(@root)="o:1":"ok",1:"corrupt")
+ else  set status=$$recordmeta(root,.cfg)
  if status'="ok" quit status
  set field=""
- for  set field=$order(@root@(field)) quit:field=""  if field'="%m",'$data(cfg("tag",field)) set status="corrupt"
+ for  set field=$order(@root@(field)) quit:field=""  if (field'="%m")!$get(cfg("owned")),'$data(cfg("tag",field)) set status="corrupt"
  set field=""
  for  set field=$order(cfg("tag",field)) quit:field=""  do
  . if $data(@root@(field))'=1 set status="corrupt" quit
@@ -187,6 +204,7 @@ quote(value)
 @DECIMAL@
 @SUMMATH@
 @SHA256@
+@HIERARCHY@
 @MAINTENANCE@
 config(cfg)
 @CONFIG@

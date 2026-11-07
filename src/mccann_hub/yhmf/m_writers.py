@@ -6,6 +6,7 @@ from importlib.resources import files
 
 from .canonical_schema import schema_document
 from .errors import SchemaError
+from .m_hierarchy_config import compile_hierarchy
 from .m_writer_config import _field_config, _literal, _overhead, _schema_config, _set
 from .registry import ModelSpec, NodeSpec
 
@@ -20,6 +21,7 @@ def _template(name: str) -> tuple[str, str]:
         ("@DECIMAL@", "m_decimal.template"),
         ("@SUMMATH@", "m_sum_math.template"),
         ("@SHA256@", "m_sha256.template"),
+        ("@HIERARCHY@", "m_hierarchy.template"),
         ("@SCHEMA@", "m_schema.template"),
         ("@REFERENCES@", "m_references.template"),
     ):
@@ -61,8 +63,11 @@ def source(spec: ModelSpec, name: str, *, targets: tuple[ModelSpec, ...] = ()) -
                 ),
             ]
         )
-    for field, rule in declaration["properties"].items():
-        config.extend(_field_config(node, spec.global_name, field, rule, policy, bindings))
+    if any(field.node is not None for field in spec.fields):
+        config.extend(compile_hierarchy(spec, node, declaration, bindings))
+    else:
+        for field, rule in declaration["properties"].items():
+            config.extend(_field_config(node, spec.global_name, field, rule, policy, bindings))
     config.append(
         _set(
             "dataOverhead",
