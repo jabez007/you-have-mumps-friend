@@ -171,3 +171,39 @@ another one. Review its schema difference and migrate before use. A registry acc
 model for each global, so registering both old and replacement declarations is rejected.
 Shared-global variants and runtime class mutation are not implied by field inheritance.
 [ADR 0007](../adr/0007-compile-time-model-reuse.md) records the choice and alternatives.
+
+## Compute a virtual value
+
+Use a Python property for a calculation on a loaded object. Pydantic computed_field
+also includes it in the object's normal model_dump output:
+
+```python
+from pydantic import computed_field
+
+
+class VirtualCatalog(Catalog):
+    @computed_field
+    @property
+    def display_name(self) -> str:
+        return f"{self.id}: {self.sku}"
+
+
+virtual_db = Database(MemoryStore(), Registry(VirtualCatalog))
+item = VirtualCatalog(id="V", sku="ITEM")
+virtual_db.insert(item)
+assert virtual_db.get(VirtualCatalog, "V").display_name == "V: ITEM"
+```
+
+The property reads this Python value object, not live database state. Persistence
+does not evaluate it or store its result. Adding it preserves the schema contract,
+including supported legacy snapshots. It cannot be patched, indexed, used as a
+stored key, or passed to a query predicate. Use the original declared fields for
+writes; model_dump with computed output is a presentation mapping, not persistence
+input. Save the model itself instead.
+
+Prefer an ordinary uncached property when fields may change. Python cached_property
+does not invalidate automatically when you patch the database or modify an object.
+No dependency graph or stored rollup maintenance is implied. The inventory
+Warehouse.total_on_hand sums a loaded warehouse using a local Decimal context;
+loading that aggregate costs work proportional to its data. For targeted inventory
+queries, use indexed balance occurrences instead.

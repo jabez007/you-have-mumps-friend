@@ -55,6 +55,11 @@ Concrete roots still declare their own global, and Position stays an embedded va
 without its own key. This changes no existing schema bytes or stored paths. See
 [the model-reuse decision](../../docs/adr/0007-compile-time-model-reuse.md).
 
+Warehouse.total_on_hand is a virtual sum of that loaded warehouse's balances. It
+creates no stored rollup nodes and requires no schema migration. It does not query
+fresh data or replace bounded balance queries; load an aggregate only when the
+workflow needs it. The uncached calculation uses its own Decimal precision.
+
 ## Workflows
 
 ```python

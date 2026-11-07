@@ -225,8 +225,10 @@ def _node_spec(
         raise SchemaError("Schema versions must be positive integers")
     if model.model_config.get("extra") == "allow":
         raise SchemaError("Models with extra='allow' cannot be persisted; declare stored fields")
-    if model.model_computed_fields:
-        raise SchemaError("Computed fields are not persisted")
+    for computed in model.model_computed_fields.values():
+        extra = computed.json_schema_extra
+        if isinstance(extra, dict) and "yhmf" in extra:
+            raise SchemaError("Computed fields are virtual; persistence metadata is not supported")
     for name, field in model.model_fields.items():
         if not _NAME.fullmatch(name) or any(
             (field.alias, field.validation_alias, field.serialization_alias)

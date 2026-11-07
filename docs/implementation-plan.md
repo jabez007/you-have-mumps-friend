@@ -606,3 +606,15 @@ that implies protection on other access paths. ADR 0008 records the decision and
 the independent M-writer limitation, supported by upstream security documentation.
 Document that inventory's business validation is not authorization. No runtime,
 storage, or dependency change; validate documentation examples and links.
+
+### Virtual computed values, first slice of issue 17
+
+Pydantic computed_field already computes Python values, and records.input_values
+stores only compiled model_fields. Registry currently rejects computed declarations
+entirely. Permit virtual computed fields, but reject mapper persistence metadata on
+them. They create no nodes, indexes, schema identity, or dependency machinery. Reads
+compute from the loaded value object; cached properties retain Python's ordinary
+staleness semantics. Demonstrate an uncached Warehouse.total_on_hand with exact local
+Decimal arithmetic. Verify canonical/legacy compatibility, nested patches, save,
+index/query refusal, and no persistence-time evaluation. Stored rollups stay open
+pending the independent-writer contract in issue 25. Existing C901 passes at ten.

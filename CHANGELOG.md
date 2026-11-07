@@ -2,6 +2,13 @@
 
 This file records what each release added and what it left out.
 
+## Unreleased
+
+- Permits Pydantic virtual computed fields without persisting them or changing
+  existing schema identities. They cannot declare mapper storage or index metadata.
+- Adds an uncached total to the inventory warehouse example. Stored rollups remain
+  deferred pending the independent M-writer contract.
+
 ## 0.5.0
 
 - Adds canonical schema format 2, compatible legacy bindings, generated mutation

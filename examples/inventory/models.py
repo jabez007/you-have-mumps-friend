@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Warehouse ownership and independent catalog, lot, and ledger identities."""
 
-from decimal import Decimal
+from decimal import Decimal, localcontext
 from typing import Annotated, Self
 
-from pydantic import ConfigDict, model_validator
+from pydantic import ConfigDict, computed_field, model_validator
 
 from mccann_hub.yhmf import ChildField, Children, Field, Model, Reference
 
@@ -64,6 +64,22 @@ class Warehouse(Identified):
     __global__ = "^InventoryWarehouse"
     name: str
     locations: Children[Location] = ChildField(key="id")
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def total_on_hand(self) -> Decimal:
+        """Sum this loaded snapshot; no database reads or stored rollup nodes."""
+        with localcontext() as context:
+            context.prec = 40
+            return sum(
+                (
+                    balance.quantity
+                    for location in self.locations.values()
+                    for bin_ in location.bins.values()
+                    for balance in bin_.balances.values()
+                ),
+                Decimal(0),
+            )
 
 
 class Position(Model):

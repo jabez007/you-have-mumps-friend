@@ -25,6 +25,12 @@ uses its own codecs. Unsupported validation metadata fails registration rather
 than silently losing a constraint. Dates, times, compound keys, recursive ownership,
 and arbitrary unions remain outside the supported type set.
 
+Virtual properties and Pydantic computed fields are outside the stored contract.
+They add no nodes, indexes, defaults, or schema changes. A computed field may not
+declare mapper persistence metadata. Changing a virtual display calculation alone
+needs no data migration; using it to change persisted values in a validator still
+follows the application revision policy below.
+
 Mapper flags are compiled from registry semantics, rather than copied from raw
 Field metadata. Adding `Field()` only for presentation, spelling a default `restrict`
 policy explicitly, or supplying false index flags does not change the contract.
