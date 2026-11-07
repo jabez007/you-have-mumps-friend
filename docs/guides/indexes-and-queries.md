@@ -30,6 +30,42 @@ except UniqueViolation:
     pass
 ```
 
+## Typed equality fields
+
+Use Database.field when field names and equality values should be checked by strict
+mypy. The selector runs over declarations without reading records or creating an
+index. Existing keyword queries remain available.
+
+```python
+sku = db.field(CatalogProduct, lambda product: product.sku)
+price = db.field(CatalogProduct, lambda product: product.price)
+assert db.query(CatalogProduct).where(sku.eq("SKU1")).all()[0].id == "P1"
+assert db.query(CatalogProduct).where(price.eq(Decimal("12.50")), sku="SKU1").all()[0].id == "P1"
+```
+
+sku.eq(42) and a misspelled attribute fail type checking. Nulls remain valid for a
+nullable field. A field belongs to its root class and schema fingerprint; mixing
+declarations raises SchemaError at runtime as well as a type error where inferable.
+Use each(collection) to name an owned declaration without a concrete child key:
+
+```python
+from examples.inventory import MODELS, Warehouse
+from mccann_hub.yhmf import each
+
+inventory = Database(MemoryStore(), Registry(*MODELS))
+quantity = inventory.field(
+    Warehouse, lambda warehouse: each(each(each(warehouse.locations).bins).balances).quantity
+)
+assert quantity.name == "locations.bins.balances.quantity"
+```
+
+This does not add an index: where(quantity.eq(...)) still requires a declared index.
+each is only for field selectors; keyed selectors belong to Database.path. Use pure
+attribute access and each calls, without conditions or calculations. Scalar and
+reference equality values use their existing adapters and visit budgets. order_by
+also accepts a QueryField for a declared ordered index. Typed range and prefix
+predicates are not yet provided; their existing string forms remain available.
+
 ## Ordered index storage
 
 Field(ordered=True) opts a supported scalar into the versioned ordered-v1 index

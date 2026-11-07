@@ -47,7 +47,7 @@ from .queries import children as read_children
 from .records import input_values, metadata, record_nodes, record_values, validate_stored
 from .registry import ModelSpec, Registry, reference_fields
 from .schemas import SchemaInspection, check_schema, inspect_schema, schema_path
-from .selectors import ModelPath
+from .selectors import ModelPath, QueryField
 from .storage import Path, Store
 from .transforms import Transform
 
@@ -152,6 +152,11 @@ class Database:
         """Select an owned declaration with ordinary typed field and key access."""
         self._ensure_active()
         return selectors.model_path(self.registry.spec(model), select)
+
+    def field[M: Model, T](self, model: type[M], select: Callable[[M], T]) -> QueryField[M, T]:
+        """Select a typed query declaration without reading records or implying an index."""
+        self._ensure_active()
+        return selectors.query_field(self.registry.spec(model), select)
 
     def patch(
         self, model: type[Model], key: Key, *, changes: Mapping[str, Any], at: OwnedPath = ()

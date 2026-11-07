@@ -12,6 +12,7 @@ from .models import Model, Reference
 from .mutations import read_owner
 from .owned import OwnedPath, Owner, require_object, resolve_collection
 from .registry import reference_target, scalar_type
+from .selectors import FieldPredicate, QueryField, bind_field
 from .storage import Path
 
 if TYPE_CHECKING:
@@ -149,7 +150,10 @@ class Query[M: Model]:
         indexes.index_root(self._db.registry.spec(self._model), definition, text)
         return self._selected(index_scans.Selection(definition, "prefix", text=text))
 
-    def order_by(self, field: str) -> "Query[M]":
+    def order_by(self, field: str | QueryField[M, Any]) -> "Query[M]":
+        self._db._ensure_active()
+        if isinstance(field, QueryField):
+            field = bind_field(self._db.registry.spec(self._model), field)
         selection = index_scans.Selection(self._ordered(field), "ordered")
         if self._field is None:
             return self._selected(selection)
@@ -164,16 +168,17 @@ class Query[M: Model]:
             predicates=self._predicates or (self._term(),),
         )
 
-    def where(self, **equals: Any) -> "Query[M]":
+    def where(self, *predicates: FieldPredicate[M], **equals: Any) -> "Query[M]":
         self._db._ensure_active()
-        if not equals or len(equals) > query_intersections.MAX_PREDICATES:
+        count = len(predicates) + len(equals)
+        if not 1 <= count <= query_intersections.MAX_PREDICATES:
             raise QueryError("Specify between one and eight equality predicates")
-        if self._field is not None or len(equals) > 1:
-            return self._combine(
-                tuple(self._equality(name, value) for name, value in equals.items())
-            )
-        name, value = next(iter(equals.items()))
-        return self._equality(name, value)
+        spec = self._db.registry.spec(self._model)
+        terms = tuple((bind_field(spec, p.field), p.value) for p in predicates) + tuple(
+            equals.items()
+        )
+        queries = tuple(self._equality(name, value) for name, value in terms)
+        return self._combine(queries) if self._field is not None or count > 1 else queries[0]
 
     def _equality(self, name: str, value: Any) -> "Query[M]":
         spec = self._db.registry.spec(self._model)

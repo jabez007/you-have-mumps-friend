@@ -13,7 +13,7 @@ from .registry import Registry
 from .repository import Database
 from .schema_diff import SchemaChange, compare_schemas
 from .schemas import SchemaInspection, SchemaSnapshot
-from .selectors import ModelPath, ReferenceFactory
+from .selectors import FieldPredicate, ModelPath, QueryField, ReferenceFactory, each
 from .storage import MemoryStore, NativeStore, Path, Store
 from .transforms import Transform
 
@@ -22,6 +22,7 @@ __all__ = [
     "Children",
     "Database",
     "Field",
+    "FieldPredicate",
     "GlobalView",
     "IndexReport",
     "IndexRebuildPlan",
@@ -38,6 +39,7 @@ __all__ = [
     "Path",
     "PredicatePlan",
     "QueryPlan",
+    "QueryField",
     "Registry",
     "Reference",
     "ReferenceFactory",
@@ -47,5 +49,6 @@ __all__ = [
     "Store",
     "Transform",
     "compare_schemas",
+    "each",
 ]
 __version__ = "0.5.0"

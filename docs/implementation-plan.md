@@ -1254,6 +1254,24 @@ reference replacement/deletion, self-reference, large exact counts, legacy schem
 bindings, restart, rollback, and multi-model transaction composition on native.
 No persistent layout, source reference identity, or public Python signature changes.
 
+### Typed query fields, issue 43
+
+Reuse selectors._Probe/_Leaf and the immutable schema binding used by ModelPath.
+Database.field selects one declared scalar/reference; QueryField.eq produces a
+typed equality predicate consumed by the existing Query._equality and intersection
+planner. Query.where keeps its keyword form and accepts these predicates as
+positional arguments. order_by also accepts a typed field. No new query executor,
+indexes, model mutation, or persisted contract is needed.
+
+Declaration paths differ from concrete owned addresses: each(collection) explicitly
+selects the child declaration, while keyed access is rejected in query selectors.
+Share probes with an explicit declaration mode rather than duplicating traversal.
+Bind fields to their root class and fingerprint, validate their index through the
+existing planner, and reject computed selectors without reading storage. Strict
+mypy probes must demonstrate field typos, wrong values, and wrong root types; native
+and memory tests compare keyword and typed queries. Existing touched functions pass
+the configured C901 maximum of ten; keep that threshold unchanged.
+
 Before reference support, share schema constants and M schema/record-metadata checks
 without changing their validation or stored bytes. This keeps source and referenced
 target bindings on the same implementation, including exact legacy snapshots.

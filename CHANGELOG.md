@@ -4,6 +4,9 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Adds typed query fields, equality predicates, and explicit each() declaration
+  selectors for nested collections. Existing keyword queries and storage stay intact.
+
 - Adds managed reference fields to generated M writers, exact target schema bindings,
   reverse entries and counts, scoped target maintenance, and transaction composition.
   Valid zero-count namespaces no longer prevent M target deletion.
