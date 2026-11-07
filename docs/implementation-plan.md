@@ -740,3 +740,25 @@ types. Use a small immutable state value instead of expanding positional tuples.
 Reject mutation before access and require fresh declarations/registries, preserving
 all valid schema bytes. Test empty and installed databases with root/owned changes
 and verify no writes on failure. Existing C901 passes at ten.
+
+### Date and datetime codecs, first slice of issue 11
+
+Use the existing scalar codecs, field adapters, canonical declarations, indexes,
+and literal-default migration path. Add D:YYYY-MM-DD and fixed-width
+T:YYYY-MM-DDTHH:MM:SS.ffffffZ encodings. Datetimes represent UTC instants; require
+aware inputs, reject UTC overflow, and do not preserve zone/fold presentation.
+Reencoding rejects noncanonical raw values. Keep layout/global codec version one
+and every existing scalar encoding/fingerprint unchanged. New fields explicitly
+declare date-v1 or datetime-utc-v1 codecs. Canonical temporal bounds use their own
+named rules, avoiding numeric rounding/normalization; comparisons recognize those
+formats and reject unknown temporal codecs. Defaults use canonical ISO strings,
+which existing strict JSON literal validation can reconstruct.
+
+Verify golden bytes/contracts, equality/unique indexes, boundaries, nullable and
+nested fields, migrations/defaults, rejected naive/invalid values, and native
+adapters before changing the sample ledger. Then add an explicit named migration
+from legacy string Movement timestamps to an application-revision-two datetime
+model, preserving string timestamp inputs at the service boundary. Do not silently
+invalidate existing example databases. UUID/enums/literals and hierarchical scalar
+lists remain separate slices. Existing C901 passes at ten; extract temporal codec
+logic rather than raising complexity thresholds.

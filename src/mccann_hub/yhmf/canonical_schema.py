@@ -76,14 +76,16 @@ def numeric_rule(value: Any) -> str:
 
 
 def _value(value: Any) -> Any:
-    if value is None or type(value) in (str, bool, int):
+    if (
+        value is None
+        or type(value) in (str, bool, int)
+        or (type(value) is float and math.isfinite(value))
+    ):
         return value
     if isinstance(value, Decimal):
         if not value.is_finite():
             raise SchemaError("Schema defaults and constraints must be finite")
         return str(value)
-    if type(value) is float and math.isfinite(value):
-        return value
     if isinstance(value, bytes):
         return {"$bytes": value.hex()}
     if isinstance(value, re.Pattern):
