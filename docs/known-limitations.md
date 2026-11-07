@@ -70,7 +70,8 @@ identities unchanged; shared-global variants remain a separate design. See
 
 Database.path selectors infer typed owner reads without casts, and Registry.reference
 infers a key-checked factory returning the existing Reference type. Tuple paths remain
-available. Typed query-field objects are deferred with query expansion; see
+available. Typed query-field objects are deferred to
+[#43](https://github.com/jabez007/you-have-mumps-friend/issues/43). See
 [owned selectors](guides/partial-updates.md) and [reference factories](guides/references.md).
 
 Unique constraints apply immediately to ordinary operations. Use the explicit
@@ -82,11 +83,14 @@ deferred uniqueness is not supported. See [the example](guides/indexes-and-queri
 These features remain outside the current implementation:
 
 - Nested/model/reference lists, Annotated list-item declarations, arbitrary `dict`, and unions
-  other than `| None`. [#11](https://github.com/jabez007/you-have-mumps-friend/issues/11)
-- General computed callbacks, owned-level stored sums, and reference-based dependencies.
+  other than `| None`. [#44](https://github.com/jabez007/you-have-mumps-friend/issues/44)
+- Owned-level stored sums. [#41](https://github.com/jabez007/you-have-mumps-friend/issues/41)
+  General computed callbacks and reference-based dependencies are outside that issue's scope.
   Root Decimal sums through owned paths and virtual Pydantic fields are supported;
   see [computed fields](guides/computed-fields.md).
-- Descending order, multi-predicate occurrence projections, and ordered root continuation cursors. [#15](https://github.com/jabez007/you-have-mumps-friend/issues/15)
+- Descending order and ordered root continuation cursors. [#42](https://github.com/jabez007/you-have-mumps-friend/issues/42)
+  Combined queries reject occurrence projections by design, because independent matches
+  can have different owners.
 - Mapper access rules. Apply authorization in the application's trusted service;
   independent M writers require their own enforcement. Database and raw paths do
   not provide record isolation. [ADR 0008](adr/0008-application-authorization-boundary.md)
@@ -96,7 +100,7 @@ These features remain outside the current implementation:
   [transform guide](guides/record-transforms.md).
 - Automatic change tracking and optimistic revisions. save validates and compares
   the full aggregate, writing only physical node differences. It remains
-  last-writer-wins. [#27](https://github.com/jabez007/you-have-mumps-friend/issues/27)
+  last-writer-wins. [#45](https://github.com/jabez007/you-have-mumps-friend/issues/45)
 
 ## Operating limits
 
@@ -108,13 +112,21 @@ These features remain outside the current implementation:
 
 - A migration or rebuild blocks its affected model and reference validation that
   needs that model. Unrelated CRUD can proceed; only one maintenance job runs at a
-  time. Older clients honoring the global gate stay blocked conservatively. See
+  time ([#46](https://github.com/jabez007/you-have-mumps-friend/issues/46)). Older
+  clients honoring the global gate stay blocked conservatively. See
   [maintenance guidance](guides/migrations.md#stop-other-clients-first) and
   [ADR 0009](adr/0009-model-scoped-maintenance.md).
 - Raw M SET/KILL bypasses validation, indexes, references, and stored sums. Exported
   [schema-bound M routines](guides/m-access.md#export-an-explicit-m-writer) maintain
   a qualified flat ASCII str/int subset and reject unsupported models.
   Read-only GlobalView mappings can project foreign globals without adopting them.
+  Extending those routines is tracked for
+  [other scalar types](https://github.com/jabez007/you-have-mumps-friend/issues/36),
+  [references](https://github.com/jabez007/you-have-mumps-friend/issues/37),
+  [owned trees and stored sums](https://github.com/jabez007/you-have-mumps-friend/issues/38), and
+  [multi-record transactions](https://github.com/jabez007/you-have-mumps-friend/issues/39).
+- Any maintenance job blocks generated M routines, even for an unrelated model.
+  [#40](https://github.com/jabez007/you-have-mumps-friend/issues/40)
 - Equality index tokens preserve typed equality, not numeric order. Opt-in ordered-v1
   indexes provide native numeric/temporal and escaped string ordering within their
   declared domains. M readers must follow the selected index codec; see

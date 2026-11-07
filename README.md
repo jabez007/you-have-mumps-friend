@@ -74,9 +74,11 @@ metadata nodes:
 
 - **Ownership is part of the data model.** Owned records are stored under their parent. A
   patch to one lot writes that lot's changed nodes, however many other lots exist.
-- **M code can reach the data.** A plain `zwrite` or `$order` loop sees every record. M can
-  also [write under limits](https://github.com/jabez007/you-have-mumps-friend/blob/main/docs/guides/m-access.md#write-from-m), and safer M writes are
-  a project goal.
+- **M code can reach the data.** A plain `zwrite` or `$order` loop sees every record. For
+  flat models, YHMF [exports M routines](https://github.com/jabez007/you-have-mumps-friend/blob/main/docs/guides/m-access.md#export-an-explicit-m-writer)
+  that validate each write and update its indexes in one transaction.
+  [Raw writes](https://github.com/jabez007/you-have-mumps-friend/blob/main/docs/guides/m-access.md#raw-writes-from-m)
+  bypass those checks.
 - **Queries have bounded plans.** A filter on an unindexed field raises `QueryError`, and
   `explain()` shows the plan. There is no fallback scan.
 - **Schema changes are explicit.** A declaration that differs from the installed schema
@@ -95,7 +97,7 @@ for release boundaries.
 | Queries | Indexed equality, bounded predicate intersections, ordered range/prefix/ascending reads, unique indexes, root and child paging, occurrence projections, collection counts | Descending order, ordered root cursors |
 | Writes | Whole-record `save`, scalar `patch`, explicit `patch_many` groups, child insert and delete, restart-safe transactions | Change tracking, callback-wide deferred unique checks |
 | Migrations | Scalar defaults, index changes, validation-only revisions, explicit record transforms, resume after interruption, model-scoped access | Root identity/layout changes; only one maintenance job at a time |
-| M access | Read every node, write valid scalars | Writes that maintain indexes and references |
+| M access | Read every node, generated writer routines for flat `str`/`int` models with equality and unique indexes | Generated writers for other scalar types, references, owned trees, and multi-record transactions |
 
 [Known limitations](https://github.com/jabez007/you-have-mumps-friend/blob/main/docs/known-limitations.md) lists current defects and their workarounds.
 Read it before you build on this project.
