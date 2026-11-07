@@ -133,8 +133,14 @@ def test_temporal_bounds_use_calendar_order_and_failed_replace_rolls_back(store,
         ("instant", "2000-01-01T00:00:00.000000Z"),
         ("instant", "2100-01-01T00:00:00.000001Z"),
     ):
+        python_values = {
+            "id": "A",
+            "day": date(2000, 1, 1),
+            "instant": datetime(2000, 1, 1, 0, 0, 0, 1, tzinfo=UTC),
+        }
+        changed = date.fromisoformat(value) if field == "day" else datetime.fromisoformat(value)
         with pytest.raises(ValidationError):
-            Bounded.model_validate(values | {field: value})
+            Bounded.model_validate(python_values | {field: changed})
         assert run("replace", values | {field: value}) == "invalid"
         assert dump(store, roots) == before
     assert run("replace", values | {"instant": "2100-01-01T00:00:00.000000Z"}) == "ok"

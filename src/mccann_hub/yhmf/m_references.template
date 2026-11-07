@@ -3,12 +3,10 @@ refkey(value,field,cfg)
  if cfg("targets",cfg("ref",field),"keytag")="s" quit "s:"_value
  quit value
 refvalid(value,field,cfg)
- new i,tag,good
+ new tag
  if value[$char(0) quit 0
  set tag=cfg("targets",cfg("ref",field),"keytag")
- if tag="s" do  quit good
- . set good=1
- . for i=1:1:$length(value) if $ascii(value,i)>127 set good=0 quit
+ if tag="s" quit $$utf8(value)
  if value'=+value quit 0
  if ($length(value)-($extract(value)="-"))>18 quit 0
  quit (value?1.18N)!(value?1"-"1.18N)

@@ -46,7 +46,7 @@ def test_export_accepts_finite_string_integer_domains_without_installing_schema(
 
 @pytest.mark.parametrize(
     "annotation",
-    [Literal["caf\u00e9"], Literal[10**18], Literal[True], Literal["x" * 32765]],
+    [Literal[10**18], Literal[True], Literal["x" * 32765]],
 )
 def test_unqualified_choice_domains_fail_at_export(store, annotation):
     model = create_model("Unsupported", __base__=ChoiceRow, kind=(annotation, Field()))

@@ -40,23 +40,15 @@ def values(key="A", sku="S", name="Stock", quantity="1"):
 
 
 @pytest.mark.native
-@pytest.mark.parametrize("field,value", [("name", "caf\u00e9"), ("quantity", 10**30)])
-def test_python_values_outside_m_input_subset_are_unsupported_and_unchanged(
-    store, m_writer, field, value
-):
-    db, run, _, _ = m_writer
-    if field == "name":
-        db.insert(MRecord(id="A", sku="S", name=value, quantity=1))
-    else:
+def test_python_integers_outside_m_domain_are_unsupported_and_unchanged(store, m_writer):
+    class WideInteger(MRecord):
+        quantity: int = Field(ge=0)
 
-        class WideInteger(MRecord):
-            quantity: int = Field(ge=0)
-
-        db = Database(store, Registry(WideInteger))
-        _, _, routine, _ = m_writer
-        routine.write_text(db.m_routine(WideInteger, name="YHMFTAPI"))
-        routine.with_suffix(".o").unlink(missing_ok=True)
-        db.insert(WideInteger(id="A", sku="S", name="Stock", quantity=value))
+    _, run, routine, _ = m_writer
+    db = Database(store, Registry(WideInteger))
+    routine.write_text(db.m_routine(WideInteger, name="YHMFTAPI"))
+    routine.with_suffix(".o").unlink(missing_ok=True)
+    db.insert(WideInteger(id="A", sku="S", name="Stock", quantity=10**30))
     from tests.adversarial_support import dump
 
     roots = (MRecord.__global__, "^YHMFSchema", "^YHMFIndex", "^YHMFUnique")

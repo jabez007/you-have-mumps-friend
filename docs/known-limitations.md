@@ -125,7 +125,7 @@ These features remain outside the current implementation:
   [ADR 0009](adr/0009-model-scoped-maintenance.md).
 - Raw M SET/KILL bypasses validation, indexes, references, and stored sums. Exported
   [schema-bound M routines](guides/m-access.md#export-an-explicit-m-writer) maintain
-  qualified ASCII str/int/Decimal, finite str/int choices, dates/UTC datetimes,
+  qualified UTF-8 str/int/Decimal, finite str/int choices, dates/UTC datetimes,
   their nullable scalar forms, and references, with owning or caller-participating
   transactions. Keyed hierarchies support leaf-child operations and root/non-leaf
   scalar patches under existing roots, including exact stored sums. Whole aggregate
@@ -136,8 +136,8 @@ These features remain outside the current implementation:
   [#55](https://github.com/jabez007/you-have-mumps-friend/issues/55)).
   Unsupported declarations stay rejected.
   Existing values outside the M stored-value domain return unsupported without
-  writes. Normalized stored Decimal scale is supported; Unicode strings, wide
-  integers, and Decimals outside the exact unit domain still require Python.
+  writes. Normalized stored Decimal scale and Unicode strings are supported; wide
+  integers and Decimals outside the exact unit domain still require Python.
   Participants require a restartable outer transaction. Bare TSTART is unsupported
   and can raise TRESTNOT instead of a failure status; the caller's error handler must
   roll back any active TP. See [the caller contract](guides/m-access.md#compose-writes-in-a-caller-transaction).

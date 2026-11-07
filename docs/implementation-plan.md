@@ -1605,3 +1605,21 @@ Test physical equivalence with Python patch, unchanged children, invalid root sh
 unique rollback, participants, and a forced restart after index writes. Complete tree
 creation/deletion remains a later issue-53 slice. Configured C901 passes at ten before
 this change; no unrelated Python refactor or threshold change is required.
+
+### Qualify native UTF-8 string writes, issue 55
+
+Reuse the existing strict UTF-8 parser, scalar/key bytes, canonical_json, quote/token,
+and shared field/reference validation. Factor one byte-oriented codepoint decoder
+under UTF-8 validation and JSON quoting, independent of the M process character set.
+Count Unicode codepoints for string constraints, preserve UTF-8 record/key bytes,
+and emit Python-compatible ASCII JSON escapes including surrogate pairs. Existing
+ASCII quoting and digest identities must remain byte-identical.
+
+Qualify strings, finite string choices, and string reference keys within the existing
+byte/key budgets. Reject invalid UTF-8 before character-sensitive reads; use byte
+operations to peel storage/internal wire tags. Keep unsupported patterns and validators
+rejected. No Unicode normalization is performed. Tests compare full Python nodes,
+index/claim bytes, Unicode ownership digests, malformed input/storage, character limits,
+and generated strings under M and UTF-8 process modes on both engines. Remove only
+the superseded ASCII refusal checks/locals. Configured C901 passes at ten before
+this change; no threshold changes or native dependencies are needed.

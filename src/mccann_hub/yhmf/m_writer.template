@@ -81,15 +81,15 @@ input(operation,input,cfg,values)
  for  set field=$order(cfg("tag",field)) quit:field=""  if '$data(values(field)) set status="invalid"
  quit status
 valid(value,field,cfg,stored)
- new i,good
+ new characters,good
  if $zlength(value)>32764 quit 0
+ if '$$utf8(value,.characters) quit 0
  if $data(cfg("choicecount",field)),'$$choice(value,field,.cfg) quit 0
  if cfg("tag",field)="r" quit $$refvalid(value,field,.cfg)
  if cfg("tag",field)="d" quit $$dvalid(value,field,.cfg,+$get(stored))
  if (cfg("tag",field)="D")!(cfg("tag",field)="T") quit $$tvalid(value,field,.cfg)
  if cfg("tag",field)="s" do  quit good
- . set good=($length(value)'<cfg("min",field))&($length(value)'>cfg("max",field))
- . for i=1:1:$length(value) if $ascii(value,i)>127 set good=0 quit
+ . set good=(characters'<cfg("min",field))&(characters'>cfg("max",field))
  if value'=+value quit 0
  if ($length(value)-($extract(value)="-"))>18 quit 0
  if (value'?1.18N)&(value'?1"-"1.18N) quit 0
@@ -200,24 +200,21 @@ old(root,cfg,values)
  . if $data(@root@(field))'=1 set status="corrupt" quit
  . set raw=@root@(field)
  . if $get(cfg("nullable",field)),raw="n:" set values(field)="n:" quit
- . if $extract(raw,1,2)'=(cfg("tag",field)_":") set status="corrupt" quit
- . set part=$extract(raw,3,$length(raw))
+ . if $zextract(raw,1,2)'=(cfg("tag",field)_":") set status="corrupt" quit
+ . set part=$zextract(raw,3,$zlength(raw))
  . if cfg("tag",field)="r",cfg("targets",cfg("ref",field),"keytag")="s" do  quit:status'="ok"
- . . if $extract(part,1,2)'="s:" set status="corrupt" quit
- . . set part=$extract(part,3,$length(part))
+ . . if $zextract(part,1,2)'="s:" set status="corrupt" quit
+ . . set part=$zextract(part,3,$zlength(part))
  . set status=$$storedscalar(part,field,.cfg)
  . if status'="ok" quit
  . set values(field)=$select($get(cfg("nullable",field)):"v:",1:"")_part
  quit status
 storedscalar(value,field,cfg)
- new tag,magnitude,number,index,ascii
+ new tag,magnitude,number
  if $zlength(value)>32764 quit "unsupported"
  set tag=cfg("tag",field)
  if tag="r" set tag=cfg("targets",cfg("ref",field),"keytag")
  if tag="s",'$$utf8(value) quit "corrupt"
- if tag="s" do  quit:'ascii "unsupported"
- . set ascii=1
- . for index=1:1:$zlength(value) if $zascii(value,index)>127 set ascii=0 quit
  if tag="i" do  quit:magnitude="invalid" "corrupt"
  . set magnitude=$extract(value,1+($extract(value)="-"),$length(value))
  . if '$$natural(magnitude)!(value="-0") set magnitude="invalid"
@@ -228,7 +225,7 @@ storedscalar(value,field,cfg)
 hasclaim(value,field,cfg)
  quit cfg("unique",field)&'($get(cfg("nullable",field))&(value="n:"))
 payload(value,field,cfg)
- quit $select($get(cfg("nullable",field)):$extract(value,3,$length(value)),1:value)
+ quit $select($get(cfg("nullable",field)):$zextract(value,3,$zlength(value)),1:value)
 token(value,field,cfg)
  if $get(cfg("nullable",field)),value="n:" quit "v:"_$$quote("n:")
  if cfg("tag",field)="d" quit "v:"_$$quote($$dtoken($$payload(value,field,.cfg)))
@@ -238,20 +235,7 @@ scalar(value,field,cfg)
  set value=$$payload(value,field,.cfg)
  if cfg("tag",field)="r" quit "r:"_$$refkey(value,field,.cfg)
  quit cfg("tag",field)_":"_value
-quote(value)
- new out,i,code,char
- set out=$char(34)
- for i=1:1:$length(value) do
- . set char=$extract(value,i),code=$ascii(char)
- . if (code=34)!(code=92) set out=out_$char(92)_char quit
- . if code=8 set out=out_"\b" quit
- . if code=9 set out=out_"\t" quit
- . if code=10 set out=out_"\n" quit
- . if code=12 set out=out_"\f" quit
- . if code=13 set out=out_"\r" quit
- . if (code<32)!(code=127) set out=out_"\u00"_$extract("0123456789abcdef",(code\16)+1)_$extract("0123456789abcdef",(code#16)+1) quit
- . set out=out_char
- quit out_$char(34)
+@STRINGS@
 @REFERENCES@
 @SCHEMA@
 @DECIMAL@

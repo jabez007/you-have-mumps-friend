@@ -211,3 +211,6 @@ ownerpatch
  set path(1)="locations",path(2)="DOCK"
  write $$patchchild^YHMFTAPI("MAIN",.path,.input),!
  quit
+jsonquote
+ write $$quote^YHMFTAPI(^YHMFTestStorage("writerInput","value")),!
+ quit

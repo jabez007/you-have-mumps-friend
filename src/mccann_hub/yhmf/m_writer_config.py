@@ -110,14 +110,12 @@ def _choice_config(field: FieldSpec, rule: dict[str, Any], policy: dict[str, Any
     values = field.choices.values
     primitive = type(values[0])
     if primitive not in {str, int} or any(
-        (not value.isascii() or len(value) > 32764)
-        if isinstance(value, str)
-        else len(str(abs(value))) > 18
+        len(value.encode("utf-8")) > 32764 if isinstance(value, str) else len(str(abs(value))) > 18
         for value in values
     ):
-        raise SchemaError("M choices require ASCII strings or canonical 18-digit integers")
+        raise SchemaError("M choices require bounded UTF-8 strings or canonical 18-digit integers")
     encoded = [
-        canonical_json(encode_scalar(value).decode("ascii")).decode("ascii") for value in values
+        canonical_json(encode_scalar(value).decode("utf-8")).decode("ascii") for value in values
     ]
     if len(values) > 256 or sum(map(len, encoded)) > 32764:
         raise SchemaError("M choice domains require at most 256 members and 32764 encoded bytes")

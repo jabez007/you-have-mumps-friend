@@ -81,20 +81,10 @@ cursor(value)
  if $length(bytes)>19 quit 0
  if (bytes'?1.18N)&(bytes'?1"-"1.18N) quit 0
  quit bytes=+bytes
-utf8(value)
- new i,j,code,size,low,high,good
- set i=1,good=1
- for  quit:i>$zlength(value)  quit:'good  do
- . set code=$zascii(value,i),i=i+1
- . if code<128 quit
- . if code<194!(code>244) set good=0 quit
- . set size=$select(code<224:1,code<240:2,1:3),low=128,high=191
- . if code=224 set low=160
- . if code=237 set high=159
- . if code=240 set low=144
- . if code=244 set high=143
- . for j=1:1:size do  quit:'good
- . . set code=$zascii(value,i),i=i+1
- . . if code<low!(code>high) set good=0 quit
- . . set low=128,high=191
+utf8(value,characters)
+ new position,good
+ set position=1,good=1,characters=0
+ for  quit:position>$zlength(value)  quit:'good  do
+ . if $$codepoint(value,.position)<0 set good=0 quit
+ . set characters=characters+1
  quit good

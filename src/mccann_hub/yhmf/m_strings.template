@@ -1,0 +1,40 @@
+ ; SPDX-License-Identifier: GPL-3.0-or-later
+ ; Byte-oriented UTF-8 decoding is independent of $ZCHSET.
+codepoint(value,position)
+ new code,size,low,high,index,point
+ set code=$zascii(value,position),position=position+1
+ if code<128 quit code
+ if code<194!(code>244) quit -1
+ set size=$select(code<224:1,code<240:2,1:3),low=128,high=191
+ set point=code-$select(size=1:192,size=2:224,1:240)
+ if code=224 set low=160
+ if code=237 set high=159
+ if code=240 set low=144
+ if code=244 set high=143
+ for index=1:1:size do  quit:point<0
+ . set code=$zascii(value,position),position=position+1
+ . if code<low!(code>high) set point=-1 quit
+ . set point=(point*64)+code-128,low=128,high=191
+ quit point
+quote(value)
+ new out,index,code
+ set out=$char(34),index=1
+ for  quit:index>$zlength(value)  quit:out=""  do
+ . set code=$$codepoint(value,.index)
+ . if code<0 set out="" quit
+ . if (code=34)!(code=92) set out=out_$char(92)_$char(code) quit
+ . if code=8 set out=out_"\b" quit
+ . if code=9 set out=out_"\t" quit
+ . if code=10 set out=out_"\n" quit
+ . if code=12 set out=out_"\f" quit
+ . if code=13 set out=out_"\r" quit
+ . if (code<32)!(code>126) set out=out_$$unicode(code) quit
+ . set out=out_$char(code)
+ if out="" quit ""
+ quit out_$char(34)
+unicode(code)
+ new out,index
+ if code>65535 quit $$unicode(55296+((code-65536)\1024))_$$unicode(56320+((code-65536)#1024))
+ set out=""
+ for index=1:1:4 set out=$extract("0123456789abcdef",(code#16)+1)_out,code=code\16
+ quit $char(92)_"u"_out

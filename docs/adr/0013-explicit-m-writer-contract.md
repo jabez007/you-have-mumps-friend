@@ -250,3 +250,17 @@ unrelated children. Keys, derived fields, collections, and unsupported validatio
 remain rejected. Changed indexes/references use the existing transitions, with native
 rollback/restart qualification. Whole aggregate replacement and tree construction/
 deletion retain their separate contracts. No storage or metadata conversion occurs.
+
+
+## UTF-8 strings, issue 55
+
+Use one byte-oriented codepoint decoder for existing UTF-8 validation and canonical
+JSON quoting. Count codepoints for string constraints; retain UTF-8 record/key bytes.
+Emit Python-compatible lowercase JSON escapes, including surrogate pairs, independent
+of $ZCHSET. ASCII identities remain byte-identical. Reuse the same string rules for
+finite domains and reference keys. Peel stored/internal tags with byte operations
+before rejecting invalid text, so UTF-8 mode cannot raise BADCHAR before validation.
+Native tests run both M and UTF-8 modes; the harness resolves the installed ICU major
+version for UTF-8 subprocesses without adding a dependency. Existing byte/key/location
+budgets still apply. General regex translation remains rejected because Python regex
+semantics cannot be represented exactly by M patterns. No storage conversion occurs.

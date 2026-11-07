@@ -115,9 +115,10 @@ From plain M, supply every field as an untagged, named scalar:
 
 The generator supports flat qualified scalar and Reference models with ordinary equality
 and unique indexes. It enforces string length and numeric gt/ge/lt/le bounds, with
-ASCII string values and canonical signed integers of at most 18 digits. Strings may
-contain ASCII controls; NUL is forbidden in keys. Python retains its full Unicode
-and scalar integer domains. An existing record outside the M stored-value domain
+valid UTF-8 string values and canonical signed integers of at most 18 digits. Strings
+may contain controls; NUL is forbidden in keys. String length constraints count
+Unicode codepoints, independently of the M process character set. Python retains its
+full scalar integer domain. An existing record outside the M stored-value domain
 returns unsupported without changes. Use Python for those records.
 
 Export rejects custom Python validators, unsupported constraints or normalization,
@@ -152,8 +153,7 @@ reported as success or silently converted into a validation failure.
 
 unsupported means an existing value has a recognized storage shape but M cannot
 validate or manipulate it within its qualified domain. It does not certify that
-Python would accept the record. For example, an existing Unicode string, an integer
-over 18 digits, or a Decimal outside the fixed-unit domain is refused without writes.
+Python would accept the record. For example, an existing integer over 18 digits, or a Decimal outside the fixed-unit domain is refused without writes.
 Invalid tags, markers, identities, malformed scalar text, and enforceable constraint
 violations still return corrupt.
 
@@ -234,8 +234,8 @@ without a TP. Failed operations leave data, metadata, totals, counts, and indexe
 Regenerate source after schema changes; old bindings fail rather than bypass new
 totals. No layout conversion or root metadata installation occurs through child
 operations. M enforces declared model rules, not inventory service rules or ledger
-workflows. The complete inventory ledger still needs unsupported M temporal/embedded
-types and application business checks. Root creation/replacement remains a Python
+workflows. The complete inventory ledger still needs unsupported M ordered/embedded
+contracts and application business checks. Root creation/replacement remains a Python
 operation.
 
 New exports memoize SHA-256 of exact serialized locations in the reserved process-local
@@ -327,7 +327,7 @@ lot_source = catalog.m_routine(CatalogLot, name="LotAPI")
 
 Supply the target's plain key, without the stored r: or s: prefixes. The declared
 target key codec determines its interpretation. M reference keys use the current
-ASCII string or canonical 18-digit integer subset. Target creation must precede a
+UTF-8 string or canonical 18-digit integer subset. Target creation must precede a
 new link. Participants can create the target and source in the same caller TP.
 
 Export binds each registered target's exact schema snapshot and fingerprint,
@@ -376,8 +376,7 @@ Values outside that domain return unsupported. No schema or record conversion
 occurs. Unsupported Decimal constraints, including multiple_of and bounds finer
 than the unit precision, fail export rather than being ignored.
 
-Other scalar extensions remain separate: lists, non-ASCII strings, and arbitrary
-patterns still fail
+Other scalar extensions remain separate: lists and arbitrary patterns still fail
 export. For owned trees, see [mutate a keyed hierarchy](#mutate-a-keyed-hierarchy).
 
 ## Patch a root or a non-leaf owner
@@ -414,7 +413,7 @@ regenerate source for these patch interfaces.
 
 ## Finite string and integer choices
 
-String and integer Enum/Literal fields accept their exact primitive values, using
+UTF-8 string and integer Enum/Literal fields accept their exact primitive values, using
 ordinary scalar record tags and equality/unique indexes. Enum member names and
 aliases are not wire values. For example, Literal["receive", "move", "adjust"]
 accepts input("kind")="receive" and rejects "unknown" with invalid. Existing
@@ -422,10 +421,10 @@ out-of-domain stored members return corrupt; failed calls leave all state intact
 The same rules apply to owned-child insert/patch/delete.
 
 Each exported domain is limited to 256 distinct members and 32,764 bytes of escaped
-scalar JSON. All members must fit the ASCII string or canonical signed 18-digit
+scalar JSON. All members must fit the UTF-8 string or canonical signed 18-digit
 integer domain; unsupported members reject the entire export. Controls and long
-options are escaped and chunked in generated source. Boolean choices remain unqualified. Custom validators, Enum core-schema validation hooks, and
-unsupported constraints still fail export. Python Enum fallback hooks are not run.
+options are escaped and chunked in generated source. Boolean choices remain unqualified. Custom validators, Enum core-schema validation
+hooks, and unsupported constraints still fail export. Python Enum fallback hooks are not run.
 
 Regenerate source to use this capability. Existing choice schemas and record/index
 bytes are unchanged. Changing an application's plain string field to a finite choice
@@ -444,8 +443,9 @@ input("occurred_at")="2026-11-07T12:30:00.000000Z".
 Calendar/UTC bounds use exact lexical comparisons of canonical text. Equality and
 unique indexes use the existing temporal-v1 bytes, D: for dates and T: for instants.
 Existing Python temporal values can be replaced or deleted without conversion;
-invalid calendar/UTC stored text returns corrupt. Custom validators and ordered temporal indexes remain separately unqualified. Regenerate source for
-the new writer capability; schema snapshots and record/index layouts do not change.
+invalid calendar/UTC stored text returns corrupt. Custom validators and ordered
+temporal indexes remain separately unqualified. Regenerate source for the new writer
+capability; schema snapshots and record/index layouts do not change.
 
 ## Explicit nullable scalar inputs
 
@@ -463,6 +463,28 @@ transaction, including rollback and restart. Invalid null shapes return invalid;
 malformed stored shapes remain corrupt. This applies to flat and owned scalar fields.
 Nullable references, containers, lists, and unqualified scalar families still fail
 export. No stored metadata or data conversion is needed; regenerate M source.
+
+## Unicode strings and native identities
+
+String fields, string choices, and string reference/ownership keys preserve valid
+UTF-8 bytes. Length constraints count codepoints, including combining marks as
+separate codepoints. No normalization or grapheme clustering is applied: "é" and
+"é" remain distinct values and unique claims. JSON index values, claim identities,
+and ownership locations use the same lowercase ASCII escapes and surrogate pairs
+as Python's canonical JSON. Existing ASCII identities remain unchanged.
+
+The decoder and quoting helpers operate on bytes in both M and UTF-8 character modes.
+Malformed UTF-8 input returns invalid, and malformed stored strings return corrupt,
+including truncated sequences, overlong encodings, surrogate encodings, and values
+above U+10FFFF. The existing 32,764-byte scalar input ceiling, native key budgets,
+and 4,096-byte encoded-location hashing limit still apply; Unicode escaping can use
+more bytes than the input text. Exceeding a key/location budget returns key_size.
+Regenerate source for Unicode support; schemas and record/index bytes need no change.
+
+General pattern constraints remain rejected. Python regular expressions include
+Unicode, flags, anchoring, and matching rules that have no general exact translation
+to M pattern syntax. Use a finite Literal domain when it describes the actual rule,
+with a reviewed schema migration if replacing an existing pattern declaration.
 
 ## Raw writes from M
 
