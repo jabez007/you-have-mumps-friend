@@ -46,6 +46,9 @@ A rebuild uses the same [maintenance gate](migrations.md#stop-other-clients-firs
 barrier, `migration_status`, and `abort_migration` as a schema migration. Raw writers must
 stay stopped.
 
+Ordinary access to unrelated models continues. The rebuilt model remains blocked
+until activation or safe abort; a second maintenance job is still refused.
+
 The phases are `validate`, `clear_indexes`, `backfill`, `verify`, `activate`, and `complete`.
 
 1. **`validate`** reads authoritative records and reserves selected unique values before

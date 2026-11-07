@@ -93,7 +93,7 @@ class Database:
         return operation(self) if self._transaction else self.atomic(operation)
 
     def _check_schema(self, spec: ModelSpec, *, install: bool = False) -> ModelSpec:
-        require_available(self.store)
+        require_available(self.store, global_name=spec.global_name)
         return check_schema(self.store, spec, install=install)
 
     def _exists(self, spec: ModelSpec, root: Path) -> bool:

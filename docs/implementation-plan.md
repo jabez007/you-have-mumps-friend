@@ -673,3 +673,21 @@ measurements support more. Oversized raw subtrees now fail safely for explicit r
 Test no-op/one-field writes, owned removal/nulls, raw parent values, rollback, legacy
 metadata, and generated equivalence against delete-and-insert. Existing C901 passes
 at ten; no optimistic revisions or automatic change tracking.
+
+### Model-scoped maintenance access, issue 21
+
+Keep the existing single job coordinator and per-global fingerprint barrier. Its
+checkpoint already identifies the migrating global. Let ordinary schema checks
+load and validate that checkpoint/ownership inside TP and block only that global;
+do not add a dependency graph or a second lock system. All reference targets already
+go through schema checks, and deletion already reads maintained inbound counts.
+Thus a new/validated reference to the migrating target blocks; unrelated scalar
+patches and detached source reads can proceed. Full saves revalidate every nonnull
+target and may block. Removing an incoming edge or source is safe and uses existing
+atomic counts. Deleting a target referenced by the migrating model remains restrict.
+Any cross-model callback needing the gated model rolls back; a second maintenance
+job remains refused. Empty resolve batches access no model. Explicit adoption stays
+serialized with other maintenance. Older clients still block globally and respect
+the same schema barrier. Unknown/corrupt active jobs fail closed for ordinary access.
+Test all edges, interrupted/resumed jobs, index rebuilds, and two-process unrelated
+CRUD with barriers on native. No metadata/layout change; existing C901 passes at ten.

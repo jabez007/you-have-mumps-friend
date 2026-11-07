@@ -4,7 +4,7 @@ from dataclasses import replace
 
 import pytest
 
-from mccann_hub.yhmf import Database, Field, Model, Path, Registry
+from mccann_hub.yhmf import Database, Field, Model, Registry
 from mccann_hub.yhmf.codecs import canonical_json
 from mccann_hub.yhmf.errors import MaintenanceActive, MigrationError, StorageError
 from mccann_hub.yhmf.maintenance import (
@@ -122,7 +122,7 @@ def test_migration_global_is_reserved():
         Registry(Invalid)
 
 
-def test_unrelated_models_are_also_gated(store):
+def test_unrelated_models_can_install_and_write_under_a_model_gate(store):
     db, _ = gated(store)
 
     class Order(Model):
@@ -130,6 +130,5 @@ def test_unrelated_models_are_also_gated(store):
         id: str = Field(primary_key=True)
 
     other = Database(db.store, Registry(Order))
-    with pytest.raises(MaintenanceActive):
-        other.insert(Order(id="O1"))
-    assert store.children(Path(Order.__global__), limit=1) == ()
+    other.insert(Order(id="O1"))
+    assert other.get(Order, "O1").id == "O1"

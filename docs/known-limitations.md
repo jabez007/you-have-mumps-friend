@@ -98,9 +98,11 @@ These features are not in version 0.5.0:
   are unchanged. See the [migration guide](guides/migrations.md) and
   [#9](https://github.com/jabez007/you-have-mumps-friend/issues/9).
 
-- A migration or index rebuild blocks ordinary mapper operations on every model in the
-  database until it finishes. See [stop other clients first](guides/migrations.md#stop-other-clients-first)
-  and [#21](https://github.com/jabez007/you-have-mumps-friend/issues/21).
+- A migration or rebuild blocks its affected model and reference validation that
+  needs that model. Unrelated CRUD can proceed; only one maintenance job runs at a
+  time. Older clients honoring the global gate stay blocked conservatively. See
+  [maintenance guidance](guides/migrations.md#stop-other-clients-first) and
+  [ADR 0009](adr/0009-model-scoped-maintenance.md).
 - Plain M code can read everything, but [M writes](guides/m-access.md#write-from-m) do not
   maintain indexes, references, or validation. [#25](https://github.com/jabez007/you-have-mumps-friend/issues/25)
 - Index entries hold encoded value tokens, so M code walking an index does not see numeric

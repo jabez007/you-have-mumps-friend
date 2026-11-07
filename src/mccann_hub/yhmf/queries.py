@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Any, Literal, cast
 from . import indexes, occurrences
 from .codecs import Key, decode_key, encode_key
 from .errors import NotFound, QueryError, SchemaError, StorageError
-from .maintenance import require_available
 from .models import Model, Reference
 from .mutations import read_owner
 from .owned import OwnedPath, Owner, require_object, resolve_collection
@@ -233,7 +232,6 @@ def resolve_many[M: Model](db: "Database", refs: Sequence[Reference[M]]) -> list
     batch = _batch(refs)
 
     def read(tx: "Database") -> list[M]:
-        require_available(tx.store)
         cache: dict[tuple[type[M], Key], M] = {}
         result = []
         for reference in batch:

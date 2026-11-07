@@ -90,7 +90,7 @@ metadata nodes:
 | Relationships | Enforced references, explicit resolution, bounded inverse reads, owned many-to-many links, `restrict` on delete | `set_null`, `cascade` |
 | Queries | One equality predicate on an index or key, unique indexes, root and child paging, occurrence projections, collection counts | Range, prefix, sorting, several predicates |
 | Writes | Whole-record `save`, scalar `patch`, explicit `patch_many` groups, child insert and delete, restart-safe transactions | Change tracking, callback-wide deferred unique checks |
-| Migrations | Scalar defaults, index changes, validation-only revisions, resume after interruption | Renames, removals, type changes. A migration blocks the whole database. |
+| Migrations | Scalar defaults, index changes, validation-only revisions, resume after interruption, model-scoped access | Renames, removals, type changes; only one maintenance job at a time |
 | M access | Read every node, write valid scalars | Writes that maintain indexes and references |
 
 [Known limitations](https://github.com/jabez007/you-have-mumps-friend/blob/main/docs/known-limitations.md) lists current defects and their workarounds.

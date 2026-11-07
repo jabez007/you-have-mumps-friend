@@ -7,7 +7,7 @@ import sys
 from decimal import Decimal
 from pathlib import Path as FilePath
 
-from mccann_hub.yhmf import Database, NativeStore, Registry
+from mccann_hub.yhmf import Database, Field, Model, NativeStore, Registry
 from mccann_hub.yhmf.errors import MaintenanceActive, SchemaMismatch, UniqueViolation
 from mccann_hub.yhmf.maintenance import GATE, job_path
 from mccann_hub.yhmf.schemas import schema_path
@@ -17,6 +17,12 @@ Product, ProductV2 = _models["Product"], _models["ProductV2"]
 _unique_models = runpy.run_path(str(FilePath(__file__).with_name("unique_migration_models.py")))
 _nested_models = runpy.run_path(str(FilePath(__file__).with_name("nested_migration_models.py")))
 _removal_models = runpy.run_path(str(FilePath(__file__).with_name("removal_migration_models.py")))
+
+
+class Other(Model):
+    __global__ = "^YHMFTestOrder"
+    id: str = Field(primary_key=True)
+    value: int = Field(default=0, index=True)
 
 
 class RendezvousStore(NativeStore):
@@ -71,6 +77,20 @@ class RendezvousStore(NativeStore):
             self.rendezvous()
 
 
+def _other_crud(store):
+    other = Database(store, Registry(Other))
+    other.insert(Other(id="B"))
+
+    def increment(tx):
+        value = tx.get(Other, "B").value
+        tx.patch(Other, "B", changes={"value": value + 1})
+
+    for _ in range(100):
+        other.atomic(increment)
+    assert other.check_indexes(Other).issues == ()
+    return {"value": other.get(Other, "B").value}
+
+
 def run(operation, migration_id, kind="additive"):
     source, target, related = {
         "additive": (Product, ProductV2, ()),
@@ -97,7 +117,10 @@ def run(operation, migration_id, kind="additive"):
     db = Database(store, Registry(*related, target))
     error = None
     try:
-        if operation == "write":
+        if operation == "other":
+            print(json.dumps(_other_crud(store)), flush=True)
+            return
+        elif operation == "write":
             Database(store, Registry(Product)).save(
                 Product(id="P0", name="Changed", sku="SKU0", price=Decimal("1.00"))
             )

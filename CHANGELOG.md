@@ -4,6 +4,9 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Allows unrelated model operations during migrations and rebuilds, preserving
+  target validation, restrict counts, one-job coordination, and legacy barriers.
+
 - Keeps whole-value save semantics while writing only physical node differences.
   A bounded physical audit removes raw extras and can add read/traversal cost.
   Detached saves remain last-writer-wins; use explicit mutations for targeted changes.

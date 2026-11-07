@@ -44,6 +44,7 @@ New here? Start with [get started](getting-started.md), then read
   - [0006 Canonical schema contracts](adr/0006-canonical-schema-contracts.md)
   - [0007 Compile-time model reuse](adr/0007-compile-time-model-reuse.md)
   - [0008 Application authorization boundary](adr/0008-application-authorization-boundary.md)
+  - [0009 Model-scoped maintenance](adr/0009-model-scoped-maintenance.md)
 
 ## Check the evidence
 

@@ -178,17 +178,27 @@ and no-op plans. The same list appears in serialized plan documents.
 
 ## Stop other clients first
 
-A running migration holds a maintenance gate that covers the whole database, not only the
-migrating model. While the gate is held:
+A running migration holds one job coordinator and a barrier on its affected model.
+While the gate is held:
 
-- Current mapper clients get `MaintenanceActive` on ordinary operations, on any model.
+- Current clients get `MaintenanceActive` when an operation needs the affected model.
+- Unrelated CRUD, queries, and reference resolution continue normally.
+- Only one migration or rebuild can run at a time; explicit adoption also waits.
 - `inspect_schema`, `plan_migration`, and `migration_status` still work.
 - Inspection reports the source snapshot and active migration ID until activation.
 - A fingerprint barrier makes older clients reject the migrating model.
 
-Before you start, stop older clients that use other models, and stop all raw YottaDB
-writers. Validators must be deterministic and free of external side effects, because native
-transactions can run them again.
+Reference source reads and unrelated scalar patches do not resolve their targets.
+New/changed references to the migrating model block, as do full saves with such
+nonnull references. Removing an incoming reference or its source remains safe.
+Deleting a target referenced by the migrating model still obeys restrict counts.
+A mixed-model callback that needs the gated model rolls back staged writes.
+
+Older clients honoring the previous global gate remain blocked on all models. Before
+starting, stop clients that cannot handle the affected model becoming unavailable,
+and stop raw YottaDB writers. Validators must be deterministic and free of external
+side effects, because native transactions can run them again. [ADR 0009](../adr/0009-model-scoped-maintenance.md)
+records the compatibility and contention limits.
 
 ## Run the migration
 

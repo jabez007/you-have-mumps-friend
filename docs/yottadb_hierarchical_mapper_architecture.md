@@ -287,14 +287,15 @@ executor supports scalar literal-default backfills in existing owned trees, new 
 and index promotion, uniqueness downgrade, or removal. Job-scoped reservations detect
 duplicate values across validation batches before application data changes.
 It uses a maintenance gate and bounded checkpoints before
-atomic activation. The gate currently blocks every model in the database. Broader migration execution
+atomic activation. Ordinary access is scoped to the affected model; unrelated CRUD
+continues while one maintenance job owns the coordinator. Broader migration execution
 remains a later milestone.
 
-Narrowing the gate to the migrating model is a goal, not a hard requirement. Odoo's
-[upgrade documentation](https://www.odoo.com/documentation/18.0/administration/upgrade.html)
-says a production database upgrade renders the database unavailable while it runs, so a
-database-wide gate is not clearly worse than that benchmark for a version upgrade. It is
-a poor fit for adding one field or index to one model. See [#21](https://github.com/jabez007/you-have-mumps-friend/issues/21).
+Reference target checks and inbound counts preserve their normal boundaries during
+maintenance. Full saves referencing the affected model can block even when a local
+scalar patch would not. Cross-model callbacks roll back when they need an unavailable
+model; concurrent maintenance jobs remain refused. Older clients can remain globally
+blocked. [ADR 0009](adr/0009-model-scoped-maintenance.md) records the decision.
 
 Production migrations must be reviewable, recoverable, and appropriately checkpointed.
 

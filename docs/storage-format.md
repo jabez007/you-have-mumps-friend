@@ -112,13 +112,15 @@ This format is a review report, not an executable migration program.
 
 The migration maintenance gate is `^YHMFMigration("gate")`, containing a
 32-character lowercase hexadecimal job identifier. Current mapper data
-operations read this gate inside their transaction and refuse access while it
-exists. Schema inspection and planning remain available. The migrating model's
+operations read this gate inside their transaction, validate the owning checkpoint
+and barrier, and refuse access to that job's model. Unrelated models remain usable;
+maintenance jobs themselves remain serialized. Older clients honoring the global
+gate continue to block conservatively. Schema inspection and planning remain available. The migrating model's
 installed fingerprint is temporarily `migration:` followed by the identifier;
 its source snapshot stays installed for inspection. This barrier also makes
 older clients reject that model through their existing fingerprint checks.
-Older clients accessing other globals and raw YottaDB writers must be stopped
-by the operator.
+Raw YottaDB writers must be coordinated by the operator. No new metadata is needed
+for scoped access; the existing checkpoint already identifies the affected global.
 
 Committed migration checkpoints live at `^YHMFMigration("jobs",job_id)` as
 canonical JSON with format version 1, source and target fingerprints, a phase,

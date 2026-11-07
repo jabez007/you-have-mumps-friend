@@ -47,9 +47,21 @@ def gate_owner(store: Store) -> str | None:
     return owner
 
 
-def require_available(store: Store) -> None:
-    if gate_owner(store) is not None:
+def require_available(store: Store, *, global_name: str | None = None) -> None:
+    owner = gate_owner(store)
+    if owner is None:
+        return
+    if global_name is None:
         raise MaintenanceActive("A migration holds the mapper maintenance gate")
+    try:
+        status = load_status(store, owner)
+    except MigrationError as exc:
+        raise StorageError("Maintenance gate has no trusted job checkpoint") from exc
+    require_owner(store, status)
+    if status.phase in {"complete", "aborted"} or status.pruning:
+        raise StorageError("Maintenance gate refers to a terminal job")
+    if status.global_name == global_name:
+        raise MaintenanceActive("The requested model is under maintenance")
 
 
 @dataclass(frozen=True)

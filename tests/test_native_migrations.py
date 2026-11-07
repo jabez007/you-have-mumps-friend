@@ -19,6 +19,7 @@ pytestmark = pytest.mark.native
 _WORKER = FilePath(__file__).with_name("native_migrations.py")
 _models = runpy.run_path(str(_WORKER))
 Product, ProductV2 = _models["Product"], _models["ProductV2"]
+Other = _models["Other"]
 _unique_models = _models["_unique_models"]
 UniqueSource, UniqueTarget = _unique_models["Product"], _unique_models["UniqueProduct"]
 _nested_models = _models["_nested_models"]
@@ -36,6 +37,7 @@ def db():
         Path(name)
         for name in (
             "^YHMFTestProduct",
+            "^YHMFTestOrder",
             "^YHMFSchema",
             "^YHMFIndex",
             "^YHMFUnique",
@@ -141,6 +143,33 @@ def test_competing_native_workers_resume_from_the_latest_committed_cursor(db):
     resumed = db.migration_status(status.migration_id)
     assert resumed.validated == 2
     assert advance_to(db, resumed, "complete").retagged == 3
+
+
+@pytest.mark.adversarial
+def test_native_unrelated_crud_commits_while_another_process_advances_maintenance(db):
+    status = start(db)
+    processes = [worker("other", status.migration_id), worker("advance", status.migration_id)]
+    try:
+        for process in processes:
+            ready(process)
+        for process in processes:
+            process.stdin.write("go\n")
+            process.stdin.flush()
+        summaries = []
+        for process in processes:
+            stdout, stderr = process.communicate(timeout=20)
+            assert process.returncode == 0, stderr
+            summaries.append(json.loads(stdout))
+    finally:
+        for process in processes:
+            stop(process)
+    assert summaries[0] == {"value": 100}
+    assert summaries[1]["validated"] == 1
+    assert db.migration_status(status.migration_id).phase == "validate"
+    other = Database(db.store, Registry(Other))
+    assert other.get(Other, "B").value == 100
+    assert other.check_indexes(Other).issues == ()
+    assert advance_to(db, db.migration_status(status.migration_id), "complete").retagged == 3
 
 
 def test_competing_native_starts_claim_only_one_job(db):
