@@ -7,6 +7,7 @@ from typing import Any, overload
 
 from . import (
     adoption,
+    adoption_jobs,
     child_mutations,
     deletions,
     grouped_mutations,
@@ -352,6 +353,20 @@ class Database:
                 return adoption.adopt(tx, spec)
 
         return self._run(attempt)
+
+    def begin_adoption(self, model: type[Model]) -> MigrationStatus:
+        """Claim maintenance for bounded initial adoption of exact layout-one data."""
+        self._migration_ready()
+        return adoption_jobs.begin(self.store, self.registry, model)
+
+    def advance_adoption(
+        self, migration_id: str, model: type[Model], *, batch_size: int = 25
+    ) -> MigrationStatus:
+        """Validate, build, verify, or activate at most one resumable adoption batch."""
+        self._migration_ready()
+        return adoption_jobs.advance(
+            self.store, self.registry, migration_id, model, batch_size=batch_size
+        )
 
     def plan_migration(
         self, model: type[Model], *, transform: Transform[Any, Any] | None = None

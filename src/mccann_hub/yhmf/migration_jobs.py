@@ -29,24 +29,28 @@ from .storage import MAX_VALUE_BYTES, Store
 
 def begin(
     store: Store,
-    source: ModelSpec,
+    source: ModelSpec | None,
     target: ModelSpec,
     *,
     preflight: Callable[[], None] | None = None,
     operation: bytes | None = None,
 ) -> MigrationStatus:
+    if source is None and (preflight is None or operation is None):
+        raise MigrationError("Initial adoption requires an explicit operation and preflight")
     migration_id = uuid.uuid4().hex  # Stable across native transaction retries.
 
     def claim() -> MigrationStatus:
         require_available(store)
-        if inspect_schema(store, target).installed != SchemaSnapshot(source.snapshot):
+        expected = SchemaSnapshot(source.snapshot) if source is not None else None
+        if inspect_schema(store, target).installed != expected:
             raise MigrationError("Installed source changed since the plan was reviewed")
         if preflight is not None:
             preflight()
         root = job_path(migration_id)
         if store.get(root) is not None or store.children(root, limit=1):
             raise MigrationError("Migration identifier is already in use")
-        for name, spec in ((b"source_snapshot", source), (b"target_snapshot", target)):
+        snapshots = ((b"source_snapshot", source),) if source is not None else ()
+        for name, spec in snapshots + ((b"target_snapshot", target),):
             if len(spec.snapshot) > MAX_VALUE_BYTES:
                 raise StorageError("Migration snapshot exceeds the node limit")
             store.set(root.child(name), spec.snapshot)
@@ -55,7 +59,7 @@ def begin(
         status = MigrationStatus(
             migration_id,
             target.global_name,
-            source.fingerprint.decode("ascii"),
+            source.fingerprint.decode("ascii") if source is not None else None,
             target.fingerprint.decode("ascii"),
             operation_fingerprint=hashlib.sha256(operation).hexdigest()
             if operation is not None
@@ -158,6 +162,10 @@ def abort_owned(store: Store, status: MigrationStatus) -> MigrationStatus:
     ):
         raise MigrationError("Committed migration updates must be resumed; they cannot be aborted")
     require_owner(store, status)
+    if status.source_fingerprint is None:
+        from .adoption_jobs import abort_owned as abort_adoption
+
+        return abort_adoption(store, status)
     source, _ = manifests(store, status)
     store.set(schema_path(status.global_name), SchemaSnapshot(source).fingerprint.encode("ascii"))
     result = replace(status, phase="aborted", cursor=b"")

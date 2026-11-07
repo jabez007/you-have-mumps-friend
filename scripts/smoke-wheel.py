@@ -113,11 +113,35 @@ def smoke_m_export(store):
     assert not db.inspect_schema(Flat).installed
 
 
+def smoke_adoption(store):
+    class Adopted(Model):
+        __global__ = "^YHMFWheelAdoption"
+        id: str = Field(primary_key=True)
+        name: str = Field(unique=True)
+
+    for number in range(125):
+        key = f"P{number:04}"
+        root = Path(Adopted.__global__, (f"s:{key}".encode(),))
+        store.set(root.child(b"id"), f"s:{key}".encode())
+        store.set(root.child(b"name"), f"s:Part{number}".encode())
+    db = Database(store, Registry(Adopted))
+    status = db.begin_adoption(Adopted)
+    assert status.source_fingerprint is None
+    for _ in range(100):
+        status = db.advance_adoption(status.migration_id, Adopted, batch_size=17)
+        if status.phase == "complete":
+            break
+    assert status.phase == "complete" and status.verified == 125
+    assert db.get(Adopted, "P0124").name == "Part124"
+    assert db.check_indexes(Adopted, limit=1000).issues == ()
+
+
 def main():
     assert mccann_hub.__file__ is None
     assert version("mccann-hub-yhmf") == __version__
     store = MemoryStore()
     smoke_m_export(store)
+    smoke_adoption(store)
     old = Database(store, Registry(Before))
     for number, sku in enumerate(("one", None, None)):
         old.insert(Before(id=str(number), sku=sku, price=Decimal(f"{number + 1}.00")))

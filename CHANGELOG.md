@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Adds begin_adoption/advance_adoption for resumable exact-layout adoption beyond
+  100 records, pinned field digests, cross-batch unique reservations, self-reference
+  handling, atomic activation, and the existing abort/prune recovery paths.
+
 - Recognizes explicit absent-source maintenance checkpoints in format two while
   preserving existing format-one bytes and reporting no installed schema during
   initial-adoption barriers.

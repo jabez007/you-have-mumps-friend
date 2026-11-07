@@ -298,6 +298,11 @@ These use native paths and pure decoders, validate complete flat scalar models, 
 never install metadata, indexes, or rewrite the source. They provide no managed
 write or reference/ownership guarantees.
 
+Initial adoption of larger exact-layout globals uses the existing maintenance
+journal with an explicitly absent source schema and bounded validate/build/verify
+passes. Only final activation publishes installed metadata; early abort restores
+absence. No managed data format is fabricated for foreign globals.
+
 ## 10. Schema evolution
 
 Python model declarations are the source of truth for intended schema.

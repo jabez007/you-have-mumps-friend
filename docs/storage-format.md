@@ -202,6 +202,14 @@ version; current readers reject unknown or mixed versions. This checkpoint forma
 is independent of schema-representation, application-schema, and record-layout
 versions. MigrationStatus.source_fingerprint is correspondingly optional.
 
+An adoption operation is the canonical document {"format_version":1,"kind":"adoption"},
+with its ordinary operation fingerprint. Its target_snapshot child is required,
+source_snapshot is forbidden, and records/<SHA-256-of-key> nodes contain canonical
+JSON with key (hex) and fields (the existing length-delimited field-tree digest).
+Uniqueness reservations use the ordinary job namespace. Phases are validate,
+backfill, verify, activate, and complete; retagged remains zero. Record counts must
+agree before activation. No field bytes are rewritten.
+
 For initial adoption, only the maintenance marker is published under YHMFSchema;
 there is no installed snapshot before activation. Inspection reports no installed
 schema and includes the active job id. The prospective target snapshot lives only
