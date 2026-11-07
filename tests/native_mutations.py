@@ -6,7 +6,7 @@ from decimal import Decimal
 
 from mutation_models import Lot, Product, Warehouse
 
-from mccann_hub.yhmf import Database, NativeStore, Path, Reference, Registry
+from mccann_hub.yhmf import Database, NativeStore, Patch, Path, Reference, Registry
 from mccann_hub.yhmf.errors import NotFound, ReferenceViolation, UniqueViolation
 
 
@@ -47,6 +47,13 @@ def run(operation, child, value):
             db.patch(Warehouse, "W", at=at, changes={"product": Reference[Product](key="P")})
         elif operation == "delete_product":
             db.delete(Product, "P")
+        elif operation == "swap":
+            db.patch_many(
+                [
+                    Patch(Warehouse, "W", at=("bins", "A", "lots", "0"), changes={"serial": "B"}),
+                    Patch(Warehouse, "W", at=("bins", "A", "lots", "1"), changes={"serial": "A"}),
+                ]
+            )
         else:
             selected = Decimal(value) if operation == "quantity" else value
             db.patch(Warehouse, "W", at=at, changes={operation: selected})

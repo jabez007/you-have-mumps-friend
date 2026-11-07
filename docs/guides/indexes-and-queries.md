@@ -44,6 +44,7 @@ Index rules:
 Every insert, replacement, and deletion updates indexes and uniqueness claims in the
 record's transaction. Constraints apply after each write, not at commit. Changing or
 deleting an indexed value releases its old claim.
+Use an explicit [patch group](#exchange-unique-values) to exchange unique values.
 Values are never truncated or hashed to fit. An oversized native index key raises an
 error before any record write. See the [index key lengths](../reference/limits.md#index-values).
 
@@ -144,3 +145,38 @@ returns `next_key`, and the next page may be empty.
 This audit does not search all index entries for orphans, and it does not repair data.
 Indexed queries reject any orphan entry they meet, and any entry whose value disagrees
 with its record. To repair entries, [rebuild the index](index-rebuilds.md).
+
+## Exchange unique values
+
+Use an explicit group when several changes must release and reclaim unique values
+together. Continuing the catalog example:
+
+```python
+from mccann_hub.yhmf import Patch
+
+db.insert(CatalogProduct(id="P2", sku="SKU2"))
+db.patch_many([
+    Patch(CatalogProduct, "P1", changes={"sku": "SKU2"}),
+    Patch(CatalogProduct, "P2", changes={"sku": "SKU1"}),
+])
+assert db.get(CatalogProduct, "P1").sku == "SKU2"
+assert db.get(CatalogProduct, "P2").sku == "SKU1"
+assert db.check_indexes(CatalogProduct).issues == ()
+```
+
+patch_many accepts a finite sequence of 1–100 Patch values. A Patch has the same
+model, key, at, and changes meanings as patch. Groups may span independent roots
+and owned children. Combine all changes for one owner into one Patch; duplicate
+owner addresses are rejected. Input is copied before the first attempt's validation
+and retained across retries of this call.
+
+Each owner is validated using the ordinary partial-update rules. The group releases
+old claims and acquires final claims in one transaction; duplicates within the final
+state still fail. Reference checks, inverse edges, indexes, and data commit together.
+Only changed field nodes are written. No arbitrary callback runs between group writes.
+
+Inside atomic, reads before the call see the preceding valid state and reads after
+it see the final valid state. An error rolls back the group; catching a group failure
+also requires the enclosing write transaction to roll back. Other operations keep
+immediate constraint checks. This is not deferred uniqueness across a callback.
+Cross-record business rules still belong in an explicit atomic callback.

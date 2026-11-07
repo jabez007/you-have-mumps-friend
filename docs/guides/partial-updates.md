@@ -59,6 +59,10 @@ objects or collections. A missing owner raises `NotFound`.
 A null collection raises `NotFound`; malformed markers and unexpected descendants
 under a null marker still raise `StorageError`.
 
+For several owner changes that must release unique claims together, use
+[Patch and patch_many](indexes-and-queries.md#exchange-unique-values). Ordinary
+patches keep immediate constraints even inside atomic.
+
 ## Do arithmetic in a transaction
 
 Read the owned value inside the callback:

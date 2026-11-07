@@ -8,6 +8,7 @@ from typing import Any, overload
 from . import (
     adoption,
     child_mutations,
+    grouped_mutations,
     index_rebuilds,
     indexes,
     migration_executor,
@@ -25,6 +26,7 @@ from .errors import (
     StorageError,
     TransactionError,
 )
+from .grouped_mutations import Patch
 from .index_rebuilds import IndexRebuildPlan
 from .maintenance import MigrationStatus, load_status, require_available
 from .migrations import MigrationPlan, build_plan
@@ -137,6 +139,19 @@ class Database:
         def attempt(tx: Database) -> None:
             with tx._writing():
                 mutations.patch(tx, spec, key, at, changes)
+
+        self._run(attempt)
+
+    def patch_many(self, patches: Sequence[Patch]) -> None:
+        """Apply 1–100 owner patches as one validated index/reference transition."""
+        inputs: tuple[Patch, ...] | None = None
+
+        def attempt(tx: Database) -> None:
+            nonlocal inputs
+            with tx._writing():
+                if inputs is None:
+                    inputs = grouped_mutations.snapshot(patches)
+                grouped_mutations.apply(tx, inputs)
 
         self._run(attempt)
 

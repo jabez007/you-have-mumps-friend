@@ -95,6 +95,21 @@ def test_native_unique_patch_race_commits_one_claim(db):
     assert db.check_indexes(Warehouse, limit=5).issues == ()
 
 
+@pytest.mark.adversarial
+@pytest.mark.parametrize("swap_first", [False, True])
+def test_native_grouped_swap_keeps_claims_exclusive_against_another_process(db, swap_first):
+    for child, serial in (("0", "A"), ("1", "B")):
+        db.patch(Warehouse, "W", at=("bins", "A", "lots", child), changes={"serial": serial})
+    db.insert_child(Warehouse, "W", collection=("bins", "A", "lots"), record=Lot(id="2"))
+    swap, claim = ("swap", "unused", "unused"), ("serial", "2", "A")
+    commands = (swap, claim) if swap_first else (claim, swap)
+    expected = ["committed", "UniqueViolation"] if swap_first else ["UniqueViolation", "committed"]
+    assert race(*commands) == expected
+    lots = db.get(Warehouse, "W").bins["A"].lots
+    assert (lots["0"].serial, lots["1"].serial, lots["2"].serial) == ("B", "A", None)
+    assert db.check_indexes(Warehouse).issues == ()
+
+
 @pytest.mark.parametrize("delete_first", [False, True])
 def test_native_parent_delete_and_nested_patch_serialize(db, delete_first):
     delete = ("delete_parent", "0", "unused")

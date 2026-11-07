@@ -320,6 +320,12 @@ The project will maintain golden storage fixtures and serialization contracts to
 
 ## 12. Operations and security
 
+Explicit patch_many groups prepare 1–100 scalar/reference owner changes using the
+ordinary partial-validation policy, then apply the union of normal index/reference
+transitions. This supports unique swaps without deferring constraints throughout
+atomic callbacks. Duplicate owner requests are rejected; no new index layout or
+stored transaction state is needed. See [grouped patches](guides/indexes-and-queries.md#exchange-unique-values).
+
 The framework provides schema inspection, bounded expected-index validation,
 query explanations, and migration status. Full reverse index audits and repair
 procedures remain later extensions.

@@ -61,11 +61,9 @@ Identified base as the example, issue
 identities unchanged; shared-global variants remain a separate design. See
 [ADR 0007](adr/0007-compile-time-model-reuse.md).
 
-## Defects
-
-| Behavior | What to do for now | Issue |
-| --- | --- | --- |
-| Swapping two unique values in one transaction raises `UniqueViolation`, because constraints apply after each write. | Move one value to a temporary value first. | [#23](https://github.com/jabez007/you-have-mumps-friend/issues/23) |
+Unique constraints apply immediately to ordinary operations. Use the explicit
+patch_many group to exchange unique values in one validated transition. Callback-wide
+deferred uniqueness is not supported. See [the example](guides/indexes-and-queries.md#exchange-unique-values).
 
 ## Missing features
 

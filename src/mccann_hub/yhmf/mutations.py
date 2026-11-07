@@ -107,6 +107,7 @@ def replace_secondary(
 class PreparedPatch:
     spec: ModelSpec
     root: Path
+    owner: Path
     before: tuple[FieldValue, ...]
     after: tuple[FieldValue, ...]
     writes: tuple[tuple[Path, bytes], ...]
@@ -129,7 +130,7 @@ def prepare_patch(
         (owner.path.child(field.name.encode("ascii")), encode_leaf(field, new[field.name]))
         for field in changed
     )
-    return PreparedPatch(spec, spec.path(key), before, after, writes)
+    return PreparedPatch(spec, spec.path(key), owner.path, before, after, writes)
 
 
 def patch(

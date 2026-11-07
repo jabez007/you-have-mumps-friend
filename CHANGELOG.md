@@ -4,6 +4,9 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Adds Patch and patch_many for explicit groups of 1–100 scalar/reference owner
+  changes, including unique-value swaps. Constraints remain immediate outside the group.
+
 - Permits Pydantic virtual computed fields without persisting them or changing
   existing schema identities. They cannot declare mapper storage or index metadata.
 - Adds an uncached total to the inventory warehouse example. Stored rollups remain
