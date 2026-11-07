@@ -170,14 +170,21 @@ def read_address(tx: "Database", spec: ModelSpec, key: Key, location: Address) -
         raise StorageError("Occurrence points to a missing owner") from None
     except SchemaError:
         raise StorageError("Occurrence root key disagrees with its declaration") from None
+    check_address_value(tx.store, spec, key, location, record)
+    return record
+
+
+def check_address_value(
+    store: Store, spec: ModelSpec, key: Key, location: Address, record: Model
+) -> None:
+    """Verify stored field bytes against an already validated owner in this attempt."""
     encoded = value_nodes(
         location.field,
         spec.path(key).child(*location.relative),
         getattr(record, location.field.name),
     )
-    if any(tx.store.get(path) != value for path, value in encoded.items()):
+    if any(store.get(path) != value for path, value in encoded.items()):
         raise StorageError("Validated occurrence differs from its stored field")
-    return record
 
 
 def _indexed(

@@ -33,6 +33,17 @@ def require_local_validation(node: NodeSpec) -> None:
         )
 
 
+def check_collection_length(owner: Owner, field: FieldSpec, count: int) -> None:
+    if not 0 <= count <= MAX_CHILDREN:
+        raise StorageError("Child collection exceeds 1000 entries")
+    info = owner.node.model.model_fields[field.name]
+    for constraint in info.metadata:
+        minimum = getattr(constraint, "min_length", None)
+        maximum = getattr(constraint, "max_length", None)
+        if (minimum is not None and count < minimum) or (maximum is not None and count > maximum):
+            raise MutationError("Child mutation violates collection length constraints")
+
+
 def collection_count(store: Store, path: Path) -> int:
     marker = store.get(path)
     if marker == b"n:":

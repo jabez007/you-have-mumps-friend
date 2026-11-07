@@ -11,6 +11,7 @@ from .codecs import Key
 from .errors import MutationError
 from .models import Model
 from .owned import OwnedPath
+from .record_budget import require_growth
 
 if TYPE_CHECKING:
     from .repository import Database
@@ -44,7 +45,7 @@ def apply(tx: "Database", items: tuple[Patch, ...]) -> None:
     )
     if len({item.owner for item in prepared}) != len(prepared):
         raise MutationError("Combine changes for the same owner in one Patch")
-    mutations.check_growth(tx, prepared)
+    require_growth(tx.store, ((item.spec, item.root, item.growth) for item in prepared))
     # Unlike a single owner transition, a group releases the union of old claims
     # before claiming any new values. The existing replace helpers enforce the
     # same integrity rules, including conflicts within the new group itself.

@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Bound growing mutations using declared hierarchical value counts."""
 
+from collections.abc import Iterable
+
 from .errors import StorageError
 from .owned import collection_count, require_object
-from .records import MAX_CHILDREN
+from .records import MAX_CHILDREN, MAX_RECORD_NODES
 from .registry import FieldSpec, ModelSpec
 from .scalar_lists import length
 from .storage import Path, Store
@@ -55,3 +57,14 @@ def require_capacity(store: Store, spec: ModelSpec, root: Path, allowance: int) 
             )
     if count > allowance:
         raise StorageError("Mutation exceeds the root record node budget")
+
+
+def require_growth(store: Store, changes: Iterable[tuple[ModelSpec, Path, int]]) -> None:
+    """Check the final net growth once per root before applying grouped changes."""
+    grouped: dict[Path, tuple[ModelSpec, int]] = {}
+    for spec, root, delta in changes:
+        _, growth = grouped.get(root, (spec, 0))
+        grouped[root] = spec, growth + delta
+    for root, (spec, growth) in grouped.items():
+        if growth > 0:
+            require_capacity(store, spec, root, MAX_RECORD_NODES - growth)

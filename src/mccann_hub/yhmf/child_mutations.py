@@ -9,34 +9,22 @@ from .models import Model
 from .mutations import replace_secondary
 from .owned import (
     OwnedPath,
-    Owner,
+    check_collection_length,
     require_object,
     resolve_collection,
 )
 from .record_budget import require_capacity
 from .records import (
-    MAX_CHILDREN,
     MAX_RECORD_NODES,
     input_values,
     node_nodes,
     node_values,
     walk_values,
 )
-from .registry import FieldSpec, ModelSpec
+from .registry import ModelSpec
 
 if TYPE_CHECKING:
     from .repository import Database
-
-
-def _length(owner: Owner, field: FieldSpec, count: int) -> None:
-    if not 0 <= count <= MAX_CHILDREN:
-        raise StorageError("Child collection exceeds 1000 entries")
-    info = owner.node.model.model_fields[field.name]
-    for constraint in info.metadata:
-        minimum = getattr(constraint, "min_length", None)
-        maximum = getattr(constraint, "max_length", None)
-        if (minimum is not None and count < minimum) or (maximum is not None and count > maximum):
-            raise MutationError("Child mutation violates collection length constraints")
 
 
 def insert(tx: "Database", spec: ModelSpec, key: Key, collection: OwnedPath, record: Model) -> None:
@@ -51,7 +39,7 @@ def insert(tx: "Database", spec: ModelSpec, key: Key, collection: OwnedPath, rec
     child = path.child(encode_key(child_key))
     if tx.store.get(child) is not None or tx.store.children(child, limit=1):
         raise AlreadyExists("Child insertion cannot replace existing data")
-    _length(owner, field, count + 1)
+    check_collection_length(owner, field, count + 1)
     nodes = {child: b"o:1"} | node_nodes(field.node.fields, child, validated)
     require_capacity(tx.store, spec, spec.path(key), MAX_RECORD_NODES - len(nodes))
     relative = owner.relative + (field.name.encode("ascii"), encode_key(child_key))
@@ -76,7 +64,7 @@ def delete(tx: "Database", spec: ModelSpec, key: Key, at: OwnedPath) -> None:
     record = field.node.model.model_validate(values)
     if getattr(record, field.node.key_field) != child_key:
         raise StorageError("Stored child identity does not match its path")
-    _length(owner, field, count - 1)
+    check_collection_length(owner, field, count - 1)
     relative = owner.relative + (field.name.encode("ascii"), encode_key(child_key))
     old = tuple(walk_values(field.node.fields, record, relative))
     replace_secondary(tx, spec, spec.path(key), old, ())

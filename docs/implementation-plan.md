@@ -820,3 +820,43 @@ into every leaf. Keep ambiguous unions rejected by the existing type signatures.
 No snapshot or record bytes change. Deliver this regression fix separately before
 list integration; its memory/native test verifies validation-only activation and
 unchanged Decimal bytes/indexes.
+
+### Bounded reference deletion policies, issue 13
+
+Reuse reverse-reference counts and edges, occurrence address validation, owner
+resolution, prepared patches, normal secondary transitions, and collection length
+checks. Keep restrict as the default and preserve its existing schema bytes. Record
+set_null/cascade in the reference contract; require nullable set_null declarations.
+A policy-only change is a reviewed validation migration, not a data rewrite.
+
+Discover the entire cascade closure before writing or deciding restrict conflicts.
+Cascade deletes the nearest keyed owner of the incoming reference; a reference in
+an embedded value belongs to its nearest keyed child or independent root. Parent
+removal dominates overlapping owned deletions. Cycles terminate through native
+owner identities; restrict edges internal to the closure are released together.
+Defer set_null changes until the closure is known and combine changes per surviving
+owner. Preserve full leaf validation and existing ancestor-validator restrictions.
+
+Bound each delete attempt to 100 distinct decoded owners, 1000 incoming edges,
+and 10,000 distinct decoded value nodes. Use bounded physical reverse-subtree reads
+and exact count/edge validation, rejecting malformed or unregistered sources. These
+limits raise MutationError before writes; there is no partial progress. Incoming
+sources must have exact registered declarations, since stored snapshots cannot run
+application validators. Decode/cache owners only within this transaction attempt.
+Raw missing edges remain outside the supported-writer contract; do not claim a
+source-global scan audits them.
+
+Prepare final collection counts, root growth after deletions, and union index/link
+transitions before applying anything. Release all removed links/claims, install
+surviving patch changes, and delete physical units/counts in one native transaction.
+Check new targets and reject surviving links to deleted roots. Keep the final
+restrict count check as a safety invariant. Whole-root deletion remains available
+with custom root validators; partial child/null updates retain existing policy.
+
+Before implementation, move existing collection-length and grouped-growth checks
+to the ownership/budget modules and separate occurrence field-byte validation from
+owner fetching. This refactor preserves behavior and allows the planner to reuse
+validated attempt-local owners without parallel integrity implementations. Existing
+C901 passes at ten. Test nested policies, mixed-policy cycles, closure overlap,
+bounds, null validation, claims/reverse counts, rollback/poisoning, migrations,
+unregistered sources, malformed reverse data, native races, and native restarts.

@@ -11,8 +11,8 @@ from .codecs import Key, encode_key
 from .errors import MutationError, StorageError
 from .models import Model
 from .owned import OwnedPath, Owner, require_local_validation, resolve
-from .record_budget import require_capacity
-from .records import MAX_RECORD_NODES, FieldValue, node_values, value_nodes
+from .record_budget import require_growth
+from .records import FieldValue, node_values, value_nodes
 from .registry import FieldSpec, ModelSpec
 from .storage import Path, Store
 
@@ -176,20 +176,10 @@ def prepare_patch(
     )
 
 
-def check_growth(tx: "Database", prepared: tuple[PreparedPatch, ...]) -> None:
-    grouped: dict[Path, tuple[ModelSpec, int]] = {}
-    for item in prepared:
-        _, growth = grouped.get(item.root, (item.spec, 0))
-        grouped[item.root] = item.spec, growth + item.growth
-    for root, (spec, growth) in grouped.items():
-        if growth > 0:
-            require_capacity(tx.store, spec, root, MAX_RECORD_NODES - growth)
-
-
 def patch(
     tx: "Database", spec: ModelSpec, key: Key, at: OwnedPath, changes: Mapping[str, Any]
 ) -> None:
     prepared = prepare_patch(tx, spec, key, at, changes)
-    check_growth(tx, (prepared,))
+    require_growth(tx.store, ((spec, prepared.root, prepared.growth),))
     replace_secondary(tx, spec, prepared.root, prepared.before, prepared.after)
     prepared.apply_nodes(tx.store)
