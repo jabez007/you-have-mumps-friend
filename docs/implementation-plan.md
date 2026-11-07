@@ -1303,6 +1303,26 @@ object lifecycle without removing validation dependencies. No API, stored metada
 or code changes are justified by this workload. Re-run the existing concurrency
 regressions and documentation checks; complexity is unchanged.
 
+### Stored sums on owned records, issue 41
+
+Reuse rollups' compiled source identities, exact decimal units, shared secondary
+changes, and ordinary indexed field occurrences. Compile owned declarations bottom
+up, requiring local validation on every ancestor of a sum. Keep sources authoritative
+Decimal leaves; reject sums of other stored sums rather than introducing a dependency
+compiler. Whole writes and child insertion initialize owned totals after validation;
+loaded owners verify them recursively.
+
+Group partial deltas by root and concrete total path, using each declaration's
+physical ownership depth to identify the affected owner. Read/write each nonzero
+surviving total once and pass its ordinary field occurrence through existing index
+maintenance. Newly inserted owners already contain initialized totals; deleted owners
+need only release their total indexes, while surviving ancestors receive deltas.
+Net-zero patch groups touch neither their totals nor indexes. No sibling reads or
+new storage codec. Owned sums require explicit transform migration; preserve frozen
+warehouse-v2 declarations before upgrading the inventory location example. Compare
+native contention for no sums, root sums, and root plus location sums before claiming
+scalability. Current C901 passes; keep the maximum of ten.
+
 Before reference support, share schema constants and M schema/record-metadata checks
 without changing their validation or stored bytes. This keeps source and referenced
 target bindings on the same implementation, including exact legacy snapshots.

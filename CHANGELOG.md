@@ -4,6 +4,9 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Extends stored Decimal sums to owned records, including indexed totals, recursive
+  read verification, child initialization, and coalesced partial deltas at each owner.
+
 - Accepts Annotated constraints on scalar-list items with canonical schema rules,
   explicit migration checks, and unchanged scalar-list-v1 storage. Other container
   declarations retain explicit owned-model alternatives.

@@ -57,7 +57,7 @@ def ChildField(
     if type(ordered) is not bool:
         raise SchemaError("ordered must be a boolean")
     if sum_of is not None:
-        raise SchemaError("Stored sums must be declared as root Decimal fields")
+        raise SchemaError("Stored sums must be declared as Decimal fields")
     if index or unique or ordered:
         raise SchemaError("Index a scalar or Reference field inside the child model")
     if "json_schema_extra" in kwargs:

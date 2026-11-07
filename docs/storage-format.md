@@ -526,7 +526,7 @@ records are never staged as serialized blobs in job metadata. See the
 
 ## Stored Decimal sums
 
-A root scalar declaration can carry yhmf.sum_of (a dotted owned path) and
+A root or owned scalar declaration can carry yhmf.sum_of (a dotted owned path) and
 yhmf.rollup_codec: "decimal-sum-v1". This codec requires a nonnullable Decimal source
 below a child collection, at most 18 significant/fractional source digits, and
 magnitude below 1E18. Exact arithmetic uses 1E-18 integer units, at most 40 digits

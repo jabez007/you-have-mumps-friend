@@ -3,7 +3,7 @@
 
 from typing import TYPE_CHECKING
 
-from . import secondary
+from . import rollups, secondary
 from .codecs import Key, encode_key
 from .errors import AlreadyExists, MutationError, StorageError
 from .models import Model
@@ -19,6 +19,7 @@ from .records import (
     input_values,
     node_nodes,
     node_values,
+    validate_stored,
     walk_values,
 )
 from .registry import ModelSpec
@@ -33,6 +34,7 @@ def insert(tx: "Database", spec: ModelSpec, key: Key, collection: OwnedPath, rec
     if not isinstance(record, field.node.model):
         raise MutationError("Inserted child type does not match its declared model")
     validated = field.node.model.model_validate(input_values(field.node.fields, record))
+    validated = rollups.initialize(field.node.fields, validated)
     child_key = getattr(validated, field.node.key_field)
     if type(child_key) is not field.node.model.model_fields[field.node.key_field].annotation:
         raise MutationError("Child identity type does not match its declaration")
@@ -61,7 +63,7 @@ def delete(tx: "Database", spec: ModelSpec, key: Key, at: OwnedPath) -> None:
     child = path.child(encode_key(child_key))
     require_object(tx.store, child)
     values = node_values(field.node.fields, child, tx.store)
-    record = field.node.model.model_validate(values)
+    record = validate_stored(field.node.fields, field.node.model, values)
     if getattr(record, field.node.key_field) != child_key:
         raise StorageError("Stored child identity does not match its path")
     check_collection_length(owner, field, count - 1)

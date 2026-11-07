@@ -56,3 +56,27 @@ compares virtual and stored totals, and its existing-balance transfers use one
 net-zero patch group. [Native measurements](../inventory-performance.md) retain
 raw samples and distinguish current warehouse-v2 workflows from the direct
 quantity-only lower bound on the frozen warehouse-v1 model.
+
+## Owned targets, issue 41
+
+Extend the same decimal-sum-v1 contract to stored Decimal targets on owned objects.
+Compile the ownership tree bottom up so each target refers to the authoritative
+source FieldSpec. Require local validation on every ancestor, including a root
+without its own sum. Sources cannot themselves be stored sums: there is no implicit
+derived dependency graph or reference traversal.
+
+Whole writes and child insertion derive each owned total after normal validation;
+loaded owners recursively verify their totals. Partial changes group deltas by root
+and concrete total path. An ownership declaration's physical depth identifies the
+correct owner without reading siblings. Each surviving nonzero total contributes
+one ordinary before/after field occurrence to shared index maintenance. Newly
+inserted owners already contain initialized totals; removed owners release their
+indexes without updating a deleted total. Surviving ancestors still receive deltas.
+Net-zero groups avoid total/index I/O at every affected level.
+
+Existing root-only metadata and bytes remain unchanged. Adding or changing an owned
+sum requires a named transform; its zero default cannot backfill populated owners.
+Each stored ancestor is an intentional shared conflict point. Adding location sums
+does not remove contention from an existing warehouse total, and an index can add
+its own shared blocks. Native comparisons must separate no totals, root-only totals,
+and root plus location totals. Avoid declaring totals at every level by default.

@@ -191,7 +191,7 @@ def _field_spec(model: type[Model], name: str, ancestors: tuple[type[Model], ...
     spec = _indexed_spec(spec, annotation, metadata)
     return replace(
         spec,
-        sum_of=_sum_path(model, name, spec, metadata, ancestors),
+        sum_of=_sum_path(model, name, spec, metadata),
         adapter=field_adapter(model, name) if spec.node is None else None,
     )
 
@@ -201,14 +201,13 @@ def _sum_path(
     name: str,
     spec: FieldSpec,
     metadata: dict[str, Any],
-    ancestors: tuple[type[Model], ...],
 ) -> str | None:
     path = metadata.get("sum_of")
     if path is None:
         return None
     field = model.model_fields[name]
-    if len(ancestors) != 1 or spec.kind != "scalar" or field.annotation is not Decimal:
-        raise SchemaError("Stored sums require a nonnullable root Decimal field")
+    if spec.kind != "scalar" or field.annotation is not Decimal:
+        raise SchemaError("Stored sums require a nonnullable Decimal field")
     if (
         type(path) is not str
         or not 1 <= len(path.split(".")) <= 15

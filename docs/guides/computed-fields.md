@@ -2,7 +2,7 @@
 
 Use a Pydantic computed_field or ordinary property for a value derived from a loaded
 object. It is never stored or indexed and does not fetch missing data. Use a stored
-sum when a root needs an indexed total maintained with its owned quantities.
+sum when a root or owned object needs an indexed total maintained with its owned quantities.
 
 ```python
 from decimal import Decimal, localcontext
@@ -41,7 +41,7 @@ assert db.query(Warehouse).where(on_hand=Decimal("3.75")).all()[0].id == "W"
 
 sum_of follows dotted declarations through owned objects and child collections,
 without keys. Each occurrence of the source field contributes once. Empty and null
-containers contribute zero. The initial implementation requires a root Decimal
+containers contribute zero. The implementation requires a root or owned Decimal
 target and a nonnullable Decimal source below at least one child collection. A
 literal Decimal zero default is implicit. Targets can use normal equality, unique,
 or compatible ordered indexes. The canonical snapshot records the path and the
@@ -81,9 +81,9 @@ writes requires an explicit operator procedure, not a read-time correction.
 
 ## Transactions, efficiency, and indexes
 
-A partial quantity update reads/writes the affected owner and one total per surviving
-root. It never loads unrelated sibling quantities. Patch groups combine all deltas
-for a root once; a net-zero group leaves that total and its index untouched. Child
+A partial quantity update reads/writes the affected owner and each affected surviving
+total once. It never loads unrelated sibling quantities. Patch groups combine deltas
+by concrete total path; a net-zero group leaves that total and its index untouched. Child
 insertion/deletion, cascading child deletion, and set_null validators contribute
 through the same secondary transition. Deleted whole roots need no surviving total.
 Normal index/unique-claim maintenance is reused in the transaction; unrelated indexes
@@ -107,6 +107,14 @@ one, scalar Decimal encoding, and unrelated schema bytes remain unchanged.
 
 Generated M writers reject these hierarchical/derived declarations under
 [ADR 0013](../adr/0013-explicit-m-writer-contract.md). Raw SET/KILL bypasses the
-invariants and remains unsupported. General Python compute callbacks, owned-level
+invariants and remains unsupported. General Python compute callbacks, sums of other
 stored sums, dependency cycles, reference traversal, and automatic object tracking
 remain outside this API.
+
+An owned Location can declare total: Decimal = Field(sum_of="bins.balances.quantity",
+index=True). Its root and all ownership ancestors must support local validation,
+even when the root has no total. Whole and owned reads verify each loaded total;
+inserting a populated location derives its total before storing it. Deleting it
+releases its index and updates surviving ancestor totals. Each additional total
+adds a shared write location, so choose levels from measured reporting needs rather
+than declaring a total on every owner.

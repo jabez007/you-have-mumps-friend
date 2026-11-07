@@ -84,9 +84,8 @@ These features remain outside the current implementation:
 
 - Nested/model/reference lists, arbitrary `dict`, and ambiguous unions
   other than `| None`. [#44](https://github.com/jabez007/you-have-mumps-friend/issues/44)
-- Owned-level stored sums. [#41](https://github.com/jabez007/you-have-mumps-friend/issues/41)
-  General computed callbacks and reference-based dependencies are outside that issue's scope.
-  Root Decimal sums through owned paths and virtual Pydantic fields are supported;
+- General computed callbacks, sums of derived sums, and reference-based dependencies.
+  Root and owned Decimal sums through owned paths and virtual Pydantic fields are supported;
   see [computed fields](guides/computed-fields.md).
 - Descending order and ordered root continuation cursors. [#42](https://github.com/jabez007/you-have-mumps-friend/issues/42)
   Combined queries reject occurrence projections by design, because independent matches
