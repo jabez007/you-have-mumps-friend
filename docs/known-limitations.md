@@ -35,9 +35,11 @@ Child insertion counts fixed-width collections from their existing transactional
 markers, issue [#4](https://github.com/jabez007/you-have-mumps-friend/issues/4).
 Variable-width owned containers still require bounded traversal for node limits.
 
-`children` and `count` expose bounded owned-collection reads. Issue
-[#30](https://github.com/jabez007/you-have-mumps-friend/issues/30) remains open for the
-separate controlled raw-access interface. See [collection paging](guides/models-and-ownership.md).
+`children` and `count` expose bounded owned-collection reads, and `raw_path` resolves
+managed native addresses inside atomic callbacks using the existing Store and Path,
+issue [#30](https://github.com/jabez007/you-have-mumps-friend/issues/30). See
+[collection paging](guides/models-and-ownership.md) and
+[raw addressing](guides/m-access.md#resolve-a-managed-raw-address).
 
 Explicit `resolve`, `resolve_many`, and `get_many` provide bounded transactional target
 reads, issue [#12](https://github.com/jabez007/you-have-mumps-friend/issues/12).

@@ -545,3 +545,20 @@ referencing independent Products; inverse reads retrieve supplier links directly
 Add only the Supplier global, leaving existing inventory contracts unchanged. Cover
 typed pagination, null/changed/removed links, corruption, rollback, restrict deletion,
 and bounded work on memory and native adapters. C901 passes at ten.
+
+### Scoped raw addressing, remaining issue 30
+
+The existing public Store and Path already supply native byte operations. Add only
+raw_path(model, key, at=...) on an active atomic handle, reusing owned.resolve to
+check the installed schema, managed record metadata, and owned markers. This avoids
+a parallel raw persistence wrapper and takes trusted model declarations rather than
+caller-supplied global names. A resolved Path remains an address, not an authority
+token; use it and Store operations in that callback.
+
+Document the exact bypasses: raw bytes do not run Pydantic validation or maintain
+indexes, uniqueness, references, child counts, or application rules. Uncaught errors
+and native TP signals retain transaction rollback/restart behavior; caught raw errors
+do not acquire mapper write-poisoning semantics. Raw addressing does not install
+schemas or adopt unmanaged data. Test bounds, expiry, rollback, owned addresses,
+schema refusal, and demonstrated stale indexes after intentional raw writes. No
+metadata or layout change; C901 passes at ten.

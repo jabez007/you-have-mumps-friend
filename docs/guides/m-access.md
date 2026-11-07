@@ -76,3 +76,51 @@ M writes bypass the following:
 
 Stop raw writers during [migrations](migrations.md#stop-other-clients-first) and
 [index rebuilds](index-rebuilds.md).
+
+## Resolve a managed raw address
+
+The public `Store` and `Path` are the byte-level interface. Inside `atomic`, use
+`tx.raw_path(Model, key, at=...)` to resolve a managed root or owned object without
+loading its aggregate. Global names come from registered application declarations;
+caller-supplied keys become encoded subscripts. The helper checks the live installed
+schema, record metadata, and owned markers. It never installs metadata or adopts raw data.
+
+```python
+from decimal import Decimal
+
+from mccann_hub.yhmf import Database, Field, MemoryStore, Model, Registry
+from mccann_hub.yhmf.codecs import decode_scalar, encode_scalar
+
+
+class Counter(Model):
+    __global__ = "^RawCounter"
+    id: str = Field(primary_key=True)
+    quantity: Decimal = Field(default=Decimal(0), ge=0)
+
+
+db = Database(MemoryStore(), Registry(Counter))
+db.insert(Counter(id="C", quantity=Decimal(4)))
+
+
+def raw_increment(tx):
+    path = tx.raw_path(Counter, "C").child(b"quantity")
+    value = decode_scalar(tx.store.get(path))
+    assert isinstance(value, Decimal)
+    tx.store.set(path, encode_scalar(value + Decimal(1)))
+
+
+db.atomic(raw_increment)
+assert db.get(Counter, "C").quantity == Decimal(5)
+```
+
+This example changes a valid unindexed scalar. Raw Store operations bypass Pydantic
+validation, indexes, unique claims, references, child counts, and application rules.
+A valid type tag does not guarantee those invariants. In ordinary application code,
+use `patch`, child operations, or `save` to maintain them.
+
+`raw_path` requires an active callback. Use the returned address and Store operations
+in that transaction; a Path retained afterward is only an address and carries no
+snapshot or authorization. Uncaught exceptions roll back the callback, and native
+restart signals retain their control semantics. Caught raw-operation errors do not
+set the mapper's failed-write flag. Raw access does not supply record permissions
+or make direct M writes maintain bookkeeping.

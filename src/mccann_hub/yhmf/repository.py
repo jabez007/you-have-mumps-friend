@@ -31,6 +31,7 @@ from .migrations import MigrationPlan, build_plan
 from .models import Model, Reference
 from .occurrences import Occurrence
 from .owned import OwnedPath
+from .owned import resolve as resolve_owner
 from .queries import IndexReport, Query, audit_indexes, count_children, scan
 from .queries import children as read_children
 from .records import input_values, metadata, record_nodes, record_values
@@ -177,6 +178,13 @@ class Database:
     ) -> list[Occurrence]:
         """Page exact reverse occurrences from a declared source without scanning roots."""
         return queries.referrers(self, reference, source=source, limit=limit, after=after)
+
+    def raw_path(self, model: type[Model], key: Key, *, at: OwnedPath = ()) -> Path:
+        """Resolve a managed native address; raw Store operations bypass mapper invariants."""
+        self._ensure_active()
+        if not self._transaction:
+            raise TransactionError("raw_path requires an active atomic callback")
+        return resolve_owner(self, self.registry.spec(model), key, at).path
 
     def insert_child(
         self, model: type[Model], key: Key, *, collection: OwnedPath, record: Model
