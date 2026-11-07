@@ -192,14 +192,14 @@ def check_address_value(
         raise StorageError("Validated occurrence differs from its stored field")
 
 
-def _indexed(
+def read_indexed(
     tx: "Database",
     spec: ModelSpec,
     definition: indexes.Definition,
     expected: bytes,
-    identity: str,
     path: Path,
-) -> Occurrence:
+) -> tuple[Key, Address, Model]:
+    """Read one exact indexed owner, including its location and unique claim."""
     raw = tx.store.get(path)
     if tx.store.children(path, limit=1):
         raise StorageError("An occurrence leaf has unexpected descendants")
@@ -219,6 +219,18 @@ def _indexed(
     if entry.path != path or entry.location != raw:
         raise StorageError("Index occurrence identity does not match its record")
     indexes.validate_claim(tx.store, entry)
+    return key, location, record
+
+
+def _indexed(
+    tx: "Database",
+    spec: ModelSpec,
+    definition: indexes.Definition,
+    expected: bytes,
+    identity: str,
+    path: Path,
+) -> Occurrence:
+    key, location, record = read_indexed(tx, spec, definition, expected, path)
     cursor = encode_cursor(identity, path.subscripts[-2], path.subscripts[-1])
     return Occurrence(key, location.at, definition.name, record, cursor)
 
