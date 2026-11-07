@@ -268,28 +268,29 @@ class _Fields:
     def _types(self, kind: str, variants: list[Any], path: tuple[str, ...]) -> bytes:
         if kind != "scalar":
             return canonical_json(kind)
-        types: list[tuple[str, str | None] | tuple[str, str, str]] = []
-        for variant in variants:
-            name = variant.get("type")
-            if not isinstance(name, str) or name not in {"string", "integer", "number", "boolean"}:
-                raise _Unsupported(path)
-            format_name = variant.get("format")
-            if format_name is not None and (
-                format_name not in {"binary", "date", "date-time", "uuid"} or name != "string"
-            ):
-                raise _Unsupported(path)
-            if format_name in {"date", "date-time", "uuid"}:
-                codec = {"date": "date-v1", "date-time": "datetime-utc-v1", "uuid": "uuid-v1"}[
-                    format_name
-                ]
-                if variant.get("codec", codec if self.legacy_comparison else None) != codec:
-                    raise _Unsupported(path)
-                types.append((name, format_name, codec))
-            else:
-                types.append((name, format_name))
+        types = [_scalar_type(variant, path, legacy=self.legacy_comparison) for variant in variants]
         if len(types) > 1 and set(types) != {("number", None), ("string", None)}:
             raise _Unsupported(path)
         return canonical_json(sorted(types, key=canonical_json))
+
+
+def _scalar_type(
+    variant: dict[str, Any], path: tuple[str, ...], *, legacy: bool
+) -> tuple[str, str | None] | tuple[str, str, str]:
+    name = variant.get("type")
+    if not isinstance(name, str) or name not in {"string", "integer", "number", "boolean"}:
+        raise _Unsupported(path)
+    format_name = variant.get("format")
+    if format_name is not None and (
+        format_name not in {"binary", "date", "date-time", "uuid"} or name != "string"
+    ):
+        raise _Unsupported(path)
+    if format_name in {"date", "date-time", "uuid"}:
+        codec = {"date": "date-v1", "date-time": "datetime-utc-v1", "uuid": "uuid-v1"}[format_name]
+        if variant.get("codec", codec if legacy else None) != codec:
+            raise _Unsupported(path)
+        return name, format_name, codec
+    return name, format_name
 
 
 def _added(path: tuple[str, ...], value: _Field) -> list[SchemaChange]:
