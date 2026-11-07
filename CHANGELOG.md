@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Lets M create and delete empty non-leaf children. Empty collection markers and
+  zero derived totals match Python; collection minimums and normal index/reference
+  checks still apply. Populated non-leaf deletion remains guarded.
+
 - Qualifies M UTF-8 strings, choices, and reference/ownership keys in both character
   modes. Codepoint length checks and ASCII JSON escaping match Python, including
   supplementary characters. Malformed UTF-8 fails without changing data.

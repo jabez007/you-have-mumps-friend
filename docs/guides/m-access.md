@@ -224,7 +224,7 @@ group's net-zero totals or defer uniqueness across calls. Python patch_many rema
 the grouped mutation interface.
 
 Hierarchical whole insert/replace/delete labels return operation without writes.
-Non-leaf child insertion/deletion, embedded or nullable containers, and custom Python
+Populated non-leaf deletion, embedded or nullable containers, and custom Python
 validators remain unsupported. Supplier still fails export because SupplierProduct
 has a custom model validator. Up to 64 keyed declarations with 16 fields per owner
 are supported. New statuses include operation, invalid_path, collection_limit, and
@@ -406,10 +406,30 @@ Child nodes, collection counts, and descendant totals remain intact. This is a b
 mutation, not a complete aggregate audit. Unsupported validators still fail export.
 
 Normal transaction, maintenance, reference, and uniqueness checks apply on every
-attempt. Replace remains a complete-record operation. Tree construction, non-leaf
-insertion/deletion, and hierarchical root deletion remain unqualified until their
+attempt. Replace remains a complete-record operation. Root construction and populated branch deletion remain unqualified until their
 separate issue-53 slices. Existing storage bytes and schema identities are unchanged;
 regenerate source for these patch interfaces.
+
+## Empty owned branches
+
+insertchild/insertchildtx can create an empty non-leaf child, such as a Location
+or Bin. Supply all non-derived scalars, omit its child collections, and omit stored
+totals. The writer creates c:0 markers for the collections and derives zero totals,
+validating them normally. Application defaults/factories are not run. A collection
+whose minimum length is positive returns collection_limit; invalid zero totals fail
+validation. Supplied collection markers or derived values return invalid.
+
+```mumps
+ set path(1)="locations",path(2)="DOCK",path(3)="bins"
+ set input("id")="B2"
+ set status=$$insertchild^WarehouseAPI("MAIN",.path,.input)
+```
+
+Delete the empty branch with deletechild/deletechildtx and its concrete path. The
+same transaction maintains parent counts, indexes, references, and any ancestor sums.
+A branch containing children returns operation without writes. This operation does
+not recursively delete populated data. Root construction/deletion and complete tree
+replacement retain their separate contracts.
 
 ## Finite string and integer choices
 

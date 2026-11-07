@@ -1,5 +1,5 @@
  ; SPDX-License-Identifier: GPL-3.0-or-later
- ; Schema-bound flat records and keyed leaf children; qualified scalar inputs only.
+ ; Schema-bound record/owner mutations; qualified scalar inputs only.
  quit
 insert(input)
  quit $$write("insert",.input)
@@ -78,7 +78,13 @@ input(operation,input,cfg,values)
  if operation="delete" quit $select($data(values(cfg("key"))):"ok",1:"invalid")
  if operation="patch" quit $select($data(values):"ok",1:"invalid")
  set field=""
- for  set field=$order(cfg("tag",field)) quit:field=""  if '$data(values(field)) set status="invalid"
+ for  set field=$order(cfg("tag",field)) quit:field=""  do
+ . if $data(cfg("derived",field)),operation="insert" do
+ . . set values(field)="0"
+ . . if '$$valid("0",field,.cfg) set status="invalid"
+ . if '$data(values(field)) set status="invalid"
+ set field=""
+ for  set field=$order(cfg("children",field)) quit:field=""  if cfg("minchildren",field)>0,status="ok" set status="collection_limit"
  quit status
 valid(value,field,cfg,stored)
  new characters,good
@@ -122,6 +128,7 @@ attempt(operation,key,values,cfg,previous)
  if operation'="insert" do  quit:status'="ok" status
  . if $get(@root@(cfg("key")))'=$$scalar(values(cfg("key")),cfg("key"),.cfg) set status="corrupt" quit
  . set status=$$old(root,.cfg,.old)
+ . if status="ok",operation="delete" set status=$$hempty(root,.cfg)
  if $get(cfg("partial")) do
  . set field=""
  . for  set field=$order(old(field)) quit:field=""  if '$data(values(field)) set values(field)=old(field)
@@ -144,6 +151,9 @@ attempt(operation,key,values,cfg,previous)
  . if $get(cfg("owned")) set @root="o:1" quit
  . set field=""
  . for  set field=$order(cfg("meta",field)) quit:field=""  set @root@("%m",field)=cfg("meta",field)
+ if operation="insert" do
+ . set field=""
+ . for  set field=$order(cfg("children",field)) quit:field=""  set @root@(field)="c:0"
  set field=""
  for  set field=$order(values(field)) quit:field=""  if $get(@root@(field))'=$$scalar(values(field),field,.cfg) set @root@(field)=$$scalar(values(field),field,.cfg)
  quit $$refchange(operation,recordkey,.values,.old,.cfg)

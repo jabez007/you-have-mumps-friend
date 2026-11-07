@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Fail-closed export of schema-bound flat and keyed-leaf M writers."""
+"""Fail-closed export of schema-bound transactional M writers."""
 
 import re
 from importlib.resources import files

@@ -129,7 +129,7 @@ These features remain outside the current implementation:
   their nullable scalar forms, and references, with owning or caller-participating
   transactions. Keyed hierarchies support leaf-child operations and root/non-leaf
   scalar patches under existing roots, including exact stored sums. Whole aggregate
-  construction, non-leaf insertion/deletion, embedded/nullable containers, custom validators, and ordered
+  construction, populated non-leaf deletion, embedded/nullable containers, custom validators, and ordered
   indexes remain outside this M contract
   ([#53](https://github.com/jabez007/you-have-mumps-friend/issues/53),
   [#54](https://github.com/jabez007/you-have-mumps-friend/issues/54),

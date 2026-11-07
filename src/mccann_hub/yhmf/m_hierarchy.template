@@ -1,5 +1,5 @@
  ; SPDX-License-Identifier: GPL-3.0-or-later
- ; Leaf child operations under an already managed root; paths alternate names/keys.
+ ; Bounded mutations under managed roots; paths alternate names/keys.
 patch(key,input)
  new path
  quit $$owned("patch",key,.path,.input,0)
@@ -68,7 +68,6 @@ hprepare(operation,rootkey,path,input,cfg,wire,parts,node)
  . if key="invalid" set status="invalid_key" quit
  . set parts(position+1)=key
  if status'="ok" quit status
- if operation'="patch",'cfg("nodes",node,"leaf") quit "operation"
  kill local
  do hconfig(.cfg,node,.parts,.local)
  set local("partial")=(operation="patch")
@@ -136,6 +135,11 @@ hwhere(parts,depth,field,cfg)
  for index=1:1:depth set location=location_$$quote(parts(index))_","
  set location=location_$$quote(field)_"]",cfg("location",field)=location,cfg("digest",field)=$$locationhash(location)
  quit $select(cfg("digest",field)="":"key_size",1:"ok")
+hempty(root,cfg)
+ new field,status
+ set field="",status="ok"
+ for  set field=$order(cfg("children",field)) quit:field=""  if $get(@root@(field))'="c:0" set status="operation" quit
+ quit status
 hcount(path,cfg,field,count)
  new marker
  set marker=$get(@path)

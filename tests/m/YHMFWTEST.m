@@ -214,3 +214,22 @@ ownerpatch
 jsonquote
  write $$quote^YHMFTAPI(^YHMFTestStorage("writerInput","value")),!
  quit
+emptypath(path,input)
+ new scope
+ set scope=$get(input("_scope")) kill input("_scope")
+ set path(1)="locations"
+ if scope="bin" set path(2)="DOCK",path(3)="bins"
+ quit
+emptyinsert
+ new input,path
+ merge input=^YHMFTestStorage("writerInput")
+ do emptypath(.path,.input)
+ write $$insertchild^YHMFTAPI("MAIN",.path,.input),!
+ quit
+emptydelete
+ new input,path,count
+ merge input=^YHMFTestStorage("writerInput")
+ do emptypath(.path,.input)
+ set count=$order(path(""),-1),path(count+1)=input("id")
+ write $$deletechild^YHMFTAPI("MAIN",.path),!
+ quit

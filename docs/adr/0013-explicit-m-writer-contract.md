@@ -264,3 +264,15 @@ Native tests run both M and UTF-8 modes; the harness resolves the installed ICU 
 version for UTF-8 subprocesses without adding a dependency. Existing byte/key/location
 budgets still apply. General regex translation remains rejected because Python regex
 semantics cannot be represented exactly by M patterns. No storage conversion occurs.
+
+
+## Empty non-leaf owners, issue 53
+
+Permit empty non-leaf child insertion/deletion through the existing owned operation
+path. Create declared c:0 collections, derive/validate zero totals, and maintain
+ordinary indexes, references, and parent counts. Do not evaluate application defaults
+or accept supplied collections/totals. Reject a positive collection minimum before
+writes. Delete only owners whose declared immediate collections are empty, after
+normal stored-shape validation; populated owners return operation. Keep capacity
+traversal's leaf classification and existing node budget. This is a bounded subset,
+not implicit recursive deletion or whole-aggregate replacement.

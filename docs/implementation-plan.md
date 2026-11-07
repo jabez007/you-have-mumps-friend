@@ -1623,3 +1623,20 @@ index/claim bytes, Unicode ownership digests, malformed input/storage, character
 and generated strings under M and UTF-8 process modes on both engines. Remove only
 the superseded ASCII refusal checks/locals. Configured C901 passes at ten before
 this change; no threshold changes or native dependencies are needed.
+
+### Create and remove empty non-leaf children, issue 53
+
+Reuse hprepare, capacity/count checks, attempt, old, and ordinary index/reference/sum
+transitions. A non-leaf insert supplies all non-derived scalar fields and implicitly
+creates empty declared collections. Do not run application defaults/factories. Derive
+empty stored totals as zero and validate them through the existing scalar rules.
+Reject insertion when an empty collection violates its declared minimum. Never accept
+caller-supplied counts, collections, or derived totals.
+
+Permit non-leaf deletion only when every immediate collection is empty, after old()
+checks its marker/count shape. Populated branches still return operation without
+writes. This keeps bounded empty-branch operations separate from a future complete
+subtree deletion plan and its aggregate constraints. Root insert/delete and complete
+replace remain unchanged in this slice. Retain the leaf classification used by bounded
+capacity traversal. Compare Python physical state, totals/indexes,
+minimum-length refusal, and rollback on both native engines. C901 remains ten.
