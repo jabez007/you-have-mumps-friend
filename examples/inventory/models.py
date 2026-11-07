@@ -11,23 +11,26 @@ from mccann_hub.yhmf import ChildField, Children, Field, Model, Reference
 Quantity = Annotated[Decimal, Field(max_digits=18, decimal_places=6)]
 
 
-class Product(Model):
-    __global__ = "^InventoryProduct"
+class Identified(Model):
+    """Shared declaration only; concrete roots and owned models choose their own storage."""
+
     id: str = Field(primary_key=True, min_length=1)
+
+
+class Product(Identified):
+    __global__ = "^InventoryProduct"
     sku: str = Field(unique=True, min_length=1)
     name: str = Field(min_length=1)
 
 
-class Lot(Model):
+class Lot(Identified):
     __global__ = "^InventoryLot"
-    id: str = Field(primary_key=True, min_length=1)
     product: Reference[Product] = Field(index=True)
 
 
-class SupplierProduct(Model):
+class SupplierProduct(Identified):
     """An owned membership link; the independently stored Product keeps its lifecycle."""
 
-    id: str = Field(primary_key=True, min_length=1)
     product: Reference[Product]
 
     @model_validator(mode="after")
@@ -37,33 +40,28 @@ class SupplierProduct(Model):
         return self
 
 
-class Supplier(Model):
+class Supplier(Identified):
     __global__ = "^InventorySupplier"
-    id: str = Field(primary_key=True, min_length=1)
     name: str = Field(min_length=1)
     products: Children[SupplierProduct] = ChildField(key="id")
 
 
-class Balance(Model):
-    id: str = Field(primary_key=True, min_length=1)
+class Balance(Identified):
     lot: Reference[Lot] = Field(index=True)
     product: Reference[Product] = Field(index=True)
     quantity: Quantity = Field(default=Decimal(0), ge=0)
 
 
-class Bin(Model):
-    id: str = Field(primary_key=True, min_length=1)
+class Bin(Identified):
     balances: Children[Balance] = ChildField(key="id")
 
 
-class Location(Model):
-    id: str = Field(primary_key=True, min_length=1)
+class Location(Identified):
     bins: Children[Bin] = ChildField(key="id")
 
 
-class Warehouse(Model):
+class Warehouse(Identified):
     __global__ = "^InventoryWarehouse"
-    id: str = Field(primary_key=True, min_length=1)
     name: str
     locations: Children[Location] = ChildField(key="id")
 
@@ -74,10 +72,9 @@ class Position(Model):
     bin: str = Field(min_length=1)
 
 
-class Movement(Model):
+class Movement(Identified):
     __global__ = "^InventoryMovement"
     model_config = ConfigDict(frozen=True)
-    id: str = Field(primary_key=True, min_length=1)
     kind: str = Field(pattern=r"^(receive|move|adjust)$")
     product: Reference[Product] = Field(index=True)
     lot: Reference[Lot] = Field(index=True)

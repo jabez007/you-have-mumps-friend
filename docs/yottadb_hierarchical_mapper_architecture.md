@@ -49,6 +49,12 @@ needs them, but the framework will not copy their relational designs. Each one n
 design that fits globals, such as embedding or delegation in place of table-per-class
 inheritance.
 
+The inventory example reuses its id declaration through ordinary Python field
+inheritance, preserving each concrete global and owned path. Embedding and References
+remain the choices for shared data with different lifecycles. Shared-global variants
+need a concrete workflow and a separate storage design. See
+[ADR 0007](adr/0007-compile-time-model-reuse.md).
+
 It will not use SQL as its primary persistence layer, automatically distribute transactions, or hide inefficient global scans behind convenient query expressions.
 
 It will not introduce a shared Python/Go runtime prematurely.

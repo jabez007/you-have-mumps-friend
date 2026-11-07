@@ -55,6 +55,12 @@ Unfinished migrations still require exact Python source and target declarations.
 models supplier/product memberships as owned reference links, issue
 [#14](https://github.com/jabez007/you-have-mumps-friend/issues/14).
 
+Ordinary Python field inheritance supplies shared declarations, with the inventory's
+Identified base as the example, issue
+[#18](https://github.com/jabez007/you-have-mumps-friend/issues/18). It leaves storage
+identities unchanged; shared-global variants remain a separate design. See
+[ADR 0007](adr/0007-compile-time-model-reuse.md).
+
 ## Defects
 
 | Behavior | What to do for now | Issue |
@@ -67,7 +73,7 @@ These features are not in version 0.5.0:
 
 - Field types for `date`, `datetime`, `UUID`, `Enum`, `Literal`, `list`, `dict`, and unions
   other than `| None`. [#11](https://github.com/jabez007/you-have-mumps-friend/issues/11)
-- Computed fields ([#17](https://github.com/jabez007/you-have-mumps-friend/issues/17)) and model inheritance ([#18](https://github.com/jabez007/you-have-mumps-friend/issues/18)).
+- Computed fields. [#17](https://github.com/jabez007/you-have-mumps-friend/issues/17)
 - `set_null` and `cascade` deletion policies. [#13](https://github.com/jabez007/you-have-mumps-friend/issues/13)
 - Range, prefix, sorted, and multi-predicate queries. [#15](https://github.com/jabez007/you-have-mumps-friend/issues/15)
 - Access rules. [#19](https://github.com/jabez007/you-have-mumps-friend/issues/19)

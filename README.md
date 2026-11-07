@@ -86,7 +86,7 @@ metadata nodes:
 
 | Area | Works today | Not yet |
 | --- | --- | --- |
-| Models | `str`, `int`, `bool`, `float`, `Decimal`, `bytes`, optional fields, embedded objects, keyed children | Dates, enums, lists, computed fields, inheritance |
+| Models | Primitive scalars, optional fields, embedded objects, keyed children, Python field inheritance | Dates, enums, lists, computed fields, shared-global variants |
 | Relationships | Enforced references, explicit resolution, bounded inverse reads, owned many-to-many links, `restrict` on delete | `set_null`, `cascade` |
 | Queries | One equality predicate on an index or key, unique indexes, root and child paging, occurrence projections, collection counts | Range, prefix, sorting, several predicates |
 | Writes | Whole-record `save`, scalar `patch`, child insert and delete, restart-safe transactions | Change tracking, deferred unique checks |

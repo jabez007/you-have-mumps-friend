@@ -42,6 +42,7 @@ New here? Start with [get started](getting-started.md), then read
   - [0004 Hierarchical mutations](adr/0004-hierarchical-mutations.md)
   - [0005 Native validation restarts](adr/0005-native-validation-restarts.md)
   - [0006 Canonical schema contracts](adr/0006-canonical-schema-contracts.md)
+  - [0007 Compile-time model reuse](adr/0007-compile-time-model-reuse.md)
 
 ## Check the evidence
 

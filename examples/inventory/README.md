@@ -45,6 +45,11 @@ service enforces cross-record inventory rules. Writing directly through `Databas
 can bypass those business rules. Historical movement positions are snapshots:
 warehouse references are enforced, while location/bin strings preserve history.
 
+The models reuse an unregistered Identified base for their nonempty string id.
+Concrete roots still declare their own global, and Position stays an embedded value
+without its own key. This changes no existing schema bytes or stored paths. See
+[the model-reuse decision](../../docs/adr/0007-compile-time-model-reuse.md).
+
 ## Workflows
 
 ```python

@@ -140,3 +140,34 @@ and migrate the installed schema. Equal persistence fingerprints do not make Pyt
 validation behavior interchangeable: compiled rules belong to that registry's exact
 declarations. This compilation does not cache database state. Every transaction still
 checks the live installed schema snapshot and fingerprint.
+
+## Reuse field declarations
+
+Ordinary Python inheritance reuses fields before the registry compiles a model:
+
+```python
+class Identified(Model):
+    id: str = Field(primary_key=True, min_length=1)
+
+
+class Catalog(Identified):
+    __global__ = "^ReusableCatalog"
+    sku: str = Field(unique=True)
+
+
+catalog_db = Database(MemoryStore(), Registry(Catalog))
+catalog_db.insert(Catalog(id="C", sku="SKU"))
+assert catalog_db.get(Catalog, "C").sku == "SKU"
+```
+
+Identified is a declaration base, not a registered root. Each independent model declares
+its own global. Owned models can inherit the same key field without declaring a global.
+The resulting fields have ordinary names and index paths; the Python base introduces no
+stored relationship. Use an embedded object or Reference when the shared data has an
+ownership or lifecycle relationship instead.
+
+A subclass extending a stored root inherits that global unless it explicitly declares
+another one. Review its schema difference and migrate before use. A registry accepts one
+model for each global, so registering both old and replacement declarations is rejected.
+Shared-global variants and runtime class mutation are not implied by field inheritance.
+[ADR 0007](../adr/0007-compile-time-model-reuse.md) records the choice and alternatives.

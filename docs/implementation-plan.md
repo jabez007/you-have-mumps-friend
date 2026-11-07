@@ -562,3 +562,13 @@ do not acquire mapper write-poisoning semantics. Raw addressing does not install
 schemas or adopt unmanaged data. Test bounds, expiry, rollback, owned addresses,
 schema refusal, and demonstrated stale indexes after intentional raw writes. No
 metadata or layout change; C901 passes at ten.
+
+### Compile-time field reuse, issue 18
+
+Registry and Pydantic already support inherited model_fields. Capture current
+inventory snapshots before factoring their repeated nonempty string id into an
+Identified base. Follow ADR 0007: concrete globals stay explicit, ownership and
+References keep their existing roles, and shared-global variants are deferred.
+Verify byte-identical contracts, legacy metadata, indexes, and additive migrations.
+This is a behavior-preserving example refactor, with no mapper API or storage
+change. Existing C901 passes at ten.
