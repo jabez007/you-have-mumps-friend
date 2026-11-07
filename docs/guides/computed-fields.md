@@ -105,9 +105,11 @@ The transform executor materializes and pins target totals before rebuilding ind
 No installed database is converted just because a new version opens it. Record layout
 one, scalar Decimal encoding, and unrelated schema bytes remain unchanged.
 
-Generated M writers reject these hierarchical/derived declarations under
-[ADR 0013](../adr/0013-explicit-m-writer-contract.md). Raw SET/KILL bypasses the
-invariants and remains unsupported. General Python compute callbacks, sums of other
+Generated M leaf-child writers maintain root and owned sums under
+[ADR 0013](../adr/0013-explicit-m-writer-contract.md), using exact digit arithmetic,
+ordinary indexes, and one TP. Their declared scalar/validation subset still applies;
+whole hierarchical construction/replacement remains a Python operation. Raw SET/KILL
+bypasses these invariants. General Python compute callbacks, sums of other
 stored sums, dependency cycles, reference traversal, and automatic object tracking
 remain outside this API.
 

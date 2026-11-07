@@ -70,8 +70,8 @@ identities unchanged; shared-global variants remain a separate design. See
 
 Database.path selectors infer typed owner reads without casts, and Registry.reference
 infers a key-checked factory returning the existing Reference type. Tuple paths remain
-available. Typed query-field objects are deferred to
-[#43](https://github.com/jabez007/you-have-mumps-friend/issues/43). See
+available. Typed query-field objects provide checked equality values and ordering;
+range/prefix selectors still use the existing string interface. See
 [owned selectors](guides/partial-updates.md) and [reference factories](guides/references.md).
 
 Unique constraints apply immediately to ordinary operations. Use the explicit
@@ -119,11 +119,13 @@ These features remain outside the current implementation:
   [ADR 0009](adr/0009-model-scoped-maintenance.md).
 - Raw M SET/KILL bypasses validation, indexes, references, and stored sums. Exported
   [schema-bound M routines](guides/m-access.md#export-an-explicit-m-writer) maintain
-  a qualified flat ASCII str/int/Decimal and reference subset, with owning or
-  caller-participating transactions. Unsupported declarations remain rejected.
+  a qualified ASCII str/int/Decimal and reference subset, with owning or
+  caller-participating transactions. Keyed hierarchies support leaf-child operations
+  under existing roots, including exact stored sums. Whole aggregate construction,
+  non-leaf mutations, embedded/nullable containers, custom validators, and temporal
+  scalar inputs remain outside this M contract. Unsupported declarations stay rejected.
   Read-only GlobalView mappings can project foreign globals without adopting them.
-  [Owned trees and stored sums](https://github.com/jabez007/you-have-mumps-friend/issues/38)
-  remain the next M extension. Newly generated routines validate maintenance scope;
+  Newly generated routines validate maintenance scope;
   older exported source retains its conservative global-gate check until regenerated.
 - Equality index tokens preserve typed equality, not numeric order. Opt-in ordered-v1
   indexes provide native numeric/temporal and escaped string ordering within their

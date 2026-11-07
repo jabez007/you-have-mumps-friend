@@ -1,5 +1,5 @@
  ; SPDX-License-Identifier: GPL-3.0-or-later
- ; Generated schema-bound writer: complete flat ASCII str/int/Decimal records only.
+ ; Schema-bound flat records and keyed leaf children; qualified scalar inputs only.
  quit
 insert(input)
  quit $$write("insert",.input)

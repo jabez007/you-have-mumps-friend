@@ -292,10 +292,13 @@ a root; combined occurrence projection is rejected rather than implying a join.
 Joins, full-text search, complex aggregates, and arbitrary SQL compatibility remain outside the initial scope.
 
 Plain M writers use a schema-bound generated routine for the explicitly supported
-flat ASCII str/int/Decimal and reference subset. It owns TP or participates in a
-caller TP, verifies exact metadata, and maintains equality/unique and reverse-reference
-identities. New exports validate maintenance scope. Participant failures abort the
-whole caller transaction. Unsupported validation/ownership contracts fail at export;
+ASCII str/int/Decimal and reference subset. Flat routines own TP or participate in a
+caller TP. Keyed hierarchies expose leaf-child insert/patch/delete beneath existing
+managed roots, maintaining presence markers, collection counts, equality/unique and
+reverse-reference identities, and exact root/owned sums. Python creates and replaces
+whole hierarchies. New exports verify exact metadata and maintenance scope. Status
+failures revalidate on a stable TP attempt; participant failure aborts the whole
+caller transaction. Unsupported validation/ownership contracts fail at export;
 raw SET/KILL remain outside mapper guarantees. See [ADR 0013](adr/0013-explicit-m-writer-contract.md).
 
 Foreign layouts can be read through explicit GlobalView/MappedField projections.

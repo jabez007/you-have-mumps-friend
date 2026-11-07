@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Fail-closed export of schema-bound, flat scalar/Reference M writers."""
+"""Fail-closed export of schema-bound flat and keyed-leaf M writers."""
 
 import re
 from importlib.resources import files
@@ -36,7 +36,7 @@ def _template(name: str) -> tuple[str, str]:
 
 
 def source(spec: ModelSpec, name: str, *, targets: tuple[ModelSpec, ...] = ()) -> str:
-    """Export source only. The routine installs metadata only on its first valid insert."""
+    """Export source only; only flat first inserts can install metadata."""
     if not isinstance(name, str) or not _NAME.fullmatch(name):
         raise SchemaError("M routine names require an ASCII letter and at most 30 letters/digits")
     if not spec.local_validation or len(spec.fields) > 16:

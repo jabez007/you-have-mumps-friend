@@ -42,9 +42,11 @@ A stored value is updated at persistence boundaries; loaded objects are not trac
 
 A shared total introduces real writer contention, even for separate children. Raw
 writes can corrupt it; incremental operations trust a valid managed starting state
-rather than scan siblings on every update. Full reads detect disagreement. Generated
-M writers reject these models under ADR 0013, so the supported M path cannot change
-rollup inputs. A broader writer or computation contract requires its own design.
+rather than scan siblings on every update. Full reads detect disagreement. The initial
+M generator rejected these models. ADR 0013's keyed-leaf extension now maintains
+source deltas and every affected root/owned sum with exact bounded digit arithmetic
+and ordinary indexes in one TP. Other validation and ownership limitations remain
+explicit; raw writes still bypass the contract.
 
 ## Qualification
 

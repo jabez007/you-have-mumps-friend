@@ -169,7 +169,12 @@ warehouse reads verify the stored total; child mutations do not read sibling bal
 The warehouse total adds intentional contention for writers affecting one warehouse;
 location totals add shared nodes for writers within each location. They demonstrate
 the reporting tradeoff rather than a recommendation to store totals at every level.
-Generated M writers reject these hierarchical models; raw SET/KILL cannot maintain
+Generated M writers support Warehouse leaf-balance insertion, patching, and deletion
+under an existing managed root, maintaining both totals, counts, indexes, and references
+in one TP. Python still constructs/replaces the warehouse. SupplierProduct's custom
+validator and Movement's temporal/embedded fields remain unsupported by the M exporter;
+the full ledger workflows and their business checks remain Python services. See the
+[M guide](../../docs/guides/m-access.md#mutate-a-keyed-hierarchy). Raw SET/KILL cannot maintain
 the total or its index. See [computed fields](../../docs/guides/computed-fields.md).
 
 ## Upgrade an existing ledger
