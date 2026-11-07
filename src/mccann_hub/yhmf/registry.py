@@ -93,7 +93,7 @@ def field_adapter(model: type[Model], name: str) -> TypeAdapter[Any]:
 @dataclass(frozen=True)
 class FieldSpec:
     name: str
-    kind: Literal["scalar", "embedded", "children", "reference"]
+    kind: Literal["scalar", "list", "embedded", "children", "reference"]
     node: "NodeSpec | None" = None
     target: type[Model] | None = None
     target_key: str | None = None
@@ -101,6 +101,7 @@ class FieldSpec:
     unique: bool = False
     adapter: TypeAdapter[Any] | None = compiled_field(default=None, repr=False, compare=False)
     choices: Choices | None = compiled_field(default=None, repr=False, compare=False)
+    item: "FieldSpec | None" = None
 
 
 @dataclass(frozen=True)
@@ -174,15 +175,12 @@ def _field_spec(model: type[Model], name: str, ancestors: tuple[type[Model], ...
     annotation = scalar_type(model.model_fields[name].annotation)
     metadata = _field_metadata(model, name)
     spec = _field_type_spec(annotation, name, metadata, ancestors)
-    if (
-        spec.choices is not None
-        and spec.choices.kind == "enum"
-        and model.model_config.get("use_enum_values")
-    ):
+    choices = spec.choices if spec.item is None else spec.item.choices
+    if choices is not None and choices.kind == "enum" and model.model_config.get("use_enum_values"):
         raise SchemaError("Enum fields do not support use_enum_values=True")
     indexed, unique = bool(metadata.get("index")), bool(metadata.get("unique"))
-    if (indexed or unique) and spec.kind not in {"scalar", "reference"}:
-        raise SchemaError("Indexes require scalar or Reference fields")
+    if (indexed or unique) and spec.kind not in {"scalar", "list", "reference"}:
+        raise SchemaError("Indexes require scalar, scalar list, or Reference fields")
     return replace(
         spec,
         index=indexed or unique,
@@ -201,6 +199,8 @@ def _field_type_spec(
         return _child_spec(annotation, name, metadata, ancestors)
     if "children_key" in metadata:
         raise SchemaError("ChildField requires a Children[Model] annotation")
+    if get_origin(annotation) is list:
+        return _list_spec(annotation, name)
     if isinstance(annotation, type) and issubclass(annotation, Reference):
         target = reference_target(annotation)
         return FieldSpec(name, "reference", target=target, target_key=_key_field(target))
@@ -212,6 +212,17 @@ def _field_type_spec(
     if annotation not in _SCALARS and choices is None:
         raise SchemaError("Unsupported field type; use scalar, Model, or Children[Model]")
     return FieldSpec(name, "scalar", choices=choices)
+
+
+def _list_spec(annotation: Any, name: str) -> FieldSpec:
+    args = get_args(annotation)
+    if len(args) != 1:
+        raise SchemaError("Scalar lists require an explicit item type")
+    item_type = scalar_type(args[0])
+    choices = compile_choices(item_type)
+    if item_type not in _SCALARS and choices is None:
+        raise SchemaError("Scalar list items require plain scalar or Enum/Literal types")
+    return FieldSpec(name, "list", item=FieldSpec(name, "scalar", choices=choices))
 
 
 def reference_target(annotation: type[Reference[Any]]) -> type[Model]:

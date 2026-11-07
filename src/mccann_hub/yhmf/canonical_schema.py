@@ -190,10 +190,8 @@ def _field(field: "FieldSpec", declaration: FieldInfo, *, primary: bool) -> dict
             result = {"type": "object", "additionalProperties": result}
     elif field.target is not None:
         result = {"type": "object"}
-    elif field.choices is not None:
-        result = field.choices.schema()
     else:
-        result = _scalar(annotation)
+        result = _scalar_field(field, annotation)
     if nullable:
         result = {"anyOf": [result, {"type": "null"}]}
     result.update(_rules(declaration, temporal=annotation in (date, datetime)))
@@ -204,6 +202,25 @@ def _field(field: "FieldSpec", declaration: FieldInfo, *, primary: bool) -> dict
     elif not declaration.is_required():
         result["default"] = _value(declaration.default)
     return result
+
+
+def _scalar_field(field: "FieldSpec", annotation: Any) -> dict[str, Any]:
+    if field.item is not None:
+        return _list_schema(field.item, annotation)
+    return field.choices.schema() if field.choices is not None else _scalar(annotation)
+
+
+def _list_schema(item: "FieldSpec", annotation: Any) -> dict[str, Any]:
+    item_type = get_args(annotation)[0]
+    nullable = get_origin(item_type) in (Union, types.UnionType) and type(None) in get_args(
+        item_type
+    )
+    if nullable:
+        item_type = next(value for value in get_args(item_type) if value is not type(None))
+    result = item.choices.schema() if item.choices is not None else _scalar(item_type)
+    if nullable:
+        result = {"anyOf": [result, {"type": "null"}]}
+    return {"type": "array", "codec": "scalar-list-v1", "items": result}
 
 
 def _mapper_metadata(field: "FieldSpec", primary: bool) -> dict[str, Any]:

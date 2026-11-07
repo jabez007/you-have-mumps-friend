@@ -45,6 +45,14 @@ Custom Enum behavior still follows the explicit application revision policy;
 stored unknown values never use _missing_ as a coercion hook. Enum use_enum_values
 mode is rejected because strict detached save/patch revalidation requires members.
 
+Scalar lists declare scalar-list-v1, their item codec, and item nullability. New
+list fields and item-type/Enum-domain changes require a named record transform.
+Ordinary index changes and whole-list validation changes retain the existing
+executor. This initial policy avoids treating complex binary/Enum lists as ordinary
+scalar JSON defaults. Layout/global codec versions remain one and older snapshots
+are unchanged. Nested nullable Decimal alternatives are inspected with bounded
+flattening; revision-only migrations preserve those existing snapshots and values.
+
 Virtual properties and Pydantic computed fields are outside the stored contract.
 They add no nodes, indexes, defaults, or schema changes. A computed field may not
 declare mapper persistence metadata. Changing a virtual display calculation alone

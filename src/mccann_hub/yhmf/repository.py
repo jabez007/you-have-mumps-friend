@@ -152,7 +152,7 @@ class Database:
     def patch(
         self, model: type[Model], key: Key, *, changes: Mapping[str, Any], at: OwnedPath = ()
     ) -> None:
-        """Validate and update scalar or Reference fields at an explicit owned path."""
+        """Validate and update scalar, scalar list, or Reference fields at an owned path."""
         spec = self.registry.spec(model)
 
         def attempt(tx: Database) -> None:

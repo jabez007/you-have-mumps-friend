@@ -5,6 +5,7 @@ from .errors import StorageError
 from .owned import collection_count, require_object
 from .records import MAX_CHILDREN
 from .registry import FieldSpec, ModelSpec
+from .scalar_lists import length
 from .storage import Path, Store
 
 
@@ -18,7 +19,7 @@ def _owned_nodes(store: Store, field: FieldSpec, path: Path) -> tuple[tuple[Path
         return (path,), 0
     count = collection_count(store, path)
     assert field.node is not None
-    if all(nested.node is None for nested in field.node.fields):
+    if all(nested.node is None and nested.item is None for nested in field.node.fields):
         # c:N is the authoritative transactional count. Every fixed-width child
         # contributes one object marker plus one value per declared leaf field.
         return (), count * (1 + len(field.node.fields))
@@ -41,6 +42,9 @@ def require_capacity(store: Store, spec: ModelSpec, root: Path, allowance: int) 
         count += 1
         if count + len(pending) > allowance:
             raise StorageError("Mutation exceeds the root record node budget")
+        if field.item is not None:
+            marker = store.get(path)
+            count += 0 if marker == b"n:" else length(marker)
         if field.node is not None:
             children, markers = _owned_nodes(store, field, path)
             count += markers

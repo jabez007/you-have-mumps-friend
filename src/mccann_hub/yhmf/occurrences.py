@@ -15,7 +15,7 @@ from .codecs import Key, canonical_json, decode_key
 from .errors import NotFound, QueryError, SchemaError, StorageError
 from .models import Model, Reference
 from .owned import OwnedPath
-from .records import MAX_RECORD_NODES, encode_leaf, walk_values
+from .records import MAX_RECORD_NODES, value_nodes, walk_values
 from .registry import FieldSpec, ModelSpec, reference_target
 from .storage import Path, Store
 
@@ -170,8 +170,12 @@ def read_address(tx: "Database", spec: ModelSpec, key: Key, location: Address) -
         raise StorageError("Occurrence points to a missing owner") from None
     except SchemaError:
         raise StorageError("Occurrence root key disagrees with its declaration") from None
-    stored = tx.store.get(spec.path(key).child(*location.relative))
-    if encode_leaf(location.field, getattr(record, location.field.name)) != stored:
+    encoded = value_nodes(
+        location.field,
+        spec.path(key).child(*location.relative),
+        getattr(record, location.field.name),
+    )
+    if any(tx.store.get(path) != value for path, value in encoded.items()):
         raise StorageError("Validated occurrence differs from its stored field")
     return record
 

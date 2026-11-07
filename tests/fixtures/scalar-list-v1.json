@@ -1,0 +1,154 @@
+{
+  "nodes": [
+    [
+      [
+        "id"
+      ],
+      "s:A"
+    ],
+    [
+      [
+        "values"
+      ],
+      "l:3"
+    ],
+    [
+      [
+        "values",
+        "1"
+      ],
+      "i:1"
+    ],
+    [
+      [
+        "values",
+        "2"
+      ],
+      "n:"
+    ],
+    [
+      [
+        "values",
+        "3"
+      ],
+      "i:-2"
+    ],
+    [
+      [
+        "labels"
+      ],
+      "l:3"
+    ],
+    [
+      [
+        "labels",
+        "1"
+      ],
+      "s:"
+    ],
+    [
+      [
+        "labels",
+        "2"
+      ],
+      "s:\u96ea"
+    ],
+    [
+      [
+        "labels",
+        "3"
+      ],
+      "s:a\u0000b"
+    ],
+    [
+      [
+        "states"
+      ],
+      "l:1"
+    ],
+    [
+      [
+        "states",
+        "1"
+      ],
+      "s:open"
+    ]
+  ],
+  "schema": {
+    "codec_version": 1,
+    "declaration": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "codec": "str",
+          "type": "string",
+          "yhmf": {
+            "primary_key": true
+          }
+        },
+        "labels": {
+          "codec": "scalar-list-v1",
+          "default_factory": true,
+          "items": {
+            "codec": "str",
+            "type": "string"
+          },
+          "type": "array",
+          "yhmf": {
+            "index": true
+          }
+        },
+        "states": {
+          "codec": "scalar-list-v1",
+          "default_factory": true,
+          "items": {
+            "codec": "enum-str-v1",
+            "enum": [
+              "closed",
+              "open"
+            ],
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "values": {
+          "anyOf": [
+            {
+              "codec": "scalar-list-v1",
+              "items": {
+                "anyOf": [
+                  {
+                    "codec": "int",
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "maxLength": 10,
+          "yhmf": {
+            "index": true,
+            "unique": true
+          }
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    },
+    "format_version": 2,
+    "global": "^YHMFTestProduct",
+    "key": "id",
+    "layout": 1,
+    "version": 1
+  }
+}

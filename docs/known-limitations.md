@@ -74,7 +74,7 @@ deferred uniqueness is not supported. See [the example](guides/indexes-and-queri
 
 These features are not in version 0.5.0:
 
-- Field types for scalar `list`, arbitrary `dict`, and unions
+- Nested/model/reference lists, Annotated list-item declarations, arbitrary `dict`, and unions
   other than `| None`. [#11](https://github.com/jabez007/you-have-mumps-friend/issues/11)
 - Stored computed rollups and automatic dependency maintenance. Virtual Python
   properties and Pydantic computed fields are supported on loaded value objects.

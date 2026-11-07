@@ -16,6 +16,7 @@ from .codecs import (
 from .errors import StorageError
 from .models import Model, Reference
 from .registry import FieldSpec, ModelSpec, NodeSpec
+from .scalar_lists import MAX_ITEMS, length
 from .storage import MAX_VALUE_BYTES, Path, Store
 
 type FieldValue = tuple[FieldSpec, tuple[bytes, ...], Any]
@@ -90,17 +91,25 @@ class _Encoder:
 
     def fields(self, fields: tuple[FieldSpec, ...], root: Path, record: Model) -> None:
         for field in fields:
-            value = getattr(record, field.name)
-            path = root.child(field.name.encode("ascii"))
-            if field.kind in {"scalar", "reference"} or value is None:
-                self.put(path, encode_leaf(field, value))
-            elif field.kind == "embedded":
-                assert field.node is not None
-                self.put(path, b"o:1")
-                self.fields(field.node.fields, path, value)
-            else:
-                assert field.node is not None
-                self.children(field.node, path, value)
+            self.field(field, root.child(field.name.encode("ascii")), getattr(record, field.name))
+
+    def field(self, field: FieldSpec, path: Path, value: Any) -> None:
+        if field.kind in {"scalar", "reference"} or value is None:
+            self.put(path, encode_leaf(field, value))
+        elif field.kind == "list":
+            assert field.item is not None
+            if len(value) > MAX_ITEMS:
+                raise StorageError("Scalar list exceeds 1000 items")
+            self.put(path, b"l:" + str(len(value)).encode("ascii"))
+            for ordinal, item in enumerate(value, 1):
+                self.put(path.child(str(ordinal).encode("ascii")), encode_leaf(field.item, item))
+        elif field.kind == "embedded":
+            assert field.node is not None
+            self.put(path, b"o:1")
+            self.fields(field.node.fields, path, value)
+        else:
+            assert field.node is not None
+            self.children(field.node, path, value)
 
     def children(self, node: NodeSpec, path: Path, records: dict[Key, Model]) -> None:
         if len(records) > MAX_CHILDREN:
@@ -129,6 +138,13 @@ def node_nodes(fields: tuple[FieldSpec, ...], root: Path, record: Model) -> dict
     return encoder.nodes
 
 
+def value_nodes(field: FieldSpec, path: Path, value: Any) -> dict[Path, bytes]:
+    """Encode a complete field, retaining native nodes for scalar lists."""
+    encoder = _Encoder()
+    encoder.field(field, path, value)
+    return encoder.nodes
+
+
 class _Reader:
     def __init__(self, store: Store) -> None:
         self.store = store
@@ -149,7 +165,7 @@ class _Reader:
             path = root.child(field.name.encode("ascii"))
             stored = self.get(path)
             if field.node is None or stored == b"n:":
-                values[field.name] = self.leaf(field, stored)
+                values[field.name] = self.leaf(field, path, stored)
             elif field.kind == "embedded":
                 assert field.node is not None
                 if stored != b"o:1":
@@ -160,7 +176,9 @@ class _Reader:
                 values[field.name] = self.children(field.node, path, stored)
         return values
 
-    def leaf(self, field: FieldSpec, stored: bytes) -> Any:
+    def leaf(self, field: FieldSpec, path: Path, stored: bytes) -> Any:
+        if field.kind == "list":
+            return self.scalar_list(field, path, stored)
         if field.kind == "reference" and stored != b"n:":
             if not stored.startswith(b"r:"):
                 raise StorageError("Invalid reference encoding")
@@ -173,6 +191,22 @@ class _Reader:
             return {"key": key}
         value = decode_scalar(stored)
         return field.choices.restore(value) if field.choices is not None else value
+
+    def scalar_list(self, field: FieldSpec, path: Path, stored: bytes) -> Any:
+        keys = self.store.children(path, limit=MAX_ITEMS + 1)
+        if stored == b"n:" and not keys:
+            return None
+        count = length(stored)
+        if keys != tuple(str(i).encode("ascii") for i in range(1, count + 1)):
+            raise StorageError("Scalar list length disagrees with its item ordinals")
+        assert field.item is not None
+        result = []
+        for key in keys:
+            item_path = path.child(key)
+            if self.store.children(item_path, limit=1):
+                raise StorageError("Scalar list item has unexpected descendants")
+            result.append(self.leaf(field.item, item_path, self.get(item_path)))
+        return result
 
     def children(self, node: NodeSpec, path: Path, marker: bytes) -> dict[Key, Any]:
         keys = self.store.children(path, limit=MAX_CHILDREN + 1)

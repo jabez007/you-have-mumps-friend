@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Adds bounded scalar lists as native numbered nodes, preserving null/empty values,
+  whole-list equality/unique indexes, minimal patch writes, and shared root budgets.
+  New list fields and item type changes use explicit record transforms initially.
+
 - Fixes schema inspection of nullable Decimal alternatives, allowing revision-only
   migrations without changing snapshots, stored values, or indexes.
 

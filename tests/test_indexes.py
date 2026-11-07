@@ -158,7 +158,7 @@ def test_native_index_key_limits_are_checked_before_writes(db):
         db.get(Product, "P1")
 
 
-def test_containers_cannot_be_indexed():
+def test_owned_containers_cannot_be_indexed():
     class Embedded(Model):
         value: str
 
@@ -167,7 +167,7 @@ def test_containers_cannot_be_indexed():
         id: int = Field(primary_key=True)
         value: Embedded = Field(index=True)
 
-    with pytest.raises(SchemaError, match="scalar or Reference"):
+    with pytest.raises(SchemaError, match="scalar, scalar list, or Reference"):
         Registry(BadEmbedded)
 
 

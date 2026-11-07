@@ -256,7 +256,11 @@ class _Fields:
             if path in self.references
             else self.owned.get(path, {}).get("kind", "scalar")
         )
-        if kind != "scalar" and (len(variants) != 1 or variants[0].get("type") != "object"):
+        if kind == "scalar" and len(variants) == 1 and variants[0].get("type") == "array":
+            kind = "scalar_list"
+        if kind not in {"scalar", "scalar_list"} and (
+            len(variants) != 1 or variants[0].get("type") != "object"
+        ):
             raise _Unsupported(path)
         signature = self._types(kind, variants, path)
         rules = _field_rules(raw, variants, legacy=self.legacy_comparison)
@@ -282,12 +286,22 @@ class _Fields:
         )
 
     def _types(self, kind: str, variants: list[Any], path: tuple[str, ...]) -> bytes:
+        if kind == "scalar_list":
+            return self._list_type(variants[0], path)
         if kind != "scalar":
             return canonical_json(kind)
         types = [_scalar_type(variant, path, legacy=self.legacy_comparison) for variant in variants]
         if len(types) > 1 and set(types) != {("number", None), ("string", None)}:
             raise _Unsupported(path)
         return canonical_json(sorted(types, key=canonical_json))
+
+    def _list_type(self, variant: dict[str, Any], path: tuple[str, ...]) -> bytes:
+        item = variant.get("items")
+        if variant.get("codec") != "scalar-list-v1" or not isinstance(item, dict):
+            raise _Unsupported(path)
+        variants, nullable = self._variants(item, path)
+        types = json.loads(self._types("scalar", variants, path))
+        return canonical_json(["scalar-list-v1", types, nullable])
 
 
 def _scalar_type(

@@ -30,7 +30,7 @@ class Product(Model):
 
 Field types include `str`, `int`, `bool`, `float`, `Decimal`, `bytes`, date, aware
 datetime, UUID, Enum/Literal choices, nullable variants, embedded models, `Children`,
-and `Reference`. Keys must match their declared str/int type.
+scalar lists, and `Reference`. Keys must match their declared str/int type.
 
 The registry rejects overlapping globals, aliases, unsupported field types, and missing
 or ambiguous primary keys.
@@ -284,3 +284,35 @@ Primary keys remain plain str/int. Names, aliases, and ordering do not change sc
 identity; changing an Enum's stored domain needs an explicit named transform. Literal
 constraint changes use the existing validation-only migration. Defaults and indexes
 use the same transaction guarantees as other scalars.
+
+## Scalar lists
+
+Lists of supported scalar or finite-choice values have native numbered item nodes:
+
+```python
+class TaggedItem(Model):
+    __global__ = "^TaggedItem"
+    id: str = Field(primary_key=True)
+    tags: list[str] = Field(default_factory=list, index=True, max_length=8)
+    samples: list[int | None] | None = None
+
+
+tagged = Database(MemoryStore(), Registry(TaggedItem))
+tagged.insert(TaggedItem(id="A", tags=["cold", "fragile"]))
+tagged.patch(TaggedItem, "A", changes={"samples": [1, None, 2]})
+assert tagged.query(TaggedItem).where(tags=["cold", "fragile"]).all()[0].id == "A"
+assert tagged.query(TaggedItem).where(tags=["fragile", "cold"]).all() == []
+```
+
+List equality includes order and duplicates. It is not a membership query. Patches
+replace the logical list and write only changed ordinals; use patch_many to group
+changes. Empty, null, and missing remain distinct. Lists have at most 1000 items and
+share the root's 10,000-node budget with every owned record. Growth checks may read
+other variable-width branch markers, without loading their item values. Long indexed
+lists can exceed native key limits before reaching the item limit.
+
+Nested/model/reference lists and Annotated item declarations are rejected. Use
+whole-field constraints or validators for item policies; those hooks follow existing
+partial-validation restrictions on owners with descendants. New list fields and
+item type changes require an explicit named record transform initially. Validation
+or index changes on an existing list use the normal migration executor.

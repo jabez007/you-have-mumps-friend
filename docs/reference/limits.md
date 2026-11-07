@@ -5,6 +5,7 @@
 | Limit | Value | Defined in |
 | --- | --- | --- |
 | Children in one collection | 1000 | `MAX_CHILDREN`, `records.py` |
+| Scalars in one list | 1000, also subject to the root node budget | `MAX_ITEMS`, `scalar_lists.py` |
 | Stored nodes in one record, including metadata and presence markers | 10,000 | `MAX_RECORD_NODES`, `records.py` |
 | Records in one query page | 1 to 1000, default 100 | `MAX_QUERY_RECORDS`, `queries.py` |
 | Items in `get_many` or `resolve_many` | 0 to 1000, including duplicates | `MAX_QUERY_RECORDS`, `queries.py` |

@@ -11,7 +11,8 @@ from .codecs import Key, encode_key
 from .errors import MutationError, StorageError
 from .models import Model
 from .owned import OwnedPath, Owner, require_local_validation, resolve
-from .records import FieldValue, encode_leaf, node_values
+from .record_budget import require_capacity
+from .records import MAX_RECORD_NODES, FieldValue, node_values, value_nodes
 from .registry import FieldSpec, ModelSpec
 from .storage import Path, Store
 
@@ -54,7 +55,7 @@ def _identity(owner: Owner, old: Mapping[str, Any], new: Mapping[str, Any]) -> N
 def _fields(owner: Owner, changes: Mapping[str, Any]) -> tuple[FieldSpec, ...]:
     by_name = {field.name: field for field in owner.node.fields}
     if not changes or changes.keys() - by_name.keys():
-        raise MutationError("Patch requires one or more declared scalar or Reference fields")
+        raise MutationError("Patch requires declared scalar, scalar list, or Reference fields")
     if owner.node.key_field in changes:
         raise MutationError("Partial mutation cannot change record identity")
     selected = tuple(by_name[name] for name in changes)
@@ -120,6 +121,14 @@ class PreparedPatch:
     before: tuple[FieldValue, ...]
     after: tuple[FieldValue, ...]
     writes: tuple[tuple[Path, bytes], ...]
+    deletes: tuple[Path, ...]
+    growth: int
+
+    def apply_nodes(self, store: Store) -> None:
+        for path in self.deletes:
+            store.delete_tree(path)
+        for path, value in self.writes:
+            store.set(path, value)
 
 
 def prepare_patch(
@@ -129,23 +138,58 @@ def prepare_patch(
     owner = resolve(tx, spec, key, at, mutate=True)
     selected = _fields(owner, changes)
     old, new, fields = _validated(tx, owner, selected, changes)
-    changed = tuple(
-        field
+    before_nodes = {
+        field.name: value_nodes(
+            field, owner.path.child(field.name.encode("ascii")), old[field.name]
+        )
         for field in fields
-        if encode_leaf(field, old[field.name]) != encode_leaf(field, new[field.name])
+    }
+    after_nodes = {
+        field.name: value_nodes(
+            field, owner.path.child(field.name.encode("ascii")), new[field.name]
+        )
+        for field in fields
+    }
+    changed = tuple(
+        field for field in fields if before_nodes[field.name] != after_nodes[field.name]
     )
     before, after = _occurrences(owner, changed, old), _occurrences(owner, changed, new)
+    old_nodes = {
+        path: value for field in changed for path, value in before_nodes[field.name].items()
+    }
+    new_nodes = {
+        path: value for field in changed for path, value in after_nodes[field.name].items()
+    }
     writes = tuple(
-        (owner.path.child(field.name.encode("ascii")), encode_leaf(field, new[field.name]))
-        for field in changed
+        (path, value) for path, value in new_nodes.items() if old_nodes.get(path) != value
     )
-    return PreparedPatch(spec, spec.path(key), owner.path, before, after, writes)
+    deletes = tuple(sorted(old_nodes.keys() - new_nodes.keys(), key=lambda path: path.subscripts))
+    return PreparedPatch(
+        spec,
+        spec.path(key),
+        owner.path,
+        before,
+        after,
+        writes,
+        deletes,
+        len(new_nodes) - len(old_nodes),
+    )
+
+
+def check_growth(tx: "Database", prepared: tuple[PreparedPatch, ...]) -> None:
+    grouped: dict[Path, tuple[ModelSpec, int]] = {}
+    for item in prepared:
+        _, growth = grouped.get(item.root, (item.spec, 0))
+        grouped[item.root] = item.spec, growth + item.growth
+    for root, (spec, growth) in grouped.items():
+        if growth > 0:
+            require_capacity(tx.store, spec, root, MAX_RECORD_NODES - growth)
 
 
 def patch(
     tx: "Database", spec: ModelSpec, key: Key, at: OwnedPath, changes: Mapping[str, Any]
 ) -> None:
     prepared = prepare_patch(tx, spec, key, at, changes)
+    check_growth(tx, (prepared,))
     replace_secondary(tx, spec, prepared.root, prepared.before, prepared.after)
-    for path, value in prepared.writes:
-        tx.store.set(path, value)
+    prepared.apply_nodes(tx.store)

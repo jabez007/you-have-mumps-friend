@@ -8,11 +8,12 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any, cast
 
-from .codecs import Scalar, encode_key, encode_scalar
+from .codecs import Scalar, canonical_json, encode_key, encode_scalar
 from .errors import SchemaError, StorageError, UniqueViolation
 from .models import Model, Reference
 from .records import FieldValue, walk_values
 from .registry import FieldSpec, ModelSpec
+from .scalar_lists import MAX_ITEMS
 from .storage import Path, Store
 
 
@@ -31,6 +32,13 @@ class Definition:
         result = self.field.adapter.validate_python(value)
         if self.field.choices is not None:
             self.field.choices.primitive(result)
+        if (
+            self.field.item is not None
+            and self.field.item.choices is not None
+            and result is not None
+        ):
+            for item in result:
+                self.field.item.choices.primitive(item)
         if result is not None and self.field.target is not None:
             assert self.field.target_key is not None
             key_type = self.field.target.model_fields[self.field.target_key].annotation
@@ -71,6 +79,10 @@ def _decimal_value(value: Decimal) -> bytes:
 
 def normalized(value: Any) -> bytes:
     """Normalize equality without rounding decimals or changing stored values."""
+    if isinstance(value, list):
+        if len(value) > MAX_ITEMS:
+            raise StorageError("Scalar list exceeds 1000 items")
+        return b"l:" + canonical_json([normalized(item).decode("utf-8") for item in value])
     if isinstance(value, Decimal):
         return _decimal_value(value)
     if isinstance(value, Reference):

@@ -37,6 +37,11 @@ db.insert(
 
 ## Patch scalar fields
 
+Patch accepts scalar values, scalar lists, and references. Lists retain native
+numbered nodes; changing a list writes only changed ordinals and removes trailing
+items. List equality indexes cover the whole ordered value. See
+[scalar list declarations](models-and-ownership.md#scalar-lists).
+
 ```python
 db.patch(Warehouse, 7, changes={"name": "Renamed"})
 db.patch(

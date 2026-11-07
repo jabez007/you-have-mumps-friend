@@ -83,6 +83,28 @@ unknown values and wrong primitive tags fail without invoking Enum._missing_.
 choices-v1.json fixes representative schema and storage bytes. Existing schemas,
 primitive encodings, and layout/global codec versions remain unchanged.
 
+Scalar lists use scalar-list-v1 in format-two metadata with an explicit item codec
+and nullable item contract. The field holds l:N and item values live at numeric
+subscripts 1 through N, each using its ordinary scalar tag. Order, duplicates, and
+null items are preserved; n: is a null list, l:0 is empty, and a missing field is
+corrupt. Lists have at most 1000 items and count toward the 10,000-node root budget.
+Reads verify the marker, consecutive canonical ordinals, and absence of nested item
+nodes. Only supported plain scalar and finite-choice items are accepted; nested
+containers, models, references, and Annotated item declarations are rejected.
+Whole-field constraints and custom validators still run through existing adapters.
+
+Equality indexes compare the complete ordered list using a canonical JSON array
+of normalized scalar encodings. Null lists, empty lists, different orderings, and
+different duplicate counts are distinct. Individual items are not indexed; native
+key-size limits can reject long indexed lists even when the record itself fits.
+Patches compare field node maps, setting changed ordinals and deleting only removed
+ones. Net growth across a patch group is checked once per root before any writes.
+New list fields and item-type changes require an explicit named record transform;
+there is no automatic list-default backfill in the initial implementation. Existing
+list-field validation/index revisions use ordinary migration validation. The golden
+scalar-list-v1.json fixture fixes schema and physical nodes without altering prior
+contracts or layout/global codec versions.
+
 The [golden scalar fixtures](../tests/fixtures/scalars.json) contain literal
 encoded values for readers in other languages. Float rendering still requires
 cross-language qualification before a Go writer can claim compatibility.
@@ -118,7 +140,8 @@ omit that entry.
 belong to the framework.
 The engine reserves
 `^%Y*`, which the path validator rejects. A registry assigns each application
-global to exactly one top-level model. Save replaces the entire record subtree;
+global to exactly one top-level model. Save supplies a complete replacement value
+and writes its physical node differences;
 it does not merge raw nodes or silently overwrite unmanaged records.
 
 CRUD reads both installed metadata nodes on every transaction attempt. Exact
