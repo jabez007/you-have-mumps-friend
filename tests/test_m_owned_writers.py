@@ -55,6 +55,74 @@ class IndexedWarehouse(Warehouse):
     locations: Children[IndexedLocation] = ChildField(key="id")
 
 
+class UniqueBalance(Balance):
+    quantity: Decimal = Field(
+        default=Decimal(0), ge=0, max_digits=18, decimal_places=6, unique=True
+    )
+
+
+class UniqueBin(Bin):
+    balances: Children[UniqueBalance] = ChildField(key="id")
+
+
+class UniqueSourceLocation(Location):
+    bins: Children[UniqueBin] = ChildField(key="id")
+
+
+class UniqueSourceWarehouse(Warehouse):
+    __schema_version__ = 4
+    locations: Children[UniqueSourceLocation] = ChildField(key="id")
+
+
+class UniqueTotalLocation(Location):
+    stored_on_hand: Decimal = Field(sum_of="bins.balances.quantity", unique=True, ge=0)
+
+
+class UniqueTotalWarehouse(Warehouse):
+    __schema_version__ = 4
+    locations: Children[UniqueTotalLocation] = ChildField(key="id")
+
+
+class BoundedBin(Bin):
+    balances: Children[Balance] = ChildField(key="id", min_length=1, max_length=1)
+
+
+class BoundedLocation(Location):
+    bins: Children[BoundedBin] = ChildField(key="id")
+
+
+class BoundedWarehouse(Warehouse):
+    __schema_version__ = 4
+    locations: Children[BoundedLocation] = ChildField(key="id")
+
+
+def warehouse_values(dock, storage):
+    return {
+        "id": "MAIN",
+        "name": "Main warehouse",
+        "locations": {
+            name: {
+                "id": name,
+                "bins": {
+                    "B1": {
+                        "id": "B1",
+                        "balances": {
+                            key: {
+                                "id": key,
+                                "lot": {"key": "LOT-001"},
+                                "product": {"key": "WIDGET"},
+                                "quantity": Decimal(value),
+                            }
+                            for key, value in quantities.items()
+                        },
+                    }
+                },
+            }
+            for name, quantities in (("DOCK", dock), ("STORAGE", storage))
+        },
+    }
+
+
 def namespaces():
     return tuple(model.__global__ for model in MODELS) + (
         "^YHMFSchema",
@@ -63,6 +131,13 @@ def namespaces():
         "^YHMFRef",
         "^YHMFMigration",
     )
+
+
+@pytest.mark.parametrize("model", [UniqueSourceWarehouse, UniqueTotalWarehouse, BoundedWarehouse])
+def test_owned_export_accepts_qualified_unique_and_collection_constraints(model):
+    db = Database(MemoryStore(), Registry(Product, Lot, model))
+    model.model_validate(warehouse_values({"LOT-001": "2"}, {"LOT-001": "3"}))
+    assert "insertchild(rootkey,path,input)" in db.m_routine(model, name="WarehouseAPI")
 
 
 def test_warehouse_export_is_read_only_and_custom_owned_validators_stay_rejected(read_only_store):
@@ -237,6 +312,132 @@ def test_native_m_nodes_match_the_same_public_python_child_operations(store, own
     assert run("owneddelete", {}) == "ok"
     expected.delete_child(Warehouse, "MAIN", at=(*path, "LOT-001"))
     assert dump(store, namespaces()) == dump(expected_store, namespaces())
+
+
+@pytest.mark.native
+@pytest.mark.parametrize("model", [UniqueSourceWarehouse, UniqueTotalWarehouse])
+def test_owned_unique_failure_restores_source_totals_and_all_earlier_index_changes(
+    store, variant_writer, model
+):
+    db, run, _, _ = variant_writer(model, warehouse_values({"LOT-001": "2"}, {"LOT-001": "3"}))
+    before = dump(store, namespaces())
+    assert run("ownedpatch", {"quantity": "3"}) == "unique"
+    assert dump(store, namespaces()) == before
+    assert db.check_indexes(model).issues == ()
+    assert run("ownedpatch", {"quantity": "4"}) == "ok"
+    assert db.get(model, "MAIN").stored_on_hand == 7
+    assert db.check_indexes(model).issues == ()
+
+
+@pytest.mark.native
+def test_owned_collection_limits_preserve_all_values_on_insertion_and_deletion(
+    store, variant_writer
+):
+    db, run, _, _ = variant_writer(
+        BoundedWarehouse, warehouse_values({"LOT-001": "2"}, {"LOT-001": "3"})
+    )
+    before = dump(store, namespaces())
+    assert (
+        run("ownedinsert", {"id": "extra", "lot": "LOT-001", "product": "WIDGET", "quantity": "1"})
+        == "collection_limit"
+    )
+    assert run("owneddelete", {}) == "collection_limit"
+    assert dump(store, namespaces()) == before
+    assert db.check_indexes(BoundedWarehouse).issues == ()
+
+
+@pytest.mark.native
+def test_owned_insertion_honors_the_same_root_node_budget_as_python(store, variant_writer):
+    db, run, _, _ = variant_writer(
+        Warehouse,
+        warehouse_values({f"D{i}": "1" for i in range(1000)}, {f"S{i}": "1" for i in range(995)}),
+    )
+    before = dump(store, namespaces())
+    assert (
+        run(
+            "ownedinsert",
+            {
+                "_location": "STORAGE",
+                "id": "extra",
+                "lot": "LOT-001",
+                "product": "WIDGET",
+                "quantity": "1",
+            },
+        )
+        == "node_budget"
+    )
+    assert dump(store, namespaces()) == before
+    assert db.get(Warehouse, "MAIN").stored_on_hand == 1995
+    assert db.check_indexes(Warehouse).issues == ()
+
+
+@pytest.mark.native
+def test_owned_reference_replacement_uses_exact_dotted_indexes_and_reverse_locations(
+    store, owned_writer
+):
+    db, run, _, _ = owned_writer
+    db.insert(Product(id="GADGET", sku="GADGET", name="Gadget"))
+    db.insert(Lot(id="LOT-002", product=Reference[Product](key="GADGET")))
+    assert (
+        run(
+            "ownedinsert", {"id": "LOT-001", "lot": "LOT-001", "product": "WIDGET", "quantity": "2"}
+        )
+        == "ok"
+    )
+    assert run("ownedpatch", {"product": "GADGET", "lot": "LOT-002"}) == "ok"
+    assert db.referrers(Reference[Lot](key="LOT-001"), source=Warehouse) == []
+    assert db.referrers(Reference[Product](key="WIDGET"), source=Warehouse) == []
+    for reference in (Reference[Product](key="GADGET"), Reference[Lot](key="LOT-002")):
+        (hit,) = db.referrers(reference, source=Warehouse)
+        assert hit.at == ("locations", "DOCK", "bins", "B1", "balances", "LOT-001")
+    root = db.get(Warehouse, "MAIN")
+    assert root.stored_on_hand == root.locations["DOCK"].stored_on_hand == 2
+    assert db.check_indexes(Warehouse).issues == ()
+
+
+@pytest.mark.native
+@pytest.mark.parametrize("target", [Product, Warehouse])
+def test_owned_maintenance_blocks_only_affected_reads_and_allows_reference_release(
+    store, owned_writer, target
+):
+    db, run, _, _ = owned_writer
+    assert (
+        run(
+            "ownedinsert", {"id": "LOT-001", "lot": "LOT-001", "product": "WIDGET", "quantity": "2"}
+        )
+        == "ok"
+    )
+    job = db.begin_index_rebuild(target, plan=db.plan_index_rebuild(target))
+    if target is Warehouse:
+        before = dump(store, namespaces())
+        assert run("ownedpatch", {"quantity": "3"}) == "maintenance"
+        assert dump(store, namespaces()) == before
+    else:
+        assert run("ownedpatch", {"quantity": "3"}) == "ok"
+        before = dump(store, namespaces())
+        assert run("ownedpatch", {"product": "WIDGET"}) == "maintenance"
+        assert dump(store, namespaces()) == before
+        assert run("owneddelete", {}) == "ok"
+    db.abort_migration(job.migration_id)
+    assert db.check_indexes(Warehouse).issues == ()
+
+
+@pytest.mark.native
+@pytest.mark.parametrize("raw", [False, True])
+def test_owned_operations_never_install_or_adopt_a_root_schema(store, owned_writer, raw):
+    _, run, _, _ = owned_writer
+    for name in namespaces():
+        store.delete_tree(Path(name))
+    if raw:
+        store.set(Path("^InventoryWarehouse", (b"s:OTHER", b"raw")), b"unmanaged")
+    before = dump(store, namespaces())
+    assert (
+        run(
+            "ownedinsert", {"id": "LOT-001", "lot": "LOT-001", "product": "WIDGET", "quantity": "2"}
+        )
+        == "schema"
+    )
+    assert dump(store, namespaces()) == before
 
 
 @pytest.mark.native
