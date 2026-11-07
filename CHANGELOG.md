@@ -4,6 +4,11 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Explains ordered all() budget exhaustion in terms of its requested result ceiling
+  and directs callers to bounded page() continuation. Documents distinct-value cost
+  and filtered cases without imposing a misleading 500-result cap or changing the
+  existing 1,000-visit work budget.
+
 - Clarifies that generated M participants require a restartable outer transaction.
   Native regressions cover bare and nested nonrestartable callers, error-trap
   cleanup, and TSTART () without SERIAL. Bare TSTART can raise TRESTNOT instead of

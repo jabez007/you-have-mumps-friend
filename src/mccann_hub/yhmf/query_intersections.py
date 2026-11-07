@@ -222,8 +222,13 @@ def ordered_page(
             cursor = index_scans.encode_cursor(scope, path.subscripts[-3], path)
             if len(result) == limit:
                 return RootPage(tuple(result), cursor)
-    except index_scans.VisitLimit:
-        if strict or cursor is None:
+    except index_scans.VisitLimit as exc:
+        if strict:
+            raise index_scans.VisitLimit(
+                f"{exc}. The requested {limit}-record limit is a result ceiling. "
+                "Use page() and follow its cursor, or narrow the query."
+            ) from None
+        if cursor is None:
             raise
         return RootPage(tuple(result), cursor)
     return RootPage(tuple(result), None)

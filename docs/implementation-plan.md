@@ -1488,3 +1488,19 @@ after staged data is restored. Require the caller's error handler to TROLLBACK b
 continuing. Verify data, schema, and indexes independently after the expected error.
 Also qualify a restartable outer TSTART () without SERIAL. This is a documented
 precondition and regression coverage, with no stored-format or writer-code change.
+
+### Make ordered result limits and work limits explicit, issue 51
+
+Reuse Budget, strict ordered_page execution, RootPage progress cursors, and the
+existing explain fields. A result limit is a ceiling and cannot guarantee a number
+of matches under bounded execution: rejected predicates and repeated owned witnesses
+can exhaust the budget even for one requested result. Preserve both limits and all
+visit accounting. Add an actionable strict-all diagnostic that names the requested
+ceiling and directs ordered callers to page() with continuation. Other visit-limit
+paths keep their existing errors, including a page that cannot fit one candidate.
+
+Document the two visits per distinct value/root and the approximately 500-result
+case without describing 500 as a universal safe limit. Regressions cover 700 distinct
+roots, full continuation, and a filtered query whose first match lies beyond the
+budget. They use both existing adapters. No new budget setting or query interface is
+needed. C901 passes at ten before the change and the threshold remains unchanged.

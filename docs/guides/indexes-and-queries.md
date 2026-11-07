@@ -140,6 +140,18 @@ requested limit or completing the walk, QueryError is raised.
 Narrow the selection or use smaller occurrence pages. The result limit remains
 1–1000. Limits bound returned items; they do not authorize an unbounded search.
 
+For 700 distinct root values, ordered all(limit=500) can return 500 records, while
+all(limit=600) and all(limit=1000) exhaust the 1,000 visits. page(limit=1000) returns
+up to 500 records and a continuation cursor in that workload. Follow the cursor to
+read the remaining records within another bounded call.
+
+There is no universal safe all() result limit. Rejected predicates and repeated
+owned occurrences can consume the budget before one matching root is found. The
+strict all() error explains that the requested record count is a result ceiling and
+directs ordered callers to page() with its cursor, or a narrower query. explain()
+reports maximum_limit and maximum_index_visits separately. Neither field promises a
+number of results. A result ceiling is not a configurable work budget.
+
 Ordered all() returns distinct roots, ranked by the first matching occurrence, and
 materializes those complete aggregates. Use page() to obtain a RootPage with records
 and a continuation cursor. all(after=page.cursor) also accepts that root cursor;

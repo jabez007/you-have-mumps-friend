@@ -246,6 +246,7 @@ class Query[M: Model]:
         return QueryPlan(strategy, spec.global_name, self._field, predicates=plans)
 
     def all(self, *, limit: int = 100, after: Key | None = None) -> list[M]:
+        """Return at most limit roots; bounded index work can fail before that ceiling."""
         _limit(limit)
         self.explain()
         if self._selection is not None:

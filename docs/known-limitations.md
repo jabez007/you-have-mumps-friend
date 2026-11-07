@@ -78,13 +78,6 @@ Unique constraints apply immediately to ordinary operations. Use the explicit
 patch_many group to exchange unique values in one validated transition. Callback-wide
 deferred uniqueness is not supported. See [the example](guides/indexes-and-queries.md#exchange-unique-values).
 
-## Open defects
-
-- `all()` on an ordered selection raises `QueryError` above about 500 records with
-  distinct values, because each value costs two of the 1,000 index visits. Keep the
-  limit at 500 or less, or use `page()` and follow its cursor.
-  [#51](https://github.com/jabez007/you-have-mumps-friend/issues/51)
-
 ## Missing features
 
 These features remain outside the current implementation:
@@ -110,6 +103,12 @@ These features remain outside the current implementation:
   gives the workload evidence and criteria for reconsidering each feature.
 
 ## Operating limits
+
+- Ordered result limits and work budgets are independent. Distinct root values cost
+  two visits each, so a 1,000-visit walk can exhaust its budget above 500 results.
+  Filtered or owned-occurrence queries can exhaust it even for one requested result.
+  all() fails without returning partial success. Use page() and follow its progress
+  cursor for bounded continuation. See [query limits](guides/indexes-and-queries.md).
 
 - Registries bind references to exact target declarations. After changing a target,
   redefine referring fields against that declaration. Errors now name the source field
