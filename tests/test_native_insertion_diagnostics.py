@@ -69,7 +69,7 @@ def _snapshot(keys, tmp_path):
             locations[expression] = _dse("find -key=" + quoted)
     expression = '^YHMFSchema("YHMFTestWarehouse")'
     locations[expression] = _dse('find -key="' + expression.replace('"', '""') + '"')
-    header = _dse("dump -fileheader")
+    header = _dse("dump -fileheader -all")
     relevant = [
         line.strip()
         for line in header.splitlines()
