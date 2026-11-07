@@ -10,31 +10,12 @@ from .models import Model
 from .records import MAX_RECORD_NODES, metadata, record_nodes, record_values
 from .registry import ModelSpec
 from .schemas import has_data, install_schema, schema_path
-from .storage import Path, Store
+from .storage import Path, Store, subtree_nodes
 
 if TYPE_CHECKING:
     from .repository import Database
 
 MAX_ADOPTION_RECORDS = 100
-
-
-def _nodes(store: Store, root: Path) -> dict[Path, bytes]:
-    result: dict[Path, bytes] = {}
-    pending = [root]
-    visited = 0
-    while pending:
-        path = pending.pop()
-        visited += 1
-        if visited > MAX_RECORD_NODES:
-            raise StorageError("Adoption exceeds its traversal budget")
-        value = store.get(path)
-        if value is not None:
-            result[path] = value
-        keys = store.children(path, limit=MAX_RECORD_NODES)
-        if len(keys) + len(pending) + visited > MAX_RECORD_NODES:
-            raise StorageError("Adoption exceeds its traversal budget")
-        pending.extend(path.child(key) for key in keys)
-    return result
 
 
 def prepare(store: Store, spec: ModelSpec) -> tuple[tuple[Path, Model], ...]:
@@ -68,7 +49,7 @@ def _record(store: Store, spec: ModelSpec, key: bytes) -> tuple[Path, Model, int
         raise StorageError("Adopted record identity does not match its path")
     expected = record_nodes(spec, path, record)
     fields = {p: v for p, v in expected.items() if p.subscripts[1] != b"%m"}
-    actual = _nodes(store, path)
+    actual = subtree_nodes(store, path, limit=MAX_RECORD_NODES)
     if actual != fields and actual != expected:
         raise StorageError(
             "Adoption requires exact layout-one bytes with absent or intact metadata"

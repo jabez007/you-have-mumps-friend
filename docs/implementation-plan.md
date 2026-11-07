@@ -653,3 +653,23 @@ Replace actual inventory get casts, not domain business rules. Query-field objec
 remain separate from owned-path selection; no new query language is introduced.
 Test positive and negative strict-mypy fixtures, schema compatibility, nulls, wrong
 root/target, expiry, bounded reads, and native adapters. Existing C901 passes at ten.
+
+### Aggregate replacement node differences, issue 27
+
+save already validates a full input and loads the previous aggregate for secondary
+maintenance. Preserve that whole-value, last-writer-wins contract; a node difference
+cannot infer which edits the caller intended. Use the existing Store interface to
+take a bounded physical subtree snapshot. First extract adoption._nodes into
+storage.subtree_nodes, preserving the adoption budget and conservative full-page
+rejection. Then compare record_nodes, delete only minimal
+removed prefixes, and write changed values. Audit actual nodes so replacement still
+removes undeclared raw data. If an extra value occupies a retained parent, deleting
+it also deletes descendants; explicitly rewrite all desired descendants of that
+deleted prefix. Bound visited addresses as well as values, with O(nodes * depth)
+prefix checks rather than pairwise subtree comparisons. Keep existing index/reference
+replacement. Inserts remain direct writes. Physical auditing adds traversal/reads;
+measure native replacement benchmarks and claim reduced writes only unless latency
+measurements support more. Oversized raw subtrees now fail safely for explicit repair.
+Test no-op/one-field writes, owned removal/nulls, raw parent values, rollback, legacy
+metadata, and generated equivalence against delete-and-insert. Existing C901 passes
+at ten; no optimistic revisions or automatic change tracking.

@@ -79,13 +79,13 @@ def test_failed_adoption_preserves_all_data_and_metadata(store, damage):
             registry,
             Product(id="two", name="Second", related=Reference[Product](key="absent")),
         )
-    from mccann_hub.yhmf.adoption import _nodes
+    from mccann_hub.yhmf.storage import subtree_nodes
 
-    before = _nodes(store, Path(Product.__global__))
+    before = subtree_nodes(store, Path(Product.__global__), limit=10_000)
     db = Database(store, registry)
     with pytest.raises((StorageError, UniqueViolation, ReferenceViolation)):
         db.adopt(Product)
-    assert _nodes(store, Path(Product.__global__)) == before
+    assert subtree_nodes(store, Path(Product.__global__), limit=10_000) == before
     for global_name in ("^YHMFSchema", "^YHMFIndex", "^YHMFUnique", "^YHMFRef"):
         assert store.children(Path(global_name), limit=1) == ()
 

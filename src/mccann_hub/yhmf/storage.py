@@ -82,6 +82,26 @@ def _check_limit(limit: int) -> None:
         raise StorageError("Traversal limit must be between 1 and 10000")
 
 
+def subtree_nodes(store: Store, root: Path, *, limit: int) -> dict[Path, bytes]:
+    """Read physical values with a bound on all visited addresses, including branches."""
+    result: dict[Path, bytes] = {}
+    pending = [root]
+    visited = 0
+    while pending:
+        path = pending.pop()
+        visited += 1
+        if visited > limit:
+            raise StorageError("Subtree exceeds its traversal budget")
+        value = store.get(path)
+        if value is not None:
+            result[path] = value
+        keys = store.children(path, limit=min(limit, 10_000))
+        if len(keys) == 10_000 or len(keys) + len(pending) + visited > limit:
+            raise StorageError("Subtree exceeds its traversal budget")
+        pending.extend(path.child(key) for key in keys)
+    return result
+
+
 def _collation(value: bytes) -> tuple[int, int | bytes]:
     if _INTEGER.fullmatch(value):
         return (0, int(value))
