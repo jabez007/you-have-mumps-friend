@@ -249,3 +249,6 @@ rootcreatepair
  tcommit
  write status,"|",$tlevel,!
  quit
+orderedkey
+ write $$onumber^YHMFTAPI(^YHMFTestStorage("writerInput","value")),!
+ quit

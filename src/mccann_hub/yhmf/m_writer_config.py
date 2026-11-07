@@ -197,7 +197,10 @@ def _field_config(
 ) -> list[str]:
     field = next(field for field in node.fields if field.name == name)
     rule, nullable = _nullable_rule(field, rule)
-    if field.kind not in {"scalar", "reference"} or field.index_codec != "equality-v1":
+    if field.kind not in {"scalar", "reference"} or field.index_codec not in {
+        "equality-v1",
+        "ordered-v1",
+    }:
         raise SchemaError(f"M writer does not support field {name!r}")
     result = (
         _reference_config(node.model, global_name, field, rule, targets)
@@ -208,6 +211,10 @@ def _field_config(
     )
     if nullable:
         result.append(_set("nullable", name, value="1"))
+    if field.index_codec == "ordered-v1":
+        result.append(_set("ordered", name, value="1"))
+        if rule.get("codec") == "decimal":
+            result.append(_set("source", name, value="1"))
     if field.index or field.kind == "reference":
         location = canonical_json([name])
         digest = hashlib.sha256(location).hexdigest()

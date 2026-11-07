@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Qualifies M ordered-v1 writes for supported scalar/choice families and nullable
+  forms, preserving native numeric/string/temporal keys and existing unique claims.
+  Exact numeric construction avoids native precision loss.
+
 - Lets M create and delete empty hierarchical roots through the existing schema
   installation, transaction, index, and reference checks. Concurrent first-write
   and participant rollback tests protect against implicit unmanaged-data adoption.

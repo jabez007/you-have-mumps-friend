@@ -1,0 +1,25 @@
+ ; SPDX-License-Identifier: GPL-3.0-or-later
+ ; ordered-v1 tokens retain native numeric and escaped UTF-8 lexical order.
+otoken(value,field,cfg)
+ new tag,out,index,code
+ if $get(cfg("nullable",field)),value="n:" quit "z:null"
+ set value=$$payload(value,field,.cfg),tag=cfg("tag",field)
+ if tag="i" quit value
+ if tag="d" quit $$onumber(value)
+ if (tag="D")!(tag="T") quit tag_":"_value
+ set out="s:"
+ for index=1:1:$zlength(value) do
+ . set code=$zascii(value,index)
+ . if code<2 set out=out_$zchar(1,code+1) quit
+ . set out=out_$zchar(code)
+ quit out
+onumber(value)
+ new number,coefficient,negative,power,point,out
+ if '$$decimal(value,.number) set $ecode=",U1006,"
+ if number("units")="0" quit "0"
+ set negative=($extract(number("coefficient"))="-"),coefficient=$extract(number("coefficient"),1+negative,$length(number("coefficient")))
+ set power=number("power"),point=$length(coefficient)+power
+ if point'>0 set out="."_$translate($justify("",0-point)," ","0")_coefficient
+ else  if point'<$length(coefficient) set out=coefficient_$translate($justify("",point-$length(coefficient))," ","0")
+ else  set out=$extract(coefficient,1,point)_"."_$extract(coefficient,point+1,$length(coefficient))
+ quit $select(negative:"-",1:"")_out

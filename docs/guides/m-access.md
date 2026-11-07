@@ -122,8 +122,7 @@ full scalar integer domain. An existing record outside the M stored-value domain
 returns unsupported without changes. Use Python for those records.
 
 Export rejects custom Python validators, unsupported constraints or normalization,
-embedded objects, scalar lists, ordered
-indexes, and more than 16 fields per owner. Keyed trees have the separate operations
+embedded objects, scalar lists, and more than 16 fields per owner. Keyed trees have the separate operations
 below. The generator does not silently omit rules. Every inserted non-derived scalar field must be supplied even if Python declares a
 default; defaults/factories are not run. Empty-root/branch creation derives zero
 stored totals and creates empty declared collections.
@@ -235,7 +234,7 @@ without a TP. Failed operations leave data, metadata, totals, counts, and indexe
 Regenerate source after schema changes; old bindings fail rather than bypass new
 totals. No layout conversion or root metadata installation occurs through child
 operations. M enforces declared model rules, not inventory service rules or ledger
-workflows. The complete inventory ledger still needs unsupported M ordered/embedded
+workflows. The complete inventory ledger still needs unsupported M embedded
 contracts and application business checks. Populated root creation/replacement remains a Python operation.
 
 New exports memoize SHA-256 of exact serialized locations in the reserved process-local
@@ -487,8 +486,7 @@ input("occurred_at")="2026-11-07T12:30:00.000000Z".
 Calendar/UTC bounds use exact lexical comparisons of canonical text. Equality and
 unique indexes use the existing temporal-v1 bytes, D: for dates and T: for instants.
 Existing Python temporal values can be replaced or deleted without conversion;
-invalid calendar/UTC stored text returns corrupt. Custom validators and ordered
-temporal indexes remain separately unqualified. Regenerate source for the new writer
+invalid calendar/UTC stored text returns corrupt. Custom validators remain separately unqualified. Regenerate source for the new writer
 capability; schema snapshots and record/index layouts do not change.
 
 ## Explicit nullable scalar inputs
@@ -529,6 +527,25 @@ General pattern constraints remain rejected. Python regular expressions include
 Unicode, flags, anchoring, and matching rules that have no general exact translation
 to M pattern syntax. Use a finite Literal domain when it describes the actual rule,
 with a reviewed schema migration if replacing an existing pattern declaration.
+
+## Ordered index writes
+
+Generated writers support ordered-v1 on qualified string, integer, Decimal, date,
+UTC datetime, and finite-choice fields, including their qualified nullable forms.
+They use the existing native numeric/lexical index keys and ordinary transactional
+claim maintenance. Python ordered queries can read those writes immediately; no
+new index namespace or metadata migration is introduced.
+
+String keys escape NUL and SOH exactly as ordered-v1 specifies. Temporal keys keep
+D:/T: bytes. Null uses z:null and has no unique claim. Nonzero ordered numerics require
+at most 18 significant digits and magnitude from 1E-18 to below 1E18. M builds their
+canonical native numeric text from exact coefficient/power values without native
+rounding. Records retain their original scalar text, including Decimal scale.
+Unsupported values fail validation before persistence; native key budgets still apply.
+
+Root/owned patches touch only the affected ordered indexes. Whole replacements,
+unique failures, rollback, and restarts use the same index transition code as equality
+indexes. Regenerate source to enable this capability on existing ordered schemas.
 
 ## Raw writes from M
 

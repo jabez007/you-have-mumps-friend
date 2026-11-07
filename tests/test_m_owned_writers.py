@@ -244,9 +244,7 @@ def test_failed_m_child_changes_leave_all_data_and_metadata_unchanged(
 
 
 @pytest.mark.native
-def test_hierarchical_labels_refuse_incomplete_insert_and_unsupported_replace(
-    store, owned_writer
-):
+def test_hierarchical_labels_refuse_incomplete_insert_and_unsupported_replace(store, owned_writer):
     _, run, _, _ = owned_writer
     before = dump(store, namespaces())
     assert run("insert", {"id": "NEW"}) == "invalid"

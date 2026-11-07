@@ -96,7 +96,6 @@ def test_export_rejects_invalid_routine_names(store, name):
     [
         "decimal_rule",
         "pattern",
-        "ordered",
         "hook",
         "normalization",
         "embedded",
@@ -111,7 +110,6 @@ def test_unsupported_writer_contracts_fail_at_export(store, kind):
     annotations = {
         "decimal_rule": (Decimal, Field(multiple_of=Decimal("0.25"))),
         "pattern": (str, Field(pattern="^[A-Z]+$")),
-        "ordered": (str, Field(ordered=True)),
         "hook": (Annotated[str, AfterValidator(lambda value: value)], Field()),
         "normalization": (str, Field()),
         "embedded": (Item, Field()),

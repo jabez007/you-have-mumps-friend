@@ -288,3 +288,14 @@ keeps incoming-reference restrictions; populated delete and tree replace still r
 operation. Native qualification covers concurrent first writes, unique contention,
 raw different-key data, initial metadata rollback, and caller restarts. No schema or
 record/index bytes change, and no second initialization/adoption path is introduced.
+
+
+## Ordered-v1 transitions, issue 54
+
+Dispatch index tokens to the existing ordered-v1 contract while retaining the same
+transactional index/unique maintenance. Construct native numeric strings from exact
+Decimal coefficient/power; reuse sourceunits to enforce the ordered numeric domain.
+Use byte-oriented NUL/SOH escaping for strings, canonical D:/T: bytes for temporal
+values, and z:null without a unique claim. Root/owned patches and stored sums retain
+their existing transition paths. Native differential/restart tests qualify these
+identities; raw records, schema metadata, and index namespaces remain unchanged.

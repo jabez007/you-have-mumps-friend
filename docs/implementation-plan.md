@@ -1655,3 +1655,19 @@ concurrent first writes with and without a unique collision, participant rollbac
 including initial metadata, and forced restarts. Root construction is empty only;
 application defaults/factories and populated tree replacement remain unqualified.
 Schema and storage bytes do not change. Configured C901 remains at ten.
+
+### Write ordered-v1 indexes from M, issue 54
+
+Reuse ordered.value_key's existing contract, the shared index-before/index-after
+transitions, unique/null claim handling, exact Decimal parser, and UTF-8 scalar
+validation. Add token dispatch for ordered-v1: native canonical numeric subscripts,
+D:/T: temporal bytes, NUL/SOH-escaped UTF-8 strings, and z:null. Build numeric text
+from normalized coefficient/power without native rounding or scientific subscripts.
+Reuse sourceunits for the ordered Decimal domain (18 significant digits, 1E-18 to
+below 1E18 for nonzero values). Preserve raw record text and unrelated indexes.
+
+There is no new index namespace, persistence API, codec, or metadata conversion.
+Export still rejects unsupported scalar declarations/validators. Differential tests
+cover every qualified key family, null/unique transitions, failed claims, root and
+owned patches, ordered queries, and generated exact numerics on both native engines.
+The baseline C901 check passes at ten; retain the threshold and the current index seam.

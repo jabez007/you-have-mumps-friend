@@ -244,6 +244,7 @@ hasclaim(value,field,cfg)
 payload(value,field,cfg)
  quit $select($get(cfg("nullable",field)):$zextract(value,3,$zlength(value)),1:value)
 token(value,field,cfg)
+ if $get(cfg("ordered",field)) quit $$otoken(value,field,.cfg)
  if $get(cfg("nullable",field)),value="n:" quit "v:"_$$quote("n:")
  if cfg("tag",field)="d" quit "v:"_$$quote($$dtoken($$payload(value,field,.cfg)))
  quit "v:"_$$quote($$scalar(value,field,.cfg))
@@ -257,6 +258,7 @@ scalar(value,field,cfg)
 @SCHEMA@
 @DECIMAL@
 @TEMPORAL@
+@ORDERED@
 @SUMMATH@
 @SHA256@
 @HIERARCHY@
