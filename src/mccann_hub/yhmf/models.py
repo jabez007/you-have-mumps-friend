@@ -48,10 +48,13 @@ def ChildField(
     key: str,
     index: bool = False,
     unique: bool = False,
+    ordered: bool = False,
     **kwargs: Any,
 ) -> Any:
     """A parent-owned dictionary keyed by the child model's primary-key field."""
-    if index or unique:
+    if type(ordered) is not bool:
+        raise SchemaError("ordered must be a boolean")
+    if index or unique or ordered:
         raise SchemaError("Index a scalar or Reference field inside the child model")
     if "json_schema_extra" in kwargs:
         raise ValueError("json_schema_extra is reserved for mapper metadata")
@@ -67,17 +70,22 @@ def Field(
     primary_key: bool = False,
     index: bool = False,
     unique: bool = False,
+    ordered: bool = False,
     on_delete: str | None = None,
     **kwargs: Any,
 ) -> Any:
     """Pydantic Field with explicit persistence, index, and relationship metadata."""
+    if type(ordered) is not bool:
+        raise SchemaError("ordered must be a boolean")
     if on_delete is not None and on_delete not in ("restrict", "set_null", "cascade"):
         raise NotImplementedError("on_delete supports restrict, set_null, or cascade")
     if "json_schema_extra" in kwargs:
         raise ValueError("json_schema_extra is reserved for mapper metadata")
     metadata: dict[str, Any] = {"primary_key": primary_key}
-    if index or unique:
+    if index or unique or ordered:
         metadata["index"] = True
+    if ordered:
+        metadata["index_codec"] = "ordered-v1"
     if unique:
         metadata["unique"] = True
     if on_delete is not None:

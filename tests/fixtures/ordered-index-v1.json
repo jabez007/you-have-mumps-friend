@@ -1,0 +1,128 @@
+{
+  "schema": {
+    "codec_version": 1,
+    "declaration": {
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "codec": "decimal"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "yhmf": {
+            "index": true,
+            "index_codec": "ordered-v1",
+            "unique": true
+          }
+        },
+        "day": {
+          "codec": "date-v1",
+          "default": "2026-11-06",
+          "format": "date",
+          "type": "string",
+          "yhmf": {
+            "index": true,
+            "index_codec": "ordered-v1"
+          }
+        },
+        "id": {
+          "codec": "str",
+          "type": "string",
+          "yhmf": {
+            "primary_key": true
+          }
+        },
+        "text": {
+          "anyOf": [
+            {
+              "codec": "str",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "yhmf": {
+            "index": true,
+            "index_codec": "ordered-v1"
+          }
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    },
+    "format_version": 2,
+    "global": "^YHMFTestProduct",
+    "key": "id",
+    "layout": 1,
+    "version": 1
+  },
+  "values": [
+    {
+      "encoded": "12.5",
+      "kind": "decimal",
+      "value": "12.500"
+    },
+    {
+      "encoded": "0",
+      "kind": "decimal",
+      "value": "-0.000"
+    },
+    {
+      "encoded": ".000000000000000001",
+      "kind": "decimal",
+      "value": "1E-18"
+    },
+    {
+      "encoded": "-.125",
+      "kind": "decimal",
+      "value": "-.1250"
+    },
+    {
+      "encoded": "999999999999999999",
+      "kind": "int",
+      "value": "999999999999999999"
+    },
+    {
+      "encoded": "z:null",
+      "kind": "null",
+      "value": null
+    },
+    {
+      "encoded": "s:",
+      "kind": "str",
+      "value": ""
+    },
+    {
+      "encoded": "s:a\u0001\u0001\u0001\u0002\u96ea",
+      "kind": "str",
+      "value": "a\u0000\u0001\u96ea"
+    },
+    {
+      "encoded": "D:2026-11-06",
+      "kind": "date",
+      "value": "2026-11-06"
+    },
+    {
+      "encoded": "T:2026-11-06T12:00:00.000000Z",
+      "kind": "datetime",
+      "value": "2026-11-06T14:00:00+02:00"
+    }
+  ]
+}

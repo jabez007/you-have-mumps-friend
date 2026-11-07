@@ -925,3 +925,14 @@ engine's 18-significant-digit/range domain using exact Decimal comparisons, keep
 noncanonical numeric-looking strings distinct. Existing str/int key encodings and
 record bytes remain unchanged. Qualify the same golden on native CI before adding
 ordered index declarations.
+
+The shared-adapter fractional-key golden passed native CI 42336532015 before the
+ordered declaration feature. Additive index domain failures preserve their normal
+checkpoint/barrier and can be explicitly aborted before backfill; automatic abort
+stays limited to validation-only migrations. Reusing named transforms for an existing
+index codec conversion reapplies target field nodes even if their bytes are unchanged;
+this is an explicit initial tradeoff instead of introducing a second conversion
+executor. Rebuild reviews compare codec selections as well as fields/uniqueness.
+The existing rebuild review's tuple uniqueness membership can become quadratic for
+large declarations; no such overhead has been measured, so leave that cleanup out
+of this codec change.

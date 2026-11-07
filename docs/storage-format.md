@@ -397,7 +397,7 @@ subscripts, including canonical child keys. Its lowercase hexadecimal SHA-256
 is `location_sha256`. `owner_json` is the compact ASCII JSON array containing
 the encoded owner key and the decoded location array.
 
-`value_token` is `v:` followed by an ASCII JSON string containing the normalized
+For equality-v1, `value_token` is `v:` followed by an ASCII JSON string containing the normalized
 typed value. Ordinary scalar and reference encodings remain unchanged except
 for numeric normalization. Decimal normalization strips trailing coefficient
 zeros and increases the exponent accordingly, without decimal-context rounding.
@@ -408,10 +408,33 @@ String comparison uses exact code points without Unicode or case folding.
 The [index-value fixtures](../tests/fixtures/index-values.json) define literal
 tokens for decimals, negative zero, Unicode, NUL, null, empty strings, and bytes.
 
-Unique fields also have equality entries. Null values use the equality token
+Unique fields also have equality entries. Under equality-v1, null values use the token
 `v:"n:"` and create no unique claim. Every non-null unique field occurrence owns
 its claim exclusively, even when multiple occurrences are under the same parent.
 Claims are scoped to a top-level global and declaration path.
+
+Field(ordered=True) declares index_codec: ordered-v1 in its yhmf field metadata.
+The same entry/claim shape uses native canonical numeric subscripts for int/Decimal
+values with at most 18 significant digits and nonzero magnitude from 1E-18 to below
+1E18. Numeric zero is 0, fractions below one omit the leading zero, and redundant
+fractional zeros are stripped exactly, independent of Decimal context. Values outside
+this initial index domain are rejected before writes without rounding or fallback.
+Record scalar encodings and stored Decimal scale remain unchanged.
+
+Ordered date/datetime value subscripts are their existing D:/T: ISO encodings. Ordered
+string subscripts are s: plus UTF-8, replacing byte 01 with 01 02 and byte 00 with
+01 01, in that order. This preserves lexical order, empty strings, and prefix identity
+without NUL subscripts. Null uses z:null and sorts after every supported nonnull
+value. str/int finite choices use their primitive value encoding. Float, bool, bytes,
+UUID, reference, and list ordering are not supported in this codec. Qualification
+uses standard native collation; the golden ordered-index-v1.json fixes schema and
+value bytes. Existing indexes without a marker retain equality-v1 exactly.
+
+An index-codec change on an already indexed field is index_codec_changed and needs
+an explicit named transform initially. A new ordered index can use ordinary additive
+migration. Rebuild reviews identify ordered codecs and preserve the installed format.
+Unknown index codecs fail schema comparison. No record layout or global codec version
+changes, and no index is converted during ordinary CRUD.
 
 Record replacement validates existing entries, releases removed claims, and
 claims new values in one native transaction. Uniqueness is immediate per mapper

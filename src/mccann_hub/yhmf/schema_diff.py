@@ -62,6 +62,7 @@ class _Field:
     primary: bool
     version: int | None
     delete_policy: str | None
+    index_codec: str
 
 
 class _Unsupported(Exception):
@@ -243,6 +244,7 @@ class _Fields:
             "unique",
             "children_key",
             "on_delete",
+            "index_codec",
         }:
             raise _Unsupported(path)
         if any(
@@ -251,6 +253,9 @@ class _Fields:
         ):
             raise _Unsupported(path)
         relationship = self.references.get(path) or self.owned.get(path)
+        codec = metadata.get("index_codec", "equality-v1")
+        if codec not in ("equality-v1", "ordered-v1"):
+            raise _Unsupported(path)
         kind = (
             "reference"
             if path in self.references
@@ -285,6 +290,7 @@ class _Fields:
             bool(metadata.get("primary_key")),
             self.owned.get(path, {}).get("version"),
             policy,
+            codec,
         )
 
     def _types(self, kind: str, variants: list[Any], path: tuple[str, ...]) -> bytes:
@@ -393,6 +399,8 @@ def _changed(path: tuple[str, ...], old: _Field, new: _Field) -> list[SchemaChan
                 )
             )
     changes.extend(_validation_changes(path, old, new))
+    if old.index and new.index and old.index_codec != new.index_codec:
+        changes.append(SchemaChange("index_codec_changed", path, requires_manual_review=True))
     if old.version != new.version:
         downgrade = (
             old.version is not None and new.version is not None and new.version < old.version
@@ -462,6 +470,7 @@ def _dependent_rebuilds(
             "global_changed",
             "primary_key_changed",
             "layout_changed",
+            "index_codec_changed",
         }
     }
     result = []

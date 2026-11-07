@@ -14,6 +14,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, TypeAdapter
 
+from . import ordered
 from .canonical_schema import schema_bytes
 from .choices import Choices, compile_choices
 from .codecs import LAYOUT_VERSION
@@ -103,6 +104,7 @@ class FieldSpec:
     choices: Choices | None = compiled_field(default=None, repr=False, compare=False)
     item: "FieldSpec | None" = None
     on_delete: str = "restrict"
+    index_codec: str = "equality-v1"
 
 
 @dataclass(frozen=True)
@@ -183,15 +185,24 @@ def _field_spec(model: type[Model], name: str, ancestors: tuple[type[Model], ...
     choices = spec.choices if spec.item is None else spec.item.choices
     if choices is not None and choices.kind == "enum" and model.model_config.get("use_enum_values"):
         raise SchemaError("Enum fields do not support use_enum_values=True")
-    spec = _indexed_spec(spec, metadata)
+    spec = _indexed_spec(spec, annotation, metadata)
     return replace(spec, adapter=field_adapter(model, name) if spec.node is None else None)
 
 
-def _indexed_spec(spec: FieldSpec, metadata: dict[str, Any]) -> FieldSpec:
+def _indexed_spec(spec: FieldSpec, annotation: Any, metadata: dict[str, Any]) -> FieldSpec:
     indexed, unique = bool(metadata.get("index")), bool(metadata.get("unique"))
+    codec = metadata.get("index_codec", "equality-v1")
+    if codec not in ("equality-v1", "ordered-v1"):
+        raise SchemaError("Unknown index codec")
+    if codec == "ordered-v1":
+        if spec.kind != "scalar" or not ordered.supports(annotation, spec.choices):
+            raise SchemaError(
+                "Ordered indexes require str, int, Decimal, date, or datetime scalars"
+            )
+        indexed = True
     if (indexed or unique) and spec.kind not in {"scalar", "list", "reference"}:
         raise SchemaError("Indexes require scalar, scalar list, or Reference fields")
-    return replace(spec, index=indexed or unique, unique=unique)
+    return replace(spec, index=indexed or unique, unique=unique, index_codec=codec)
 
 
 def _field_type_spec(

@@ -27,6 +27,7 @@ class IndexRebuildPlan:
     inspection: SchemaInspection = field(repr=False)
     fields: tuple[str, ...]
     unique_fields: tuple[str, ...]
+    index_codecs: tuple[tuple[str, str], ...] = ()
 
     @property
     def execution_supported(self) -> bool:
@@ -37,6 +38,7 @@ class IndexRebuildPlan:
         )
 
     def to_dict(self) -> dict[str, Any]:
+        codecs = dict(self.index_codecs)
         steps = ["validate_records"]
         if self.unique_fields:
             steps.append("validate_uniqueness")
@@ -49,7 +51,9 @@ class IndexRebuildPlan:
             "global": self.inspection.declared.global_name,
             "schema_fingerprint": self.inspection.declared.fingerprint,
             "indexes": [
-                {"field": name, "unique": name in self.unique_fields} for name in self.fields
+                {"field": name, "unique": name in self.unique_fields}
+                | ({"codec": codecs[name]} if name in codecs else {})
+                for name in self.fields
             ],
             "steps": steps,
         }
@@ -70,7 +74,12 @@ def build_plan(
     if len(set(selected)) != len(selected) or any(name not in definitions for name in selected):
         raise MigrationError("Rebuild fields must be distinct declared indexes")
     unique = tuple(name for name in selected if definitions[name].field.unique)
-    return IndexRebuildPlan(inspection, selected, unique)
+    codecs = tuple(
+        (name, definitions[name].field.index_codec)
+        for name in selected
+        if definitions[name].field.index_codec != "equality-v1"
+    )
+    return IndexRebuildPlan(inspection, selected, unique, codecs)
 
 
 def _spec(registry: Registry, model: type[Model]) -> ModelSpec:
@@ -93,6 +102,7 @@ def begin(
         not plan.execution_supported
         or plan.fields != reviewed.fields
         or plan.unique_fields != reviewed.unique_fields
+        or plan.index_codecs != reviewed.index_codecs
     ):
         raise MigrationError("Reviewed rebuild plan differs from declared indexes")
     operation = canonical_json(

@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Adds opt-in ordered-v1 index storage with native numeric/temporal ordering,
+  escaped string values, explicit numeric limits, and nulls last. Reuses equality,
+  uniqueness, patch, migration, and rebuild paths. Query range APIs remain separate.
+
 - Adds native insertion diagnostics attributing independent-parent retries to shared
   data blocks and shared-parent retries to the count node. Reports both engines and
   journaling modes, retaining current count and layout guarantees.

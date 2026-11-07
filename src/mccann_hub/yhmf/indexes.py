@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any, cast
 
+from . import ordered
 from .codecs import Scalar, canonical_json, encode_key, encode_scalar
 from .errors import SchemaError, StorageError, UniqueViolation
 from .models import Model, Reference
@@ -97,9 +98,14 @@ def value_key(value: Any) -> bytes:
 
 
 def index_root(spec: ModelSpec, definition: Definition, value: Any) -> Path:
+    token = (
+        ordered.value_key(value)
+        if definition.field.index_codec == "ordered-v1"
+        else value_key(value)
+    )
     return Path(
         "^YHMFIndex",
-        (spec.global_name[1:].encode("ascii"), definition.name.encode("ascii"), value_key(value)),
+        (spec.global_name[1:].encode("ascii"), definition.name.encode("ascii"), token),
     )
 
 

@@ -5,6 +5,11 @@ installed declaration unchanged. It supports declared root and nested indexes, i
 reference equality indexes. Existing reverse edges and target metadata get the same
 maintenance checks. Reverse-reference counts stay unchanged.
 
+Installed ordered-v1 indexes use the same rebuild lifecycle and normal entry/claim
+maintenance. Review output names their codec. A rebuild preserves the installed
+contract; changing an equality-v1 field to ordered-v1 requires a separate explicit
+schema migration with a named transform.
+
 ```python
 from decimal import Decimal
 

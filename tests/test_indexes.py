@@ -171,7 +171,7 @@ def test_owned_containers_cannot_be_indexed():
         Registry(BadEmbedded)
 
 
-@pytest.mark.parametrize("flag", ["index", "unique"])
+@pytest.mark.parametrize("flag", ["index", "unique", "ordered"])
 def test_child_field_cannot_silently_ignore_index_flags(flag):
     with pytest.raises(SchemaError, match="scalar or Reference"):
         ChildField(key="code", **{flag: True})

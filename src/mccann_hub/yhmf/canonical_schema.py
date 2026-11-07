@@ -238,6 +238,8 @@ def _mapper_metadata(field: "FieldSpec", primary: bool) -> dict[str, Any]:
     if field.kind == "children":
         assert field.node is not None
         result["children_key"] = field.node.key_field
+    if field.index_codec != "equality-v1":
+        result["index_codec"] = field.index_codec
     return result
 
 

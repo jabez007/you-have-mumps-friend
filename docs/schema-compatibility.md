@@ -6,6 +6,13 @@ and uses codec version 1. The application revision is the owning model's positiv
 
 ## What defines the contract
 
+Index codecs are independent from record codecs. Absence of an index_codec marker
+means equality-v1, preserving every earlier snapshot. Field(ordered=True) records
+ordered-v1 in mapper metadata. Its supported domain, native number canonicalization,
+string escaping, temporal order, and null sentinel are versioned together. Unknown
+index codecs fail comparison. A codec change on an existing index requires explicit
+review and a named transform initially; merely opening the database changes nothing.
+
 The registry produces sorted, compact ASCII JSON directly from typed declarations.
 The existing properties/hierarchy/reference grammar supports the existing migration
 inspector. Its codec/default markers and exact bound strings are YHMF-specific. Global names and owned field paths identify models. Field names identify
