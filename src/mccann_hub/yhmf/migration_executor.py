@@ -20,7 +20,7 @@ from .migration_defaults import BackfillDefaults
 from .migration_records import check_metadata, field_nodes, validate_targets
 from .migrations import MigrationPlan, build_plan
 from .models import Model
-from .records import metadata, record_values
+from .records import metadata, record_values, validate_stored
 from .registry import ModelSpec, Registry
 from .schema_compatibility import bind_snapshot
 from .schemas import SchemaInspection, SchemaSnapshot
@@ -132,8 +132,10 @@ def begin(
 
 def _validate_models(binding: _Binding, values: dict[str, Any]) -> tuple[Model, Model]:
     try:
-        old = binding.source.model.model_validate(deepcopy(values))
-        new = binding.target.model.model_validate(binding.defaults.apply(values))
+        old = validate_stored(binding.source.fields, binding.source.model, deepcopy(values))
+        new = validate_stored(
+            binding.target.fields, binding.target.model, binding.defaults.apply(values)
+        )
     except ValidationError:
         raise _RecordRejected(
             "A stored record does not satisfy the migration model bindings"

@@ -9,13 +9,13 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from . import indexes, migration_claims, references
+from . import indexes, migration_claims, references, rollups
 from .codecs import canonical_json, decode_key
 from .errors import MigrationError, SchemaMismatch, StorageError
 from .maintenance import MigrationStatus, job_path
 from .migration_records import check_metadata, field_digest, field_nodes, validate_target_metadata
 from .models import Model
-from .records import input_values, metadata, record_values
+from .records import input_values, metadata, record_values, validate_stored
 from .registry import ModelSpec, Registry, reference_fields
 from .schema_compatibility import bind_snapshot
 from .schemas import SchemaSnapshot
@@ -69,7 +69,7 @@ def _read(
 ) -> tuple[Model, dict[Path, bytes]]:
     check_metadata(store, metadata_spec, root)
     try:
-        result = spec.model.model_validate(record_values(spec, root, store))
+        result = validate_stored(spec.fields, spec.model, record_values(spec, root, store))
     except ValidationError:
         raise MigrationError("Stored data does not satisfy the transform binding") from None
     if spec.path(getattr(result, spec.key_field)) != root:
@@ -86,6 +86,7 @@ def _convert(binding: Binding, root: Path, source: Model) -> tuple[Model, dict[P
         if type(result) is not binding.target.model:
             raise MigrationError("Transform must return its exact declared target model")
         result = binding.target.model.model_validate(input_values(binding.target.fields, result))
+        result = rollups.initialize(binding.target.fields, result)
     except ValueError:
         raise MigrationError("Transform rejected a stored record") from None
     if binding.target.path(getattr(result, binding.target.key_field)) != root:

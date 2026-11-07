@@ -44,6 +44,7 @@ class WheelWarehouse(Model):
     __global__ = "^YHMFWheelWarehouse"
     id: str = Field(primary_key=True)
     lots: Children[WheelLot] = ChildField(key="id")
+    total: Decimal = Field(sum_of="lots.quantity", index=True, ge=0)
 
 
 def smoke_mutations(store):
@@ -60,6 +61,7 @@ def smoke_mutations(store):
     owned = db.get(WheelWarehouse, "W", at=path)
     assert isinstance(owned, WheelLot) and owned.quantity == Decimal("2.5")
     assert db.get(WheelWarehouse, "W").lots.keys() == {"new"}
+    assert db.get(WheelWarehouse, "W").total == Decimal("2.5")
     assert db.check_indexes(WheelWarehouse).issues == ()
 
 

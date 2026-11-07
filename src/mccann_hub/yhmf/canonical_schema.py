@@ -240,6 +240,8 @@ def _mapper_metadata(field: "FieldSpec", primary: bool) -> dict[str, Any]:
         result["children_key"] = field.node.key_field
     if field.index_codec != "equality-v1":
         result["index_codec"] = field.index_codec
+    if field.sum_of is not None:
+        result.update(sum_of=field.sum_of, rollup_codec="decimal-sum-v1")
     return result
 
 

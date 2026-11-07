@@ -83,9 +83,9 @@ These features remain outside the current implementation:
 
 - Nested/model/reference lists, Annotated list-item declarations, arbitrary `dict`, and unions
   other than `| None`. [#11](https://github.com/jabez007/you-have-mumps-friend/issues/11)
-- Stored computed rollups and automatic dependency maintenance. Virtual Python
-  properties and Pydantic computed fields are supported on loaded value objects.
-  [#17](https://github.com/jabez007/you-have-mumps-friend/issues/17)
+- General computed callbacks, owned-level stored sums, and reference-based dependencies.
+  Root Decimal sums through owned paths and virtual Pydantic fields are supported;
+  see [computed fields](guides/computed-fields.md).
 - Descending order, multi-predicate occurrence projections, and ordered root continuation cursors. [#15](https://github.com/jabez007/you-have-mumps-friend/issues/15)
 - Mapper access rules. Apply authorization in the application's trusted service;
   independent M writers require their own enforcement. Database and raw paths do

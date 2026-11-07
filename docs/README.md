@@ -14,6 +14,7 @@ New here? Start with [get started](getting-started.md), then read
 - [Define models and owned data](guides/models-and-ownership.md)
 - [Use transactions](guides/transactions.md)
 - [Change part of an aggregate](guides/partial-updates.md)
+- [Use virtual fields and stored sums](guides/computed-fields.md)
 - [Link independent records](guides/references.md)
 - [Index and query records](guides/indexes-and-queries.md)
 - [Change a schema](guides/migrations.md)

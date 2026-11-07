@@ -520,3 +520,20 @@ the model remains gated throughout. Index clearing increments the existing clean
 counter, making abort unsafe after its first committed deletion. Application
 records are never staged as serialized blobs in job metadata. See the
 [transform guide](guides/record-transforms.md) for recovery and compatibility.
+
+## Stored Decimal sums
+
+A root scalar declaration can carry yhmf.sum_of (a dotted owned path) and
+yhmf.rollup_codec: "decimal-sum-v1". This codec requires a nonnullable Decimal source
+below a child collection, at most 18 significant/fractional source digits, and
+magnitude below 1E18. Exact arithmetic uses 1E-18 integer units, at most 40 digits
+for aggregate units. The target uses ordinary d: scalar encoding and normal index
+identities. Its dependency is a persistence contract separate from scalar, index,
+schema-representation, and application versions. Unknown rollup codecs fail planning.
+
+Stored source/target bytes are validated through normal codecs; complete loaded
+owners additionally verify totals. Partial updates change one stored total per root
+and union its index entries/claims with the source delta. No extra record revision
+or nested rollup metadata is introduced. Dependency changes require a named transform,
+which computes and pins target totals before index reconstruction. Existing snapshots
+without stored sums retain their exact bytes.

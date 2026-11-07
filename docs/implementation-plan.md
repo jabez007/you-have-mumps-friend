@@ -1079,3 +1079,43 @@ checks, physical writes, and transaction boundaries. This is an internal seam on
 public APIs and bytes remain unchanged. Then extend that seam with root-local stored
 sum preparation. Existing Ruff/C901 passes at ten; the long deletion apply method
 is a cohesion cleanup candidate addressed by removing its repeated secondary logic.
+
+### Root-local stored Decimal sums, issue 17
+
+Add Field(sum_of="locations.bins.balances.quantity") for a root Decimal field, with
+an implicit Decimal(0) default. Compile its source field identity through declared
+ownership; require at least one child collection, a nonnullable Decimal source,
+and local validation on root/ancestor owners. Leaf validators retain ordinary full
+owner validation. Reject owned stored sums, reference traversal, dependency cycles,
+custom root/ancestor validation, and unsupported target declarations initially.
+Virtual Pydantic computed fields remain unchanged.
+
+Record sum_of and decimal-sum-v1 in the canonical contract; unchanged models keep
+all prior snapshot bytes. Source values use up to 18 significant and 18 fractional
+digits with magnitude below 1E18. Fixed 1E-18 units bound exact integer arithmetic
+independently of Decimal context and prevent enormous exponent expansion. Aggregate
+units are bounded to 40 digits by the existing record-size domain. Reject unsupported
+inputs before writes; never round. Stored totals are read-only to patch callers.
+
+Whole writes validate the aggregate normally, derive the sum from final validated
+values, and validate its target adapter without rerunning arbitrary leaf callbacks.
+Stored reads validate the complete model and verify any sum fields whenever that
+owner is loaded. Partial operations feed their existing before/after field events
+through secondary.replace, combine all deltas per surviving root, read/write one
+stored total, and union its ordinary index transitions with the source changes.
+Do not load siblings or introduce a separate rollup index implementation. Deleted
+whole roots need no surviving total; cascaded child deletion and set_null validators
+that alter quantities contribute to surviving totals normally.
+
+Add/change/remove dependencies only through a named record transform. Transform
+outputs derive target totals before pinning fields/indexes. Direct/adoption/rebuild
+and migration reads verify managed totals; no default-zero additive backfill is safe.
+Update the inventory warehouse to schema revision two with frozen v1 owned declarations
+and an explicit transform, keeping its virtual total for comparison. Generated M
+writers reject these models, as ADR 0013 specifies; raw SET/KILL remain unsupported.
+
+Native tests must prove restart/rollback behavior, independent-child concurrent
+updates, indexed-total/unique failures and group exchanges, and parent/child deletes.
+A shared stored total is an intentional contention point; do not promise independent
+commits for writers that update it. Test direct IO bounds as unrelated siblings grow,
+complete validation, numeric boundaries/contexts, schema goldens, and explicit upgrade.

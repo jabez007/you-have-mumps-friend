@@ -7,7 +7,7 @@ from . import indexes, references
 from .codecs import decode_key
 from .errors import StorageError
 from .models import Model
-from .records import MAX_RECORD_NODES, metadata, record_nodes, record_values
+from .records import MAX_RECORD_NODES, metadata, record_nodes, record_values, validate_stored
 from .registry import ModelSpec
 from .schemas import has_data, install_schema, schema_path
 from .storage import Path, Store, subtree_nodes
@@ -50,7 +50,7 @@ def prepare(store: Store, spec: ModelSpec) -> tuple[tuple[Path, Model], ...]:
 
 def read_record(store: Store, spec: ModelSpec, key: bytes) -> tuple[Path, Model, int]:
     path = spec.path(decode_key(key))
-    record = spec.model.model_validate(record_values(spec, path, store))
+    record = validate_stored(spec.fields, spec.model, record_values(spec, path, store))
     if spec.path(getattr(record, spec.key_field)) != path:
         raise StorageError("Adopted record identity does not match its path")
     expected = record_nodes(spec, path, record)

@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Adds root-owned stored Decimal sums with versioned dependencies, exact bounded
+  arithmetic, shared mutation/index transitions, read verification, and explicit
+  transform-based upgrades. Virtual fields and whole-save semantics remain intact.
+
 - Adds begin_adoption/advance_adoption for resumable exact-layout adoption beyond
   100 records, pinned field digests, cross-batch unique reservations, self-reference
   handling, atomic activation, and the existing abort/prune recovery paths.

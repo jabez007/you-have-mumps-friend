@@ -1,0 +1,123 @@
+{
+  "codec_version": 1,
+  "declaration": {
+    "additionalProperties": false,
+    "properties": {
+      "bins": {
+        "additionalProperties": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "codec": "str",
+              "type": "string",
+              "yhmf": {
+                "primary_key": true
+              }
+            },
+            "items": {
+              "additionalProperties": {
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "codec": "str",
+                    "type": "string",
+                    "yhmf": {
+                      "primary_key": true
+                    }
+                  },
+                  "label": {
+                    "codec": "str",
+                    "default": "stock",
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "codec": "decimal",
+                    "default": "0",
+                    "minimum": "0"
+                  }
+                },
+                "required": [
+                  "id"
+                ],
+                "type": "object"
+              },
+              "default_factory": true,
+              "type": "object",
+              "yhmf": {
+                "children_key": "id"
+              }
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "type": "object"
+        },
+        "default_factory": true,
+        "type": "object",
+        "yhmf": {
+          "children_key": "id"
+        }
+      },
+      "id": {
+        "codec": "str",
+        "type": "string",
+        "yhmf": {
+          "primary_key": true
+        }
+      },
+      "total": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "codec": "decimal",
+        "default": "0",
+        "minimum": "0",
+        "yhmf": {
+          "index": true,
+          "rollup_codec": "decimal-sum-v1",
+          "sum_of": "bins.items.quantity"
+        }
+      }
+    },
+    "required": [
+      "id"
+    ],
+    "type": "object"
+  },
+  "format_version": 2,
+  "global": "^YHMFTestWarehouse",
+  "hierarchy": [
+    {
+      "field": "bins",
+      "fields": [
+        {
+          "field": "items",
+          "fields": [],
+          "key": "id",
+          "kind": "children",
+          "version": 1
+        }
+      ],
+      "key": "id",
+      "kind": "children",
+      "version": 1
+    }
+  ],
+  "key": "id",
+  "layout": 1,
+  "version": 1
+}

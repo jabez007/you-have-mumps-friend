@@ -2,6 +2,7 @@
 """Translate validated record values to native nodes and reconstruct stored fields."""
 
 from collections.abc import Iterator
+from decimal import Decimal
 from typing import Any, cast
 
 from .codecs import (
@@ -23,6 +24,15 @@ type FieldValue = tuple[FieldSpec, tuple[bytes, ...], Any]
 
 MAX_CHILDREN = 1000
 MAX_RECORD_NODES = 10_000
+
+
+def validate_stored[M: Model](fields: tuple[FieldSpec, ...], model: type[M], values: Any) -> M:
+    """Validate a loaded owner and its framework-managed derived invariants."""
+    from .rollups import verify
+
+    result = model.model_validate(values)
+    verify(fields, result)
+    return result
 
 
 def input_values(fields: tuple[FieldSpec, ...], record: Model) -> dict[str, Any]:
@@ -190,6 +200,8 @@ class _Reader:
                 raise StorageError("Reference key type does not match its target")
             return {"key": key}
         value = decode_scalar(stored)
+        if field.sum_of is not None and type(value) is not Decimal:
+            raise StorageError("Stored sum requires its declared Decimal encoding")
         return field.choices.restore(value) if field.choices is not None else value
 
     def scalar_list(self, field: FieldSpec, path: Path, stored: bytes) -> Any:

@@ -12,7 +12,7 @@ from .errors import MutationError, StorageError
 from .models import Model
 from .owned import OwnedPath, Owner, require_local_validation, resolve
 from .record_budget import require_growth
-from .records import FieldValue, node_values, value_nodes
+from .records import FieldValue, node_values, validate_stored, value_nodes
 from .registry import FieldSpec, ModelSpec
 from .storage import Path, Store
 
@@ -37,7 +37,7 @@ def read(
 def read_owner(store: Store, owner: Owner) -> Model:
     """Validate a resolved object's values and identity without rereading its ancestors."""
     values = node_values(owner.node.fields, owner.path, store)
-    result = owner.node.model.model_validate(values)
+    result = validate_stored(owner.node.fields, owner.node.model, values)
     _identity(
         owner, values, {field.name: getattr(result, field.name) for field in owner.node.fields}
     )
@@ -59,6 +59,8 @@ def _fields(owner: Owner, changes: Mapping[str, Any]) -> tuple[FieldSpec, ...]:
     if owner.node.key_field in changes:
         raise MutationError("Partial mutation cannot change record identity")
     selected = tuple(by_name[name] for name in changes)
+    if any(field.sum_of is not None for field in selected):
+        raise MutationError("Stored sums are read-only; patch their owned inputs")
     if any(field.node is not None for field in selected):
         raise MutationError("Patch scalar fields; address owned objects using at")
     return selected

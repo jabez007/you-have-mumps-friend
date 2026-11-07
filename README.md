@@ -90,7 +90,7 @@ for release boundaries.
 
 | Area | Works today | Not yet |
 | --- | --- | --- |
-| Models | Primitive scalars, dates, UTC datetimes, UUID values, Enum/Literal choices, scalar lists, optional fields, embedded objects, keyed children, Python field inheritance, virtual computed values | Stored rollups, shared-global variants |
+| Models | Primitive scalars, dates, UTC datetimes, UUID values, Enum/Literal choices, scalar lists, optional fields, embedded objects, keyed children, Python field inheritance, virtual computed values, root Decimal stored sums | General compute callbacks, owned-level sums, shared-global variants |
 | Relationships | Enforced references, explicit resolution, bounded inverse reads, owned many-to-many links, bounded `restrict`/`set_null`/`cascade` deletion | Unbounded or background cascades |
 | Queries | Indexed equality, bounded predicate intersections, ordered range/prefix/ascending reads, unique indexes, root and child paging, occurrence projections, collection counts | Descending order, ordered root cursors |
 | Writes | Whole-record `save`, scalar `patch`, explicit `patch_many` groups, child insert and delete, restart-safe transactions | Change tracking, callback-wide deferred unique checks |

@@ -20,6 +20,7 @@ from . import (
     queries,
     references,
     replacement,
+    rollups,
     selectors,
     transform_executor,
 )
@@ -43,7 +44,7 @@ from .owned import OwnedPath
 from .owned import resolve as resolve_owner
 from .queries import IndexReport, Query, audit_indexes, count_children, scan
 from .queries import children as read_children
-from .records import input_values, metadata, record_nodes, record_values
+from .records import input_values, metadata, record_nodes, record_values, validate_stored
 from .registry import ModelSpec, Registry
 from .schemas import SchemaInspection, check_schema, inspect_schema, schema_path
 from .selectors import ModelPath
@@ -138,7 +139,7 @@ class Database:
             bound = tx._check_schema(spec)
             if not tx._exists(bound, root):
                 raise NotFound("Record does not exist")
-            result = model.model_validate(record_values(spec, root, tx.store))
+            result = validate_stored(spec.fields, model, record_values(spec, root, tx.store))
             if getattr(result, spec.key_field) != key:
                 raise StorageError("Stored primary key does not match its path")
             return result
@@ -248,7 +249,7 @@ class Database:
     def _write[M: Model](self, record: M, *, insert: bool) -> M:
         spec = self.registry.spec(type(record))
         values = input_values(spec.fields, record)
-        validated = type(record).model_validate(values)
+        validated = rollups.initialize(spec.fields, type(record).model_validate(values))
         root = spec.path(getattr(validated, spec.key_field))
         new_links = references.links(self.registry, spec, root, validated)
         new_entries = indexes.entries(spec, root, validated)

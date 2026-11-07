@@ -63,11 +63,25 @@ class _Field:
     version: int | None
     delete_policy: str | None
     index_codec: str
+    rollup: bytes | None
 
 
 class _Unsupported(Exception):
     def __init__(self, path: tuple[str, ...] = ()) -> None:
         self.path = path
+
+
+def _rollup(metadata: dict[str, Any], path: tuple[str, ...]) -> bytes | None:
+    if not ({"sum_of", "rollup_codec"} & metadata.keys()):
+        return None
+    source = metadata.get("sum_of")
+    if type(source) is not str or not re.fullmatch(
+        r"[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*){1,14}", source
+    ):
+        raise _Unsupported(path)
+    if metadata.get("rollup_codec") != "decimal-sum-v1":
+        raise _Unsupported(path)
+    return canonical_json([source, metadata["rollup_codec"]])
 
 
 def _rules(schema: dict[str, Any]) -> bytes:
@@ -245,6 +259,8 @@ class _Fields:
             "children_key",
             "on_delete",
             "index_codec",
+            "sum_of",
+            "rollup_codec",
         }:
             raise _Unsupported(path)
         if any(
@@ -291,6 +307,7 @@ class _Fields:
             self.owned.get(path, {}).get("version"),
             policy,
             codec,
+            _rollup(metadata, path),
         )
 
     def _types(self, kind: str, variants: list[Any], path: tuple[str, ...]) -> bytes:
@@ -358,7 +375,11 @@ def _added(path: tuple[str, ...], value: _Field) -> list[SchemaChange]:
     known_null_reference = (
         value.kind == "reference" and value.nullable and value.default_json == b"null"
     )
-    manual = value.default_json is None or (value.kind != "scalar" and not known_null_reference)
+    manual = (
+        value.rollup is not None
+        or value.default_json is None
+        or (value.kind != "scalar" and not known_null_reference)
+    )
     changes = [
         SchemaChange(
             "field_added", path, requires_manual_review=manual, default_json=value.default_json
@@ -382,6 +403,8 @@ def _removed(path: tuple[str, ...], value: _Field) -> list[SchemaChange]:
 
 def _changed(path: tuple[str, ...], old: _Field, new: _Field) -> list[SchemaChange]:
     changes = []
+    if old.rollup != new.rollup:
+        changes.append(SchemaChange("rollup_changed", path, requires_manual_review=True))
     if old.kind != new.kind or old.relationship != new.relationship:
         changes.append(
             SchemaChange(
@@ -471,6 +494,7 @@ def _dependent_rebuilds(
             "primary_key_changed",
             "layout_changed",
             "index_codec_changed",
+            "rollup_changed",
         }
     }
     result = []

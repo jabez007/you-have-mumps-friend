@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Pydantic declarations and explicit persistence metadata."""
 
+from decimal import Decimal
 from typing import Any, ClassVar
 
 from pydantic import BaseModel, ConfigDict
@@ -49,11 +50,14 @@ def ChildField(
     index: bool = False,
     unique: bool = False,
     ordered: bool = False,
+    sum_of: str | None = None,
     **kwargs: Any,
 ) -> Any:
     """A parent-owned dictionary keyed by the child model's primary-key field."""
     if type(ordered) is not bool:
         raise SchemaError("ordered must be a boolean")
+    if sum_of is not None:
+        raise SchemaError("Stored sums must be declared as root Decimal fields")
     if index or unique or ordered:
         raise SchemaError("Index a scalar or Reference field inside the child model")
     if "json_schema_extra" in kwargs:
@@ -72,6 +76,7 @@ def Field(
     unique: bool = False,
     ordered: bool = False,
     on_delete: str | None = None,
+    sum_of: str | None = None,
     **kwargs: Any,
 ) -> Any:
     """Pydantic Field with explicit persistence, index, and relationship metadata."""
@@ -82,6 +87,10 @@ def Field(
     if "json_schema_extra" in kwargs:
         raise ValueError("json_schema_extra is reserved for mapper metadata")
     metadata: dict[str, Any] = {"primary_key": primary_key}
+    if sum_of is not None:
+        metadata["sum_of"] = sum_of
+        if default is PydanticUndefined and "default_factory" not in kwargs:
+            default = Decimal(0)
     if index or unique or ordered:
         metadata["index"] = True
     if ordered:

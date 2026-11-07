@@ -105,6 +105,8 @@ class FieldSpec:
     item: "FieldSpec | None" = None
     on_delete: str = "restrict"
     index_codec: str = "equality-v1"
+    sum_of: str | None = None
+    rollup_source: "FieldSpec | None" = compiled_field(default=None, repr=False, compare=False)
 
 
 @dataclass(frozen=True)
@@ -186,7 +188,39 @@ def _field_spec(model: type[Model], name: str, ancestors: tuple[type[Model], ...
     if choices is not None and choices.kind == "enum" and model.model_config.get("use_enum_values"):
         raise SchemaError("Enum fields do not support use_enum_values=True")
     spec = _indexed_spec(spec, annotation, metadata)
-    return replace(spec, adapter=field_adapter(model, name) if spec.node is None else None)
+    return replace(
+        spec,
+        sum_of=_sum_path(model, name, spec, metadata, ancestors),
+        adapter=field_adapter(model, name) if spec.node is None else None,
+    )
+
+
+def _sum_path(
+    model: type[Model],
+    name: str,
+    spec: FieldSpec,
+    metadata: dict[str, Any],
+    ancestors: tuple[type[Model], ...],
+) -> str | None:
+    path = metadata.get("sum_of")
+    if path is None:
+        return None
+    field = model.model_fields[name]
+    if len(ancestors) != 1 or spec.kind != "scalar" or field.annotation is not Decimal:
+        raise SchemaError("Stored sums require a nonnullable root Decimal field")
+    if (
+        type(path) is not str
+        or not 1 <= len(path.split(".")) <= 15
+        or not all(_NAME.fullmatch(part) for part in path.split("."))
+    ):
+        raise SchemaError("sum_of requires a dotted owned field path")
+    if (
+        field.default_factory is not None
+        or type(field.default) is not Decimal
+        or field.default != 0
+    ):
+        raise SchemaError("Stored sums require a literal Decimal zero default")
+    return path
 
 
 def _indexed_spec(spec: FieldSpec, annotation: Any, metadata: dict[str, Any]) -> FieldSpec:
@@ -362,9 +396,11 @@ def _legacy_snapshot(node: NodeSpec, global_name: str) -> bytes:
 
 
 def _make_spec(model: type[Model], *, legacy: bool = False) -> ModelSpec:
+    from .rollups import compile_fields
+
     model.model_rebuild()
     global_name = _application_global(model)
-    node = _node_spec(model, keyed=True, ancestors=())
+    node = compile_fields(_node_spec(model, keyed=True, ancestors=()))
     key = _key_field(model)
     try:
         snapshot = (

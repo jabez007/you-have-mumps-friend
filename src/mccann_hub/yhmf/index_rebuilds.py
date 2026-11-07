@@ -12,7 +12,7 @@ from .errors import MigrationError, SchemaMismatch, StorageError
 from .maintenance import MigrationStatus, load_status, require_owner, save_status
 from .migration_records import check_metadata, field_nodes, validate_targets
 from .models import Model
-from .records import record_values
+from .records import record_values, validate_stored
 from .registry import ModelSpec, Registry
 from .schema_compatibility import bind_snapshot
 from .schemas import SchemaInspection, SchemaSnapshot
@@ -144,7 +144,7 @@ def _record(store: Store, registry: Registry, spec: ModelSpec, key: bytes) -> Mo
     root = spec.path(decode_key(key))
     check_metadata(store, spec, root)
     try:
-        record = spec.model.model_validate(record_values(spec, root, store))
+        record = validate_stored(spec.fields, spec.model, record_values(spec, root, store))
     except ValidationError:
         raise MigrationError("A stored record does not satisfy the rebuild declaration") from None
     if spec.path(getattr(record, spec.key_field)) != root:

@@ -4,7 +4,7 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from . import indexes, references
+from . import indexes, references, rollups
 from .errors import ReferenceViolation
 from .records import FieldValue
 from .registry import ModelSpec
@@ -25,6 +25,7 @@ class Change:
 def replace(
     tx: "Database", changes: tuple[Change, ...], *, deleting_roots: frozenset[Path] = frozenset()
 ) -> None:
+    changes, derived = rollups.augment(tx.store, changes, deleting_roots)
     old_links = frozenset(
         link
         for change in changes
@@ -52,3 +53,5 @@ def replace(
     for root in deleting_roots:
         references.restrict_delete(tx.store, root)
     indexes.replace(tx.store, old_entries, new_entries)
+    for path, value in derived.items():
+        tx.store.set(path, value)

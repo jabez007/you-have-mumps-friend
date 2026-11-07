@@ -303,6 +303,14 @@ journal with an explicitly absent source schema and bounded validate/build/verif
 passes. Only final activation publishes installed metadata; early abort restores
 absence. No managed data format is fabricated for foreign globals.
 
+Root Decimal fields may declare a bounded owned sum. A shared secondary transition
+combines validated quantity deltas per root and maintains the total and normal index
+entries in one TP, without sibling reads. Root/ancestor custom validation, arbitrary
+compute callbacks, reference dependencies, and owned stored sums are rejected initially.
+Whole writes derive totals; complete owner reads verify them. Source numeric domains
+and decimal-sum-v1 dependencies are explicit schema contracts. The shared total is
+an intentional contention point. See [ADR 0015](adr/0015-root-owned-stored-sums.md).
+
 ## 10. Schema evolution
 
 Python model declarations are the source of truth for intended schema.
