@@ -83,7 +83,7 @@ def test_native_restart_repeats_the_workflow_with_one_stable_ledger_identity(
     with monkeypatch.context() as patch:
         patch.setattr(store, "set", restart_once)
         inventory.receive("01", "LOT-001", DOCK, Decimal(20), occurred_at=TIME)
-    assert observed == [b"s:" + TIME.encode()] * 2
+    assert observed == [b"T:2026-11-06T12:00:00.000000Z"] * 2
     assert inventory.stock_at(DOCK)[0].quantity == 20
     assert len(inventory.history("LOT-001")) == 1
     assert store.get(Path("^YHMFRef", (Product.__global__[1:].encode(), b"s:WIDGET"))) == b"3"

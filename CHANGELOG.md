@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Moves the inventory example's ledger to UTC datetime timestamps at application
+  schema revision two, with frozen v1 declarations and an explicit resumable
+  conversion. ISO string inputs remain accepted; returned timestamps are datetime.
+
 - Adds versioned date and UTC datetime field codecs, canonical defaults/bounds,
   equality/unique indexes, and literal-default migrations. Existing scalar contracts
   remain unchanged; temporal type changes require an explicit migration.

@@ -79,16 +79,24 @@ def _quantity(value: Decimal, *, positive: bool) -> Decimal:
     return result
 
 
-def _time(value: str | None) -> str:
+def _time(value: str | datetime | None) -> datetime:
     try:
-        instant = datetime.now(UTC) if value is None else datetime.fromisoformat(value)
-    except (ValueError, TypeError):
+        instant = (
+            datetime.now(UTC)
+            if value is None
+            else (value if isinstance(value, datetime) else datetime.fromisoformat(value))
+        )
+        offset = instant.utcoffset()
+    except (ValueError, TypeError, OverflowError):
         raise InventoryError(
             "Movement timestamp must be an ISO 8601 time with a timezone"
         ) from None
-    if instant.utcoffset() is None:
+    if offset is None:
         raise InventoryError("Movement timestamps require a timezone")
-    return instant.astimezone(UTC).isoformat()
+    try:
+        return instant.astimezone(UTC)
+    except (OverflowError, ValueError, TypeError):
+        raise InventoryError("Movement timestamp is outside the UTC calendar") from None
 
 
 def _change(tx: Database, address: BinAddress, lot: Lot, delta: Decimal) -> BalanceChange:
@@ -145,7 +153,7 @@ class Inventory:
         quantity: Decimal,
         *,
         reason: str = "stock receipt",
-        occurred_at: str | None = None,
+        occurred_at: str | datetime | None = None,
     ) -> Movement:
         amount, timestamp = _quantity(quantity, positive=True), _time(occurred_at)
 
@@ -167,7 +175,7 @@ class Inventory:
         quantity: Decimal,
         *,
         reason: str = "stock transfer",
-        occurred_at: str | None = None,
+        occurred_at: str | datetime | None = None,
     ) -> Movement:
         if source == destination:
             raise InventoryError("Source and destination bins must differ")
@@ -194,7 +202,7 @@ class Inventory:
         delta: Decimal,
         *,
         reason: str,
-        occurred_at: str | None = None,
+        occurred_at: str | datetime | None = None,
     ) -> Movement:
         if not reason.strip():
             raise InventoryError("An inventory adjustment requires a reason")
@@ -218,7 +226,7 @@ class Inventory:
         kind: str,
         destination: BinAddress,
         reason: str,
-        timestamp: str,
+        timestamp: datetime,
         source: BinAddress | None = None,
     ) -> Movement:
         value = Movement(

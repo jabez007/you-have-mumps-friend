@@ -762,3 +762,13 @@ model, preserving string timestamp inputs at the service boundary. Do not silent
 invalidate existing example databases. UUID/enums/literals and hierarchical scalar
 lists remain separate slices. Existing C901 passes at ten; extract temporal codec
 logic rather than raising complexity thresholds.
+
+Temporal codecs passed native CI 42328226444 before changing the ledger. Preserve
+explicit legacy Movement/Position/quantity declarations for migration rather than
+sharing a mutable historical base with future domain changes. This intentional
+small duplicate freezes the old contract; the existing inventory fixture verifies
+its exact bytes. The service keeps ISO string inputs and also accepts datetime,
+fixing a UTC instant before atomic work. Returned Movement.occurred_at becomes
+datetime and the example schema revision increases to two. Migration remains an
+explicit plan/begin/advance operation, including interrupted and invalid legacy
+timestamp tests. Other inventory model identities must stay unchanged.

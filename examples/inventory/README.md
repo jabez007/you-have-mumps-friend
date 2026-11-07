@@ -100,14 +100,61 @@ Movement IDs and timestamps are fixed before retryable persistence work. A dupli
 movement ID raises `AlreadyExists` and rolls back the complete command, including
 both sides of a move. This is duplicate protection, not automatic idempotent success.
 Commands generate a UTC timestamp before entering the callback when none is supplied;
-an explicit ISO timestamp must include a timezone. Timestamp fields remain strings
-because YHMF does not yet have date/time codecs.
+explicit ISO strings and datetime inputs must include a timezone. Movement.occurred_at
+now returns and stores a UTC datetime. Other timezones normalize to the same instant;
+the original zone is not retained.
 
 The service only appends movement records and their Python values are frozen.
 It does not provide database permissions or prevent another program from replacing
 history through the general persistence API. Use this service as the application's
 write boundary. Custom business-rule changes require an application schema revision
 when they change persistence semantics, as described in the schema compatibility policy.
+
+## Upgrade an existing ledger
+
+Movement schema revision two changes occurred_at from string to datetime. Opening a
+v1 database with current MODELS does not convert its data; ledger access fails with
+SchemaMismatch until an explicit migration. Other inventory schemas are unchanged.
+The frozen source declarations and named conversion live in
+[migrations.py](migrations.py), with the original schema fixture protecting their bytes.
+
+On a current Database handle, construct and review the plan, then use the normal
+maintenance lifecycle. This helper shows both a new job and resume by retained ID:
+
+```python
+from examples.inventory import Movement
+from examples.inventory.migrations import LegacyMovement, MOVEMENT_TIMESTAMPS
+
+ledger_plan = db.plan_migration(Movement, transform=MOVEMENT_TIMESTAMPS)
+
+
+def upgrade_ledger(current, reviewed_plan, migration_id=None):
+    status = (
+        current.begin_migration(
+            LegacyMovement, Movement, plan=reviewed_plan, transform=MOVEMENT_TIMESTAMPS
+        )
+        if migration_id is None
+        else current.migration_status(migration_id)
+    )
+    while status.phase != "complete":
+        status = current.advance_migration(
+            status.migration_id, LegacyMovement, Movement,
+            transform=MOVEMENT_TIMESTAMPS, batch_size=25,
+        )
+    return status
+
+
+# For existing v1 data, review ledger_plan and the recovery boundary before calling:
+# result = upgrade_ledger(db, ledger_plan)
+```
+
+The fresh demo above already uses revision two, so it needs no upgrade. For an
+existing v1 ledger, retain the job ID and coordinate raw readers/writers before
+starting. Invalid, naive, or out-of-calendar historical timestamps fail the validation
+pass without changing records; early abort remains available. Later committed work
+requires resume or backup restore, as the [transform guide](../../docs/guides/record-transforms.md)
+explains. Migration tests preserve stock data, references, indexes, and ledger IDs
+across interruption, and compare UTC instants after activation.
 
 ## Queries and bounds
 
@@ -206,9 +253,9 @@ competes to move 15 units twice from a balance of 20: only one command may commi
   and actual indexed declaration paths, including the usable product path. This
   improvement has a failing regression against the original generic message and
   does not expose predicate values or add implicit scans.
-- `.explain()` identifies the chosen index and bound, but indexed aggregate reads
-  still load unrelated balances. Occurrence projections are a measured follow-up,
-  rather than an implicit change to query semantics.
+- `.explain()` identifies the chosen index and bound. The framework now offers
+  direct occurrence projections; stock_by_product keeps its warehouse-key page
+  contract and loads matching roots. Use occurrences explicitly for balance pages.
 - Reference counts for new movement entries touch shared Product/Lot/Warehouse
   targets. They provide deletion safety but can become contention points. The
   example does not claim independent stock updates eliminate that shared work.

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Exercise the example as a downstream client on both adapters."""
 
+from datetime import datetime
 from decimal import Decimal, localcontext
 
 import pytest
@@ -58,7 +59,7 @@ def test_receive_move_adjust_and_query_audited_inventory(inventory):
     assert [value.kind for value in history] == ["receive", "move", "adjust"]
     assert history[1].source.location == "DOCK"
     assert history[2].quantity == Decimal("-0.5")
-    assert received.occurred_at == TIME
+    assert received.occurred_at == datetime.fromisoformat(TIME)
     for model in MODELS:
         assert inventory.db.check_indexes(model).issues == ()
     with pytest.raises(ValidationError):

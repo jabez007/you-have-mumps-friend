@@ -4,6 +4,8 @@ from decimal import Decimal
 from pathlib import Path
 
 from examples.inventory import MODELS, Product
+from examples.inventory.migrations import LegacyMovement
+from examples.inventory.models import Movement
 from mccann_hub.yhmf import Database, Field, Registry, SchemaSnapshot
 from mccann_hub.yhmf.schemas import canonical_json
 from tests.test_schema_contracts import seed_legacy
@@ -13,9 +15,10 @@ FIXTURE = Path(__file__).with_name("fixtures") / "inventory-before-field-reuse.j
 
 def test_shared_field_reuse_preserves_every_existing_inventory_contract():
     fixture = json.loads(FIXTURE.read_text())
-    registry = Registry(*MODELS)
+    registry = Registry(*(model for model in MODELS if model is not Movement), LegacyMovement)
     for model in MODELS:
-        assert registry.spec(model).snapshot == canonical_json(fixture["schemas"][model.__name__])
+        binding = LegacyMovement if model is Movement else model
+        assert registry.spec(binding).snapshot == canonical_json(fixture["schemas"][model.__name__])
 
 
 def test_inherited_keys_keep_legacy_metadata_and_unique_index_behavior(store):
