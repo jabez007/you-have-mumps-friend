@@ -1426,6 +1426,11 @@ forced restarts, late rollback, concurrent Python writers and deletion races on 
 engines/journal modes. Preserve old schema/layout bytes; regenerate source for new
 capabilities. Existing C901 passes at ten; keep that threshold unchanged.
 
+Keep shared constant generation in m_writer_config, reused by flat and hierarchical
+exporters. This separates owner declarations from installed global bindings without
+creating fake ModelSpecs or circular module imports. Existing flat, Decimal, and
+reference exports must remain byte-for-byte identical through this extraction.
+
 Before reference support, share schema constants and M schema/record-metadata checks
 without changing their validation or stored bytes. This keeps source and referenced
 target bindings on the same implementation, including exact legacy snapshots.
