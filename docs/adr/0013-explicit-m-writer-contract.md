@@ -25,7 +25,7 @@ complete managed-record implementation.
 
 Generate an explicit, schema-bound M routine. Exporting source is read-only and
 never installs triggers or metadata. Each insert/replace/delete owns one native TP;
-nested transactions are rejected. Inputs are complete named field values, not a
+nested calls to these transaction-owning entry points are rejected. Inputs are complete named field values, not a
 patch or a Python-default invocation. Recompute database-derived state after every
 restart. Check exact installed fingerprint/snapshot and record metadata on each
 attempt; a stale routine fails rather than interpreting another schema. Initial
@@ -51,9 +51,8 @@ regenerated. Unexpected native errors roll back the owned TP and propagate to th
 caller's handler.
 
 Owned trees, references as fields, ordered indexes, scalar lists, stored rollups,
-custom validators, nullable values, non-ASCII input, and multi-record M transactions
-remain unsupported by this initial generator. Thus supported M writes cannot change
-rollup inputs. A future extension must implement the complete affected invariants
+custom validators, nullable values, and non-ASCII input remain unsupported by this
+initial generator. Thus supported M writes cannot change rollup inputs. A future extension must implement the complete affected invariants
 before accepting those models.
 
 ## Alternatives and tradeoffs
@@ -81,3 +80,15 @@ M arguments through %XCMD; extra shell arguments alone populate ZCMDLINE instead
 Ruff/C901, mypy, offline tests, both Pydantic matrix versions, executable docs, and
 the installed-wheel smoke test passed. The wheel test exercises the packaged M
 template. No trigger latency or generated-writer throughput claim is made.
+
+## Caller-owned transaction extension
+
+New exports add explicit inserttx/replacetx/deletetx participants, reusing prepare
+and attempt. They require an existing TP and never commit it. Every failure aborts
+the entire active TP, across all levels, rather than depending on a caller to honor
+a rollback-only flag. Unexpected errors roll back before propagation. Existing entry
+points retain their own TP and nested refusal. Inputs, schema checks, records,
+indexes, and status meanings remain compatible; only participants add transaction
+for missing context. The caller owns the outer restart point and must rebuild all
+database-derived inputs there. This extension initially composes supported flat
+models, independently of future hierarchical support.

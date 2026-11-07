@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Adds explicit M transaction participants for composing records across models.
+  Success leaves commit ownership with the caller; any failure aborts the entire
+  active transaction. Existing transaction-owning routines keep their behavior.
+
 - Scopes newly exported M writers to the affected maintenance model after validating
   the live checkpoint and barrier. Corrupt or unknown state blocks every write;
   earlier exported routines retain their conservative check until regenerated.

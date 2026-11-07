@@ -9,6 +9,23 @@ delete(key)
  new input
  set input(@KEY@)=key
  quit $$write("delete",.input)
+inserttx(input)
+ quit $$participate("insert",.input)
+replacetx(input)
+ quit $$participate("replace",.input)
+deletetx(key)
+ new input
+ set input(@KEY@)=key
+ quit $$participate("delete",.input)
+participate(operation,input)
+ new cfg,values,status,key,$etrap
+ if '$tlevel quit "transaction"
+ set $etrap="if $tlevel trollback"
+ set status=$$prepare(operation,.input,.cfg,.values,.key)
+ if status'="ok" trollback  quit status
+ set status=$$attempt(operation,key,.values,.cfg)
+ if status'="ok" trollback
+ quit status
 write(operation,input)
  new cfg,values,status,key,$etrap
  if $tlevel quit "nested"

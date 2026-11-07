@@ -126,7 +126,8 @@ M does not distinguish Python runtime types, so the declaration determines how e
 canonical textual input is encoded. This is validation of the declared M subset,
 not execution of Pydantic in M.
 
-Each call owns one native transaction and rejects a caller with nonzero tlevel.
+The insert/replace/delete entry points each own one native transaction and reject
+a caller with nonzero tlevel.
 All live schema/record/index checks and derived reads repeat after a restart. Changes
 to data, equality entries, and unique claims commit or roll back together. Existing
 records and expected claim ownership are checked before replacement/deletion. A
@@ -138,18 +139,52 @@ the affected model while unrelated writes can proceed. Corrupt or unknown checkp
 formats fail closed. Existing exported routines retain their conservative global
 gate check until regenerated; their installed schema bindings do not change.
 
-The returned status is ok, exists, missing, invalid, invalid_key, key_size, schema,
-unmanaged, maintenance, corrupt, unique, references, or nested. Failure statuses
-leave the call's database state unchanged. Unexpected engine errors roll back the
+The transaction-owning entry points return ok, exists, missing, invalid, invalid_key,
+key_size, schema,
+unmanaged, maintenance, corrupt, unique, references, or nested. Their failure
+statuses leave the call's database state unchanged. Unexpected engine errors roll back the
 owned transaction and propagate to the caller's error handler. They are not
 reported as success or silently converted into a validation failure.
 
 The [ADR](../adr/0013-explicit-m-writer-contract.md) records the trigger comparison
 and initial contract. No trigger is installed by export or generated CRUD. Do not
 combine these writers with external triggers that mutate managed data/indexes.
-Multi-record M transactions and hierarchical writers require further design. Since
-this generator rejects owned trees, it cannot update future stored-rollup inputs.
+Hierarchical writers require further design. Since this generator rejects owned
+trees, it cannot update stored-rollup inputs.
 Raw writes remain outside the managed guarantees and are not an authorization path.
+
+## Compose writes in a caller transaction
+
+Newly exported routines also provide inserttx(input), replacetx(input), and
+deletetx(key). These participants require an existing transaction and return transaction if none is active. A successful
+participant leaves the caller's transaction level unchanged and never commits it.
+
+```m
+ tstart ():serial
+ set status=$$inserttx^PartAPI(.first)
+ if status'="ok" quit
+ set status=$$inserttx^PartAPI(.second)
+ if status'="ok" quit
+ tcommit
+```
+
+Supply complete field inputs as above. This code belongs in a callable M routine,
+with its own input/error reporting. The two participants may come from different
+exported models. Index and schema changes commit with both records.
+
+Every participant failure status aborts the entire active transaction, including
+all nesting levels and earlier successful operations. Unexpected errors also roll
+back before propagating to the caller's handler. After failure, tlevel is zero.
+The caller must stop the workflow instead of proceeding as though earlier writes
+survived. An attempted commit of that failed transaction cannot commit partial data.
+Existing insert/replace/delete still return nested without rolling back the caller.
+
+The caller owns the outer restart point. Re-read every database-derived value after
+tstart, including values used to build inputs, so a native restart recomputes the
+whole business operation. Stable IDs and external inputs can be prepared before it.
+Avoid external effects in retryable code. Participants do not make detached inputs
+safe for dependent calculations. Regenerate existing routines to obtain these entry
+points; schema metadata and record bytes do not change.
 
 ## Raw writes from M
 
