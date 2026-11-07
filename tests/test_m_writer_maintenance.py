@@ -43,6 +43,11 @@ def begin(store, kind):
     return manager, manager.begin_migration(Other, NextOther, plan=plan)
 
 
+def replace_source(routine, source):
+    routine.write_text(source)
+    routine.with_suffix(".o").unlink(missing_ok=True)
+
+
 def document(**changes):
     status = MigrationStatus("a" * 32, Other.__global__, "b" * 64, "c" * 64)
     result = status.to_dict(include_cursor=True)
@@ -149,14 +154,15 @@ def test_affected_m_writer_stays_blocked_and_old_source_keeps_conservative_gate(
     db, run, routine, _ = m_writer
     assert run("insert", values()) == "ok"
     _, other_job = begin(store, "migration")
-    routine.write_text(
+    replace_source(
+        routine,
         routine.read_text().replace(
             ' if \'$$available(cfg("global"))', ' if $data(^YHMFMigration("gate"))'
-        )
+        ),
     )
     assert run("replace", values(sku="T")) == "maintenance"
     db.abort_migration(other_job.migration_id)
-    routine.write_text(db.m_routine(MRecord, name="YHMFTAPI"))
+    replace_source(routine, db.m_routine(MRecord, name="YHMFTAPI"))
 
     class NextRecord(MRecord):
         __schema_version__ = 2
@@ -173,12 +179,14 @@ def test_native_m_writer_rechecks_scope_when_migration_advances_during_its_attem
     db, run, routine, environment = m_writer
     assert run("insert", values()) == "ok"
     manager, job = begin(store, "migration")
-    routine.write_text(
+    original = routine.read_text()
+    replace_source(
+        routine,
         routine.read_text().replace(
             " ; YHMF writer checkpoint:",
             ' if $trestart=0 do\n . new reply\n . write "ready",!\n . read reply\n'
             ' . if reply\'="go" set $ecode=",U1004,"\n ; YHMF writer checkpoint:',
-        )
+        ),
     )
     command = str(FilePath(environment["ydb_dist"]) / "yottadb")
     worker = subprocess.Popen(
@@ -200,6 +208,7 @@ def test_native_m_writer_rechecks_scope_when_migration_advances_during_its_attem
         if worker.poll() is None:
             worker.kill()
         worker.wait(timeout=5)
+    replace_source(routine, original)
     assert db.get(MRecord, "C").sku == "C-SKU"
     for _ in range(25):
         advanced = manager.advance_migration(job.migration_id, Other, NextOther, batch_size=1)
