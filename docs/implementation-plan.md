@@ -983,3 +983,16 @@ they do not imply that one child satisfies both. Reject duplicate field predicat
 and ambiguous multi-predicate occurrence projection initially. Equality-anchor root
 paging retains native key cursors; ordered anchors retain their explicit no-root-
 cursor limitation. This avoids creating another cursor contract or implicit joins.
+
+### Plain-M writer experiments before the contract, issue 25
+
+Reuse disposable native CI, M subprocess execution, Path, and transaction rollback
+checks. Prototype triggers on a small tagged field/index pair: SET maintenance,
+leaf KILL maintenance, rollback, and parent KILL. Record whether the field trigger
+sees a complete record during creation. Keep trigger names/global prefixes confined
+to the test database and remove the definitions in finally. This tests specific
+engine semantics instead of assuming that a leaf trigger protects every subtree.
+Compare with an explicit M routine that validates a complete fixed input before
+changing a record and its index in one owned transaction. These are experiments,
+not an enabled production writer API. Inspect native results before choosing the
+supported writer path or promising stored rollups. Existing C901 passes at ten.
