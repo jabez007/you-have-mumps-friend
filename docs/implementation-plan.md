@@ -772,3 +772,19 @@ fixing a UTC instant before atomic work. Returned Movement.occurred_at becomes
 datetime and the example schema revision increases to two. Migration remains an
 explicit plan/begin/advance operation, including interrupted and invalid legacy
 timestamp tests. Other inventory model identities must stay unchanged.
+
+### UUID and finite choices, next scalar slice of issue 11
+
+First replace the growing scalar encoder branch chain with exact-type dispatch,
+preserving Decimal subclasses, finite checks, key behavior, and all golden bytes.
+Then add UUID's canonical lowercase tag and finite Enum/Literal declarations using
+the existing primitive storage tags. Compile enum lookup maps once for exact typed
+restoration; never invoke _missing_ for unknown stored values. Canonical contracts
+record sorted primitive values, not enum names/classes/order. Homogeneous str/int/
+bool choices only; reject Flag, mixed choices, and enum use_enum_values mode until
+its strict revalidation semantics are supported deliberately. Existing adapters
+validate input and queries, while field codecs restore the declared Enum on reads.
+Type changes to Enum require an explicit transform. Existing primitive, temporal,
+and legacy contracts must remain unchanged. Test null/defaults, native indexes,
+unknown choices, aliases, rollback, canonical/codec goldens, and both Pydantic
+versions. Scalar lists retain their separate hierarchical design. C901 passes at ten.

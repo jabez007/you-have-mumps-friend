@@ -6,9 +6,10 @@ import binascii
 import json
 import math
 import re
+from collections.abc import Callable
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
-from typing import Any, cast
+from typing import Any
 
 from . import temporal
 from .errors import StorageError
@@ -57,27 +58,38 @@ def decode_key(value: bytes) -> Key:
     raise StorageError("Invalid version-one key")
 
 
+def _encode_integer(value: int) -> bytes:
+    try:
+        return b"i:" + str(value).encode("ascii")
+    except ValueError:
+        raise StorageError("Integer exceeds Python's decimal conversion limit") from None
+
+
+def _encode_float(value: float) -> bytes:
+    if not math.isfinite(value):
+        raise StorageError("Unsupported scalar type or nonfinite number")
+    return b"f:" + repr(value).encode("ascii")
+
+
+_ENCODERS: dict[type[Any], Callable[[Any], bytes]] = {
+    type(None): lambda value: b"n:",
+    str: lambda value: b"s:" + _utf8(value),
+    bool: lambda value: b"b:1" if value else b"b:0",
+    int: _encode_integer,
+    bytes: lambda value: b"x:" + base64.b64encode(value),
+    float: _encode_float,
+    date: temporal.encode,
+    datetime: temporal.encode,
+}
+
+
 def encode_scalar(value: Scalar) -> bytes:
     """Encode one scalar without relying on its declared Python field type."""
-    if value is None:
-        return b"n:"
-    if type(value) in (date, datetime):
-        return temporal.encode(cast(date, value))
-    if type(value) is str:
-        return b"s:" + _utf8(value)
-    if type(value) is bool:
-        return b"b:1" if value else b"b:0"
-    if type(value) is int:
-        try:
-            return b"i:" + str(value).encode("ascii")
-        except ValueError:
-            raise StorageError("Integer exceeds Python's decimal conversion limit") from None
-    if type(value) is bytes:
-        return b"x:" + base64.b64encode(value)
+    encoder = _ENCODERS.get(type(value))
+    if encoder is not None:
+        return encoder(value)
     if isinstance(value, Decimal) and value.is_finite():
         return b"d:" + str(value).encode("ascii")
-    if type(value) is float and math.isfinite(value):
-        return b"f:" + repr(value).encode("ascii")
     raise StorageError("Unsupported scalar type or nonfinite number")
 
 
