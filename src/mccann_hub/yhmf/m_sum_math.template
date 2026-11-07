@@ -1,0 +1,54 @@
+ ; SPDX-License-Identifier: GPL-3.0-or-later
+ ; Signed fixed units: bounded digit arithmetic, never long native-number coercion.
+unitvalue(value)
+ new magnitude
+ set magnitude=$extract(value,1+($extract(value)="-"),$length(value))
+ if magnitude'?1.40N quit 0
+ if $length(magnitude)>1,$extract(magnitude)="0" quit 0
+ quit value'="-0"
+dadd(left,right)
+ new negativeL,negativeR,magnitudeL,magnitudeR,comparison,result,negative
+ if '$$unitvalue(left)!'$$unitvalue(right) quit "invalid"
+ set negativeL=($extract(left)="-"),negativeR=($extract(right)="-")
+ set magnitudeL=$extract(left,1+negativeL,$length(left)),magnitudeR=$extract(right,1+negativeR,$length(right))
+ if negativeL=negativeR set result=$$dmagnitude(magnitudeL,magnitudeR,1),negative=negativeL
+ else  do
+ . set comparison=$$dcompare(magnitudeL,magnitudeR)
+ . if comparison'<0 set result=$$dmagnitude(magnitudeL,magnitudeR,0),negative=negativeL
+ . else  set result=$$dmagnitude(magnitudeR,magnitudeL,0),negative=negativeR
+ if $length(result)>40 quit "invalid"
+ quit $select(negative&(result'="0"):"-",1:"")_result
+dmagnitude(left,right,adding)
+ new width,i,carry,digit,result
+ set width=$select($length(left)>$length(right):$length(left),1:$length(right))
+ set left=$translate($justify("",width-$length(left))," ","0")_left,right=$translate($justify("",width-$length(right))," ","0")_right
+ set result="",carry=0
+ for i=width:-1:1 do
+ . if adding set digit=$extract(left,i)+$extract(right,i)+carry,carry=digit\10,digit=digit#10
+ . else  set digit=$extract(left,i)-$extract(right,i)-carry,carry=(digit<0),digit=digit+(10*carry)
+ . set result=digit_result
+ if adding,carry set result=carry_result
+ for  quit:$length(result)=1  quit:$extract(result)'="0"  set result=$extract(result,2,$length(result))
+ quit result
+fromunits(value)
+ new negative,coefficient,power,adjusted,point,result
+ if '$$unitvalue(value) quit "invalid"
+ if value="0" quit "0"
+ set negative=($extract(value)="-"),coefficient=$extract(value,1+negative,$length(value)),power=-18
+ for  quit:$extract(coefficient,$length(coefficient))'="0"  set coefficient=$extract(coefficient,1,$length(coefficient)-1),power=power+1
+ set adjusted=$length(coefficient)-1+power,point=$length(coefficient)+power
+ if (power>0)!(adjusted<-6) do
+ . set result=$extract(coefficient)
+ . if $length(coefficient)>1 set result=result_"."_$extract(coefficient,2,$length(coefficient))
+ . set result=result_"E"_$select(adjusted'<0:"+",1:"")_adjusted
+ else  do
+ . if point'>0 set result="0."_$translate($justify("",0-point)," ","0")_coefficient quit
+ . set result=$extract(coefficient,1,point)
+ . if point<$length(coefficient) set result=result_"."_$extract(coefficient,point+1,$length(coefficient))
+ quit $select(negative:"-",1:"")_result
+sourceunits(value)
+ new number,coefficient
+ if '$$decimal(value,.number) quit "invalid"
+ set coefficient=$extract(number("coefficient"),1+($extract(number("coefficient"))="-"),$length(number("coefficient")))
+ if $length(coefficient)>18!($length(coefficient)+number("power")>18) quit "invalid"
+ quit number("units")

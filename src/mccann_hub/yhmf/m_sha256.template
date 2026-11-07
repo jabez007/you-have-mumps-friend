@@ -1,0 +1,49 @@
+ ; SPDX-License-Identifier: GPL-3.0-or-later
+ ; Bounded SHA-256 for concrete ASCII JSON locations; FIPS 180-4 section 6.2.
+sha256(value)
+ new h,k,w,a,b,c,d,e,f,g,j,i,offset,word,s0,s1,ch,maj,t1,t2,initial,constants,message,length,result
+ if $zlength(value)>4096 quit ""
+ set initial=$piece($text(shinitial),";",2),constants=$piece($text(shconstants),";",2)
+ for i=0:1:7 set h(i)=+$piece(initial,",",i+1)
+ for i=0:1:63 set k(i)=+$piece(constants,",",i+1)
+ set length=$zlength(value)*8,message=value_$zchar(128)
+ for  quit:($zlength(message)#64)=56  set message=message_$zchar(0)
+ set message=message_$zchar(0,0,0,0)_$zextract($$shbytes(length),2,5)
+ for offset=1:64:$zlength(message) do
+ . for i=0:1:15 set w(i)=$$shword($zchar(0)_$zextract(message,offset+(i*4),offset+(i*4)+3))
+ . for i=16:1:63 do
+ . . set word=w(i-15),s0=$$shxor($$shxor($$shror(word,7),$$shror(word,18)),word\(2**3))
+ . . set word=w(i-2),s1=$$shxor($$shxor($$shror(word,17),$$shror(word,19)),word\(2**10))
+ . . set w(i)=(w(i-16)+s0+w(i-7)+s1)#4294967296
+ . set a=h(0),b=h(1),c=h(2),d=h(3),e=h(4),f=h(5),g=h(6),j=h(7)
+ . for i=0:1:63 do
+ . . set s1=$$shxor($$shxor($$shror(e,6),$$shror(e,11)),$$shror(e,25))
+ . . set ch=$$shxor($$shand(e,f),$$shand(4294967295-e,g))
+ . . set t1=(j+s1+ch+k(i)+w(i))#4294967296
+ . . set s0=$$shxor($$shxor($$shror(a,2),$$shror(a,13)),$$shror(a,22))
+ . . set maj=$$shxor($$shxor($$shand(a,b),$$shand(a,c)),$$shand(b,c)),t2=(s0+maj)#4294967296
+ . . set j=g,g=f,f=e,e=(d+t1)#4294967296,d=c,c=b,b=a,a=(t1+t2)#4294967296
+ . set h(0)=(h(0)+a)#4294967296,h(1)=(h(1)+b)#4294967296,h(2)=(h(2)+c)#4294967296,h(3)=(h(3)+d)#4294967296
+ . set h(4)=(h(4)+e)#4294967296,h(5)=(h(5)+f)#4294967296,h(6)=(h(6)+g)#4294967296,h(7)=(h(7)+j)#4294967296
+ set result=""
+ for i=0:1:7 set result=result_$$shhex(h(i))
+ quit result
+shror(word,count)
+ quit (word\(2**count))+((word#(2**count))*(2**(32-count)))
+shxor(left,right)
+ quit $$shword($zbitxor($$shbytes(left),$$shbytes(right)))
+shand(left,right)
+ quit $$shword($zbitand($$shbytes(left),$$shbytes(right)))
+shbytes(word)
+ quit $zchar(0,word\16777216,(word\65536)#256,(word\256)#256,word#256)
+shword(bytes)
+ quit ($zascii(bytes,2)*16777216)+($zascii(bytes,3)*65536)+($zascii(bytes,4)*256)+$zascii(bytes,5)
+shhex(word)
+ new i,result
+ set result=""
+ for i=1:1:8 set result=$extract("0123456789abcdef",(word#16)+1)_result,word=word\16
+ quit result
+shinitial ;1779033703,3144134277,1013904242,2773480762,1359893119,2600822924,528734635,1541459225
+ quit
+shconstants ;1116352408,1899447441,3049323471,3921009573,961987163,1508970993,2453635748,2870763221,3624381080,310598401,607225278,1426881987,1925078388,2162078206,2614888103,3248222580,3835390401,4022224774,264347078,604807628,770255983,1249150122,1555081692,1996064986,2554220882,2821834349,2952996808,3210313671,3336571891,3584528711,113926993,338241895,666307205,773529912,1294757372,1396182291,1695183700,1986661051,2177026350,2456956037,2730485921,2820302411,3259730800,3345764771,3516065817,3600352804,4094571909,275423344,430227734,506948616,659060556,883997877,958139571,1322822218,1537002063,1747873779,1955562222,2024104815,2227730452,2361852424,2428436474,2756734187,3204031479,3329325298
+ quit

@@ -68,3 +68,24 @@ refpair
  tcommit
  write status,"|",$tlevel,!
  quit
+hashes
+ new key,value,result
+ set key=""
+ for  set key=$order(^YHMFTestStorage("writerInput",key)) quit:key=""  do
+ . set value=^YHMFTestStorage("writerInput",key),result=$$sha256^YHMFTAPI(value)
+ . write $select(result="":"invalid",1:result),!
+ quit
+arithmetic
+ new key,value,result
+ set key=""
+ for  set key=$order(^YHMFTestStorage("writerInput",key)) quit:key=""  do
+ . set value=^YHMFTestStorage("writerInput",key),result=$$dadd^YHMFTAPI($piece(value,"|"),$piece(value,"|",2))
+ . write result
+ . if result'="invalid" write "|",$$fromunits^YHMFTAPI(result)
+ . write !
+ quit
+sources
+ new key
+ set key=""
+ for  set key=$order(^YHMFTestStorage("writerInput",key)) quit:key=""  write $$sourceunits^YHMFTAPI(^YHMFTestStorage("writerInput",key)),!
+ quit

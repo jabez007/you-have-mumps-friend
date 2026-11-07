@@ -175,6 +175,8 @@ quote(value)
 @REFERENCES@
 @SCHEMA@
 @DECIMAL@
+@SUMMATH@
+@SHA256@
 @MAINTENANCE@
 config(cfg)
 @CONFIG@
