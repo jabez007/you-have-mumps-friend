@@ -1,5 +1,10 @@
 # Inventory workflow performance
 
+Historical rows on this page predate node-difference saves. Current aggregate
+replacement still loads and validates complete warehouses, but audits existing
+physical nodes and writes only differences. New output labels aggregate_save as
+physical_node_difference. Do not treat older write counts as current behavior.
+
 Run `YHMF_BENCHMARK=1 bash scripts/test-native.sh -q` with an installed YottaDB
 distribution. In addition to the existing mutation benchmark and native demo,
 the disposable harness runs `python -m scripts.benchmark_inventory` from the
@@ -38,8 +43,10 @@ adapter calls, not YottaDB block writes, disk operations, or allocated bytes.
 
 Final verification checks both balances, all unrelated quantities, movement count,
 declared indexes, and independent expected inbound reference counts. The process
-is single threaded with a warm disposable database. The harness does not configure
-journaling; this is not a durability or production tail-latency qualification.
+is single threaded with a warm disposable database. The current harness separately
+supports journaling off and before-image journaling on; structured output records
+the mode. Historical rows must retain their original mode. This is not a crash
+recovery or production tail-latency qualification.
 Different CI runners may have different CPUs and load, so results do not isolate
 engine-version effects or establish comparisons with other databases.
 

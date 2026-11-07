@@ -45,6 +45,7 @@ jobs:
           tests/test_inverse_references.py tests/test_inventory_relations.py
           tests/test_model_reuse.py
           tests/test_virtual_computed.py tests/test_grouped_patches.py tests/test_typed_selectors.py
+          tests/test_replacement_diffs.py
           tests/test_inventory_example.py
           tests/test_migration_execution.py tests/test_nested_migrations.py tests/test_index_rebuilds.py
           tests/test_partial_mutations.py tests/test_child_mutations.py -m 'not native' -q

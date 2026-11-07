@@ -16,6 +16,7 @@ from . import (
     mutations,
     queries,
     references,
+    replacement,
     selectors,
 )
 from .codecs import Key
@@ -260,9 +261,11 @@ class Database:
             with tx._writing():
                 bound = tx._check_schema(spec, install=True)
                 nodes = record_nodes(bound, root, validated)
-                tx.store.delete_tree(root)
-                for path, value in nodes.items():
-                    tx.store.set(path, value)
+                if exists:
+                    replacement.apply(tx.store, root, nodes)
+                else:
+                    for path, value in nodes.items():
+                        tx.store.set(path, value)
                 tx._check_reference_targets(new_links)
                 references.replace(tx.store, old_links, new_links)
                 indexes.replace(tx.store, old_entries, new_entries)

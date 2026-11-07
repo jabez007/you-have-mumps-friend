@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Keeps whole-value save semantics while writing only physical node differences.
+  A bounded physical audit removes raw extras and can add read/traversal cost.
+  Detached saves remain last-writer-wins; use explicit mutations for targeted changes.
+
 - Adds Database.path selectors and ModelPath for owned reads with inferred result
   types. Keeps tuple paths and existing schema/storage identities.
 - Adds Registry.reference typed factories inferred from a selected primary key,

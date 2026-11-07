@@ -39,6 +39,18 @@ last-writer-wins: two readers can each change a copy, and the later save replace
 of the earlier result. [ADR 0003](../adr/0003-detached-write-concurrency.md) explains
 this choice.
 
+save compares the complete desired aggregate with storage and writes only physical
+node differences. It still reads and validates the aggregate, and its physical audit
+traverses existing nodes to remove raw extras. A stale field value still replaces a
+newer stored value: a difference cannot infer your intended edits. Use patch, child
+operations, or atomic read-modify-write for targeted updates. save of an unchanged
+managed value writes nothing, while still checking schema, validation, and indexes.
+
+Replacement deletes minimal removed subtrees and preserves desired descendants if
+an unexpected raw value occupies their parent. A raw subtree beyond the bounded
+physical traversal budget raises StorageError without writes; repair it explicitly.
+No storage layout, installed schema identity, or detached concurrency rule changes.
+
 ## Write callbacks that can run again
 
 YottaDB uses optimistic transactions. When transactions conflict, it restarts the

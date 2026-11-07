@@ -320,6 +320,12 @@ The project will maintain golden storage fixtures and serialization contracts to
 
 ## 12. Operations and security
 
+save preserves whole-aggregate last-writer-wins intent while applying physical node
+differences. It audits existing physical nodes under the record budget, removes raw
+extras, and rewrites desired descendants when deleting an extra parent value.
+It still loads/validates full aggregates and maintains ordinary secondary entries;
+this reduces write amplification, not read scope or detached lost updates.
+
 Database.path selects owned models through typed Python field/key access, returning
 declaration-bound ModelPath values. get infers the selected owner type and checks its
 binding at runtime. Registry.reference infers a primary-key constructor while keeping

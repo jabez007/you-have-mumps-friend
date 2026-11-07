@@ -28,7 +28,13 @@ def test_partial_inventory_node_work_is_independent_of_unrelated_balances():
     whole = measure(store, 8, "replace", "move", 2)
     assert small["operations_per_iteration"] == larger["operations_per_iteration"]
     assert whole["operations_per_iteration"]["get"] > larger["operations_per_iteration"]["get"]
-    assert whole["operations_per_iteration"]["set"] > larger["operations_per_iteration"]["set"]
+    # save now applies a physical node difference: the same logical workflow can
+    # write the same nodes while still paying for full aggregate reads/auditing.
+    assert whole["operations_per_iteration"]["set"] == larger["operations_per_iteration"]["set"]
+    assert (
+        whole["operations_per_iteration"]["children"]
+        > larger["operations_per_iteration"]["children"]
+    )
 
 
 def test_direct_quantity_lower_bound_is_explicitly_not_a_ledger_workflow():

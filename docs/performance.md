@@ -1,5 +1,11 @@
 # Native mutation benchmark qualification
 
+The historical rows below used full tree deletion and rewrite for save. The
+development branch now applies physical node differences after a bounded audit;
+new benchmark output identifies aggregate_save as physical_node_difference. Older
+timings are not measurements of the new implementation. The change targets write
+amplification, and additional physical reads can increase replacement latency.
+
 Observed on 2026-11-06 in [CI run 42262595757](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42262595757),
 commit `cbe64797753bd1ee6fdee57036674554a3c05b4a`.
 The [machine-readable results](benchmarks/native-mutations-2026-11-06.json) include

@@ -86,7 +86,9 @@ These features are not in version 0.5.0:
   not provide record isolation. [ADR 0008](adr/0008-application-authorization-boundary.md)
 - Migrations that transform data, such as renames, removals, type changes, default
   factories, new owned containers, and reference changes. [#20](https://github.com/jabez007/you-have-mumps-friend/issues/20)
-- Change tracking. `save` always rewrites the whole aggregate. [#27](https://github.com/jabez007/you-have-mumps-friend/issues/27)
+- Automatic change tracking and optimistic revisions. save validates and compares
+  the full aggregate, writing only physical node differences. It remains
+  last-writer-wins. [#27](https://github.com/jabez007/you-have-mumps-friend/issues/27)
 
 ## Operating limits
 
