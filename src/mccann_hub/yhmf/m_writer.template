@@ -66,21 +66,23 @@ preflight(operation,input,cfg,values,key)
  if operation'="delete",'$$refbound(key,.values,.cfg) quit "key_size"
  quit "ok"
 input(operation,input,cfg,values)
+ quit $$inputnode(operation,$name(input),.cfg,.values)
+inputnode(operation,source,cfg,values)
  new field,status
- if $data(input)#2 quit "invalid"
+ if $data(@source)#2 quit "invalid"
  set field="",status="ok"
- for  set field=$order(input(field)) quit:field=""  do  quit:status'="ok"
+ for  set field=$order(@source@(field)) quit:field=""  do  quit:status'="ok"
  . if '$data(cfg("tag",field)) set status="invalid" quit
  . if operation="delete",field'=cfg("key") set status="invalid" quit
  . if operation="patch",field=cfg("key") set status="invalid" quit
  . if $data(cfg("derived",field)) set status="invalid" quit
- . if $data(input(field))'=1 do  quit
- . . if '$get(cfg("nullable",field))!($data(input(field))'=10) set status="invalid" quit
- . . if $data(input(field,"%null"))'=1!(($get(input(field,"%null"))_"x")'="1x") set status="invalid" quit
- . . if $order(input(field,""))'="%null"!($order(input(field,"%null"))'="") set status="invalid" quit
+ . if $data(@source@(field))'=1 do  quit
+ . . if '$get(cfg("nullable",field))!($data(@source@(field))'=10) set status="invalid" quit
+ . . if $data(@source@(field,"%null"))'=1!(($get(@source@(field,"%null"))_"x")'="1x") set status="invalid" quit
+ . . if $order(@source@(field,""))'="%null"!($order(@source@(field,"%null"))'="") set status="invalid" quit
  . . set values(field)="n:"
- . if '$$valid(input(field),field,.cfg) set status="invalid" quit
- . set values(field)=$select($get(cfg("nullable",field)):"v:",1:"")_input(field)
+ . if '$$valid(@source@(field),field,.cfg) set status="invalid" quit
+ . set values(field)=$select($get(cfg("nullable",field)):"v:",1:"")_@source@(field)
  if status'="ok" quit status
  if operation="delete" quit $select($data(values(cfg("key"))):"ok",1:"invalid")
  if operation="patch" quit $select($data(values):"ok",1:"invalid")

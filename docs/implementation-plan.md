@@ -1671,3 +1671,13 @@ Export still rejects unsupported scalar declarations/validators. Differential te
 cover every qualified key family, null/unique transitions, failed claims, root and
 owned patches, ordered queries, and generated exact numerics on both native engines.
 The baseline C901 check passes at ten; retain the threshold and the current index seam.
+
+
+### Address M input nodes without unbounded copies, issue 54
+
+M does not accept a subscripted local as a by-reference actual argument. Extract the
+existing input loop into inputnode, taking a trusted name built by $name while the
+public input wrapper retains its original reference. Preserve all flat/owned scalar
+and typed-null validation. This creates one traversal seam for nested validation
+without copying an unvalidated subtree. Commit this behavior-preserving change before
+embedded support, retaining the existing input API and wire values.
