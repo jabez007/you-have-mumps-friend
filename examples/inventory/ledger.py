@@ -9,7 +9,7 @@ from typing import cast
 
 from pydantic import TypeAdapter, ValidationError
 
-from mccann_hub.yhmf import Database, Reference
+from mccann_hub.yhmf import Database, Patch, Reference
 from mccann_hub.yhmf.errors import NotFound
 
 from .models import Balance, Location, Lot, Movement, Position, Product, Quantity, Warehouse
@@ -128,14 +128,17 @@ class Inventory:
         self.db = db
 
     def _apply_balances(self, tx: Database, changes: tuple[BalanceChange, ...]) -> None:
+        patches = []
         for change in changes:
             address, value = change.address, change.value
             if change.existed:
-                tx.patch(
-                    Warehouse,
-                    address.warehouse,
-                    at=address.balance_path(value.id),
-                    changes={"quantity": value.quantity},
+                patches.append(
+                    Patch(
+                        Warehouse,
+                        address.warehouse,
+                        at=address.balance_path(value.id),
+                        changes={"quantity": value.quantity},
+                    )
                 )
             else:
                 tx.insert_child(
@@ -144,6 +147,8 @@ class Inventory:
                     collection=(*address.path, "balances"),
                     record=value,
                 )
+        if patches:
+            tx.patch_many(patches)
 
     def receive(
         self,

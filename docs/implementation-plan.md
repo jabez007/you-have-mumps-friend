@@ -1119,3 +1119,17 @@ updates, indexed-total/unique failures and group exchanges, and parent/child del
 A shared stored total is an intentional contention point; do not promise independent
 commits for writers that update it. Test direct IO bounds as unrelated siblings grow,
 complete validation, numeric boundaries/contexts, schema goldens, and explicit upgrade.
+
+The stored-sum core passed native CI 42344716067 on both engines and journaling modes,
+including separate/same-child writers, unique-total contention, parent delete races,
+forced restarts, and late failures. The inventory application then adds stored_on_hand
+at warehouse revision two. Freeze the original warehouse ownership graph and compare
+it against the pre-refactor golden; do not overwrite that fixture. A named transform
+initializes real totals and preserves incoming reference identities. Existing-balance
+moves reuse patch_many to eliminate net-zero total/index IO, demonstrated by trace.
+
+The quantity-node-only benchmark must not corrupt a v2 total by omitting its update.
+Keep this intentionally weaker lower bound on the frozen v1 warehouse, retaining a
+valid dataset and all existing balance/index/reference checks. Label each output row
+with warehouse_schema_version and describe the semantic difference; current partial
+and replacement workflows both use v2. No old latency report is presented as v2 data.

@@ -5,6 +5,13 @@ replacement still loads and validates complete warehouses, but audits existing
 physical nodes and writes only differences. New output labels aggregate_save as
 physical_node_difference. Do not treat older write counts as current behavior.
 
+Current workflow fixtures use warehouse revision two and maintain stored_on_hand
+and its index. Existing-balance transfers use one patch group, leaving a same-warehouse
+net-zero total untouched. The direct quantity-only lower bound uses frozen revision
+one without stored sums, so it leaves a valid dataset while intentionally excluding
+that extra work. New rows identify warehouse_schema_version. Historical measurements
+below predate stored totals and are not current-v2 latency claims.
+
 Run `YHMF_BENCHMARK=1 bash scripts/test-native.sh -q` with an installed YottaDB
 distribution. In addition to the existing mutation benchmark and native demo,
 the disposable harness runs `python -m scripts.benchmark_inventory` from the

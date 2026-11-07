@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Adds an indexed stored warehouse total beside the inventory example's virtual
+  total, an explicit resumable warehouse-v1 upgrade, grouped existing-balance
+  transfers, and clearly versioned inventory benchmark fixtures.
+
 - Adds root-owned stored Decimal sums with versioned dependencies, exact bounded
   arithmetic, shared mutation/index transitions, read verification, and explicit
   transform-based upgrades. Virtual fields and whole-save semantics remain intact.

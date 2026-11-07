@@ -60,6 +60,9 @@ def test_receive_move_adjust_and_query_audited_inventory(inventory):
     assert history[1].source.location == "DOCK"
     assert history[2].quantity == Decimal("-0.5")
     assert received.occurred_at == datetime.fromisoformat(TIME)
+    warehouse = inventory.db.get(Warehouse, "MAIN")
+    assert warehouse.stored_on_hand == warehouse.total_on_hand == Decimal("19.5")
+    assert inventory.db.query(Warehouse).where(stored_on_hand=Decimal("19.5")).all()[0].id == "MAIN"
     for model in MODELS:
         assert inventory.db.check_indexes(model).issues == ()
     with pytest.raises(ValidationError):

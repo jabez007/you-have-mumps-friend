@@ -49,7 +49,7 @@ jobs:
           tests/test_scoped_maintenance.py
           tests/test_transform_migrations.py
           tests/test_temporal_fields.py
-          tests/test_inventory_timestamp_migration.py
+          tests/test_inventory_timestamp_migration.py tests/test_inventory_warehouse_migration.py
           tests/test_uuid_fields.py
           tests/test_choice_fields.py
           tests/test_scalar_lists.py

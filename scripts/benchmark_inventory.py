@@ -19,6 +19,7 @@ from examples.inventory import (
     Product,
     Warehouse,
 )
+from examples.inventory.migrations import LegacyWarehouse
 from mccann_hub.yhmf import Database, NativeStore, Path, Reference, Registry
 from scripts.benchmark_support import CountedStore, environment, latencies
 
@@ -49,8 +50,10 @@ def cleanup(store):
             store.delete_tree(Path(name, (model.__global__[1:].encode(),)))
 
 
-def setup(store, size):
-    db = Database(store, Registry(*MODELS))
+def setup(store, size, *, quantity_only=False):
+    model = LegacyWarehouse if quantity_only else Warehouse
+    models = (Product, Lot, LegacyWarehouse) if quantity_only else MODELS
+    db = Database(store, Registry(*models))
     db.insert(Product(id="WIDGET", sku="WIDGET", name="Widget"))
     for index in range(size):
         db.insert(Lot(id=f"LOT-{index:04}", product=Reference[Product](key="WIDGET")))
@@ -67,7 +70,15 @@ def setup(store, size):
                 quantity=quantity,
             )
         locations[location] = Location(id=location, bins={"B1": Bin(id="B1", balances=balances)})
-    db.insert(Warehouse(id="MAIN", name="Main", locations=locations))
+    db.insert(
+        model.model_validate(
+            {
+                "id": "MAIN",
+                "name": "Main",
+                "locations": {name: value.model_dump() for name, value in locations.items()},
+            }
+        )
+    )
     return db
 
 
@@ -126,7 +137,9 @@ def operation(db, method, workflow):
 
 
 def verify(db, size, workflow, completed):
-    root = db.get(Warehouse, "MAIN")
+    quantity_only = workflow == "quantity_node_only"
+    model = LegacyWarehouse if quantity_only else Warehouse
+    root = db.get(model, "MAIN")
     for location in root.locations.values():
         balances = location.bins["B1"].balances
         assert len(balances) == size
@@ -135,10 +148,14 @@ def verify(db, size, workflow, completed):
     storage = root.locations["STORAGE"].bins["B1"].balances["LOT-0000"].quantity
     assert dock == (1000 - completed if workflow == "move" else 1000 + completed)
     assert storage == (completed if workflow == "move" else 0)
-    movements = 0 if workflow == "quantity_node_only" else completed
-    assert len(db.scan(Movement, limit=1000)) == movements
-    for model in MODELS:
-        assert db.check_indexes(model, limit=1000).issues == ()
+    movements = 0 if quantity_only else completed
+    if quantity_only:
+        assert db.store.children(Path(Movement.__global__), limit=1) == ()
+    else:
+        assert len(db.scan(Movement, limit=1000)) == movements
+        assert root.stored_on_hand == root.total_on_hand
+    for indexed in (Product, Lot, model) if quantity_only else MODELS:
+        assert db.check_indexes(indexed, limit=1000).issues == ()
     assert inbound(db, Product, "WIDGET") == 3 * size + movements
     assert inbound(db, Lot, "LOT-0000") == 2 + movements
     assert inbound(db, Warehouse, "MAIN") == movements * (2 if workflow == "move" else 1)
@@ -153,7 +170,7 @@ def inbound(db, model, key):
 
 def measure(store, size, method, workflow, iterations):
     cleanup(store)
-    db = setup(store, size)
+    db = setup(store, size, quantity_only=method == "direct_native")
     mutate = operation(db, method, workflow)
     for _ in range(WARMUP):
         mutate()
@@ -170,6 +187,7 @@ def measure(store, size, method, workflow, iterations):
         "balances_per_bin": size,
         "workflow": workflow,
         "method": method,
+        "warehouse_schema_version": 1 if method == "direct_native" else 2,
         "iterations": iterations,
         "warmup": WARMUP,
         **latencies(elapsed),
@@ -215,7 +233,9 @@ def main():
                     "methodology": (
                         "Warm, single-process, counted native operations. Existing balances; "
                         "one ledger append per workflow. Direct assignment excludes all ledger "
-                        "and integrity work. Disposable region configured by the harness; "
+                        "and integrity work, using the frozen v1 warehouse without stored sums. "
+                        "Current workflows maintain the v2 sum/index. "
+                        "Disposable region configured by the harness; "
                         "the journaling field records its mode."
                     ),
                     "results": results,

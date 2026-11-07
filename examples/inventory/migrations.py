@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Frozen v1 ledger declarations and its explicit UTC timestamp conversion.
+"""Frozen inventory declarations and explicit timestamp/stored-total conversions.
 
 Keep these historical fields independent of future domain changes. The committed
 pre-refactor inventory schema fixture verifies their persistence contract.
@@ -11,7 +11,7 @@ from typing import Annotated
 
 from pydantic import ConfigDict
 
-from mccann_hub.yhmf import Field, Model, Reference, Transform
+from mccann_hub.yhmf import ChildField, Children, Field, Model, Reference, Transform
 
 from .models import Lot, Movement, Product, Warehouse
 
@@ -55,3 +55,38 @@ def _timestamp(record: LegacyMovement) -> Movement:
 
 
 MOVEMENT_TIMESTAMPS = Transform("inventory.movement.utc.v2", _timestamp)
+
+
+class LegacyWarehouseIdentity(Model):
+    __schema_version__ = 1
+    id: str = Field(primary_key=True, min_length=1)
+
+
+class LegacyBalance(LegacyWarehouseIdentity):
+    lot: Reference[Lot] = Field(index=True)
+    product: Reference[Product] = Field(index=True)
+    quantity: Annotated[Decimal, Field(max_digits=18, decimal_places=6)] = Field(
+        default=Decimal(0), ge=0
+    )
+
+
+class LegacyBin(LegacyWarehouseIdentity):
+    balances: Children[LegacyBalance] = ChildField(key="id")
+
+
+class LegacyLocation(LegacyWarehouseIdentity):
+    bins: Children[LegacyBin] = ChildField(key="id")
+
+
+class LegacyWarehouse(LegacyWarehouseIdentity):
+    __global__ = "^InventoryWarehouse"
+    name: str
+    locations: Children[LegacyLocation] = ChildField(key="id")
+
+
+def _warehouse_total(record: LegacyWarehouse) -> Warehouse:
+    # The framework derives and pins the target stored sum after normal validation.
+    return Warehouse.model_validate(record.model_dump())
+
+
+WAREHOUSE_TOTALS = Transform("inventory.warehouse.total.v2", _warehouse_total)

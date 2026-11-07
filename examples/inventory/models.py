@@ -63,13 +63,15 @@ class Location(Identified):
 
 class Warehouse(Identified):
     __global__ = "^InventoryWarehouse"
+    __schema_version__ = 2
     name: str
     locations: Children[Location] = ChildField(key="id")
+    stored_on_hand: Decimal = Field(sum_of="locations.bins.balances.quantity", index=True, ge=0)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
     def total_on_hand(self) -> Decimal:
-        """Sum this loaded snapshot; no database reads or stored rollup nodes."""
+        """Sum this loaded snapshot independently of the separately stored total."""
         with localcontext() as context:
             context.prec = 40
             return sum(

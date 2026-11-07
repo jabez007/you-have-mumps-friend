@@ -42,12 +42,17 @@ def main() -> None:
     inventory.adjust(
         "0003-adjust", "LOT-001", storage, Decimal("-0.5"), reason="Cycle count: damaged stock"
     )
+    warehouse = db.get(Warehouse, "MAIN")
     print(
         json.dumps(
             {
                 "backend": "native" if args.native else "memory",
                 "stock": [asdict(row) for row in inventory.stock_by_product("WIDGET").rows],
                 "movements": [movement.id for movement in inventory.history("LOT-001")],
+                "warehouse_totals": {
+                    "virtual": warehouse.total_on_hand,
+                    "stored": warehouse.stored_on_hand,
+                },
             },
             default=str,
             indent=2,

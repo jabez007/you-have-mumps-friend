@@ -59,6 +59,9 @@ Warehouse.total_on_hand is a virtual sum of that loaded warehouse's balances. It
 creates no stored rollup nodes and requires no schema migration. It does not query
 fresh data or replace bounded balance queries; load an aggregate only when the
 workflow needs it. The uncached calculation uses its own Decimal precision.
+Warehouse.stored_on_hand is a separate indexed Decimal sum maintained with its
+owned quantities. The demo prints both totals. This stored field requires warehouse
+schema revision two; existing warehouse data needs the explicit upgrade below.
 
 Owned reads in the service use Database.path selectors, so strict mypy infers Balance,
 Bin, and Location without casts. BinAddress remains the domain address for stock
@@ -69,7 +72,7 @@ the test suite runs mypy against deliberately invalid paths and reference keys.
 
 ```python
 from decimal import Decimal
-from examples.inventory import MODELS, BinAddress, Inventory
+from examples.inventory import MODELS, BinAddress, Inventory, Warehouse
 from examples.inventory.__main__ import seed
 from mccann_hub.yhmf import Database, MemoryStore, Registry
 
@@ -87,11 +90,15 @@ stock = inventory.stock_at(storage)
 warehouse_stock = inventory.stock_in_warehouse("MAIN", location="STORAGE")
 page = inventory.stock_by_product("WIDGET", warehouse_limit=20)
 history = inventory.history("LOT-001", limit=100)
+assert db.get(Warehouse, "MAIN").stored_on_hand == Decimal("19.5")
+assert db.get(Warehouse, "MAIN").stored_on_hand == db.get(Warehouse, "MAIN").total_on_hand
 ```
 
 Each command reads current balances, applies changes, and inserts the movement
 inside one `db.atomic` callback. Existing balances use bounded owned-path `get`
-and `patch`; new balances use `insert_child` and retain its aggregate-size check.
+and patch_many; new balances use insert_child and retain its aggregate-size check.
+Existing sides of a move share one patch group. Transfers within one warehouse
+have a net-zero sum delta, so their stored total and total index are untouched.
 Stock cannot become negative. Quantities are finite Decimals with at most twelve
 whole and six fractional digits. Arithmetic is independent of the caller's Decimal
 precision, including the negation used for debits.
@@ -110,11 +117,57 @@ history through the general persistence API. Use this service as the application
 write boundary. Custom business-rule changes require an application schema revision
 when they change persistence semantics, as described in the schema compatibility policy.
 
+## Upgrade existing warehouses
+
+Warehouse revision two adds stored_on_hand with dependency
+locations.bins.balances.quantity. Opening existing data does not initialize zero
+or rewrite its schema. The frozen LegacyWarehouse/LegacyLocation/LegacyBin/
+LegacyBalance declarations preserve the original golden contract. WAREHOUSE_TOTALS
+uses the normal named-transform lifecycle to derive real totals and build their
+index. Existing quantity bytes and incoming reference identities remain unchanged;
+the transform can reapply unchanged field nodes while rewriting each aggregate.
+
+```python
+from examples.inventory.migrations import LegacyWarehouse, WAREHOUSE_TOTALS
+
+warehouse_plan = db.plan_migration(Warehouse, transform=WAREHOUSE_TOTALS)
+
+
+def upgrade_warehouses(current, reviewed_plan, migration_id=None):
+    status = (
+        current.begin_migration(
+            LegacyWarehouse, Warehouse, plan=reviewed_plan, transform=WAREHOUSE_TOTALS
+        )
+        if migration_id is None
+        else current.migration_status(migration_id)
+    )
+    while status.phase != "complete":
+        status = current.advance_migration(
+            status.migration_id, LegacyWarehouse, Warehouse,
+            transform=WAREHOUSE_TOTALS, batch_size=25,
+        )
+    return status
+
+
+# For existing v1 warehouses, review the plan/recovery boundary before calling:
+# result = upgrade_warehouses(db, warehouse_plan)
+```
+
+Fresh demo data already uses revision two. Keep the job id for restart recovery,
+coordinate raw writers, and use the existing transform abort/resume boundary. The
+virtual total_on_hand remains a loaded-object calculation and is not stored. Whole
+warehouse reads verify the stored total; child mutations do not read sibling balances.
+The shared total adds intentional contention for writers affecting one warehouse.
+Generated M writers reject these hierarchical models; raw SET/KILL cannot maintain
+the total or its index. See [computed fields](../../docs/guides/computed-fields.md).
+
 ## Upgrade an existing ledger
 
 Movement schema revision two changes occurred_at from string to datetime. Opening a
 v1 database with current MODELS does not convert its data; ledger access fails with
-SchemaMismatch until an explicit migration. Other inventory schemas are unchanged.
+SchemaMismatch until an explicit migration. Warehouse revision two independently
+adds the stored total; upgrade existing warehouses before resuming ledger writes
+or migrating v1 movement timestamps.
 The frozen source declarations and named conversion live in
 [migrations.py](migrations.py), with the original schema fixture protecting their bytes.
 

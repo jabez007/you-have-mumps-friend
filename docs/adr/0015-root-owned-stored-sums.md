@@ -1,6 +1,7 @@
 # ADR 0015: Root-owned stored Decimal sums
 
-Status: implemented; native qualification pending.
+Status: library core qualified by [native CI 42344716067](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42344716067);
+inventory application upgrade qualification pending.
 
 ## Problem and existing mechanisms
 
