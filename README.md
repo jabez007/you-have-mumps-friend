@@ -86,7 +86,7 @@ metadata nodes:
 
 | Area | Works today | Not yet |
 | --- | --- | --- |
-| Models | Primitive scalars, dates, UTC datetimes, UUID values, optional fields, embedded objects, keyed children, Python field inheritance, virtual computed values | Enums, lists, stored rollups, shared-global variants |
+| Models | Primitive scalars, dates, UTC datetimes, UUID values, Enum/Literal choices, optional fields, embedded objects, keyed children, Python field inheritance, virtual computed values | Lists, stored rollups, shared-global variants |
 | Relationships | Enforced references, explicit resolution, bounded inverse reads, owned many-to-many links, `restrict` on delete | `set_null`, `cascade` |
 | Queries | One equality predicate on an index or key, unique indexes, root and child paging, occurrence projections, collection counts | Range, prefix, sorting, several predicates |
 | Writes | Whole-record `save`, scalar `patch`, explicit `patch_many` groups, child insert and delete, restart-safe transactions | Change tracking, callback-wide deferred unique checks |

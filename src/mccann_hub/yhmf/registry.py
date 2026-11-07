@@ -15,6 +15,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, TypeAdapter
 
 from .canonical_schema import schema_bytes
+from .choices import Choices, compile_choices
 from .codecs import LAYOUT_VERSION
 from .errors import SchemaError
 from .models import Children, Model, Reference
@@ -99,6 +100,7 @@ class FieldSpec:
     index: bool = False
     unique: bool = False
     adapter: TypeAdapter[Any] | None = compiled_field(default=None, repr=False, compare=False)
+    choices: Choices | None = compiled_field(default=None, repr=False, compare=False)
 
 
 @dataclass(frozen=True)
@@ -172,6 +174,12 @@ def _field_spec(model: type[Model], name: str, ancestors: tuple[type[Model], ...
     annotation = scalar_type(model.model_fields[name].annotation)
     metadata = _field_metadata(model, name)
     spec = _field_type_spec(annotation, name, metadata, ancestors)
+    if (
+        spec.choices is not None
+        and spec.choices.kind == "enum"
+        and model.model_config.get("use_enum_values")
+    ):
+        raise SchemaError("Enum fields do not support use_enum_values=True")
     indexed, unique = bool(metadata.get("index")), bool(metadata.get("unique"))
     if (indexed or unique) and spec.kind not in {"scalar", "reference"}:
         raise SchemaError("Indexes require scalar or Reference fields")
@@ -200,9 +208,10 @@ def _field_type_spec(
         raise SchemaError("on_delete requires a Reference field")
     if isinstance(annotation, type) and issubclass(annotation, Model):
         return FieldSpec(name, "embedded", _node_spec(annotation, keyed=False, ancestors=ancestors))
-    if annotation not in _SCALARS:
+    choices = compile_choices(annotation)
+    if annotation not in _SCALARS and choices is None:
         raise SchemaError("Unsupported field type; use scalar, Model, or Children[Model]")
-    return FieldSpec(name, "scalar")
+    return FieldSpec(name, "scalar", choices=choices)
 
 
 def reference_target(annotation: type[Reference[Any]]) -> type[Model]:

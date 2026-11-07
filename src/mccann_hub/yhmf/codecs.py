@@ -9,13 +9,14 @@ import re
 from collections.abc import Callable
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
+from enum import Enum
 from typing import Any
 from uuid import UUID
 
 from . import temporal
 from .errors import StorageError
 
-type Scalar = str | int | bool | float | Decimal | bytes | date | datetime | UUID | None
+type Scalar = str | int | bool | float | Decimal | bytes | date | datetime | UUID | Enum | None
 type Key = str | int
 LAYOUT_VERSION = 1
 MAX_INTEGER_KEY = 999_999_999_999_999_999
@@ -87,6 +88,10 @@ _ENCODERS: dict[type[Any], Callable[[Any], bytes]] = {
 
 def encode_scalar(value: Scalar) -> bytes:
     """Encode one scalar without relying on its declared Python field type."""
+    if isinstance(value, Enum):
+        if type(value.value) not in (str, int, bool):
+            raise StorageError("Enum choices require primitive str, int, or bool values")
+        value = value.value
     encoder = _ENCODERS.get(type(value))
     if encoder is not None:
         return encoder(value)

@@ -68,6 +68,8 @@ def _check_child_key(node: NodeSpec, key: Key, value: Any) -> None:
 
 
 def encode_leaf(field: FieldSpec, value: Any) -> bytes:
+    if field.choices is not None:
+        value = field.choices.primitive(value)
     if field.kind == "scalar" or value is None:
         return encode_scalar(cast(Scalar, value))
     if field.kind == "reference":
@@ -147,7 +149,10 @@ class _Reader:
             path = root.child(field.name.encode("ascii"))
             stored = self.get(path)
             if field.kind == "scalar" or stored == b"n:":
-                values[field.name] = decode_scalar(stored)
+                value = decode_scalar(stored)
+                values[field.name] = (
+                    field.choices.restore(value) if field.choices is not None else value
+                )
             elif field.kind == "reference":
                 if not stored.startswith(b"r:"):
                     raise StorageError("Invalid reference encoding")

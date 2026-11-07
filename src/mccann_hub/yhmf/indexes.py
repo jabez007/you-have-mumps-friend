@@ -29,6 +29,8 @@ class Definition:
     def validate(self, value: Any) -> Any:
         assert self.field.adapter is not None
         result = self.field.adapter.validate_python(value)
+        if self.field.choices is not None:
+            self.field.choices.primitive(result)
         if result is not None and self.field.target is not None:
             assert self.field.target_key is not None
             key_type = self.field.target.model_fields[self.field.target_key].annotation

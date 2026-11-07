@@ -1,0 +1,105 @@
+{
+  "schema": {
+    "codec_version": 1,
+    "declaration": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "codec": "enum-bool-v1",
+          "default": true,
+          "enum": [
+            false,
+            true
+          ],
+          "type": "boolean"
+        },
+        "flag": {
+          "codec": "literal-bool-v1",
+          "default": true,
+          "enum": [
+            true
+          ],
+          "type": "boolean"
+        },
+        "id": {
+          "codec": "str",
+          "type": "string",
+          "yhmf": {
+            "primary_key": true
+          }
+        },
+        "kind": {
+          "codec": "literal-str-v1",
+          "default": "receipt",
+          "enum": [
+            "issue",
+            "receipt"
+          ],
+          "type": "string",
+          "yhmf": {
+            "index": true
+          }
+        },
+        "priority": {
+          "codec": "enum-int-v1",
+          "default": -1,
+          "enum": [
+            -1,
+            2
+          ],
+          "type": "integer",
+          "yhmf": {
+            "index": true
+          }
+        },
+        "rank": {
+          "codec": "literal-int-v1",
+          "default": -1,
+          "enum": [
+            -1,
+            2
+          ],
+          "type": "integer"
+        },
+        "state": {
+          "anyOf": [
+            {
+              "codec": "enum-str-v1",
+              "enum": [
+                "closed",
+                "open"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "open",
+          "yhmf": {
+            "index": true,
+            "unique": true
+          }
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    },
+    "format_version": 2,
+    "global": "^YHMFTestProduct",
+    "key": "id",
+    "layout": 1,
+    "version": 1
+  },
+  "values": {
+    "enabled": "b:1",
+    "flag": "b:1",
+    "id": "s:A",
+    "kind": "s:receipt",
+    "priority": "i:-1",
+    "rank": "i:-1",
+    "state": "s:open"
+  }
+}

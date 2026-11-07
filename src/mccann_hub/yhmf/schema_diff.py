@@ -290,7 +290,30 @@ def _scalar_type(
         if variant.get("codec", codec if legacy else None) != codec:
             raise _Unsupported(path)
         return name, format_name, codec
+    if str(variant.get("codec", "")).startswith(("enum-", "literal-")):
+        return _choice_type(variant, path)
     return name, format_name
+
+
+def _choice_type(variant: dict[str, Any], path: tuple[str, ...]) -> tuple[str, str, str]:
+    codec, name = variant.get("codec"), variant["type"]
+    primitive = {"string": str, "integer": int, "boolean": bool}.get(name)
+    domain = variant.get("enum")
+    if primitive is None or codec not in {
+        f"enum-{primitive.__name__}-v1",
+        f"literal-{primitive.__name__}-v1",
+    }:
+        raise _Unsupported(path)
+    if (
+        not isinstance(domain, list)
+        or not domain
+        or any(type(value) is not primitive for value in domain)
+    ):
+        raise _Unsupported(path)
+    # An Enum-domain change needs an explicit conversion between Python members.
+    # Literal constraints retain primitive DTOs and use ordinary revalidation.
+    signature = canonical_json(domain).decode("ascii") if codec.startswith("enum-") else ""
+    return name, codec, signature
 
 
 def _added(path: tuple[str, ...], value: _Field) -> list[SchemaChange]:

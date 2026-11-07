@@ -72,6 +72,17 @@ scalar and equality/unique value, not as a primary-key codec. Defaults are canon
 UUID strings in metadata. uuid-v1.json fixes encoded boundary values and the schema.
 Decoders reject invalid and noncanonical encodings.
 
+Enum and Literal fields store the existing s:/i:/b: primitive encodings. Their
+format-two declarations carry enum-str-v1, enum-int-v1, enum-bool-v1 or the
+corresponding literal-* codecs, plus a sorted, deduplicated enum value array.
+Homogeneous str/int/bool domains are supported; Flag, mixed/nonprimitive values,
+and Enum use_enum_values=True are rejected. Aliases, member names, enum class names,
+and declaration order do not affect identity. Nullable unions use the existing n:.
+Enum defaults are primitive values in metadata. Exact typed lookup restores members;
+unknown values and wrong primitive tags fail without invoking Enum._missing_.
+choices-v1.json fixes representative schema and storage bytes. Existing schemas,
+primitive encodings, and layout/global codec versions remain unchanged.
+
 The [golden scalar fixtures](../tests/fixtures/scalars.json) contain literal
 encoded values for readers in other languages. Float rendering still requires
 cross-language qualification before a Go writer can claim compatibility.

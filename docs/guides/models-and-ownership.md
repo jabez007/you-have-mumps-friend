@@ -28,9 +28,9 @@ class Product(Model):
     quantity: Decimal = Field(default=Decimal("0"), ge=0)
 ```
 
-Field types are `str`, `int`, `bool`, `float`, `Decimal`, `bytes`, those types with
-`| None`, embedded models, `Children`, and `Reference`. Keys must match their declared
-type.
+Field types include `str`, `int`, `bool`, `float`, `Decimal`, `bytes`, date, aware
+datetime, UUID, Enum/Literal choices, nullable variants, embedded models, `Children`,
+and `Reference`. Keys must match their declared str/int type.
 
 The registry rejects overlapping globals, aliases, unsupported field types, and missing
 or ambiguous primary keys.
@@ -248,3 +248,39 @@ use lowercase hyphenated text with a dedicated type tag; alternative raw encodin
 fail safely. Primary keys remain str/int, so use a unique UUID scalar when the model
 also needs the existing native key contract. Version-specific Pydantic UUID aliases
 are outside the supported metadata set for now.
+
+## Finite choices
+
+Use ordinary Enum, StrEnum, IntEnum, or Literal with homogeneous str/int/bool values:
+
+```python
+from enum import StrEnum
+from typing import Literal
+
+
+class Status(StrEnum):
+    OPEN = "open"
+    CLOSED = "closed"
+
+
+class WorkItem(Model):
+    __global__ = "^WorkItem"
+    id: str = Field(primary_key=True)
+    status: Status = Field(default=Status.OPEN, index=True)
+    kind: Literal["receipt", "issue"] = "receipt"
+
+
+work = Database(MemoryStore(), Registry(WorkItem))
+work.insert(WorkItem(id="A"))
+work.patch(WorkItem, "A", changes={"status": Status.CLOSED})
+assert work.query(WorkItem).where(status=Status.CLOSED).all()[0].status is Status.CLOSED
+```
+
+Strict Enum fields take members in Python input and queries. Reads restore members
+from the stored primitive value. Unknown raw values fail even if the enum implements
+_missing_. Literal fields remain primitive values. Use a nullable union for nulls.
+Flags, empty/mixed/nonprimitive domains, and Enum use_enum_values=True are unsupported.
+Primary keys remain plain str/int. Names, aliases, and ordering do not change schema
+identity; changing an Enum's stored domain needs an explicit named transform. Literal
+constraint changes use the existing validation-only migration. Defaults and indexes
+use the same transaction guarantees as other scalars.

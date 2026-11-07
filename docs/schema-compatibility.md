@@ -34,6 +34,17 @@ UUID fields use uuid-v1 with canonical lowercase strings for defaults. Unknown U
 codec markers fail comparison safely. UUID field support does not extend primary
 keys or change the identities of earlier primitive/temporal fields.
 
+Enum/Literal contracts record homogeneous primitive values and an explicit choice
+codec. Names, aliases, and ordering do not participate. Equal Enum domains can bind
+to differently named Python enum classes without migration. A domain change or
+primitive-to-Enum conversion requires a named transform: strict Python validation
+does not convert members of unrelated enum classes. Literal domain changes use
+the existing validation-only migration path, validating all records before
+activation. Adding either kind with a literal default uses existing backfill.
+Custom Enum behavior still follows the explicit application revision policy;
+stored unknown values never use _missing_ as a coercion hook. Enum use_enum_values
+mode is rejected because strict detached save/patch revalidation requires members.
+
 Virtual properties and Pydantic computed fields are outside the stored contract.
 They add no nodes, indexes, defaults, or schema changes. A computed field may not
 declare mapper persistence metadata. Changing a virtual display calculation alone

@@ -10,6 +10,7 @@ import re
 import types
 from datetime import date, datetime
 from decimal import Decimal
+from enum import Enum
 from typing import TYPE_CHECKING, Any, Union, cast, get_args, get_origin
 from uuid import UUID
 
@@ -79,6 +80,8 @@ def numeric_rule(value: Any) -> str:
 
 
 def _metadata_scalar(value: Any) -> Any:
+    if isinstance(value, Enum):
+        return value.value
     if type(value) in (date, datetime):
         return temporal.literal(value)
     if type(value) is UUID:
@@ -187,6 +190,8 @@ def _field(field: "FieldSpec", declaration: FieldInfo, *, primary: bool) -> dict
             result = {"type": "object", "additionalProperties": result}
     elif field.target is not None:
         result = {"type": "object"}
+    elif field.choices is not None:
+        result = field.choices.schema()
     else:
         result = _scalar(annotation)
     if nullable:
