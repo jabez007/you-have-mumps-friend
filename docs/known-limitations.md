@@ -76,7 +76,9 @@ These features are not in version 0.5.0:
 - Computed fields. [#17](https://github.com/jabez007/you-have-mumps-friend/issues/17)
 - `set_null` and `cascade` deletion policies. [#13](https://github.com/jabez007/you-have-mumps-friend/issues/13)
 - Range, prefix, sorted, and multi-predicate queries. [#15](https://github.com/jabez007/you-have-mumps-friend/issues/15)
-- Access rules. [#19](https://github.com/jabez007/you-have-mumps-friend/issues/19)
+- Mapper access rules. Apply authorization in the application's trusted service;
+  independent M writers require their own enforcement. Database and raw paths do
+  not provide record isolation. [ADR 0008](adr/0008-application-authorization-boundary.md)
 - Migrations that transform data, such as renames, removals, type changes, default
   factories, new owned containers, and reference changes. [#20](https://github.com/jabez007/you-have-mumps-friend/issues/20)
 - Change tracking. `save` always rewrites the whole aggregate. [#27](https://github.com/jabez007/you-have-mumps-friend/issues/27)

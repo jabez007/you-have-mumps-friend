@@ -1,7 +1,7 @@
 # ADR 0007: Reuse fields at declaration time
 
-Status: accepted for the inventory example; native qualification is required before
-closing [issue 18](https://github.com/jabez007/you-have-mumps-friend/issues/18).
+Status: accepted for the inventory example. [CI run 42320796509](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42320796509)
+passed both configured native engines before [issue 18](https://github.com/jabez007/you-have-mumps-friend/issues/18) was closed.
 
 ## Existing mechanisms and problem
 

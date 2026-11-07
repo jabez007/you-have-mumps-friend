@@ -310,7 +310,9 @@ currently bypass validation, indexes, and constraints, as the
 these the framework can maintain for M writers, for example through triggers or a
 generated M interface, and what validation means when Pydantic cannot run. See [#25](https://github.com/jabez007/you-have-mumps-friend/issues/25).
 
-The framework will also provide a controlled raw-access interface for Python.
+Python callers can resolve managed owner addresses with raw_path inside atomic.
+Raw writes bypass mapper validation and secondary maintenance; see the
+[raw-access contract](guides/m-access.md#resolve-a-managed-raw-address).
 
 The storage format must also be usable by Go programs eventually.
 
@@ -323,6 +325,12 @@ query explanations, and migration status. Full reverse index audits and repair
 procedures remain later extensions.
 
 Diagnostic output must avoid exposing sensitive values by default.
+
+Authorization belongs to the application's trusted service boundary for now.
+Database, Store, and raw paths do not authenticate or authorize principals. Python
+policies cannot constrain an independent M process with database access. Inventory
+business invariants do not supply access control. [ADR 0008](adr/0008-application-authorization-boundary.md)
+records the decision, deployment limits, and requirements for reconsidering scoped handles.
 
 Framework-owned global names and paths must be validated, and applications must not be allowed to turn untrusted user input into arbitrary global write operations.
 

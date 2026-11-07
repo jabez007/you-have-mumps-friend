@@ -597,3 +597,12 @@ actual rollback, plus an ordinary unittest.mock boundary guard demonstrating wha
 can be tested without promising universal side-effect detection. Document the
 decision and the absence of a performance claim. No new dependency, storage change,
 or retry framework; existing C901 passes at ten.
+
+### Authorization decision, issue 19
+
+Database has no principal model and already exposes raw and maintenance interfaces.
+Reuse the application's service boundary instead of adding a partial query filter
+that implies protection on other access paths. ADR 0008 records the decision and
+the independent M-writer limitation, supported by upstream security documentation.
+Document that inventory's business validation is not authorization. No runtime,
+storage, or dependency change; validate documentation examples and links.

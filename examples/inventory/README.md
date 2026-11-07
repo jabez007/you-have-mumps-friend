@@ -45,6 +45,11 @@ service enforces cross-record inventory rules. Writing directly through `Databas
 can bypass those business rules. Historical movement positions are snapshots:
 warehouse references are enforced, while location/bin strings preserve history.
 
+The service has no authenticated principal and does not authorize callers. An
+application must restrict access through its own trusted boundary; neither this
+example nor Python mapper checks constrain independent M writers. See the
+[authorization decision](../../docs/adr/0008-application-authorization-boundary.md).
+
 The models reuse an unregistered Identified base for their nonempty string id.
 Concrete roots still declare their own global, and Position stays an embedded value
 without its own key. This changes no existing schema bytes or stored paths. See
