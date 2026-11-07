@@ -788,3 +788,26 @@ Type changes to Enum require an explicit transform. Existing primitive, temporal
 and legacy contracts must remain unchanged. Test null/defaults, native indexes,
 unknown choices, aliases, rollback, canonical/codec goldens, and both Pydantic
 versions. Scalar lists retain their separate hierarchical design. C901 passes at ten.
+
+### Hierarchical scalar lists, final type slice of issue 11
+
+Reuse FieldSpec, field adapters, record encoding/reading, equality indexes, prepared
+patches, and the existing root node-budget traversal. Store a list as l:N with
+canonical numeric 1..N item nodes, at most 1000 items. Preserve empty, null, and
+missing distinctions; items are supported plain scalars or finite choices, with
+nullable items allowed. Reject nested containers/models/references and Annotated
+item declarations initially; whole-field validators and length constraints remain
+supported. Whole-list equality preserves order and duplicates, subject to native
+index-key limits. No membership query or automatic item tracking.
+
+Extract the existing node-budget visitor from child mutations first, so list growth
+and child insertion use one invariant. Factor leaf reading before extending it.
+Then compile an item FieldSpec and explicit scalar-list-v1 schema grammar. Compare
+encoded field node maps to prepare minimal sets/deletes; grouped patches check net
+root growth once before writes. Fixed-width child counting must exclude list-bearing
+children. List type/domain changes and new list fields use explicit named record
+transforms initially, avoiding ambiguous binary/Enum literal reconstruction in the
+ordinary scalar-default executor. Existing primitive/default migration behavior and
+all stored contracts remain unchanged. Test physical shape, corruption, limits,
+index claims, shrink/null transitions, grouped swaps, rollback/restarts, owned lists,
+transform recovery, and both Pydantic/native matrices. Existing C901 passes at ten.

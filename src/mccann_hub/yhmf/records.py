@@ -148,21 +148,8 @@ class _Reader:
         for field in fields:
             path = root.child(field.name.encode("ascii"))
             stored = self.get(path)
-            if field.kind == "scalar" or stored == b"n:":
-                value = decode_scalar(stored)
-                values[field.name] = (
-                    field.choices.restore(value) if field.choices is not None else value
-                )
-            elif field.kind == "reference":
-                if not stored.startswith(b"r:"):
-                    raise StorageError("Invalid reference encoding")
-                assert field.target is not None
-                assert field.target_key is not None
-                annotation = field.target.model_fields[field.target_key].annotation
-                key = decode_key(stored[2:])
-                if type(key) is not annotation:
-                    raise StorageError("Reference key type does not match its target")
-                values[field.name] = {"key": key}
+            if field.node is None or stored == b"n:":
+                values[field.name] = self.leaf(field, stored)
             elif field.kind == "embedded":
                 assert field.node is not None
                 if stored != b"o:1":
@@ -172,6 +159,20 @@ class _Reader:
                 assert field.node is not None
                 values[field.name] = self.children(field.node, path, stored)
         return values
+
+    def leaf(self, field: FieldSpec, stored: bytes) -> Any:
+        if field.kind == "reference" and stored != b"n:":
+            if not stored.startswith(b"r:"):
+                raise StorageError("Invalid reference encoding")
+            assert field.target is not None
+            assert field.target_key is not None
+            annotation = field.target.model_fields[field.target_key].annotation
+            key = decode_key(stored[2:])
+            if type(key) is not annotation:
+                raise StorageError("Reference key type does not match its target")
+            return {"key": key}
+        value = decode_scalar(stored)
+        return field.choices.restore(value) if field.choices is not None else value
 
     def children(self, node: NodeSpec, path: Path, marker: bytes) -> dict[Key, Any]:
         keys = self.store.children(path, limit=MAX_CHILDREN + 1)
