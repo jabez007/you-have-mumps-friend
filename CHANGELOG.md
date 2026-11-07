@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Adds native insertion diagnostics attributing independent-parent retries to shared
+  data blocks and shared-parent retries to the count node. Reports both engines and
+  journaling modes, retaining current count and layout guarantees.
+
 - Retains tagged record layout one after native M arithmetic/collation probes on
   both qualified engines and journaling modes. Adds a golden-tested M payload reader
   and records the separate versioning decision for future ordered indexes.

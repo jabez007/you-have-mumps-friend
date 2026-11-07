@@ -379,3 +379,76 @@ universal journaling multiplier, power-loss durability, recovery time, or engine
 performance differences. Inventory benchmarks also executed in both modes. Their original
 methodology string still said journaling was off; the structured journaling field and
 harness mode are authoritative, and the string is corrected in subsequent output.
+
+## Native insertion conflict attribution
+
+[CI 42335756704](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42335756704)
+ran the [diagnostics](../tests/test_native_insertion_diagnostics.py) on r2.02/Ubuntu
+22.04 and r2.06/Ubuntu 24.04, with journaling off and before-image journaling on.
+The [committed observations](benchmarks/native-insertion-conflicts-2026-11-06.json)
+contain all 24 experiments, operation/attempt counters, logical address evidence,
+DSE block locations, and native conflict statistics. Source commit: 73704bd.
+
+The workload uses the public insert_child operation after the fixed-width budget
+improvement from issue 4. A Parent has a string key, an unindexed padding scalar,
+and keyed children containing only their string identity. The region uses 4096-byte
+blocks. The same declarations run with padding of zero or 16,384 bytes. Insertion
+does not read that padding field; it changes where records occupy physical blocks.
+
+For the paired intervention, two transactions pause after reading different parent
+counts. The controller commits the first before releasing the second. In every
+engine/journaling combination, logical read/write intersections were empty:
+
+| Dataset | Parent R0 metadata/count block | Parent R1 metadata/count block | Attempts for two commits | Native conflicts |
+| --- | --- | --- | --- | --- |
+| Compact | 0x03 | 0x03 | 3 | 1 |
+| Padded | 0x11 | 0x22 | 2 | 0 |
+
+The schema fingerprint occupied a different block in each case. DSE reported the
+same parent block assignments before and after the pair. No field, declaration,
+or logical insertion operation changed between these datasets. This controlled
+intervention supports shared data-block invalidation as the cause of the extra
+restart for independent compact parents. It is stronger evidence than inferring a
+block cause from attempt counts alone. The DSE TP-blkmod debug counters remained
+zero; they do not supply additional attribution in this run.
+
+Four-process bursts then performed 40 inserts per process. The following numbers
+are observed attempts per commit; each burst committed and verified 160 children:
+
+| Engine | Journaling | Separate parents: compact / padded | Shared parent: compact / padded |
+| --- | --- | --- | --- |
+| r2.02 | off | 2.344 / 1.000 | 3.313 / 3.250 |
+| r2.02 | before-image | 1.163 / 1.000 | 2.406 / 2.469 |
+| r2.06 | off | 2.331 / 1.000 | 2.294 / 2.294 |
+| r2.06 | before-image | 2.131 / 1.000 | 2.319 / 2.481 |
+
+Only the shared-parent workloads reported a logical read/write intersection: that
+parent's items c:N node. Padding did not eliminate those true conflicts. Every final
+count agreed with the independently enumerated child identities. Exact logical
+addresses are retained for the paired interventions; burst address lists are
+summarized after the overlap assertions, with full paths in the linked CI logs.
+
+The engine defines [GVSTAT conflict counters](https://docs.yottadb.com/ProgrammersGuide/commands.html#zshow-information-codes)
+and [DSE FIND block lookup](https://docs.yottadb.com/AdminOpsGuide/dse.html#qualifiers-of-find).
+These experiments used read-only diagnostic commands. Their initial short header
+request omitted the debug counters; the qualified run uses DUMP -FILEHEADER -ALL.
+
+Keep the direct count safety invariant. These measurements establish a cause for
+this workload, not a mapper correctness defect or a universal tuning prescription.
+Artificial padding is an intervention, not an application recommendation. Fixed
+case order, shared disposable region reuse, CI scheduling, and different engine/OS
+hosts prevent general latency, journaling-speed, or production-throughput claims.
+Measure real application block placement and transaction footprints before tuning.
+
+The native writer contract in [issue 25](https://github.com/jabez007/you-have-mumps-friend/issues/25)
+should evaluate any numeric-counter alternative explicitly; no $increment benefit
+was measured here. Stored totals in [issue 17](https://github.com/jabez007/you-have-mumps-friend/issues/17)
+will also introduce intentional shared writes and need their own contention evidence.
+No count format or record-layout change follows from this investigation.
+
+Reproduce only against a disposable configured native environment:
+
+```bash
+bash scripts/test-native.sh -k diagnose_native_insertion_conflicts -q
+YHMF_JOURNALING=1 bash scripts/test-native.sh -k diagnose_native_insertion_conflicts -q
+```

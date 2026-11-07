@@ -1,0 +1,4878 @@
+{
+  "ci_run": "https://github.com/jabez007/you-have-mumps-friend/actions/runs/42335756704",
+  "methodology": {
+    "bursts": "Four processes, 40 inserts each; simultaneous release after warmup.",
+    "diagnostics": "Read-only DSE FIND and extended headers, before/after GVSTAT, attempt counts, unique logical read/write addresses.",
+    "limitations": "Fixed case order and shared disposable region; CI scheduling and engine/OS/CPU are not isolated; semantic/contention investigation, not a sustained-throughput benchmark.",
+    "padding": "0 or 16384 ASCII bytes on an unindexed scalar not read during insertion; same model declaration.",
+    "pair": "Two transactions pause after separate parent count reads; first commits before second is released.",
+    "path_retention": "Exact logical addresses retained for paired interventions. Burst paths summarized as unique address counts after the in-test overlap assertion; full paths remain in the linked CI logs."
+  },
+  "results": [
+    {
+      "after": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t11:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:150,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:191,\n"
+        },
+        "gvstat": {
+          "GET": 257544,
+          "ORD": 81046,
+          "SET": 88341,
+          "TBR": 23775,
+          "TBW": 7245,
+          "TC0": 5,
+          "TC1": 0,
+          "TC2": 0,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 183,
+          "TR1": 177,
+          "TR2": 177,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 507,
+          "TTW": 2276
+        },
+        "header": [
+          "Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0"
+        ]
+      },
+      "attempts_per_commit": 1.5,
+      "before": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t11:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:133,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:174,\n"
+        },
+        "gvstat": {
+          "GET": 257468,
+          "ORD": 81044,
+          "SET": 88335,
+          "TBR": 23747,
+          "TBW": 7243,
+          "TC0": 4,
+          "TC1": 0,
+          "TC2": 0,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 182,
+          "TR1": 177,
+          "TR2": 177,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 505,
+          "TTW": 2274
+        },
+        "header": [
+          "Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0"
+        ]
+      },
+      "commits": 2,
+      "elapsed_seconds": 0.04722909599999525,
+      "engine": "pywr v0.10.0 YottaDB r2.06 Linux x86_64",
+      "gvstat_delta": {
+        "GET": 76,
+        "ORD": 2,
+        "SET": 6,
+        "TBR": 28,
+        "TBW": 2,
+        "TC0": 1,
+        "TC1": 0,
+        "TC2": 0,
+        "TC3": 0,
+        "TC4": 0,
+        "TR0": 1,
+        "TR1": 0,
+        "TR2": 0,
+        "TR3": 0,
+        "TR4": 0,
+        "TTR": 2,
+        "TTW": 2
+      },
+      "journaling": false,
+      "logical_read_write_overlap": [],
+      "padding_bytes": 0,
+      "scenario": "pair",
+      "workers": [
+        {
+          "counts": {
+            "attempts": 1,
+            "children": 1,
+            "get": 13,
+            "set": 3
+          },
+          "reads": [
+            [
+              "^YHMFMigration",
+              [
+                "gate"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse",
+                "snapshot"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "fingerprint"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "layout"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "schema"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "type"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items",
+                "s:0:0"
+              ]
+            ]
+          ],
+          "writes": [
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items",
+                "s:0:0"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items",
+                "s:0:0",
+                "id"
+              ]
+            ]
+          ]
+        },
+        {
+          "counts": {
+            "attempts": 2,
+            "children": 1,
+            "get": 24,
+            "set": 3
+          },
+          "reads": [
+            [
+              "^YHMFMigration",
+              [
+                "gate"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse",
+                "snapshot"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "fingerprint"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "layout"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "schema"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "type"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items",
+                "s:1:0"
+              ]
+            ]
+          ],
+          "writes": [
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items",
+                "s:1:0"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items",
+                "s:1:0",
+                "id"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "after": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t3:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t22:17C,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t22:1BD,\n"
+        },
+        "gvstat": {
+          "GET": 257687,
+          "ORD": 81057,
+          "SET": 88363,
+          "TBR": 23839,
+          "TBW": 7264,
+          "TC0": 5,
+          "TC1": 0,
+          "TC2": 0,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 183,
+          "TR1": 177,
+          "TR2": 177,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 513,
+          "TTW": 2280
+        },
+        "header": [
+          "Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0"
+        ]
+      },
+      "attempts_per_commit": 1.0,
+      "before": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t3:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t22:17C,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t22:1BD,\n"
+        },
+        "gvstat": {
+          "GET": 257625,
+          "ORD": 81055,
+          "SET": 88357,
+          "TBR": 23811,
+          "TBW": 7262,
+          "TC0": 5,
+          "TC1": 0,
+          "TC2": 0,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 183,
+          "TR1": 177,
+          "TR2": 177,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 511,
+          "TTW": 2278
+        },
+        "header": [
+          "Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0"
+        ]
+      },
+      "commits": 2,
+      "elapsed_seconds": 0.046743624000001205,
+      "engine": "pywr v0.10.0 YottaDB r2.06 Linux x86_64",
+      "gvstat_delta": {
+        "GET": 62,
+        "ORD": 2,
+        "SET": 6,
+        "TBR": 28,
+        "TBW": 2,
+        "TC0": 0,
+        "TC1": 0,
+        "TC2": 0,
+        "TC3": 0,
+        "TC4": 0,
+        "TR0": 0,
+        "TR1": 0,
+        "TR2": 0,
+        "TR3": 0,
+        "TR4": 0,
+        "TTR": 2,
+        "TTW": 2
+      },
+      "journaling": false,
+      "logical_read_write_overlap": [],
+      "padding_bytes": 16384,
+      "scenario": "pair",
+      "workers": [
+        {
+          "counts": {
+            "attempts": 1,
+            "children": 1,
+            "get": 13,
+            "set": 3
+          },
+          "reads": [
+            [
+              "^YHMFMigration",
+              [
+                "gate"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse",
+                "snapshot"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "fingerprint"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "layout"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "schema"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "type"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items",
+                "s:0:0"
+              ]
+            ]
+          ],
+          "writes": [
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items",
+                "s:0:0"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items",
+                "s:0:0",
+                "id"
+              ]
+            ]
+          ]
+        },
+        {
+          "counts": {
+            "attempts": 1,
+            "children": 1,
+            "get": 13,
+            "set": 3
+          },
+          "reads": [
+            [
+              "^YHMFMigration",
+              [
+                "gate"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse",
+                "snapshot"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "fingerprint"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "layout"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "schema"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "type"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items",
+                "s:1:0"
+              ]
+            ]
+          ],
+          "writes": [
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items",
+                "s:1:0"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items",
+                "s:1:0",
+                "id"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "after": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t11:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:517,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:558,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:9B0,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:9F1,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:45,\t27:3E6,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:45,\t27:427,\n"
+        },
+        "gvstat": {
+          "GET": 263947,
+          "ORD": 81394,
+          "SET": 89228,
+          "TBR": 24904,
+          "TBW": 7457,
+          "TC0": 93,
+          "TC1": 72,
+          "TC2": 53,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 270,
+          "TR1": 249,
+          "TR2": 230,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 521,
+          "TTW": 2444
+        },
+        "header": [
+          "Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0"
+        ]
+      },
+      "attempts_per_commit": 2.33125,
+      "before": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t11:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:133,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:174,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:1E8,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:229,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:29D,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:2DE,\n"
+        },
+        "gvstat": {
+          "GET": 257792,
+          "ORD": 81068,
+          "SET": 88393,
+          "TBR": 23887,
+          "TBW": 7269,
+          "TC0": 5,
+          "TC1": 0,
+          "TC2": 0,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 183,
+          "TR1": 177,
+          "TR2": 177,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 517,
+          "TTW": 2284
+        },
+        "header": [
+          "Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0"
+        ]
+      },
+      "commits": 160,
+      "elapsed_seconds": 0.14019856500000571,
+      "engine": "pywr v0.10.0 YottaDB r2.06 Linux x86_64",
+      "gvstat_delta": {
+        "GET": 6155,
+        "ORD": 326,
+        "SET": 835,
+        "TBR": 1017,
+        "TBW": 188,
+        "TC0": 88,
+        "TC1": 72,
+        "TC2": 53,
+        "TC3": 0,
+        "TC4": 0,
+        "TR0": 87,
+        "TR1": 72,
+        "TR2": 53,
+        "TR3": 0,
+        "TR4": 0,
+        "TTR": 4,
+        "TTW": 160
+      },
+      "journaling": false,
+      "logical_read_write_overlap": [],
+      "padding_bytes": 0,
+      "scenario": "burst_separate",
+      "workers": [
+        {
+          "counts": {
+            "attempts": 81,
+            "children": 81,
+            "get": 1053,
+            "set": 235
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 114,
+            "children": 96,
+            "get": 1418,
+            "set": 240
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 55,
+            "children": 55,
+            "get": 715,
+            "set": 154
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 123,
+            "children": 108,
+            "get": 1530,
+            "set": 251
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        }
+      ]
+    },
+    {
+      "after": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t3:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t22:17C,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t22:1BD,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:E0,\t27:17C,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:E0,\t27:1BD,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  2C.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:13D,\t2C:17C,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  2C.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:13D,\t2C:1BD,\n"
+        },
+        "gvstat": {
+          "GET": 267053,
+          "ORD": 81720,
+          "SET": 89714,
+          "TBR": 25969,
+          "TBW": 7650,
+          "TC0": 93,
+          "TC1": 72,
+          "TC2": 53,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 270,
+          "TR1": 249,
+          "TR2": 230,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 533,
+          "TTW": 2608
+        },
+        "header": [
+          "Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0"
+        ]
+      },
+      "attempts_per_commit": 1.0,
+      "before": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t3:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t22:17C,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t22:1BD,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:E0,\t27:17C,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:E0,\t27:1BD,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  2C.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:13D,\t2C:17C,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  2C.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:13D,\t2C:1BD,\n"
+        },
+        "gvstat": {
+          "GET": 264424,
+          "ORD": 81565,
+          "SET": 89258,
+          "TBR": 24977,
+          "TBW": 7490,
+          "TC0": 93,
+          "TC1": 72,
+          "TC2": 53,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 270,
+          "TR1": 249,
+          "TR2": 230,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 529,
+          "TTW": 2448
+        },
+        "header": [
+          "Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0"
+        ]
+      },
+      "commits": 160,
+      "elapsed_seconds": 0.0572733819999911,
+      "engine": "pywr v0.10.0 YottaDB r2.06 Linux x86_64",
+      "gvstat_delta": {
+        "GET": 2629,
+        "ORD": 155,
+        "SET": 456,
+        "TBR": 992,
+        "TBW": 160,
+        "TC0": 0,
+        "TC1": 0,
+        "TC2": 0,
+        "TC3": 0,
+        "TC4": 0,
+        "TR0": 0,
+        "TR1": 0,
+        "TR2": 0,
+        "TR3": 0,
+        "TR4": 0,
+        "TTR": 4,
+        "TTW": 160
+      },
+      "journaling": false,
+      "logical_read_write_overlap": [],
+      "padding_bytes": 16384,
+      "scenario": "burst_separate",
+      "workers": [
+        {
+          "counts": {
+            "attempts": 40,
+            "children": 40,
+            "get": 520,
+            "set": 120
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 40,
+            "children": 40,
+            "get": 520,
+            "set": 120
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 40,
+            "children": 40,
+            "get": 520,
+            "set": 120
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 40,
+            "children": 40,
+            "get": 520,
+            "set": 120
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        }
+      ]
+    },
+    {
+      "after": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t11:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:BF,\n"
+        },
+        "gvstat": {
+          "GET": 273525,
+          "ORD": 82202,
+          "SET": 90560,
+          "TBR": 27018,
+          "TBW": 7818,
+          "TC0": 179,
+          "TC1": 142,
+          "TC2": 104,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 356,
+          "TR1": 319,
+          "TR2": 281,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 545,
+          "TTW": 2769
+        },
+        "header": [
+          "Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0"
+        ]
+      },
+      "attempts_per_commit": 2.29375,
+      "before": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t11:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  31.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t31:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  31.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t31:BF,\n"
+        },
+        "gvstat": {
+          "GET": 267494,
+          "ORD": 81888,
+          "SET": 89723,
+          "TBR": 26023,
+          "TBW": 7652,
+          "TC0": 93,
+          "TC1": 72,
+          "TC2": 53,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 270,
+          "TR1": 249,
+          "TR2": 230,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 541,
+          "TTW": 2609
+        },
+        "header": [
+          "Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0"
+        ]
+      },
+      "commits": 160,
+      "elapsed_seconds": 0.1348570530000046,
+      "engine": "pywr v0.10.0 YottaDB r2.06 Linux x86_64",
+      "gvstat_delta": {
+        "GET": 6031,
+        "ORD": 314,
+        "SET": 837,
+        "TBR": 995,
+        "TBW": 166,
+        "TC0": 86,
+        "TC1": 70,
+        "TC2": 51,
+        "TC3": 0,
+        "TC4": 0,
+        "TR0": 86,
+        "TR1": 70,
+        "TR2": 51,
+        "TR3": 0,
+        "TR4": 0,
+        "TTR": 4,
+        "TTW": 160
+      },
+      "journaling": false,
+      "logical_read_write_overlap": [
+        [
+          "^YHMFTestWarehouse",
+          [
+            "s:R0",
+            "items"
+          ]
+        ]
+      ],
+      "padding_bytes": 0,
+      "scenario": "burst_shared",
+      "workers": [
+        {
+          "counts": {
+            "attempts": 79,
+            "children": 79,
+            "get": 1027,
+            "set": 236
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 113,
+            "children": 95,
+            "get": 1405,
+            "set": 220
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 122,
+            "children": 107,
+            "get": 1519,
+            "set": 257
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 53,
+            "children": 53,
+            "get": 689,
+            "set": 157
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        }
+      ]
+    },
+    {
+      "after": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t3:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t22:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t22:BF,\n"
+        },
+        "gvstat": {
+          "GET": 279924,
+          "ORD": 82682,
+          "SET": 91428,
+          "TBR": 28033,
+          "TBW": 7994,
+          "TC0": 281,
+          "TC1": 198,
+          "TC2": 152,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 458,
+          "TR1": 375,
+          "TR2": 330,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 551,
+          "TTW": 2930
+        },
+        "header": [
+          "Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0"
+        ]
+      },
+      "attempts_per_commit": 2.29375,
+      "before": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t3:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:BF,\n"
+        },
+        "gvstat": {
+          "GET": 273882,
+          "ORD": 82367,
+          "SET": 90569,
+          "TBR": 27037,
+          "TBW": 7827,
+          "TC0": 179,
+          "TC1": 142,
+          "TC2": 104,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 356,
+          "TR1": 319,
+          "TR2": 281,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 547,
+          "TTW": 2770
+        },
+        "header": [
+          "Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0"
+        ]
+      },
+      "commits": 160,
+      "elapsed_seconds": 0.13534945700000378,
+      "engine": "pywr v0.10.0 YottaDB r2.06 Linux x86_64",
+      "gvstat_delta": {
+        "GET": 6042,
+        "ORD": 315,
+        "SET": 859,
+        "TBR": 996,
+        "TBW": 167,
+        "TC0": 102,
+        "TC1": 56,
+        "TC2": 48,
+        "TC3": 0,
+        "TC4": 0,
+        "TR0": 102,
+        "TR1": 56,
+        "TR2": 49,
+        "TR3": 0,
+        "TR4": 0,
+        "TTR": 4,
+        "TTW": 160
+      },
+      "journaling": false,
+      "logical_read_write_overlap": [
+        [
+          "^YHMFTestWarehouse",
+          [
+            "s:R0",
+            "items"
+          ]
+        ]
+      ],
+      "padding_bytes": 16384,
+      "scenario": "burst_shared",
+      "workers": [
+        {
+          "counts": {
+            "attempts": 113,
+            "children": 90,
+            "get": 1409,
+            "set": 227
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 82,
+            "children": 82,
+            "get": 1066,
+            "set": 246
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 121,
+            "children": 98,
+            "get": 1515,
+            "set": 254
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 51,
+            "children": 51,
+            "get": 663,
+            "set": 153
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        }
+      ]
+    },
+    {
+      "after": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t11:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:150,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:191,\n"
+        },
+        "gvstat": {
+          "GET": 257568,
+          "ORD": 81046,
+          "SET": 88365,
+          "TBR": 23767,
+          "TBW": 7240,
+          "TC0": 5,
+          "TC1": 0,
+          "TC2": 0,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 183,
+          "TR1": 177,
+          "TR2": 177,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 507,
+          "TTW": 2276
+        },
+        "header": [
+          "Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0",
+          "Filesystem block size   0x00001000        jnl solid tn    0x0000000000000001"
+        ]
+      },
+      "attempts_per_commit": 1.5,
+      "before": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t11:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:133,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:174,\n"
+        },
+        "gvstat": {
+          "GET": 257492,
+          "ORD": 81044,
+          "SET": 88359,
+          "TBR": 23739,
+          "TBW": 7238,
+          "TC0": 4,
+          "TC1": 0,
+          "TC2": 0,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 182,
+          "TR1": 177,
+          "TR2": 177,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 505,
+          "TTW": 2274
+        },
+        "header": [
+          "Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0",
+          "Filesystem block size   0x00001000        jnl solid tn    0x0000000000000001"
+        ]
+      },
+      "commits": 2,
+      "elapsed_seconds": 0.04448200600000973,
+      "engine": "pywr v0.10.0 YottaDB r2.06 Linux x86_64",
+      "gvstat_delta": {
+        "GET": 76,
+        "ORD": 2,
+        "SET": 6,
+        "TBR": 28,
+        "TBW": 2,
+        "TC0": 1,
+        "TC1": 0,
+        "TC2": 0,
+        "TC3": 0,
+        "TC4": 0,
+        "TR0": 1,
+        "TR1": 0,
+        "TR2": 0,
+        "TR3": 0,
+        "TR4": 0,
+        "TTR": 2,
+        "TTW": 2
+      },
+      "journaling": true,
+      "logical_read_write_overlap": [],
+      "padding_bytes": 0,
+      "scenario": "pair",
+      "workers": [
+        {
+          "counts": {
+            "attempts": 1,
+            "children": 1,
+            "get": 13,
+            "set": 3
+          },
+          "reads": [
+            [
+              "^YHMFMigration",
+              [
+                "gate"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse",
+                "snapshot"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "fingerprint"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "layout"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "schema"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "type"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items",
+                "s:0:0"
+              ]
+            ]
+          ],
+          "writes": [
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items",
+                "s:0:0"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items",
+                "s:0:0",
+                "id"
+              ]
+            ]
+          ]
+        },
+        {
+          "counts": {
+            "attempts": 2,
+            "children": 1,
+            "get": 24,
+            "set": 3
+          },
+          "reads": [
+            [
+              "^YHMFMigration",
+              [
+                "gate"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse",
+                "snapshot"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "fingerprint"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "layout"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "schema"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "type"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items",
+                "s:1:0"
+              ]
+            ]
+          ],
+          "writes": [
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items",
+                "s:1:0"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items",
+                "s:1:0",
+                "id"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "after": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t3:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t22:17C,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t22:1BD,\n"
+        },
+        "gvstat": {
+          "GET": 257711,
+          "ORD": 81057,
+          "SET": 88387,
+          "TBR": 23831,
+          "TBW": 7259,
+          "TC0": 5,
+          "TC1": 0,
+          "TC2": 0,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 183,
+          "TR1": 177,
+          "TR2": 177,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 513,
+          "TTW": 2280
+        },
+        "header": [
+          "Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0",
+          "Filesystem block size   0x00001000        jnl solid tn    0x0000000000000001"
+        ]
+      },
+      "attempts_per_commit": 1.0,
+      "before": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t3:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t22:17C,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t22:1BD,\n"
+        },
+        "gvstat": {
+          "GET": 257649,
+          "ORD": 81055,
+          "SET": 88381,
+          "TBR": 23803,
+          "TBW": 7257,
+          "TC0": 5,
+          "TC1": 0,
+          "TC2": 0,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 183,
+          "TR1": 177,
+          "TR2": 177,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 511,
+          "TTW": 2278
+        },
+        "header": [
+          "Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0",
+          "Filesystem block size   0x00001000        jnl solid tn    0x0000000000000001"
+        ]
+      },
+      "commits": 2,
+      "elapsed_seconds": 0.04724025600000914,
+      "engine": "pywr v0.10.0 YottaDB r2.06 Linux x86_64",
+      "gvstat_delta": {
+        "GET": 62,
+        "ORD": 2,
+        "SET": 6,
+        "TBR": 28,
+        "TBW": 2,
+        "TC0": 0,
+        "TC1": 0,
+        "TC2": 0,
+        "TC3": 0,
+        "TC4": 0,
+        "TR0": 0,
+        "TR1": 0,
+        "TR2": 0,
+        "TR3": 0,
+        "TR4": 0,
+        "TTR": 2,
+        "TTW": 2
+      },
+      "journaling": true,
+      "logical_read_write_overlap": [],
+      "padding_bytes": 16384,
+      "scenario": "pair",
+      "workers": [
+        {
+          "counts": {
+            "attempts": 1,
+            "children": 1,
+            "get": 13,
+            "set": 3
+          },
+          "reads": [
+            [
+              "^YHMFMigration",
+              [
+                "gate"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse",
+                "snapshot"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "fingerprint"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "layout"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "schema"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "type"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items",
+                "s:0:0"
+              ]
+            ]
+          ],
+          "writes": [
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items",
+                "s:0:0"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items",
+                "s:0:0",
+                "id"
+              ]
+            ]
+          ]
+        },
+        {
+          "counts": {
+            "attempts": 1,
+            "children": 1,
+            "get": 13,
+            "set": 3
+          },
+          "reads": [
+            [
+              "^YHMFMigration",
+              [
+                "gate"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse",
+                "snapshot"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "fingerprint"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "layout"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "schema"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "type"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items",
+                "s:1:0"
+              ]
+            ]
+          ],
+          "writes": [
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items",
+                "s:1:0"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items",
+                "s:1:0",
+                "id"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "after": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t11:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  1D.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t1D:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  1D.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t1D:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  1D.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t1D:517,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  1D.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t1D:558,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  1D.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t1D:9B0,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  1D.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t1D:9F1,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:45,\t3:15E,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:45,\t3:19F,\n"
+        },
+        "gvstat": {
+          "GET": 263307,
+          "ORD": 81357,
+          "SET": 89031,
+          "TBR": 24887,
+          "TBW": 7446,
+          "TC0": 105,
+          "TC1": 51,
+          "TC2": 30,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 283,
+          "TR1": 228,
+          "TR2": 207,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 521,
+          "TTW": 2444
+        },
+        "header": [
+          "Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0",
+          "Filesystem block size   0x00001000        jnl solid tn    0x0000000000000001"
+        ]
+      },
+      "attempts_per_commit": 2.13125,
+      "before": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t11:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:133,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:174,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:1E8,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:229,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:29D,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:2DE,\n"
+        },
+        "gvstat": {
+          "GET": 257816,
+          "ORD": 81068,
+          "SET": 88417,
+          "TBR": 23879,
+          "TBW": 7264,
+          "TC0": 5,
+          "TC1": 0,
+          "TC2": 0,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 183,
+          "TR1": 177,
+          "TR2": 177,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 517,
+          "TTW": 2284
+        },
+        "header": [
+          "Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0",
+          "Filesystem block size   0x00001000        jnl solid tn    0x0000000000000001"
+        ]
+      },
+      "commits": 160,
+      "elapsed_seconds": 0.09052640200002315,
+      "engine": "pywr v0.10.0 YottaDB r2.06 Linux x86_64",
+      "gvstat_delta": {
+        "GET": 5491,
+        "ORD": 289,
+        "SET": 614,
+        "TBR": 1008,
+        "TBW": 182,
+        "TC0": 100,
+        "TC1": 51,
+        "TC2": 30,
+        "TC3": 0,
+        "TC4": 0,
+        "TR0": 100,
+        "TR1": 51,
+        "TR2": 30,
+        "TR3": 0,
+        "TR4": 0,
+        "TTR": 4,
+        "TTW": 160
+      },
+      "journaling": true,
+      "logical_read_write_overlap": [],
+      "padding_bytes": 0,
+      "scenario": "burst_separate",
+      "workers": [
+        {
+          "counts": {
+            "attempts": 90,
+            "children": 82,
+            "get": 1113,
+            "set": 173
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 86,
+            "children": 74,
+            "get": 1067,
+            "set": 179
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 82,
+            "children": 71,
+            "get": 1014,
+            "set": 165
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 83,
+            "children": 71,
+            "get": 1008,
+            "set": 161
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        }
+      ]
+    },
+    {
+      "after": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t3:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t22:17C,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t22:1BD,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:E0,\t27:17C,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:E0,\t27:1BD,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  2C.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:13D,\t2C:17C,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  2C.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:13D,\t2C:1BD,\n"
+        },
+        "gvstat": {
+          "GET": 266552,
+          "ORD": 81688,
+          "SET": 89539,
+          "TBR": 25953,
+          "TBW": 7639,
+          "TC0": 105,
+          "TC1": 51,
+          "TC2": 30,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 283,
+          "TR1": 228,
+          "TR2": 207,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 533,
+          "TTW": 2608
+        },
+        "header": [
+          "Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0",
+          "Filesystem block size   0x00001000        jnl solid tn    0x0000000000000001"
+        ]
+      },
+      "attempts_per_commit": 1.0,
+      "before": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t3:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t22:17C,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t22:1BD,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:E0,\t27:17C,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:E0,\t27:1BD,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  2C.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:13D,\t2C:17C,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  2C.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:13D,\t2C:1BD,\n"
+        },
+        "gvstat": {
+          "GET": 263784,
+          "ORD": 81528,
+          "SET": 89061,
+          "TBR": 24961,
+          "TBW": 7479,
+          "TC0": 105,
+          "TC1": 51,
+          "TC2": 30,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 283,
+          "TR1": 228,
+          "TR2": 207,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 529,
+          "TTW": 2448
+        },
+        "header": [
+          "Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0",
+          "Filesystem block size   0x00001000        jnl solid tn    0x0000000000000001"
+        ]
+      },
+      "commits": 160,
+      "elapsed_seconds": 0.0773995609999929,
+      "engine": "pywr v0.10.0 YottaDB r2.06 Linux x86_64",
+      "gvstat_delta": {
+        "GET": 2768,
+        "ORD": 160,
+        "SET": 478,
+        "TBR": 992,
+        "TBW": 160,
+        "TC0": 0,
+        "TC1": 0,
+        "TC2": 0,
+        "TC3": 0,
+        "TC4": 0,
+        "TR0": 0,
+        "TR1": 0,
+        "TR2": 0,
+        "TR3": 0,
+        "TR4": 0,
+        "TTR": 4,
+        "TTW": 160
+      },
+      "journaling": true,
+      "logical_read_write_overlap": [],
+      "padding_bytes": 16384,
+      "scenario": "burst_separate",
+      "workers": [
+        {
+          "counts": {
+            "attempts": 40,
+            "children": 40,
+            "get": 520,
+            "set": 120
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 40,
+            "children": 40,
+            "get": 520,
+            "set": 120
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 40,
+            "children": 40,
+            "get": 520,
+            "set": 120
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 40,
+            "children": 40,
+            "get": 520,
+            "set": 120
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        }
+      ]
+    },
+    {
+      "after": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t11:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:BF,\n"
+        },
+        "gvstat": {
+          "GET": 272931,
+          "ORD": 82176,
+          "SET": 90188,
+          "TBR": 27002,
+          "TBW": 7807,
+          "TC0": 217,
+          "TC1": 115,
+          "TC2": 65,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 395,
+          "TR1": 292,
+          "TR2": 242,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 545,
+          "TTW": 2769
+        },
+        "header": [
+          "Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0",
+          "Filesystem block size   0x00001000        jnl solid tn    0x0000000000000001"
+        ]
+      },
+      "attempts_per_commit": 2.31875,
+      "before": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t11:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  31.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t31:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  31.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t31:BF,\n"
+        },
+        "gvstat": {
+          "GET": 266993,
+          "ORD": 81856,
+          "SET": 89548,
+          "TBR": 26007,
+          "TBW": 7641,
+          "TC0": 105,
+          "TC1": 51,
+          "TC2": 30,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 283,
+          "TR1": 228,
+          "TR2": 207,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 541,
+          "TTW": 2609
+        },
+        "header": [
+          "Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0",
+          "Filesystem block size   0x00001000        jnl solid tn    0x0000000000000001"
+        ]
+      },
+      "commits": 160,
+      "elapsed_seconds": 0.08743297600000233,
+      "engine": "pywr v0.10.0 YottaDB r2.06 Linux x86_64",
+      "gvstat_delta": {
+        "GET": 5938,
+        "ORD": 320,
+        "SET": 640,
+        "TBR": 995,
+        "TBW": 166,
+        "TC0": 112,
+        "TC1": 64,
+        "TC2": 35,
+        "TC3": 0,
+        "TC4": 0,
+        "TR0": 112,
+        "TR1": 64,
+        "TR2": 35,
+        "TR3": 0,
+        "TR4": 0,
+        "TTR": 4,
+        "TTW": 160
+      },
+      "journaling": true,
+      "logical_read_write_overlap": [
+        [
+          "^YHMFTestWarehouse",
+          [
+            "s:R0",
+            "items"
+          ]
+        ]
+      ],
+      "padding_bytes": 0,
+      "scenario": "burst_shared",
+      "workers": [
+        {
+          "counts": {
+            "attempts": 92,
+            "children": 80,
+            "get": 1134,
+            "set": 177
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 93,
+            "children": 77,
+            "get": 1130,
+            "set": 168
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 94,
+            "children": 88,
+            "get": 1170,
+            "set": 184
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 92,
+            "children": 83,
+            "get": 1139,
+            "set": 173
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        }
+      ]
+    },
+    {
+      "after": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t3:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t22:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t22:BF,\n"
+        },
+        "gvstat": {
+          "GET": 279598,
+          "ORD": 82677,
+          "SET": 90864,
+          "TBR": 28017,
+          "TBW": 7983,
+          "TC0": 338,
+          "TC1": 189,
+          "TC2": 107,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 516,
+          "TR1": 366,
+          "TR2": 284,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 551,
+          "TTW": 2930
+        },
+        "header": [
+          "Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0",
+          "Filesystem block size   0x00001000        jnl solid tn    0x0000000000000001"
+        ]
+      },
+      "attempts_per_commit": 2.48125,
+      "before": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t3:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:BF,\n"
+        },
+        "gvstat": {
+          "GET": 273288,
+          "ORD": 82341,
+          "SET": 90197,
+          "TBR": 27021,
+          "TBW": 7816,
+          "TC0": 217,
+          "TC1": 115,
+          "TC2": 65,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 395,
+          "TR1": 292,
+          "TR2": 242,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 547,
+          "TTW": 2770
+        },
+        "header": [
+          "Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0",
+          "Filesystem block size   0x00001000        jnl solid tn    0x0000000000000001"
+        ]
+      },
+      "commits": 160,
+      "elapsed_seconds": 0.08724008299998331,
+      "engine": "pywr v0.10.0 YottaDB r2.06 Linux x86_64",
+      "gvstat_delta": {
+        "GET": 6310,
+        "ORD": 336,
+        "SET": 667,
+        "TBR": 996,
+        "TBW": 167,
+        "TC0": 121,
+        "TC1": 74,
+        "TC2": 42,
+        "TC3": 0,
+        "TC4": 0,
+        "TR0": 121,
+        "TR1": 74,
+        "TR2": 42,
+        "TR3": 0,
+        "TR4": 0,
+        "TTR": 4,
+        "TTW": 160
+      },
+      "journaling": true,
+      "logical_read_write_overlap": [
+        [
+          "^YHMFTestWarehouse",
+          [
+            "s:R0",
+            "items"
+          ]
+        ]
+      ],
+      "padding_bytes": 16384,
+      "scenario": "burst_shared",
+      "workers": [
+        {
+          "counts": {
+            "attempts": 99,
+            "children": 84,
+            "get": 1212,
+            "set": 179
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 104,
+            "children": 87,
+            "get": 1283,
+            "set": 189
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 96,
+            "children": 83,
+            "get": 1172,
+            "set": 184
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 98,
+            "children": 83,
+            "get": 1192,
+            "set": 181
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        }
+      ]
+    },
+    {
+      "after": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t11:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:150,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:191,\n"
+        },
+        "gvstat": {
+          "GET": 257572,
+          "ORD": 81044,
+          "SET": 88307,
+          "TBR": 23764,
+          "TBW": 7235,
+          "TC0": 5,
+          "TC1": 0,
+          "TC2": 10,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 183,
+          "TR1": 177,
+          "TR2": 177,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 507,
+          "TTW": 2276
+        },
+        "header": [
+          "Reserved Bytes                                  0  Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0"
+        ]
+      },
+      "attempts_per_commit": 1.5,
+      "before": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t11:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:133,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:174,\n"
+        },
+        "gvstat": {
+          "GET": 257496,
+          "ORD": 81042,
+          "SET": 88301,
+          "TBR": 23736,
+          "TBW": 7233,
+          "TC0": 4,
+          "TC1": 0,
+          "TC2": 10,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 182,
+          "TR1": 177,
+          "TR2": 177,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 505,
+          "TTW": 2274
+        },
+        "header": [
+          "Reserved Bytes                                  0  Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0"
+        ]
+      },
+      "commits": 2,
+      "elapsed_seconds": 0.05675916799998504,
+      "engine": "pywr v0.10.0 YottaDB r2.02 Linux x86_64",
+      "gvstat_delta": {
+        "GET": 76,
+        "ORD": 2,
+        "SET": 6,
+        "TBR": 28,
+        "TBW": 2,
+        "TC0": 1,
+        "TC1": 0,
+        "TC2": 0,
+        "TC3": 0,
+        "TC4": 0,
+        "TR0": 1,
+        "TR1": 0,
+        "TR2": 0,
+        "TR3": 0,
+        "TR4": 0,
+        "TTR": 2,
+        "TTW": 2
+      },
+      "journaling": false,
+      "logical_read_write_overlap": [],
+      "padding_bytes": 0,
+      "scenario": "pair",
+      "workers": [
+        {
+          "counts": {
+            "attempts": 1,
+            "children": 1,
+            "get": 13,
+            "set": 3
+          },
+          "reads": [
+            [
+              "^YHMFMigration",
+              [
+                "gate"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse",
+                "snapshot"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "fingerprint"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "layout"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "schema"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "type"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items",
+                "s:0:0"
+              ]
+            ]
+          ],
+          "writes": [
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items",
+                "s:0:0"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items",
+                "s:0:0",
+                "id"
+              ]
+            ]
+          ]
+        },
+        {
+          "counts": {
+            "attempts": 2,
+            "children": 1,
+            "get": 24,
+            "set": 3
+          },
+          "reads": [
+            [
+              "^YHMFMigration",
+              [
+                "gate"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse",
+                "snapshot"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "fingerprint"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "layout"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "schema"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "type"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items",
+                "s:1:0"
+              ]
+            ]
+          ],
+          "writes": [
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items",
+                "s:1:0"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items",
+                "s:1:0",
+                "id"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "after": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t3:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t22:17C,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t22:1BD,\n"
+        },
+        "gvstat": {
+          "GET": 257715,
+          "ORD": 81055,
+          "SET": 88329,
+          "TBR": 23828,
+          "TBW": 7254,
+          "TC0": 5,
+          "TC1": 0,
+          "TC2": 10,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 183,
+          "TR1": 177,
+          "TR2": 177,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 513,
+          "TTW": 2280
+        },
+        "header": [
+          "Reserved Bytes                                  0  Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0"
+        ]
+      },
+      "attempts_per_commit": 1.0,
+      "before": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t3:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t22:17C,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t22:1BD,\n"
+        },
+        "gvstat": {
+          "GET": 257653,
+          "ORD": 81053,
+          "SET": 88323,
+          "TBR": 23800,
+          "TBW": 7252,
+          "TC0": 5,
+          "TC1": 0,
+          "TC2": 10,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 183,
+          "TR1": 177,
+          "TR2": 177,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 511,
+          "TTW": 2278
+        },
+        "header": [
+          "Reserved Bytes                                  0  Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0"
+        ]
+      },
+      "commits": 2,
+      "elapsed_seconds": 0.05364511799996308,
+      "engine": "pywr v0.10.0 YottaDB r2.02 Linux x86_64",
+      "gvstat_delta": {
+        "GET": 62,
+        "ORD": 2,
+        "SET": 6,
+        "TBR": 28,
+        "TBW": 2,
+        "TC0": 0,
+        "TC1": 0,
+        "TC2": 0,
+        "TC3": 0,
+        "TC4": 0,
+        "TR0": 0,
+        "TR1": 0,
+        "TR2": 0,
+        "TR3": 0,
+        "TR4": 0,
+        "TTR": 2,
+        "TTW": 2
+      },
+      "journaling": false,
+      "logical_read_write_overlap": [],
+      "padding_bytes": 16384,
+      "scenario": "pair",
+      "workers": [
+        {
+          "counts": {
+            "attempts": 1,
+            "children": 1,
+            "get": 13,
+            "set": 3
+          },
+          "reads": [
+            [
+              "^YHMFMigration",
+              [
+                "gate"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse",
+                "snapshot"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "fingerprint"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "layout"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "schema"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "type"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items",
+                "s:0:0"
+              ]
+            ]
+          ],
+          "writes": [
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items",
+                "s:0:0"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items",
+                "s:0:0",
+                "id"
+              ]
+            ]
+          ]
+        },
+        {
+          "counts": {
+            "attempts": 1,
+            "children": 1,
+            "get": 13,
+            "set": 3
+          },
+          "reads": [
+            [
+              "^YHMFMigration",
+              [
+                "gate"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse",
+                "snapshot"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "fingerprint"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "layout"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "schema"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "type"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items",
+                "s:1:0"
+              ]
+            ]
+          ],
+          "writes": [
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items",
+                "s:1:0"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items",
+                "s:1:0",
+                "id"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "after": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t11:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  21.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t21:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  21.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t21:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  1E.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:63,\t1E:34F,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  1D.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:76,\t1D:10,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  24.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:A1,\t24:23D,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  24.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:A1,\t24:27E,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  24.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:A1,\t24:6D6,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  26.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:B4,\t26:10,\n"
+        },
+        "gvstat": {
+          "GET": 263818,
+          "ORD": 81410,
+          "SET": 89164,
+          "TBR": 24985,
+          "TBW": 7498,
+          "TC0": 94,
+          "TC1": 64,
+          "TC2": 71,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 271,
+          "TR1": 238,
+          "TR2": 238,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 520,
+          "TTW": 2444
+        },
+        "header": [
+          "Reserved Bytes                                  0  Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0"
+        ]
+      },
+      "attempts_per_commit": 2.34375,
+      "before": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t11:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:133,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:174,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:1E8,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:229,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:29D,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:2DE,\n"
+        },
+        "gvstat": {
+          "GET": 257820,
+          "ORD": 81066,
+          "SET": 88359,
+          "TBR": 23876,
+          "TBW": 7259,
+          "TC0": 5,
+          "TC1": 0,
+          "TC2": 10,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 183,
+          "TR1": 177,
+          "TR2": 177,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 517,
+          "TTW": 2284
+        },
+        "header": [
+          "Reserved Bytes                                  0  Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0"
+        ]
+      },
+      "commits": 160,
+      "elapsed_seconds": 0.0762415990000136,
+      "engine": "pywr v0.10.0 YottaDB r2.02 Linux x86_64",
+      "gvstat_delta": {
+        "GET": 5998,
+        "ORD": 344,
+        "SET": 805,
+        "TBR": 1109,
+        "TBW": 239,
+        "TC0": 89,
+        "TC1": 64,
+        "TC2": 61,
+        "TC3": 0,
+        "TC4": 0,
+        "TR0": 88,
+        "TR1": 61,
+        "TR2": 61,
+        "TR3": 0,
+        "TR4": 0,
+        "TTR": 3,
+        "TTW": 160
+      },
+      "journaling": false,
+      "logical_read_write_overlap": [],
+      "padding_bytes": 0,
+      "scenario": "burst_separate",
+      "workers": [
+        {
+          "counts": {
+            "attempts": 87,
+            "children": 85,
+            "get": 1119,
+            "set": 216
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 99,
+            "children": 97,
+            "get": 1273,
+            "set": 240
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 86,
+            "children": 85,
+            "get": 1113,
+            "set": 225
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 103,
+            "children": 103,
+            "get": 1334,
+            "set": 254
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        }
+      ]
+    },
+    {
+      "after": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t3:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  21.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t21:17C,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  21.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t21:1BD,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  26.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:E0,\t26:17C,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  26.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:E0,\t26:1BD,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  2C.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:13D,\t2C:17C,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  2C.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:13D,\t2C:1BD,\n"
+        },
+        "gvstat": {
+          "GET": 266461,
+          "ORD": 81698,
+          "SET": 89575,
+          "TBR": 26062,
+          "TBW": 7691,
+          "TC0": 94,
+          "TC1": 64,
+          "TC2": 71,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 271,
+          "TR1": 238,
+          "TR2": 238,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 532,
+          "TTW": 2607
+        },
+        "header": [
+          "Reserved Bytes                                  0  Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0"
+        ]
+      },
+      "attempts_per_commit": 1.0,
+      "before": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t3:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  21.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t21:17C,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  21.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t21:1BD,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  26.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:E0,\t26:17C,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  26.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:E0,\t26:1BD,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  2C.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:13D,\t2C:17C,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  2C.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:13D,\t2C:1BD,\n"
+        },
+        "gvstat": {
+          "GET": 264295,
+          "ORD": 81581,
+          "SET": 89194,
+          "TBR": 25070,
+          "TBW": 7531,
+          "TC0": 94,
+          "TC1": 64,
+          "TC2": 71,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 271,
+          "TR1": 238,
+          "TR2": 238,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 528,
+          "TTW": 2448
+        },
+        "header": [
+          "Reserved Bytes                                  0  Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0"
+        ]
+      },
+      "commits": 160,
+      "elapsed_seconds": 0.056690629999991415,
+      "engine": "pywr v0.10.0 YottaDB r2.02 Linux x86_64",
+      "gvstat_delta": {
+        "GET": 2166,
+        "ORD": 117,
+        "SET": 381,
+        "TBR": 992,
+        "TBW": 160,
+        "TC0": 0,
+        "TC1": 0,
+        "TC2": 0,
+        "TC3": 0,
+        "TC4": 0,
+        "TR0": 0,
+        "TR1": 0,
+        "TR2": 0,
+        "TR3": 0,
+        "TR4": 0,
+        "TTR": 4,
+        "TTW": 159
+      },
+      "journaling": false,
+      "logical_read_write_overlap": [],
+      "padding_bytes": 16384,
+      "scenario": "burst_separate",
+      "workers": [
+        {
+          "counts": {
+            "attempts": 40,
+            "children": 40,
+            "get": 520,
+            "set": 120
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 40,
+            "children": 40,
+            "get": 520,
+            "set": 120
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 40,
+            "children": 40,
+            "get": 520,
+            "set": 120
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 40,
+            "children": 40,
+            "get": 520,
+            "set": 120
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        }
+      ]
+    },
+    {
+      "after": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t11:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  1E.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t1E:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  1E.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t1E:BF,\n"
+        },
+        "gvstat": {
+          "GET": 275348,
+          "ORD": 82359,
+          "SET": 90782,
+          "TBR": 27237,
+          "TBW": 7991,
+          "TC0": 229,
+          "TC1": 182,
+          "TC2": 184,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 406,
+          "TR1": 356,
+          "TR2": 351,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 543,
+          "TTW": 2768
+        },
+        "header": [
+          "Reserved Bytes                                  0  Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0"
+        ]
+      },
+      "attempts_per_commit": 3.3125,
+      "before": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t11:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  31.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t31:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  31.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t31:BF,\n"
+        },
+        "gvstat": {
+          "GET": 266902,
+          "ORD": 81866,
+          "SET": 89584,
+          "TBR": 26116,
+          "TBW": 7693,
+          "TC0": 94,
+          "TC1": 64,
+          "TC2": 71,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 271,
+          "TR1": 238,
+          "TR2": 238,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 540,
+          "TTW": 2608
+        },
+        "header": [
+          "Reserved Bytes                                  0  Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0"
+        ]
+      },
+      "commits": 160,
+      "elapsed_seconds": 0.08911276999998563,
+      "engine": "pywr v0.10.0 YottaDB r2.02 Linux x86_64",
+      "gvstat_delta": {
+        "GET": 8446,
+        "ORD": 493,
+        "SET": 1198,
+        "TBR": 1121,
+        "TBW": 298,
+        "TC0": 135,
+        "TC1": 118,
+        "TC2": 113,
+        "TC3": 0,
+        "TC4": 0,
+        "TR0": 135,
+        "TR1": 118,
+        "TR2": 113,
+        "TR3": 0,
+        "TR4": 0,
+        "TTR": 3,
+        "TTW": 160
+      },
+      "journaling": false,
+      "logical_read_write_overlap": [
+        [
+          "^YHMFTestWarehouse",
+          [
+            "s:R0",
+            "items"
+          ]
+        ]
+      ],
+      "padding_bytes": 0,
+      "scenario": "burst_shared",
+      "workers": [
+        {
+          "counts": {
+            "attempts": 130,
+            "children": 128,
+            "get": 1669,
+            "set": 339
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 141,
+            "children": 139,
+            "get": 1818,
+            "set": 338
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 131,
+            "children": 129,
+            "get": 1687,
+            "set": 341
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 128,
+            "children": 126,
+            "get": 1646,
+            "set": 351
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        }
+      ]
+    },
+    {
+      "after": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t3:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t22:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t22:BF,\n"
+        },
+        "gvstat": {
+          "GET": 284042,
+          "ORD": 83013,
+          "SET": 92013,
+          "TBR": 28415,
+          "TBW": 8324,
+          "TC0": 362,
+          "TC1": 297,
+          "TC2": 293,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 539,
+          "TR1": 471,
+          "TR2": 460,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 549,
+          "TTW": 2929
+        },
+        "header": [
+          "Reserved Bytes                                  0  Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0"
+        ]
+      },
+      "attempts_per_commit": 3.25,
+      "before": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t3:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:BF,\n"
+        },
+        "gvstat": {
+          "GET": 275705,
+          "ORD": 82524,
+          "SET": 90791,
+          "TBR": 27266,
+          "TBW": 8000,
+          "TC0": 229,
+          "TC1": 182,
+          "TC2": 184,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 406,
+          "TR1": 356,
+          "TR2": 351,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 545,
+          "TTW": 2769
+        },
+        "header": [
+          "Reserved Bytes                                  0  Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0"
+        ]
+      },
+      "commits": 160,
+      "elapsed_seconds": 0.08871817900001133,
+      "engine": "pywr v0.10.0 YottaDB r2.02 Linux x86_64",
+      "gvstat_delta": {
+        "GET": 8337,
+        "ORD": 489,
+        "SET": 1222,
+        "TBR": 1149,
+        "TBW": 324,
+        "TC0": 133,
+        "TC1": 115,
+        "TC2": 109,
+        "TC3": 0,
+        "TC4": 0,
+        "TR0": 133,
+        "TR1": 115,
+        "TR2": 109,
+        "TR3": 0,
+        "TR4": 0,
+        "TTR": 4,
+        "TTW": 160
+      },
+      "journaling": false,
+      "logical_read_write_overlap": [
+        [
+          "^YHMFTestWarehouse",
+          [
+            "s:R0",
+            "items"
+          ]
+        ]
+      ],
+      "padding_bytes": 16384,
+      "scenario": "burst_shared",
+      "workers": [
+        {
+          "counts": {
+            "attempts": 131,
+            "children": 130,
+            "get": 1691,
+            "set": 350
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 130,
+            "children": 129,
+            "get": 1677,
+            "set": 335
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 126,
+            "children": 126,
+            "get": 1626,
+            "set": 330
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 133,
+            "children": 133,
+            "get": 1719,
+            "set": 358
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        }
+      ]
+    },
+    {
+      "after": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t11:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:150,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:191,\n"
+        },
+        "gvstat": {
+          "GET": 257527,
+          "ORD": 81044,
+          "SET": 88290,
+          "TBR": 23800,
+          "TBW": 7285,
+          "TC0": 5,
+          "TC1": 0,
+          "TC2": 10,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 183,
+          "TR1": 177,
+          "TR2": 177,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 507,
+          "TTW": 2276
+        },
+        "header": [
+          "Reserved Bytes                                  0  Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0",
+          "Filesystem block size   0x00001000        jnl solid tn    0x0000000000000001"
+        ]
+      },
+      "attempts_per_commit": 1.5,
+      "before": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t11:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:133,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:174,\n"
+        },
+        "gvstat": {
+          "GET": 257451,
+          "ORD": 81042,
+          "SET": 88284,
+          "TBR": 23772,
+          "TBW": 7283,
+          "TC0": 4,
+          "TC1": 0,
+          "TC2": 10,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 182,
+          "TR1": 177,
+          "TR2": 177,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 505,
+          "TTW": 2274
+        },
+        "header": [
+          "Reserved Bytes                                  0  Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0",
+          "Filesystem block size   0x00001000        jnl solid tn    0x0000000000000001"
+        ]
+      },
+      "commits": 2,
+      "elapsed_seconds": 0.06168708299998116,
+      "engine": "pywr v0.10.0 YottaDB r2.02 Linux x86_64",
+      "gvstat_delta": {
+        "GET": 76,
+        "ORD": 2,
+        "SET": 6,
+        "TBR": 28,
+        "TBW": 2,
+        "TC0": 1,
+        "TC1": 0,
+        "TC2": 0,
+        "TC3": 0,
+        "TC4": 0,
+        "TR0": 1,
+        "TR1": 0,
+        "TR2": 0,
+        "TR3": 0,
+        "TR4": 0,
+        "TTR": 2,
+        "TTW": 2
+      },
+      "journaling": true,
+      "logical_read_write_overlap": [],
+      "padding_bytes": 0,
+      "scenario": "pair",
+      "workers": [
+        {
+          "counts": {
+            "attempts": 1,
+            "children": 1,
+            "get": 13,
+            "set": 3
+          },
+          "reads": [
+            [
+              "^YHMFMigration",
+              [
+                "gate"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse",
+                "snapshot"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "fingerprint"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "layout"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "schema"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "type"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items",
+                "s:0:0"
+              ]
+            ]
+          ],
+          "writes": [
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items",
+                "s:0:0"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items",
+                "s:0:0",
+                "id"
+              ]
+            ]
+          ]
+        },
+        {
+          "counts": {
+            "attempts": 2,
+            "children": 1,
+            "get": 24,
+            "set": 3
+          },
+          "reads": [
+            [
+              "^YHMFMigration",
+              [
+                "gate"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse",
+                "snapshot"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "fingerprint"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "layout"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "schema"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "type"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items",
+                "s:1:0"
+              ]
+            ]
+          ],
+          "writes": [
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items",
+                "s:1:0"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items",
+                "s:1:0",
+                "id"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "after": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t3:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t22:17C,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t22:1BD,\n"
+        },
+        "gvstat": {
+          "GET": 257670,
+          "ORD": 81055,
+          "SET": 88312,
+          "TBR": 23864,
+          "TBW": 7304,
+          "TC0": 5,
+          "TC1": 0,
+          "TC2": 10,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 183,
+          "TR1": 177,
+          "TR2": 177,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 513,
+          "TTW": 2280
+        },
+        "header": [
+          "Reserved Bytes                                  0  Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0",
+          "Filesystem block size   0x00001000        jnl solid tn    0x0000000000000001"
+        ]
+      },
+      "attempts_per_commit": 1.0,
+      "before": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t3:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t22:17C,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  22.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t22:1BD,\n"
+        },
+        "gvstat": {
+          "GET": 257608,
+          "ORD": 81053,
+          "SET": 88306,
+          "TBR": 23836,
+          "TBW": 7302,
+          "TC0": 5,
+          "TC1": 0,
+          "TC2": 10,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 183,
+          "TR1": 177,
+          "TR2": 177,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 511,
+          "TTW": 2278
+        },
+        "header": [
+          "Reserved Bytes                                  0  Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0",
+          "Filesystem block size   0x00001000        jnl solid tn    0x0000000000000001"
+        ]
+      },
+      "commits": 2,
+      "elapsed_seconds": 0.059240126999952736,
+      "engine": "pywr v0.10.0 YottaDB r2.02 Linux x86_64",
+      "gvstat_delta": {
+        "GET": 62,
+        "ORD": 2,
+        "SET": 6,
+        "TBR": 28,
+        "TBW": 2,
+        "TC0": 0,
+        "TC1": 0,
+        "TC2": 0,
+        "TC3": 0,
+        "TC4": 0,
+        "TR0": 0,
+        "TR1": 0,
+        "TR2": 0,
+        "TR3": 0,
+        "TR4": 0,
+        "TTR": 2,
+        "TTW": 2
+      },
+      "journaling": true,
+      "logical_read_write_overlap": [],
+      "padding_bytes": 16384,
+      "scenario": "pair",
+      "workers": [
+        {
+          "counts": {
+            "attempts": 1,
+            "children": 1,
+            "get": 13,
+            "set": 3
+          },
+          "reads": [
+            [
+              "^YHMFMigration",
+              [
+                "gate"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse",
+                "snapshot"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "fingerprint"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "layout"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "schema"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "%m",
+                "type"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items",
+                "s:0:0"
+              ]
+            ]
+          ],
+          "writes": [
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items",
+                "s:0:0"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R0",
+                "items",
+                "s:0:0",
+                "id"
+              ]
+            ]
+          ]
+        },
+        {
+          "counts": {
+            "attempts": 1,
+            "children": 1,
+            "get": 13,
+            "set": 3
+          },
+          "reads": [
+            [
+              "^YHMFMigration",
+              [
+                "gate"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse"
+              ]
+            ],
+            [
+              "^YHMFSchema",
+              [
+                "YHMFTestWarehouse",
+                "snapshot"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "fingerprint"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "layout"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "schema"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "%m",
+                "type"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items",
+                "s:1:0"
+              ]
+            ]
+          ],
+          "writes": [
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items",
+                "s:1:0"
+              ]
+            ],
+            [
+              "^YHMFTestWarehouse",
+              [
+                "s:R1",
+                "items",
+                "s:1:0",
+                "id"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "after": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t11:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  20.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t20:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  20.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t20:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  20.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t20:517,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  1F.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:39,\t1F:10,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  1D.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:63,\t1D:90,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  1D.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:63,\t1D:D1,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  1D.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:63,\t1D:529,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:76,\t3:10,\n"
+        },
+        "gvstat": {
+          "GET": 260935,
+          "ORD": 81247,
+          "SET": 88874,
+          "TBR": 25059,
+          "TBW": 7559,
+          "TC0": 26,
+          "TC1": 3,
+          "TC2": 11,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 204,
+          "TR1": 181,
+          "TR2": 178,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 520,
+          "TTW": 2444
+        },
+        "header": [
+          "Reserved Bytes                                  0  Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0",
+          "Filesystem block size   0x00001000        jnl solid tn    0x0000000000000001"
+        ]
+      },
+      "attempts_per_commit": 1.1625,
+      "before": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t11:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:133,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:174,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:1E8,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:229,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:29D,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t27:2DE,\n"
+        },
+        "gvstat": {
+          "GET": 257775,
+          "ORD": 81066,
+          "SET": 88342,
+          "TBR": 23912,
+          "TBW": 7309,
+          "TC0": 5,
+          "TC1": 0,
+          "TC2": 10,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 183,
+          "TR1": 177,
+          "TR2": 177,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 517,
+          "TTW": 2284
+        },
+        "header": [
+          "Reserved Bytes                                  0  Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0",
+          "Filesystem block size   0x00001000        jnl solid tn    0x0000000000000001"
+        ]
+      },
+      "commits": 160,
+      "elapsed_seconds": 0.08249520200001825,
+      "engine": "pywr v0.10.0 YottaDB r2.02 Linux x86_64",
+      "gvstat_delta": {
+        "GET": 3160,
+        "ORD": 181,
+        "SET": 532,
+        "TBR": 1147,
+        "TBW": 250,
+        "TC0": 21,
+        "TC1": 3,
+        "TC2": 1,
+        "TC3": 0,
+        "TC4": 0,
+        "TR0": 21,
+        "TR1": 4,
+        "TR2": 1,
+        "TR3": 0,
+        "TR4": 0,
+        "TTR": 3,
+        "TTW": 160
+      },
+      "journaling": true,
+      "logical_read_write_overlap": [],
+      "padding_bytes": 0,
+      "scenario": "burst_separate",
+      "workers": [
+        {
+          "counts": {
+            "attempts": 42,
+            "children": 42,
+            "get": 546,
+            "set": 126
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 54,
+            "children": 53,
+            "get": 693,
+            "set": 152
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 42,
+            "children": 42,
+            "get": 546,
+            "set": 124
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 48,
+            "children": 46,
+            "get": 609,
+            "set": 135
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        }
+      ]
+    },
+    {
+      "after": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t3:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  21.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t21:17C,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  21.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t21:1BD,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:E0,\t27:17C,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:E0,\t27:1BD,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  2C.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:13D,\t2C:17C,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  2C.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:13D,\t2C:1BD,\n"
+        },
+        "gvstat": {
+          "GET": 264165,
+          "ORD": 81576,
+          "SET": 89382,
+          "TBR": 26124,
+          "TBW": 7752,
+          "TC0": 26,
+          "TC1": 3,
+          "TC2": 11,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 204,
+          "TR1": 181,
+          "TR2": 178,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 532,
+          "TTW": 2608
+        },
+        "header": [
+          "Reserved Bytes                                  0  Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0",
+          "Filesystem block size   0x00001000        jnl solid tn    0x0000000000000001"
+        ]
+      },
+      "attempts_per_commit": 1.0,
+      "before": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t3:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:BF,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  21.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t21:17C,\n",
+          "^YHMFTestWarehouse(\"s:R1\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  21.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:83,\t21:1BD,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:E0,\t27:17C,\n",
+          "^YHMFTestWarehouse(\"s:R2\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  27.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:E0,\t27:1BD,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  2C.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:13D,\t2C:17C,\n",
+          "^YHMFTestWarehouse(\"s:R3\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  2C.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:13D,\t2C:1BD,\n"
+        },
+        "gvstat": {
+          "GET": 261412,
+          "ORD": 81418,
+          "SET": 88904,
+          "TBR": 25140,
+          "TBW": 7592,
+          "TC0": 26,
+          "TC1": 3,
+          "TC2": 11,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 204,
+          "TR1": 181,
+          "TR2": 178,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 528,
+          "TTW": 2448
+        },
+        "header": [
+          "Reserved Bytes                                  0  Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0",
+          "Filesystem block size   0x00001000        jnl solid tn    0x0000000000000001"
+        ]
+      },
+      "commits": 160,
+      "elapsed_seconds": 0.08276963399998749,
+      "engine": "pywr v0.10.0 YottaDB r2.02 Linux x86_64",
+      "gvstat_delta": {
+        "GET": 2753,
+        "ORD": 158,
+        "SET": 478,
+        "TBR": 984,
+        "TBW": 160,
+        "TC0": 0,
+        "TC1": 0,
+        "TC2": 0,
+        "TC3": 0,
+        "TC4": 0,
+        "TR0": 0,
+        "TR1": 0,
+        "TR2": 0,
+        "TR3": 0,
+        "TR4": 0,
+        "TTR": 4,
+        "TTW": 160
+      },
+      "journaling": true,
+      "logical_read_write_overlap": [],
+      "padding_bytes": 16384,
+      "scenario": "burst_separate",
+      "workers": [
+        {
+          "counts": {
+            "attempts": 40,
+            "children": 40,
+            "get": 520,
+            "set": 120
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 40,
+            "children": 40,
+            "get": 520,
+            "set": 120
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 40,
+            "children": 40,
+            "get": 520,
+            "set": 120
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 40,
+            "children": 40,
+            "get": 520,
+            "set": 120
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        }
+      ]
+    },
+    {
+      "after": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t11:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t3:BF,\n"
+        },
+        "gvstat": {
+          "GET": 270786,
+          "ORD": 82090,
+          "SET": 90118,
+          "TBR": 27375,
+          "TBW": 8110,
+          "TC0": 135,
+          "TC1": 66,
+          "TC2": 62,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 313,
+          "TR1": 244,
+          "TR2": 229,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 544,
+          "TTW": 2769
+        },
+        "header": [
+          "Reserved Bytes                                  0  Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0",
+          "Filesystem block size   0x00001000        jnl solid tn    0x0000000000000001"
+        ]
+      },
+      "attempts_per_commit": 2.40625,
+      "before": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t11:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  31.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t31:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  31.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t31:BF,\n"
+        },
+        "gvstat": {
+          "GET": 264606,
+          "ORD": 81744,
+          "SET": 89391,
+          "TBR": 26178,
+          "TBW": 7754,
+          "TC0": 26,
+          "TC1": 3,
+          "TC2": 11,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 204,
+          "TR1": 181,
+          "TR2": 178,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 540,
+          "TTW": 2609
+        },
+        "header": [
+          "Reserved Bytes                                  0  Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0",
+          "Filesystem block size   0x00001000        jnl solid tn    0x0000000000000001"
+        ]
+      },
+      "commits": 160,
+      "elapsed_seconds": 0.09294003600001588,
+      "engine": "pywr v0.10.0 YottaDB r2.02 Linux x86_64",
+      "gvstat_delta": {
+        "GET": 6180,
+        "ORD": 346,
+        "SET": 727,
+        "TBR": 1197,
+        "TBW": 356,
+        "TC0": 109,
+        "TC1": 63,
+        "TC2": 51,
+        "TC3": 0,
+        "TC4": 0,
+        "TR0": 109,
+        "TR1": 63,
+        "TR2": 51,
+        "TR3": 0,
+        "TR4": 0,
+        "TTR": 4,
+        "TTW": 160
+      },
+      "journaling": true,
+      "logical_read_write_overlap": [
+        [
+          "^YHMFTestWarehouse",
+          [
+            "s:R0",
+            "items"
+          ]
+        ]
+      ],
+      "padding_bytes": 0,
+      "scenario": "burst_shared",
+      "workers": [
+        {
+          "counts": {
+            "attempts": 104,
+            "children": 95,
+            "get": 1290,
+            "set": 203
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 91,
+            "children": 86,
+            "get": 1143,
+            "set": 190
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 97,
+            "children": 86,
+            "get": 1201,
+            "set": 213
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 93,
+            "children": 85,
+            "get": 1156,
+            "set": 197
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        }
+      ]
+    },
+    {
+      "after": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t3:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  21.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t21:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  21.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t21:BF,\n"
+        },
+        "gvstat": {
+          "GET": 277473,
+          "ORD": 82612,
+          "SET": 90868,
+          "TBR": 28617,
+          "TBW": 8507,
+          "TC0": 253,
+          "TC1": 137,
+          "TC2": 106,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 431,
+          "TR1": 315,
+          "TR2": 273,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 550,
+          "TTW": 2930
+        },
+        "header": [
+          "Reserved Bytes                                  0  Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0",
+          "Filesystem block size   0x00001000        jnl solid tn    0x0000000000000001"
+        ]
+      },
+      "attempts_per_commit": 2.46875,
+      "before": {
+        "block_locations": {
+          "^YHMFSchema(\"YHMFTestWarehouse\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  3.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:E1,\n    Global tree path\n    Path--blk:off\n\t6:10,\t3:10,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"%m\",\"layout\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:7E,\n",
+          "^YHMFTestWarehouse(\"s:R0\",\"items\")": "DSE> DSE> \nFile  \t<disposable-db>/test.dat\nRegion\tDEFAULT\n\n\nKey found in block  11.\n    Directory path\n    Path--blk:off\n\t1:10,\t2:12D,\n    Global tree path\n    Path--blk:off\n\tE:10,\t11:BF,\n"
+        },
+        "gvstat": {
+          "GET": 271143,
+          "ORD": 82255,
+          "SET": 90127,
+          "TBR": 27410,
+          "TBW": 8119,
+          "TC0": 135,
+          "TC1": 66,
+          "TC2": 62,
+          "TC3": 0,
+          "TC4": 0,
+          "TR0": 313,
+          "TR1": 244,
+          "TR2": 229,
+          "TR3": 0,
+          "TR4": 0,
+          "TTR": 546,
+          "TTW": 2770
+        },
+        "header": [
+          "Reserved Bytes                                  0  Block size (in bytes)                 4096",
+          "TP blkmod nomod                                 0",
+          "TP blkmod gvcst_srch                            0",
+          "TP blkmod t_qread                               0",
+          "TP blkmod tp_tend                               0",
+          "TP blkmod tp_hist                               0",
+          "Filesystem block size   0x00001000        jnl solid tn    0x0000000000000001"
+        ]
+      },
+      "commits": 160,
+      "elapsed_seconds": 0.09426881600001025,
+      "engine": "pywr v0.10.0 YottaDB r2.02 Linux x86_64",
+      "gvstat_delta": {
+        "GET": 6330,
+        "ORD": 357,
+        "SET": 741,
+        "TBR": 1207,
+        "TBW": 388,
+        "TC0": 118,
+        "TC1": 71,
+        "TC2": 44,
+        "TC3": 0,
+        "TC4": 0,
+        "TR0": 118,
+        "TR1": 71,
+        "TR2": 44,
+        "TR3": 0,
+        "TR4": 0,
+        "TTR": 4,
+        "TTW": 160
+      },
+      "journaling": true,
+      "logical_read_write_overlap": [
+        [
+          "^YHMFTestWarehouse",
+          [
+            "s:R0",
+            "items"
+          ]
+        ]
+      ],
+      "padding_bytes": 16384,
+      "scenario": "burst_shared",
+      "workers": [
+        {
+          "counts": {
+            "attempts": 103,
+            "children": 95,
+            "get": 1276,
+            "set": 211
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 95,
+            "children": 84,
+            "get": 1159,
+            "set": 185
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 97,
+            "children": 90,
+            "get": 1206,
+            "set": 203
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        },
+        {
+          "counts": {
+            "attempts": 100,
+            "children": 92,
+            "get": 1241,
+            "set": 217
+          },
+          "unique_read_addresses": 48,
+          "unique_write_addresses": 81
+        }
+      ]
+    }
+  ],
+  "source_commit": "73704bd3b801530c0173b4d1cedbb56250355a91"
+}

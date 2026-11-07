@@ -36,6 +36,12 @@ Child insertion counts fixed-width collections from their existing transactional
 markers, issue [#4](https://github.com/jabez007/you-have-mumps-friend/issues/4).
 Variable-width owned containers still require bounded traversal for node limits.
 
+Independent parents can still share engine data blocks and restart each other's
+transactions. A hot collection also shares its c:N key. The
+[native conflict investigation](performance.md#native-insertion-conflict-attribution)
+distinguishes these effects with logical address traces and physical block evidence;
+transaction correctness does not imply contention-free execution.
+
 `children` and `count` expose bounded owned-collection reads, and `raw_path` resolves
 managed native addresses inside atomic callbacks using the existing Store and Path,
 issue [#30](https://github.com/jabez007/you-have-mumps-friend/issues/30). See
