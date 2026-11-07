@@ -17,6 +17,7 @@ New here? Start with [get started](getting-started.md), then read
 - [Link independent records](guides/references.md)
 - [Index and query records](guides/indexes-and-queries.md)
 - [Change a schema](guides/migrations.md)
+- [Transform records explicitly](guides/record-transforms.md)
 - [Rebuild indexes](guides/index-rebuilds.md)
 - [Adopt an existing global](guides/adoption.md)
 - [Set up a YottaDB database](guides/native-setup.md)
@@ -45,6 +46,7 @@ New here? Start with [get started](getting-started.md), then read
   - [0007 Compile-time model reuse](adr/0007-compile-time-model-reuse.md)
   - [0008 Application authorization boundary](adr/0008-application-authorization-boundary.md)
   - [0009 Model-scoped maintenance](adr/0009-model-scoped-maintenance.md)
+  - [0010 Explicit record transforms](adr/0010-explicit-record-transforms.md)
 
 ## Check the evidence
 

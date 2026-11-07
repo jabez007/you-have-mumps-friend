@@ -84,8 +84,10 @@ These features are not in version 0.5.0:
 - Mapper access rules. Apply authorization in the application's trusted service;
   independent M writers require their own enforcement. Database and raw paths do
   not provide record isolation. [ADR 0008](adr/0008-application-authorization-boundary.md)
-- Migrations that transform data, such as renames, removals, type changes, default
-  factories, new owned containers, and reference changes. [#20](https://github.com/jabez007/you-have-mumps-friend/issues/20)
+- Automatic record transformations. Use an explicit named Transform for renames,
+  removals, supported type conversions, deterministic defaults, new ownership, and
+  reference changes. Root keys/globals and layouts cannot change. See the
+  [transform guide](guides/record-transforms.md).
 - Automatic change tracking and optimistic revisions. save validates and compares
   the full aggregate, writing only physical node differences. It remains
   last-writer-wins. [#27](https://github.com/jabez007/you-have-mumps-friend/issues/27)

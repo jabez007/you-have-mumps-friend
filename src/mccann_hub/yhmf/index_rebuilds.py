@@ -112,9 +112,10 @@ def _selection(store: Store, status: MigrationStatus) -> tuple[str, ...]:
     if status.operation_fingerprint is None:
         raise MigrationError("Job is not an index rebuild")
     document = migration_jobs.load_operation(store, status)
+    if document["kind"] != "index_rebuild":
+        raise MigrationError("Job is not an index rebuild")
     if (
         set(document) != {"format_version", "kind", "fields"}
-        or document["kind"] != "index_rebuild"
         or type(document["fields"]) is not list
     ):
         raise StorageError("Malformed rebuild operation")

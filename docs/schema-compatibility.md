@@ -48,7 +48,7 @@ those hooks require an application revision too.
 Field reordering that changes a validator or factory's behavior also requires an
 application revision; ordering alone cannot reveal those custom dependencies.
 
-The migration executor still validates every existing record under both bindings
+The ordinary migration executor validates every existing record under both bindings
 and rejects transformations of existing fields. A revision does not grant permission
 to overwrite data or make an unsupported migration executable. Validation-only migrations
 validate, verify, retag, and activate without changing field or index values. Target
@@ -57,6 +57,13 @@ restores source access at the unchanged checkpoint. A concurrent checkpoint chan
 or interrupted restoration leaves maintenance held for inspection and recovery. Later
 storage or execution failures remain resumable under maintenance. See the
 [migration guide](guides/migrations.md).
+
+An explicit named [Transform](guides/record-transforms.md) can authorize record
+rewrites through the existing maintenance lifecycle. Its operation fingerprint and
+versioned record digests pin the approved revision and outputs. Legacy snapshots
+can be sources; activation publishes the reviewed target. Opening a database still
+performs no conversion. Root identity/layout changes and revision downgrades remain
+blocked, and older executors refuse the custom-operation marker.
 
 ## Existing databases
 

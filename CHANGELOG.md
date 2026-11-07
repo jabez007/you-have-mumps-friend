@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Adds explicit named record transforms to the existing migration lifecycle, with
+  pinned source/output digests, final uniqueness reservations, reference maintenance,
+  and a reviewed abort boundary. Root identity and layout changes remain blocked.
+
 - Allows unrelated model operations during migrations and rebuilds, preserving
   target validation, restrict counts, one-job coordination, and legacy barriers.
 

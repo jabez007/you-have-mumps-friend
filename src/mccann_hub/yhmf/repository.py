@@ -18,10 +18,12 @@ from . import (
     references,
     replacement,
     selectors,
+    transform_executor,
 )
 from .codecs import Key
 from .errors import (
     AlreadyExists,
+    MigrationError,
     NotFound,
     ReferenceViolation,
     SchemaMismatch,
@@ -43,6 +45,7 @@ from .registry import ModelSpec, Registry
 from .schemas import SchemaInspection, check_schema, inspect_schema, schema_path
 from .selectors import ModelPath
 from .storage import Path, Store
+from .transforms import Transform
 
 
 class Database:
@@ -348,9 +351,13 @@ class Database:
 
         return self._run(attempt)
 
-    def plan_migration(self, model: type[Model]) -> MigrationPlan:
+    def plan_migration(
+        self, model: type[Model], *, transform: Transform[Any, Any] | None = None
+    ) -> MigrationPlan:
         """Describe schema changes without scanning, validating, or modifying records."""
-        return build_plan(self.inspect_schema(model))
+        return build_plan(
+            self.inspect_schema(model), transform_id=transform.name if transform else None
+        )
 
     def _migration_ready(self) -> None:
         self._ensure_active()
@@ -358,10 +365,21 @@ class Database:
             raise TransactionError("Migration lifecycle operations require their own transactions")
 
     def begin_migration(
-        self, source: type[Model], target: type[Model], *, plan: MigrationPlan
+        self,
+        source: type[Model],
+        target: type[Model],
+        *,
+        plan: MigrationPlan,
+        transform: Transform[Any, Any] | None = None,
     ) -> MigrationStatus:
         """Claim maintenance after checking an explicitly reviewed plan and model bindings."""
         self._migration_ready()
+        if transform is not None:
+            return transform_executor.begin(
+                self.store, self.registry, source, target, plan, transform
+            )
+        if plan.transform_id is not None:
+            raise MigrationError("Supply the transform used to review this plan")
         return migration_executor.begin(self.store, self.registry, source, target, plan)
 
     def advance_migration(
@@ -371,9 +389,20 @@ class Database:
         target: type[Model],
         *,
         batch_size: int = 25,
+        transform: Transform[Any, Any] | None = None,
     ) -> MigrationStatus:
         """Commit at most one bounded batch or phase transition, resuming a saved job."""
         self._migration_ready()
+        if transform is not None:
+            return transform_executor.advance(
+                self.store,
+                self.registry,
+                migration_id,
+                source,
+                target,
+                transform,
+                batch_size=batch_size,
+            )
         return migration_executor.advance(
             self.store, self.registry, migration_id, source, target, batch_size=batch_size
         )

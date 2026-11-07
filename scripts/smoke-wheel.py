@@ -15,6 +15,7 @@ from mccann_hub.yhmf import (
     Patch,
     Path,
     Registry,
+    Transform,
     __version__,
 )
 from mccann_hub.yhmf.errors import UniqueViolation
@@ -70,6 +71,34 @@ def finish(status, advance):
     raise AssertionError("Maintenance job did not complete")
 
 
+def smoke_transform(store):
+    class Converted(Model):
+        __global__ = Before.__global__
+        __schema_version__ = 3
+        id: str = Field(primary_key=True)
+        sku: str | None = Field(default=None, unique=True)
+        cost: str = Field(unique=True)
+        note: str | None = Field(default=None, index=True)
+
+    def convert(record):
+        return Converted(id=record.id, sku=record.sku, cost=str(record.price), note=record.note)
+
+    transform = Transform("wheel.price-to-cost.v1", convert)
+    db = Database(store, Registry(Converted))
+    status = db.begin_migration(
+        After,
+        Converted,
+        plan=db.plan_migration(Converted, transform=transform),
+        transform=transform,
+    )
+    finish(
+        status,
+        lambda job: db.advance_migration(job, After, Converted, transform=transform, batch_size=1),
+    )
+    assert db.get(Converted, "0").cost == "2.00"
+    assert db.check_indexes(Converted).issues == ()
+
+
 def main():
     assert mccann_hub.__file__ is None
     assert version("mccann-hub-yhmf") == __version__
@@ -109,6 +138,7 @@ def main():
     )
     assert db.get(After, "0").price == Decimal("2.00")
     assert db.check_indexes(After).issues == ()
+    smoke_transform(store)
     print(
         "Installed wheel: migration, rebuild, hierarchical mutations, and namespace checks passed"
     )

@@ -13,8 +13,8 @@ The steps are:
 3. [Stop other writers](#stop-other-clients-first).
 4. [Run the migration](#run-the-migration), and [resume or abort](#resume-or-abort) if needed.
 
-> **Warning:** The migration executor handles a small set of changes. See
-> [what can migrate today](#what-can-migrate-today) before you edit a model that holds data.
+Automatic backfills handle a small set of changes. Use a reviewed
+[record transform](record-transforms.md) when existing values or ownership must change.
 
 The examples share this setup:
 
@@ -52,17 +52,22 @@ next_db = Database(db.store, Registry(CatalogV2))
 | Promote an equality index to unique | Yes |
 | Downgrade unique to equality, or remove an index | Yes |
 | Reorder fields or change descriptions | No migration needed |
-| Add a field with a default factory, or with no default | No |
-| Add an owned container | No |
-| Remove or rename a field, or change a storage type | No |
-| Change a reference | No |
+| Add a field with a default factory, or with no default | With an explicit named transform |
+| Add an owned container | With an explicit named transform |
+| Remove or rename a field, or change a supported storage type | With an explicit named transform |
+| Change a reference | With an explicit named transform |
 | Increase a root or owned `__schema_version__` | Yes, after record validation |
 | Change constraints, nullability, or an existing default | Yes, if stored values remain valid and unchanged |
 | Change custom validation and increase the owning revision | Yes, if stored values remain valid and unchanged |
 
-These operations apply to root fields and to fields inside existing embedded objects and
+Automatic operations apply to root fields and to fields inside existing embedded objects and
 children. Existing field values, owned trees, references, and retained index nodes stay
 as they are.
+
+Named transforms validate and rewrite complete records through the same maintenance
+lifecycle. They pin reproducible outputs, reserve final unique values, and state the
+abort boundary before execution. Root keys/globals and layout changes remain unsupported.
+See the [transform guide](record-transforms.md).
 
 ## Inspect the installed schema
 
@@ -289,7 +294,8 @@ Nested changes use dotted declaration paths such as `lots.note` and `lots.sample
 - Optional embedded objects and nullable collections that are null stay null.
 - Empty collections stay empty. The executor does not create children or embedded objects
   to apply a default.
-- A default factory is rejected, even when no owner exists yet.
+- Automatic backfill rejects a default factory, even when no owner exists yet.
+  A named transform can supply reproducible values and create new owners explicitly.
 - Batch limits and progress counters count parents. Per-parent node and child limits are
   also enforced against the target tree before backfill.
 
@@ -379,7 +385,8 @@ validation metadata is rejected.
 
 Keep the source and target declarations, review the plan, and use the migration methods
 above. A revision change permits validation and retagging; it does not authorize a
-transformation of existing values. Such transformations require an explicit data migration.
+transformation of existing values. Such transformations require an explicit named
+[record transform](record-transforms.md).
 
 [Schema compatibility](../schema-compatibility.md) and
 [ADR 0006](../adr/0006-canonical-schema-contracts.md) define the guarantees and limits,

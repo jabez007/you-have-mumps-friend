@@ -14,6 +14,7 @@ from .schema_diff import SchemaChange, compare_schemas
 from .schemas import SchemaInspection, SchemaSnapshot
 from .selectors import ModelPath, ReferenceFactory
 from .storage import MemoryStore, NativeStore, Path, Store
+from .transforms import Transform
 
 __all__ = [
     "ChildField",
@@ -40,6 +41,7 @@ __all__ = [
     "SchemaChange",
     "SchemaSnapshot",
     "Store",
+    "Transform",
     "compare_schemas",
 ]
 __version__ = "0.5.0"

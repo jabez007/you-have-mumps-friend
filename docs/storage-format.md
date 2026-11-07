@@ -377,3 +377,27 @@ validation. The native adapter requests restart for mapper and value-validation
 errors while `$trestart < 3`, then exposes persistent errors from the stable
 attempt. This changes no stored nodes or formats. Runtime aborts and native
 signals pass through. See [ADR 0005](adr/0005-native-validation-restarts.md).
+
+## Record-transform job metadata
+
+Named record transforms retain layout one and use the existing maintenance job,
+snapshot, checkpoint, operation-fingerprint, reservation, and pruning structures.
+Their operation is a canonical JSON object containing format_version=1,
+kind=record_transform, the application name, and digest_version=1. Older executors
+refuse custom operation markers they cannot execute.
+
+Each validated record pins canonical JSON at jobs/job-id/records/SHA256(encoded-key),
+under ^YHMFMigration, containing key (hex), source (digest), and target (digest).
+The full key prevents hash collisions from collapsing identities. Digests hash
+sorted relative field-node paths and exact encoded values; record metadata is
+checked separately against the pinned snapshots. For each node, append a one-byte
+path-part count, then four-byte unsigned big-endian lengths and raw bytes for each
+part, then the four-byte value length and raw value. SHA-256 produces lowercase
+hex digests. This format is fixed by tests/fixtures/record-transform-v1.json.
+
+Backfill must reproduce the validated source and target digests. Source record
+metadata stays installed on rewritten records until verification and retagging;
+the model remains gated throughout. Index clearing increments the existing cleanup
+counter, making abort unsafe after its first committed deletion. Application
+records are never staged as serialized blobs in job metadata. See the
+[transform guide](guides/record-transforms.md) for recovery and compatibility.

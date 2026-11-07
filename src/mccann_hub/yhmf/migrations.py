@@ -113,14 +113,17 @@ class MigrationPlan:
     inspection: SchemaInspection = field(repr=False)
     changes: tuple[SchemaChange, ...]
     steps: tuple[MigrationStep, ...]
+    transform_id: str | None = None
 
     @property
     def requires_manual_review(self) -> bool:
-        return any(change.requires_manual_review for change in self.changes)
+        return self.transform_id is not None or any(
+            change.requires_manual_review for change in self.changes
+        )
 
     @property
     def destructive(self) -> bool:
-        return any(change.destructive for change in self.changes)
+        return self.transform_id is not None or any(change.destructive for change in self.changes)
 
     @property
     def is_noop(self) -> bool:
@@ -141,6 +144,8 @@ class MigrationPlan:
             return ("unsupported_layout",)
         if not self.changes:
             return ("no_changes",)
+        if self.transform_id is not None:
+            return _transform_blockers(self)
         restricted = tuple(
             f"unsupported_change:{change.kind}:{'.'.join(change.path)}"
             for change in self.changes
@@ -160,13 +165,15 @@ class MigrationPlan:
     @property
     def validation_only(self) -> bool:
         """Whether execution preserves every field and index byte."""
-        return self.execution_supported and all(
-            change.kind in _VALIDATION_CHANGES for change in self.changes
+        return (
+            self.transform_id is None
+            and self.execution_supported
+            and all(change.kind in _VALIDATION_CHANGES for change in self.changes)
         )
 
     def to_dict(self, *, include_defaults: bool = False) -> dict[str, Any]:
         """Return a review document; literal defaults require an explicit opt-in."""
-        return {
+        result = {
             "format_version": 1,
             "execution_supported": self.execution_supported,
             "execution_blockers": list(self.execution_blockers),
@@ -179,6 +186,10 @@ class MigrationPlan:
             "changes": [_change_document(change, include_defaults) for change in self.changes],
             "steps": [_step_document(step, include_defaults) for step in self.steps],
         }
+        if self.transform_id is not None:
+            result["transform"] = {"name": self.transform_id, "digest_version": 1}
+            result["abort_boundary"] = "first_committed_index_delete_or_record_rewrite"
+        return result
 
     def to_json(self, *, include_defaults: bool = False) -> str:
         return canonical_json(self.to_dict(include_defaults=include_defaults)).decode("ascii")
@@ -219,9 +230,37 @@ def _index_steps(changes: tuple[SchemaChange, ...]) -> set[MigrationStep]:
     return result
 
 
-def build_plan(inspection: SchemaInspection) -> MigrationPlan:
+def _transform_blockers(plan: MigrationPlan) -> tuple[str, ...]:
+    blocked = {
+        "global_changed",
+        "primary_key_changed",
+        "layout_changed",
+        "codec_changed",
+        "unsupported_schema",
+    }
+    result = tuple(
+        f"unsupported_transform:{change.kind}" for change in plan.changes if change.kind in blocked
+    )
+    source = plan.inspection.installed
+    assert source is not None
+    if any(
+        change.kind == "type_changed" and change.path == (source.primary_key,)
+        for change in plan.changes
+    ):
+        result += ("unsupported_transform:primary_key_type_changed",)
+    if plan.inspection.declared.schema_version < source.schema_version:
+        result += ("schema_version_downgrade",)
+    if any(
+        change.kind == "owned_version_changed" and change.requires_manual_review
+        for change in plan.changes
+    ):
+        result += ("owned_version_downgrade",)
+    return result
+
+
+def build_plan(inspection: SchemaInspection, *, transform_id: str | None = None) -> MigrationPlan:
     if inspection.status == "matching":
-        return MigrationPlan(inspection, (), ())
+        return MigrationPlan(inspection, (), (), transform_id)
     if inspection.installed is None:
         unmanaged = inspection.has_data
         change = SchemaChange(
@@ -229,10 +268,25 @@ def build_plan(inspection: SchemaInspection) -> MigrationPlan:
             requires_manual_review=unmanaged,
         )
         step = MigrationStep("manual_change" if unmanaged else "install_schema")
-        return MigrationPlan(inspection, (change,), (step,))
+        return MigrationPlan(inspection, (change,), (step,), transform_id)
     changes = compare_schemas(inspection.installed, inspection.declared)
     if not changes:
-        return MigrationPlan(inspection, (), ())
+        return MigrationPlan(inspection, (), (), transform_id)
+    if transform_id is not None:
+        transform_steps = tuple(
+            MigrationStep(kind)
+            for kind in (
+                "validate_source_schema",
+                "validate_records",
+                "validate_uniqueness",
+                "clear_indexes",
+                "transform_records",
+                "validate_indexes",
+                "update_record_metadata",
+                "activate_schema",
+            )
+        )
+        return MigrationPlan(inspection, changes, transform_steps, transform_id)
     steps = _field_steps(changes) | _index_steps(changes)
     steps.update(
         MigrationStep(kind)

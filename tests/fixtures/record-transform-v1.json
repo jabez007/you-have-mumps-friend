@@ -1,0 +1,13 @@
+{
+  "operation": {
+    "digest_version": 1,
+    "format_version": 1,
+    "kind": "record_transform",
+    "name": "test.rename.v1"
+  },
+  "record": {
+    "key": "733a30",
+    "source": "0d2d2091b898466b0e97f99f00247042fe6d72ded6bfb80e5b711f240081e923",
+    "target": "16c1fb584ff9192e91553cce84125d38624f39bd00f5a8fb6139c170f4c6c9a6"
+  }
+}

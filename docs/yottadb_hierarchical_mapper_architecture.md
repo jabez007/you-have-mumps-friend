@@ -288,8 +288,11 @@ and index promotion, uniqueness downgrade, or removal. Job-scoped reservations d
 duplicate values across validation batches before application data changes.
 It uses a maintenance gate and bounded checkpoints before
 atomic activation. Ordinary access is scoped to the affected model; unrelated CRUD
-continues while one maintenance job owns the coordinator. Broader migration execution
-remains a later milestone.
+continues while one maintenance job owns the coordinator. Explicit named transforms
+reuse that lifecycle for reviewed record rewrites, including new ownership and
+reference changes, with pinned outputs and a declared abort boundary. Root global,
+key identity, and layout changes remain outside this executor. See
+[ADR 0010](adr/0010-explicit-record-transforms.md).
 
 Reference target checks and inbound counts preserve their normal boundaries during
 maintenance. Full saves referencing the affected model can block even when a local
