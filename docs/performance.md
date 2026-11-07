@@ -525,3 +525,68 @@ workflow. Cold misses retain pure-M SHA-256 cost. Memoization never caches datab
 state and cannot eliminate native block conflicts or shared counter updates. Fixed
 case order, instrumentation, small fixtures, and host differences limit general
 throughput or cross-version conclusions. Offline tests establish no native latency.
+
+
+### Qualified cache measurements, 2026-11-07
+
+[Raw samples and environments](benchmarks/native-m-location-cache-2026-11-07.json)
+come from [CI run 42420660451](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42420660451),
+source 4965633: 132 result rows and 6,720 timed operations across both engines and
+journaling modes. Each environment passed 2,516 full-suite tests with 282 skips
+in each journaling mode; its separate native stress job passed 25 with four skips.
+The host used Python 3.12, Pydantic 2.14.3, four logical CPUs, AMD EPYC 7763 on
+r2.02/Ubuntu 22.04, and EPYC 9V74 on r2.06/Ubuntu 24.04. Engine and host changes
+prevent attributing differences between environments to the engine alone.
+
+The following one-worker hot rows each contain 20 measured calls per operation,
+after three warmup cycles. Cells show median / p95 microseconds. Python uses the
+same public balance mutation cycle without a movement ledger.
+
+| Engine | Journal | Operation | M uncached | M cached | Python |
+| --- | --- | --- | --- | --- | --- |
+| r2.02 | off | insert | 16,021.0 / 16,084.0 | 476.0 / 538.0 | 786.1 / 822.5 |
+| r2.02 | off | patch | 3,577.5 / 3,658.0 | 399.5 / 475.0 | 523.6 / 547.8 |
+| r2.02 | off | delete | 15,981.5 / 16,324.0 | 427.5 / 509.0 | 557.6 / 608.7 |
+| r2.02 | before-image | insert | 16,541.0 / 16,747.0 | 865.0 / 1,091.0 | 1,234.6 / 1,333.9 |
+| r2.02 | before-image | patch | 3,973.0 / 4,233.0 | 688.5 / 859.0 | 871.3 / 969.6 |
+| r2.02 | before-image | delete | 16,468.5 / 16,711.0 | 795.5 / 1,062.0 | 964.3 / 1,098.6 |
+| r2.06 | off | insert | 13,123.0 / 13,200.0 | 331.5 / 388.0 | 603.0 / 662.8 |
+| r2.06 | off | patch | 2,906.0 / 3,024.0 | 262.5 / 323.0 | 408.0 / 462.0 |
+| r2.06 | off | delete | 13,240.5 / 13,295.0 | 306.5 / 339.0 | 424.9 / 499.1 |
+| r2.06 | before-image | insert | 13,481.5 / 17,426.0 | 688.0 / 1,122.0 | 950.1 / 23,969.0 |
+| r2.06 | before-image | patch | 3,222.5 / 47,116.0 | 524.0 / 1,248.0 | 701.3 / 831.1 |
+| r2.06 | before-image | delete | 13,499.5 / 42,843.0 | 616.5 / 3,332.0 | 756.9 / 31,721.5 |
+
+All measured hot cached M calls avoided SHA entirely. This result is conditional
+on reusing paths in a live process. Clearing the cache before every operation
+retained all 140 SHA calls per 20 insert/patch/delete cycles. Across these four
+runs, cached versus uncached cold median ratios ranged from 0.991 to 1.010.
+Cold paths therefore retain the original hashing cost. Their p95 values include
+host noise; the full distributions are retained rather than summarized as a
+reliable cold-path improvement.
+
+The 70-path churn cases exceeded cache capacity. Each uncached run made 490 SHA
+calls; each cached run made 142 (141 insert, zero patch, one delete). This cycle
+benefits from immediate patch/delete reuse even as new inserts miss. It does not
+represent an arbitrary application's hit rate. All final cache sizes stayed at
+or below 128 entries, and all cases passed post-run data/index/reference checks.
+
+Four-worker hot insert rows below contain 80 commits each. Each cell shows median
+microseconds / total TP retries. Separate warehouses and lots are used in both
+controls; Product identities are either separate or shared.
+
+| Engine | Journal | Separate Product, uncached | Separate Product, cached | Shared Product, uncached | Shared Product, cached |
+| --- | --- | --- | --- | --- | --- |
+| r2.02 | off | 58,740.0 / 111 | 2,855.5 / 222 | 44,207.5 / 102 | 2,887.0 / 223 |
+| r2.02 | before-image | 66,969.5 / 132 | 2,023.5 / 99 | 67,148.5 / 123 | 2,173.5 / 97 |
+| r2.06 | off | 33,576.0 / 94 | 1,809.0 / 211 | 35,090.0 / 103 | 1,464.0 / 152 |
+| r2.06 | before-image | 36,426.5 / 94 | 1,358.0 / 92 | 38,493.5 / 101 | 1,548.0 / 101 |
+
+The cache reduced median latency in these bursts but did not eliminate retries;
+retry counts sometimes increased. Substantial conflicts remain with separate
+Products, so shared reverse-reference counters are not an adequate sole explanation.
+These controls do not locate native blocks or assign a precise share of conflicts
+to logical counters versus physical placement. No general contention reduction,
+production throughput, or journaling-speed claim follows. A native hash call-out
+would target cold misses and remains deferred; warm-path results do not justify
+adding that dependency.

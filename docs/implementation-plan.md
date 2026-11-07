@@ -1543,3 +1543,12 @@ applications regenerate source to use the additional writer capability. Preserve
 Python choice behavior. Test byte equality, membership failures, unique rollback, stored
 invalid members, escaping, and export bounds on both native engines. Configured C901
 passes at ten before this change; no threshold increase or unrelated cleanup is needed.
+
+### Publish native cache evidence, issue 47
+
+Preserve the four successful CI reports, their exact source identity, environment,
+raw samples, operation counters, retries, and cache bounds. Reuse performance.md
+and the existing benchmark archive. Report hot, cold, churn, Python controls, and
+shared/separate Product bursts without claiming that digest caching removes conflicts
+or improves cold hashing. The native matrix passed both engines, both journaling
+modes, and stress. No production change or additional abstraction is needed.
