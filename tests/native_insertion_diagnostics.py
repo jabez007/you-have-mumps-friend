@@ -36,10 +36,10 @@ class TracedStore(NativeStore):
             rendezvous()
         return value
 
-    def children(self, path, *, limit, after=b""):
+    def children(self, path, *, limit, after=b"", reverse=False):
         self.counts["children"] += 1
         self.reads.add(path)
-        return super().children(path, limit=limit, after=after)
+        return super().children(path, limit=limit, after=after, reverse=reverse)
 
     def set(self, path, value):
         self.counts["set"] += 1

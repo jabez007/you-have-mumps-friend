@@ -4,6 +4,9 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Adds bounded reverse traversal to Store.children, preserving forward defaults,
+  native numeric/string collation, and transaction signal propagation.
+
 - Adds indexed inventory location totals in warehouse revision three. Frozen v2
   declarations and transform bindings remain available for recovery; a distinct
   explicit transform upgrades v1 or v2 data without changing reference identities.

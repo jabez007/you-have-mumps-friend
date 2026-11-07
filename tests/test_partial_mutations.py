@@ -165,9 +165,9 @@ class ObservedStore:
         self.operations.append(("get", path))
         return self.store.get(path)
 
-    def children(self, path, *, limit, after=b""):
+    def children(self, path, *, limit, after=b"", reverse=False):
         self.operations.append(("children", path))
-        return self.store.children(path, limit=limit, after=after)
+        return self.store.children(path, limit=limit, after=after, reverse=reverse)
 
     def set(self, path, value):
         self.operations.append(("set", path))

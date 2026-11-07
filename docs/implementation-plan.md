@@ -1332,6 +1332,25 @@ Preserve all samples, attempt/retry counts, adapter calls, and final integrity c
 Run from the disposable native harness in all engine/journal CI configurations;
 offline tests verify logical workload equivalence only.
 
+### Reverse traversal and ordered root continuation, issue 42
+
+First add an optional reverse flag to the existing Store.children seam. Native
+uses YDBPython subscript_previous through the same signal/error wrapper; memory
+reverses its existing numeric/string collation. Keep default forward calls compatible
+and update instrumentation/read-only wrappers. Qualify absent cursors, limits,
+numeric/string boundaries, and restart propagation before changing query execution.
+
+Then thread direction through ordered selections, occurrence walks, explain, and
+cursor scope. Descending is the literal reverse, including root/digest ties and nulls
+(last ascending, first descending). Root continuation uses a canonical first matching
+occurrence per root in the chosen direction, computed from a bounded loaded aggregate;
+do not carry an unbounded seen set between pages. Reuse existing record/index validation
+and the shared 1,000-visit budget. A dedicated ordered page result exposes records and
+its cursor; all() keeps its list return. Cursor identity includes schema, direction,
+and predicates; exactly-once pagination is promised only for a stable dataset.
+Combined occurrence projections remain ambiguous and rejected. Existing touched
+functions pass C901 <= 10; do not increase the threshold.
+
 Before reference support, share schema constants and M schema/record-metadata checks
 without changing their validation or stored bytes. This keeps source and referenced
 target bindings on the same implementation, including exact legacy snapshots.

@@ -80,3 +80,18 @@ def test_invalid_value_and_traversal_limits(store):
         store.set(Path("^YHMFTestStorage"), b"x" * 32767)
     with pytest.raises(StorageError):
         store.children(Path("^YHMFTestStorage"), limit=0)
+
+
+def test_reverse_traversal_is_the_exact_reverse_with_exclusive_absent_cursors(store):
+    root = Path("^YHMFTestStorage")
+    for key in (b"-2", b"0", b".25", b"3", b"10", b"s:1", b"s:9"):
+        store.set(root.child(key, b"leaf"), b"value")
+    forward = store.children(root, limit=100)
+    assert store.children(root, limit=100, reverse=True) == tuple(reversed(forward))
+    assert store.children(root, limit=2, reverse=True) == (b"s:9", b"s:1")
+    assert store.children(root, limit=2, after=b"s:1", reverse=True) == (b"10", b"3")
+    assert store.children(root, limit=2, after=b"2", reverse=True) == (b".25", b"0")
+    assert store.children(root, limit=2, after=b"-2", reverse=True) == ()
+    assert store.children(root.child(b"absent"), limit=1, reverse=True) == ()
+    with pytest.raises(StorageError, match="boolean"):
+        store.children(root, limit=1, reverse="yes")

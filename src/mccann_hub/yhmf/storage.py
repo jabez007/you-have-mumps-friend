@@ -70,7 +70,9 @@ class Store(Protocol):
     def get(self, path: Path) -> bytes | None: ...
     def set(self, path: Path, value: bytes) -> None: ...
     def delete_tree(self, path: Path) -> None: ...
-    def children(self, path: Path, *, limit: int, after: bytes = b"") -> tuple[bytes, ...]: ...
+    def children(
+        self, path: Path, *, limit: int, after: bytes = b"", reverse: bool = False
+    ) -> tuple[bytes, ...]: ...
     def atomic[T](self, callback: Callable[[], T]) -> T: ...
 
 
@@ -79,9 +81,11 @@ def _check_value(value: bytes) -> None:
         raise StorageError("Node values must be bytes of length at most 32766")
 
 
-def _check_limit(limit: int) -> None:
+def _check_limit(limit: int, reverse: bool = False) -> None:
     if type(limit) is not int or not 1 <= limit <= 10_000:
         raise StorageError("Traversal limit must be between 1 and 10000")
+    if type(reverse) is not bool:
+        raise StorageError("Traversal reverse must be a boolean")
 
 
 def subtree_nodes(store: Store, root: Path, *, limit: int) -> dict[Path, bytes]:
@@ -140,8 +144,10 @@ class MemoryStore:
                 or p.subscripts[: len(path.subscripts)] != path.subscripts
             }
 
-    def children(self, path: Path, *, limit: int, after: bytes = b"") -> tuple[bytes, ...]:
-        _check_limit(limit)
+    def children(
+        self, path: Path, *, limit: int, after: bytes = b"", reverse: bool = False
+    ) -> tuple[bytes, ...]:
+        _check_limit(limit, reverse)
         depth = len(path.subscripts)
         with self._lock:
             keys = {
@@ -151,8 +157,17 @@ class MemoryStore:
                 and len(p.subscripts) > depth
                 and p.subscripts[:depth] == path.subscripts
             }
-        ordered = sorted(keys, key=_collation)
-        return tuple(k for k in ordered if not after or _collation(k) > _collation(after))[:limit]
+        ordered = sorted(keys, key=_collation, reverse=reverse)
+        return tuple(
+            key
+            for key in ordered
+            if not after
+            or (
+                _collation(key) < _collation(after)
+                if reverse
+                else _collation(key) > _collation(after)
+            )
+        )[:limit]
 
     def atomic[T](self, callback: Callable[[], T]) -> T:
         with self._lock:
@@ -190,15 +205,16 @@ class NativeStore:
     def delete_tree(self, path: Path) -> None:
         self._call(self._ydb.delete_tree, path.global_name, path.subscripts)
 
-    def children(self, path: Path, *, limit: int, after: bytes = b"") -> tuple[bytes, ...]:
-        _check_limit(limit)
+    def children(
+        self, path: Path, *, limit: int, after: bytes = b"", reverse: bool = False
+    ) -> tuple[bytes, ...]:
+        _check_limit(limit, reverse)
+        operation = self._ydb.subscript_previous if reverse else self._ydb.subscript_next
         keys: list[bytes] = []
         current = after
         for _ in range(limit):
             try:
-                current = self._call(
-                    self._ydb.subscript_next, path.global_name, path.subscripts + (current,)
-                )
+                current = self._call(operation, path.global_name, path.subscripts + (current,))
             except self._ydb.YDBNodeEnd:
                 break
             keys.append(current)

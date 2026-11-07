@@ -13,8 +13,8 @@ class ReadOnlyStore:
     def get(self, path):
         return self.store.get(path)
 
-    def children(self, path, *, limit, after=b""):
-        return self.store.children(path, limit=limit, after=after)
+    def children(self, path, *, limit, after=b"", reverse=False):
+        return self.store.children(path, limit=limit, after=after, reverse=reverse)
 
     def atomic(self, callback):
         return self.store.atomic(callback)

@@ -109,9 +109,9 @@ class CountedStore:
         self.counts["get"] += 1
         return self.store.get(path)
 
-    def children(self, path, *, limit, after=b""):
+    def children(self, path, *, limit, after=b"", reverse=False):
         self.counts["children"] += 1
-        return self.store.children(path, limit=limit, after=after)
+        return self.store.children(path, limit=limit, after=after, reverse=reverse)
 
     def set(self, path, value):
         self.counts["set"] += 1

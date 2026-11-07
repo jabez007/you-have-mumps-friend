@@ -58,6 +58,14 @@ class SignalEngine(Engine):
             raise NodeEnd()
         return keys[0]
 
+    def subscript_previous(self, name, subscripts):
+        path = Path(name, subscripts[:-1])
+        self._fault("children_reverse", path)
+        keys = self.memory.children(path, limit=1, after=subscripts[-1], reverse=True)
+        if not keys:
+            raise NodeEnd()
+        return keys[0]
+
     def tp(self, callback):
         for _ in range(8):
             try:
@@ -80,10 +88,10 @@ def invoke(store, method):
         return store.set(TARGET, b"after")
     if method == "delete_tree":
         return store.delete_tree(TARGET)
-    return store.children(TARGET, limit=5)
+    return store.children(TARGET, limit=5, reverse=method == "children_reverse")
 
 
-@pytest.mark.parametrize("method", ["get", "set", "delete_tree", "children"])
+@pytest.mark.parametrize("method", ["get", "set", "delete_tree", "children", "children_reverse"])
 @pytest.mark.parametrize("signal", [Restart, Rollback])
 def test_swallowed_native_control_signal_cannot_commit_the_attempt(method, signal):
     error = signal("injected native signal")
