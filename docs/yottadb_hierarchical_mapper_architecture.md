@@ -320,6 +320,13 @@ The project will maintain golden storage fixtures and serialization contracts to
 
 ## 12. Operations and security
 
+Database.path selects owned models through typed Python field/key access, returning
+declaration-bound ModelPath values. get infers the selected owner type and checks its
+binding at runtime. Registry.reference infers a primary-key constructor while keeping
+the existing Reference[Target] object and storage contract. No type-checker plugin or
+query language is required. Tuple paths and explicit Reference construction remain
+supported; query-field objects are still deferred.
+
 Explicit patch_many groups prepare 1–100 scalar/reference owner changes using the
 ordinary partial-validation policy, then apply the union of normal index/reference
 transitions. This supports unique swaps without deferring constraints throughout

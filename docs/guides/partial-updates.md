@@ -52,6 +52,29 @@ assert lot.quantity == Decimal("25.5")
 Each path starts at the registered root key. An embedded object takes a field name.
 Keyed children take a collection field, then a key of the child's declared type.
 
+For a statically typed read, select the owner through ordinary model fields:
+
+```python
+path = db.path(Warehouse, lambda w: w.bins["A01"].lots["L-001"])
+typed_lot = db.get(Warehouse, 7, at=path)
+assert typed_lot.quantity == Decimal("25.5")
+```
+
+Strict mypy infers ModelPath[Lot] and a Lot result without a cast; a misspelled field
+fails type checking. The selector runs over compiled declarations without database
+reads. Use only field access and keyed children, with a pure selector. Conditions,
+computed values, scalar fields, and whole collections are not owner selectors.
+Nullable owned fields produce an owner path; get raises NotFound when its value is
+null. Child key types still receive runtime checks: Children intentionally retains
+its existing str-or-int dictionary annotation.
+
+Paths bind to the exact registered root declaration and selected owner. Runtime
+checks reject another root, changed declaration, or inconsistent target. Each read
+still checks installed schema metadata. A path carries no database snapshot or
+authorization. It can be reused with the same declaration. Existing tuple paths
+remain supported; use path.at where a tuple-based mutation or collection API needs
+the underlying path. Typed query-field objects remain a separate design.
+
 A patch changes scalar or `Reference` fields only. Changing keys or replacing owned
 subtrees through `changes` raises `MutationError`. Mutations never create missing
 objects or collections. A missing owner raises `NotFound`.

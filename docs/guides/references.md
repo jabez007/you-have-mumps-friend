@@ -41,6 +41,27 @@ work inside embedded objects and owned children.
 An optional `Reference[Product] | None` permits `None`. Once set, it still restricts
 deletion. Changing or removing a reference releases the previous target.
 
+For static key checking, infer a constructor from the registered primary key:
+
+```python
+product_reference = db.registry.reference(Product, lambda p: p.id)
+reference = product_reference("P42")
+assert type(reference) is Reference[Product]
+```
+
+Strict mypy infers ReferenceFactory[Product, str] and rejects product_reference(42).
+Select the primary key itself, not an expression or another scalar. The factory
+checks the exact declared key type and encoding at runtime, including rejecting
+bool for an integer key. It does not load the target, normalize keys, or prove that
+the record exists. Persistence and resolve perform their usual reference checks.
+Keep selectors pure; they run on declarations without record reads.
+
+The result is the existing Reference[Product], so generic arity, schema fingerprints,
+and stored bytes stay unchanged. Existing Reference[Product](key=...) remains valid
+and keeps its runtime key checks. Standard typing cannot derive a different key
+attribute type from arbitrary Reference[T]; use the inferred factory where static
+constructor checks matter.
+
 ## Read the target
 
 Reading a source does not load its target. Resolve it explicitly:

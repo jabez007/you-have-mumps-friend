@@ -19,8 +19,17 @@ if TYPE_CHECKING:
     from .repository import Database
 
 
-def read(tx: "Database", spec: ModelSpec, key: Key, at: OwnedPath) -> Model:
+def read(
+    tx: "Database",
+    spec: ModelSpec,
+    key: Key,
+    at: OwnedPath,
+    *,
+    expected: type[Model] | None = None,
+) -> Model:
     owner = resolve(tx, spec, key, at)
+    if expected is not None and owner.node.model is not expected:
+        raise MutationError("Typed path target differs from its owned declaration")
     return read_owner(tx.store, owner)
 
 

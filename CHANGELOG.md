@@ -4,6 +4,11 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Adds Database.path selectors and ModelPath for owned reads with inferred result
+  types. Keeps tuple paths and existing schema/storage identities.
+- Adds Registry.reference typed factories inferred from a selected primary key,
+  producing the existing Reference[Target] values without a generic-arity change.
+
 - Adds Patch and patch_many for explicit groups of 1–100 scalar/reference owner
   changes, including unique-value swaps. Constraints remain immediate outside the group.
 

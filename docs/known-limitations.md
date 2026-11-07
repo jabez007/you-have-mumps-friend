@@ -61,6 +61,11 @@ Identified base as the example, issue
 identities unchanged; shared-global variants remain a separate design. See
 [ADR 0007](adr/0007-compile-time-model-reuse.md).
 
+Database.path selectors infer typed owner reads without casts, and Registry.reference
+infers a key-checked factory returning the existing Reference type. Tuple paths remain
+available. Typed query-field objects are deferred with query expansion; see
+[owned selectors](guides/partial-updates.md) and [reference factories](guides/references.md).
+
 Unique constraints apply immediately to ordinary operations. Use the explicit
 patch_many group to exchange unique values in one validated transition. Callback-wide
 deferred uniqueness is not supported. See [the example](guides/indexes-and-queries.md#exchange-unique-values).

@@ -635,3 +635,21 @@ index/reference builders, not a deferred-constraint subsystem. Ancestor validati
 bounded ownership reads, layout, and schema identities stay unchanged. Test swaps,
 duplicates, invalid groups, rollback, references, bounded work, restarts, and an
 independent native claimant. Existing C901 passes at ten.
+
+### Typed selectors and reference factories, issues 28 and 29
+
+A strict-mypy spike in /tmp verifies that Callable[[Warehouse], Balance] selection
+infers ModelPath[Balance], detects a misspelled locations field, and that a typed
+factory inferred from Product.id rejects an integer key. Use those standard typing
+features rather than dynamic class attributes, generated stubs, or a mypy plugin.
+Implement bounded declaration probes for field access and keyed ownership only.
+Database.path returns a frozen declaration-bound ModelPath; get checks its binding
+and returns the selected model type. Tuple paths remain supported. Registry.reference
+selects the declared primary key and returns a typed callable constructing the
+existing Reference[Target], preserving legacy generic identity and schema bytes.
+Selectors run application Python and must be pure; they do not load records or form
+an authorization boundary. Runtime checks still reject wrong keys and forged paths.
+Replace actual inventory get casts, not domain business rules. Query-field objects
+remain separate from owned-path selection; no new query language is introduced.
+Test positive and negative strict-mypy fixtures, schema compatibility, nulls, wrong
+root/target, expiry, bounded reads, and native adapters. Existing C901 passes at ten.

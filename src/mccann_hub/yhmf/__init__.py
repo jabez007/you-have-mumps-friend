@@ -12,6 +12,7 @@ from .registry import Registry
 from .repository import Database
 from .schema_diff import SchemaChange, compare_schemas
 from .schemas import SchemaInspection, SchemaSnapshot
+from .selectors import ModelPath, ReferenceFactory
 from .storage import MemoryStore, NativeStore, Path, Store
 
 __all__ = [
@@ -26,6 +27,7 @@ __all__ = [
     "MigrationStatus",
     "MigrationStep",
     "Model",
+    "ModelPath",
     "NativeStore",
     "Occurrence",
     "Patch",
@@ -33,6 +35,7 @@ __all__ = [
     "QueryPlan",
     "Registry",
     "Reference",
+    "ReferenceFactory",
     "SchemaInspection",
     "SchemaChange",
     "SchemaSnapshot",

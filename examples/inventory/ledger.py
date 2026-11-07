@@ -12,7 +12,7 @@ from pydantic import TypeAdapter, ValidationError
 from mccann_hub.yhmf import Database, Reference
 from mccann_hub.yhmf.errors import NotFound
 
-from .models import Balance, Bin, Location, Lot, Movement, Position, Product, Quantity, Warehouse
+from .models import Balance, Location, Lot, Movement, Position, Product, Quantity, Warehouse
 
 _QUANTITY = TypeAdapter(Quantity)
 
@@ -93,9 +93,11 @@ def _time(value: str | None) -> str:
 
 def _change(tx: Database, address: BinAddress, lot: Lot, delta: Decimal) -> BalanceChange:
     try:
-        current = cast(
-            Balance, tx.get(Warehouse, address.warehouse, at=address.balance_path(lot.id))
+        path = tx.path(
+            Warehouse,
+            lambda w: w.locations[address.location].bins[address.bin].balances[lot.id],
         )
+        current = tx.get(Warehouse, address.warehouse, at=path)
     except NotFound:
         current = None
     if current is not None and (
@@ -234,7 +236,8 @@ class Inventory:
         return value
 
     def stock_at(self, address: BinAddress) -> tuple[StockRow, ...]:
-        bin_ = cast(Bin, self.db.get(Warehouse, address.warehouse, at=address.path))
+        path = self.db.path(Warehouse, lambda w: w.locations[address.location].bins[address.bin])
+        bin_ = self.db.get(Warehouse, address.warehouse, at=path)
         return tuple(_row(address, value) for value in bin_.balances.values())
 
     def stock_in_warehouse(
@@ -244,9 +247,8 @@ class Inventory:
         if location is None:
             locations = self.db.get(Warehouse, warehouse).locations.values()
         else:
-            locations = (
-                cast(Location, self.db.get(Warehouse, warehouse, at=("locations", location))),
-            )
+            path = self.db.path(Warehouse, lambda w: w.locations[location])
+            locations = (self.db.get(Warehouse, warehouse, at=path),)
         return tuple(_rows(warehouse, locations))
 
     def stock_by_product(

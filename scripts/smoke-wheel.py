@@ -12,6 +12,7 @@ from mccann_hub.yhmf import (
     Field,
     MemoryStore,
     Model,
+    Patch,
     Path,
     Registry,
     __version__,
@@ -54,7 +55,8 @@ def smoke_mutations(store):
         tx.delete_child(WheelWarehouse, "W", at=("lots", "old"))
 
     db.atomic(receive)
-    owned = db.get(WheelWarehouse, "W", at=("lots", "new"))
+    path = db.path(WheelWarehouse, lambda w: w.lots["new"])
+    owned = db.get(WheelWarehouse, "W", at=path)
     assert isinstance(owned, WheelLot) and owned.quantity == Decimal("2.5")
     assert db.get(WheelWarehouse, "W").lots.keys() == {"new"}
     assert db.check_indexes(WheelWarehouse).issues == ()
@@ -97,6 +99,16 @@ def main():
     else:
         raise AssertionError("Rebuilt uniqueness constraint was not enforced")
     smoke_mutations(store)
+    product = db.registry.reference(After, lambda p: p.id)
+    assert db.resolve(product("0")).price == Decimal("1.00")
+    db.patch_many(
+        [
+            Patch(After, "0", changes={"price": Decimal("2.00")}),
+            Patch(After, "1", changes={"price": Decimal("1.00")}),
+        ]
+    )
+    assert db.get(After, "0").price == Decimal("2.00")
+    assert db.check_indexes(After).issues == ()
     print(
         "Installed wheel: migration, rebuild, hierarchical mutations, and namespace checks passed"
     )

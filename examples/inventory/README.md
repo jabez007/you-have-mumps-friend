@@ -60,6 +60,11 @@ creates no stored rollup nodes and requires no schema migration. It does not que
 fresh data or replace bounded balance queries; load an aggregate only when the
 workflow needs it. The uncached calculation uses its own Decimal precision.
 
+Owned reads in the service use Database.path selectors, so strict mypy infers Balance,
+Bin, and Location without casts. BinAddress remains the domain address for stock
+operations. [typing_example.py](typing_example.py) records positive inference checks;
+the test suite runs mypy against deliberately invalid paths and reference keys.
+
 ## Workflows
 
 ```python

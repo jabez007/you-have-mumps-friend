@@ -16,6 +16,7 @@ from . import (
     mutations,
     queries,
     references,
+    selectors,
 )
 from .codecs import Key
 from .errors import (
@@ -39,6 +40,7 @@ from .queries import children as read_children
 from .records import input_values, metadata, record_nodes, record_values
 from .registry import ModelSpec, Registry
 from .schemas import SchemaInspection, check_schema, inspect_schema, schema_path
+from .selectors import ModelPath
 from .storage import Path, Store
 
 
@@ -110,11 +112,17 @@ class Database:
     def get[M: Model](self, model: type[M], key: Key) -> M: ...
 
     @overload
+    def get[M: Model](self, model: type[Model], key: Key, *, at: ModelPath[M]) -> M: ...
+
+    @overload
     def get(self, model: type[Model], key: Key, *, at: OwnedPath) -> Model: ...
 
-    def get(self, model: type[Model], key: Key, *, at: OwnedPath = ()) -> Model:
+    def get(self, model: type[Model], key: Key, *, at: OwnedPath | ModelPath[Any] = ()) -> Model:
         """Read a complete record or raise NotFound; never fill missing stored fields."""
         spec = self.registry.spec(model)
+        if isinstance(at, ModelPath):
+            path = selectors.bind(spec, at)
+            return self._run(lambda tx: mutations.read(tx, spec, key, path, expected=at.target))
         if at != ():
             return self._run(lambda tx: mutations.read(tx, spec, key, at))
         root = spec.path(key)
@@ -129,6 +137,13 @@ class Database:
             return result
 
         return self._run(read)
+
+    def path[M: Model, T: Model](
+        self, model: type[M], select: Callable[[M], T | None]
+    ) -> ModelPath[T]:
+        """Select an owned declaration with ordinary typed field and key access."""
+        self._ensure_active()
+        return selectors.model_path(self.registry.spec(model), select)
 
     def patch(
         self, model: type[Model], key: Key, *, changes: Mapping[str, Any], at: OwnedPath = ()

@@ -4,6 +4,7 @@
 import hashlib
 import re
 import types
+from collections.abc import Callable
 from dataclasses import dataclass, replace
 from dataclasses import field as compiled_field
 from decimal import Decimal
@@ -16,6 +17,7 @@ from .codecs import LAYOUT_VERSION
 from .errors import SchemaError
 from .models import Children, Model, Reference
 from .schemas import canonical_json
+from .selectors import ReferenceFactory, reference_factory
 from .storage import Path
 
 _NAME = re.compile(r"[A-Za-z][A-Za-z0-9_]*\Z")
@@ -369,6 +371,12 @@ class Registry:
                         f"{field.target.__name__}; register that exact target declaration or "
                         "redeclare the reference against its registered replacement"
                     )
+
+    def reference[M: Model, K: (str, int)](
+        self, model: type[M], key: Callable[[M], K]
+    ) -> ReferenceFactory[M, K]:
+        """Infer a reference constructor's key type from its selected primary key."""
+        return reference_factory(self, model, key)
 
     def register(self, model: type[Model]) -> ModelSpec:
         if model in self._specs:
