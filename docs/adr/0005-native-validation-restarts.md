@@ -79,3 +79,26 @@ pending calls through another store, later callback errors, fresh transactions,
 and outer/alias nesting. Four-process native tests run both plain and broad-handler
 counter callbacks for 1,500 commits per worker. Controlled native tests also force
 caught restart and rollback signals after a staged write.
+
+## Issue 33 decision: retain stable-error retries
+
+Retain the adapter policy. A callback can write through raw YDBPython calls or M
+call-ins, including from a validator. No observed adapter writes does not prove a
+transaction is read-only. Returning an error sentinel to reach commit-time read
+validation would commit those writes. The native regression in test_retry_safety.py
+demonstrates this failure mode and verifies that the existing policy rolls them back.
+The migration auto-abort regression also exposed this defect in a framework path;
+restoration now happens only after rollback, in a separate checkpoint-pinned TP.
+
+An error-only fast path would need an engine-supported validate-and-abort operation,
+or a controlled operation whose lack of writes can actually be established. Arbitrary
+Python callbacks do not meet that condition. Instrumenting only Store is insufficient.
+Do not add a process-local counter, callback classifier, or generic side-effect detector.
+
+Applications can test a **known boundary** with unittest.mock.Mock configured to raise
+AssertionError when called inside a callback. The transaction guide demonstrates this
+without sending a message. This catches that boundary, not file writes, network calls,
+closures, or other arbitrary behavior. Actual publication still belongs after commit;
+reliable publication across process crashes requires an application-specific durable
+delivery design beyond this issue. The native stress suite remains the correctness
+gate. No attempt-count reduction or performance improvement is claimed.

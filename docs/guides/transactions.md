@@ -53,6 +53,35 @@ callback. Follow these rules in every callback:
 
 YDBPython uses process-based concurrency, so use processes for parallel database work.
 
+Test known external boundaries by replacing them with a mock that fails if called
+inside the callback. For example, continuing with the Product above:
+
+```python
+from unittest.mock import Mock
+
+publish = Mock(side_effect=AssertionError("External side effect inside transaction"))
+
+
+def unsafe_notification(tx):
+    tx.patch(Product, "P42", changes={"quantity": Decimal("7")})
+    publish("stock changed")
+
+
+try:
+    db.atomic(unsafe_notification)
+except AssertionError:
+    pass
+else:
+    raise AssertionError("Expected the instrumented boundary to reject the callback")
+
+publish.assert_called_once_with("stock changed")
+assert db.get(Product, "P42").quantity == Decimal("8")
+```
+
+This checks only the boundary you replaced. Python cannot reliably detect all side
+effects in arbitrary callbacks. Keep real publication after successful commit and
+decide separately how the application recovers if it crashes before publication.
+
 ## How callbacks end
 
 The handle expires when the callback returns. Using it later raises `TransactionError`.

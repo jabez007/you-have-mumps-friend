@@ -587,3 +587,13 @@ There is a brief maintenance interval between rollback and restoration; interrup
 there is recoverable by retry or explicit abort. No metadata format changes.
 The regression fails before the fix (stored amount 4 instead of 2). Add native raw
 write coverage and checkpoint-race coverage. Existing C901 passes at ten.
+
+### Stable-error retry decision, issue 33
+
+Keep NativeStore.atomic and ADR 0005's stable-error policy. Raw calls and arbitrary
+validators make adapter write tracking insufficient evidence for an error-only
+successful commit. Add a native counterexample contrasting an unsafe sentinel with
+actual rollback, plus an ordinary unittest.mock boundary guard demonstrating what
+can be tested without promising universal side-effect detection. Document the
+decision and the absence of a performance claim. No new dependency, storage change,
+or retry framework; existing C901 passes at ten.
