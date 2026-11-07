@@ -1,5 +1,5 @@
  ; SPDX-License-Identifier: GPL-3.0-or-later
- ; Generated schema-bound writer: complete ASCII str/int records only.
+ ; Generated schema-bound writer: complete flat ASCII str/int/Decimal records only.
  quit
 insert(input)
  quit $$write("insert",.input)
@@ -66,6 +66,7 @@ input(operation,input,cfg,values)
 valid(value,field,cfg)
  new i,good
  if $zlength(value)>32764 quit 0
+ if cfg("tag",field)="d" quit $$dvalid(value,field,.cfg)
  if cfg("tag",field)="s" do  quit good
  . set good=($length(value)'<cfg("min",field))&($length(value)'>cfg("max",field))
  . for i=1:1:$length(value) if $ascii(value,i)>127 set good=0 quit
@@ -106,15 +107,15 @@ attempt(operation,key,values,cfg)
  . if $data(@index)'=1!($get(@index)'=cfg("location",field)) set status="corrupt" quit
  . if cfg("unique",field),$get(^YHMFUnique(cfg("global"),field,token))'=claim set status="corrupt" quit
  . if cfg("unique",field),$data(^YHMFUnique(cfg("global"),field,token))'=1 set status="corrupt" quit
- . if operation="replace",old(field)=values(field) quit
+ . if operation="replace",$$token(old(field),field,.cfg)=$$token(values(field),field,.cfg) quit
  . kill @index
  . if cfg("unique",field) kill ^YHMFUnique(cfg("global"),field,token)
  if status'="ok" quit status
  if operation'="delete" do  quit:status'="ok" status
  . set field=""
  . for  set field=$order(cfg("index",field)) quit:field=""  do  quit:status'="ok"
- . . if operation="replace",old(field)=values(field) quit
- . . if cfg("overhead",field)+(2*$zlength(key))+(2*$zlength(values(field)))+8>1019 set status="key_size" quit
+ . . if operation="replace",$$token(old(field),field,.cfg)=$$token(values(field),field,.cfg) quit
+ . . if cfg("tag",field)'="d",cfg("overhead",field)+(2*$zlength(key))+(2*$zlength(values(field)))+8>1019 set status="key_size" quit
  . . set token=$$token(values(field),field,.cfg)
  . . if cfg("overhead",field)+(2*$zlength(key))+(2*$zlength(token))>1019 set status="key_size" quit
  . . set claim="["_$$quote(key)_","_cfg("location",field)_"]"
@@ -150,6 +151,7 @@ old(root,cfg,values)
  . set values(field)=part
  quit status
 token(value,field,cfg)
+ if cfg("tag",field)="d" quit "v:"_$$quote($$dtoken(value))
  quit "v:"_$$quote(cfg("tag",field)_":"_value)
 quote(value)
  new out,i,code,char
@@ -165,6 +167,7 @@ quote(value)
  . if (code<32)!(code=127) set out=out_"\u00"_$extract("0123456789abcdef",(code\16)+1)_$extract("0123456789abcdef",(code#16)+1) quit
  . set out=out_char
  quit out_$char(34)
+@DECIMAL@
 @MAINTENANCE@
 config(cfg)
 @CONFIG@

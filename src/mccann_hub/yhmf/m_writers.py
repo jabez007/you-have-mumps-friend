@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Fail-closed export of schema-bound, flat ASCII str/int M writers."""
+"""Fail-closed export of schema-bound, flat ASCII str/int/Decimal M writers."""
 
 import hashlib
 import re
@@ -9,6 +9,7 @@ from typing import Any
 
 from .canonical_schema import schema_document
 from .codecs import canonical_json
+from .decimal_math import units
 from .errors import SchemaError
 from .ordered import value_key
 from .records import metadata
@@ -43,14 +44,32 @@ def _overhead(global_name: str, *fixed: bytes, variables: int = 1) -> int:
     return len(global_name) + 2 + sum(2 * len(part) + 2 for part in fixed) + 2 * variables
 
 
-def _field_config(
-    spec: ModelSpec, name: str, rule: dict[str, Any], policy: dict[str, Any]
-) -> list[str]:
+def _decimal_config(name: str, rule: dict[str, Any]) -> list[str]:
+    allowed = (_RULES - {"minLength", "maxLength"}) | {"anyOf", "max_digits", "decimal_places"}
+    if rule.keys() - allowed or rule.get("anyOf") != [{"type": "number"}, {"type": "string"}]:
+        raise SchemaError(f"M writer cannot enforce the Decimal declaration of field {name!r}")
+    result = [_set("tag", name, value="d")]
+    for constraint, code in {"max_digits": "digits", "decimal_places": "places"}.items():
+        if constraint in rule:
+            bound = rule[constraint]
+            if type(bound) is not int or not int(code == "digits") <= bound <= 32766:
+                raise SchemaError("M Decimal precision limits must be bounded nonnegative integers")
+            result.append(_set(code, name, value=str(bound)))
+    for constraint, code in _BOUNDS.items():
+        if constraint in rule:
+            try:
+                bound = str(units(Decimal(rule[constraint])))
+            except ValueError:
+                raise SchemaError("M Decimal bounds exceed the exact fixed-unit domain") from None
+            result.append(_set(code, name, value=bound))
+    return result
+
+
+def _scalar_config(name: str, rule: dict[str, Any], policy: dict[str, Any]) -> list[str]:
+    if rule.get("codec") == "decimal":
+        return _decimal_config(name, rule)
     if rule.keys() - _RULES or rule.get("codec") not in {"str", "int"}:
         raise SchemaError(f"M writer cannot enforce the declaration of field {name!r}")
-    field = next(field for field in spec.fields if field.name == name)
-    if field.kind != "scalar" or field.choices is not None or field.index_codec != "equality-v1":
-        raise SchemaError(f"M writer does not support field {name!r}")
     tag = "s" if rule["codec"] == "str" else "i"
     constraints = rule.keys() & {"minLength", "maxLength", *_BOUNDS}
     supported = {"minLength", "maxLength"} if tag == "s" else _BOUNDS.keys()
@@ -71,6 +90,16 @@ def _field_config(
                     "M writer numeric bounds exceed its exact numeric domain"
                 ) from None
             result.append(_set(code, name, value=encoded))
+    return result
+
+
+def _field_config(
+    spec: ModelSpec, name: str, rule: dict[str, Any], policy: dict[str, Any]
+) -> list[str]:
+    field = next(field for field in spec.fields if field.name == name)
+    if field.kind != "scalar" or field.choices is not None or field.index_codec != "equality-v1":
+        raise SchemaError(f"M writer does not support field {name!r}")
+    result = _scalar_config(name, rule, policy)
     if field.index:
         location = canonical_json([name])
         digest = hashlib.sha256(location).hexdigest()
@@ -93,6 +122,24 @@ def _field_config(
                 ),
             ),
         ]
+    return result
+
+
+def _template(name: str) -> str:
+    resources = files(__package__)
+    result = resources.joinpath("m_writer.template").read_text()
+    for marker, filename in (
+        ("@MAINTENANCE@", "m_maintenance.template"),
+        ("@DECIMAL@", "m_decimal.template"),
+    ):
+        result = result.replace(marker, resources.joinpath(filename).read_text())
+    labels = {
+        line.split()[0].partition("(")[0]
+        for line in result.splitlines()
+        if line and not line[0].isspace()
+    }
+    if name in labels:
+        raise SchemaError("M routine name collides with a generated entry label")
     return result
 
 
@@ -133,12 +180,11 @@ def source(spec: ModelSpec, name: str) -> str:
         config.append(
             ' set cfg("snapshot")=cfg("snapshot")_' + _literal(snapshot[offset : offset + 256])
         )
-    template = files(__package__).joinpath("m_writer.template").read_text()
+    template = _template(name)
     return (
         name
         + " ; SPDX-License-Identifier: GPL-3.0-or-later\n"
         + template.replace("@GLOBAL@", spec.global_name)
         .replace("@KEY@", _literal(spec.key_field))
         .replace("@CONFIG@", "\n".join(config))
-        .replace("@MAINTENANCE@", files(__package__).joinpath("m_maintenance.template").read_text())
     )

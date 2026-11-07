@@ -97,3 +97,26 @@ Scoped maintenance passed both engines, both journaling modes, and native stress
 [CI 42379543484](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42379543484).
 The coordinated test restores its normal routine after the rendezvous; source
 replacement removes stale compiled objects before subsequent commands.
+
+
+## Exact Decimal scalar extension
+
+Export nonnullable Decimal scalars using a declared canonical-text subset of the
+existing fixed 1E-18/40-unit-digit domain. Factor and reuse Python unit conversion
+for generated numeric bounds; M validates canonical representations and compares
+signed digit strings without rounding. Preserve raw record scale and independently
+normalize equality tokens. Unchanged normalized tokens keep their claims across
+scale-only replacements.
+
+Pydantic checks both raw and normalize()-derived precision counts. Its normalization
+uses process Decimal context. M conservatively requires raw counts to satisfy the
+limits, guaranteeing Python acceptance without reproducing ambient context. This
+restriction belongs to the explicit M input contract and changes no Python model
+semantics or installed schema. Unsupported constraints fail export. Qualify canonical
+bytes, exact bounds beyond 18 significant digits, zero/scale limits, unique claims,
+restarts, rollback, and transaction composition before expanding other types.
+
+Transaction participants passed both engines, both journaling modes, and stress in
+[CI 42380034303](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42380034303),
+including two-model rollback, nested caller levels, forced restarts, and a concurrent
+Python update observed by the restarted M business calculation.

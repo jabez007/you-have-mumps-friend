@@ -1,0 +1,75 @@
+ ; SPDX-License-Identifier: GPL-3.0-or-later
+ ; Canonical Decimal text, exact 1E-18 units, at most 40 unit digits.
+decimal(value,number)
+ new sign,body,mantissa,integer,fraction,scientific,exponent,coefficient,power,adjusted,i
+ kill number
+ if $zlength(value)>32764 quit 0
+ set sign=($extract(value)="-"),body=$extract(value,1+sign,$length(value))
+ if $length(body,"E")>2 quit 0
+ set scientific=($length(body,"E")=2),mantissa=$piece(body,"E"),exponent=0
+ if scientific do  if exponent="invalid" quit 0
+ . set exponent=$piece(body,"E",2)
+ . if ($extract(exponent)'="+")&($extract(exponent)'="-") set exponent="invalid" quit
+ . set body=$extract(exponent,2,$length(exponent))
+ . if (body'?1.18N)!(($length(body)>1)&($extract(body)="0")) set exponent="invalid" quit
+ . set exponent=+exponent
+ if $length(mantissa,".")>2 quit 0
+ set integer=$piece(mantissa,"."),fraction=$piece(mantissa,".",2)
+ if integer'?1.32764N quit 0
+ if $length(integer)>1,$extract(integer)="0" quit 0
+ if $length(mantissa,".")=2,fraction'?1.32764N quit 0
+ if scientific,$length(integer)'=1 quit 0
+ if scientific,integer="0",fraction'="" quit 0
+ set coefficient=integer_fraction
+ for  quit:$length(coefficient)=1  quit:$extract(coefficient)'="0"  set coefficient=$extract(coefficient,2,$length(coefficient))
+ if coefficient="0" do  quit $get(number("valid"),0)
+ . if scientific,fraction'="" quit
+ . if scientific,(exponent'<-6)&(exponent'>0) quit
+ . if 'scientific,$length(fraction)>6 quit
+ . set power=$select(scientific:exponent,1:0-$length(fraction))
+ . do digits(.number,1,power)
+ . set number("units")="0",number("coefficient")="0",number("power")=0,number("valid")=1
+ if scientific,(exponent<-18)!(exponent>21) quit 0
+ set power=$select(scientific:exponent,1:0)-$length(fraction)
+ set adjusted=$length(coefficient)-1+power
+ if 'scientific,adjusted<-6 quit 0
+ if scientific,(power'>0)&(adjusted'<-6) quit 0
+ do digits(.number,$length(coefficient),power)
+ for  quit:$extract(coefficient,$length(coefficient))'="0"  set coefficient=$extract(coefficient,1,$length(coefficient)-1),power=power+1
+ if power<-18!($length(coefficient)+power+18>40) quit 0
+ set number("units")=$select(sign:"-",1:"")_coefficient
+ for i=1:1:power+18 set number("units")=number("units")_"0"
+ set number("coefficient")=$select(sign:"-",1:"")_coefficient,number("power")=power
+ quit 1
+digits(number,count,power)
+ ; Counts saturate above every supported declaration bound, without expanding exponents.
+ if power>32766 set number("digits")=32767,number("places")=0,number("whole")=32767 quit
+ if power<-32766 set number("digits")=32767,number("places")=32767,number("whole")=0 quit
+ set number("places")=$select(power<0:0-power,1:0)
+ set number("digits")=$select(power'<0:count+power,count>number("places"):count,1:number("places"))
+ set number("whole")=number("digits")-number("places")
+ quit
+dvalid(value,field,cfg)
+ new number,comparison
+ if '$$decimal(value,.number) quit 0
+ if $data(cfg("digits",field)),number("digits")>cfg("digits",field) quit 0
+ if $data(cfg("places",field)),number("places")>cfg("places",field) quit 0
+ if $data(cfg("digits",field)),$data(cfg("places",field)),number("whole")>$select(cfg("digits",field)>cfg("places",field):cfg("digits",field)-cfg("places",field),1:0) quit 0
+ if $data(cfg("ge",field)),$$dcompare(number("units"),cfg("ge",field))<0 quit 0
+ if $data(cfg("gt",field)),$$dcompare(number("units"),cfg("gt",field))'>0 quit 0
+ if $data(cfg("le",field)),$$dcompare(number("units"),cfg("le",field))>0 quit 0
+ if $data(cfg("lt",field)),$$dcompare(number("units"),cfg("lt",field))'<0 quit 0
+ quit 1
+dcompare(left,right)
+ new negativeL,negativeR,comparison
+ set negativeL=($extract(left)="-"),negativeR=($extract(right)="-")
+ if negativeL'=negativeR quit $select(negativeL:-1,1:1)
+ set left=$extract(left,1+negativeL,$length(left)),right=$extract(right,1+negativeR,$length(right))
+ set comparison=$select($length(left)<$length(right):-1,$length(left)>$length(right):1,right]left:-1,left]right:1,1:0)
+ quit $select(negativeL:0-comparison,1:comparison)
+dtoken(value)
+ new number,valid
+ set valid=$$decimal(value,.number)
+ if 'valid set $ecode=",U1006,"
+ if number("units")="0" quit "d:0"
+ quit "d:"_number("coefficient")_"E"_number("power")

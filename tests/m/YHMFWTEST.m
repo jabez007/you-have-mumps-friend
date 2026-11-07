@@ -36,3 +36,10 @@ checkpoint
  new job
  write $$checkpoint^YHMFTAPI(^YHMFTestStorage("writerInput","raw"),.job),!
  quit
+decimal
+ new number,valid
+ set valid=$$decimal^YHMFTAPI(^YHMFTestStorage("writerInput","value"),.number)
+ write valid
+ if valid write "|",number("units"),"|",$$dtoken^YHMFTAPI(^YHMFTestStorage("writerInput","value"))
+ write !
+ quit

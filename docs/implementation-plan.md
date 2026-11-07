@@ -1207,3 +1207,18 @@ precision/place constraints, and multiple Decimal contexts. Reuse the common M
 preflight for both transaction-owning and participating calls. Qualify literal
 record/index bytes, duplicate claims, old out-of-subset records, restart, and late
 rollback. Add more scalar types in subsequent demonstrated slices, not all at once.
+
+
+M Decimal precision/place limits apply to the encoded scale directly. Pydantic can
+also accept a value after normalize(), which depends on its ambient Decimal
+context. The M input subset deliberately requires the raw tuple to satisfy these
+limits, guaranteeing acceptance by Python without emulating a process-specific
+context. Applications can supply a shorter equivalent scale when appropriate.
+This restriction is explicit in the M wire contract; Python validation and stored
+codecs do not change. Unconstrained M Decimal fields preserve any canonical scale
+within the node bound when its value fits the fixed-unit domain.
+
+The additional M helpers expose a preexisting exporter name collision: a routine
+name equal to an emitted entry label cannot compile. Reject these names before
+export; regression tests fail without this guard. No previously compilable source
+is rejected. The template loader derives the forbidden names from actual labels.

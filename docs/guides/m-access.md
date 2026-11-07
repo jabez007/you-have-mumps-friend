@@ -93,6 +93,8 @@ assert source.startswith("PartAPI ; SPDX-License-Identifier")
 ```
 
 Exporting source reads and verifies current schema metadata without changing it.
+A routine name cannot collide with one of its generated entry labels; export rejects
+such names before producing an uncompilable routine.
 If a supported legacy snapshot is installed, the source binds to that exact legacy
 identity. No metadata conversion occurs. If metadata is absent, the first valid M
 insert installs it only if the application global and associated namespaces are
@@ -111,7 +113,7 @@ From plain M, supply every field as an untagged, named scalar:
  set status=$$delete^PartAPI("P1")
 ```
 
-The initial generator supports flat non-null str/int models with ordinary equality
+The generator supports flat non-null str/int/Decimal models with ordinary equality
 and unique indexes. It enforces string length and numeric gt/ge/lt/le bounds, with
 ASCII string values and canonical signed integers of at most 18 digits. Strings may
 contain ASCII controls; NUL is forbidden in keys. Python retains its full Unicode
@@ -185,6 +187,35 @@ whole business operation. Stable IDs and external inputs can be prepared before 
 Avoid external effects in retryable code. Participants do not make detached inputs
 safe for dependent calculations. Regenerate existing routines to obtain these entry
 points; schema metadata and record bytes do not change.
+
+## Decimal input contract
+
+Decimal fields accept canonical Python Decimal text whose value is exactly
+representable in integer units of 1E-18, with at most 40 unit digits. Comparisons,
+bounds, and equality normalization use exact text operations rather than native M
+numeric arithmetic. Record nodes retain the supplied canonical scale, including
+signed zero, while equality indexes normalize equivalent values. A scale-only
+replacement keeps its unique identity.
+
+Numeric bounds must fit that unit domain. Precision and decimal-place limits must
+be bounded integers at most 32,766, with a positive max_digits. M applies those
+limits to the supplied encoding's digits and scale directly. It does not rely on
+Pydantic's additional context-dependent normalize() relaxation. For example, a
+field with decimal_places=6 accepts 0.100000 but rejects 0.1000000 through M even
+when Python could normalize the latter to 0.1. Supply a shorter equivalent
+encoding when appropriate. Scientific notation must match Python's canonical str
+form, with an exponent of at most 18 digits. Nonfinite inputs are rejected.
+
+This is an explicit M input subset. Python retains its full finite Decimal domain
+and existing validation behavior. A value outside this subset remains readable
+and writable through Python. The generated M routine refuses to replace/delete
+an existing record outside its supported subset. No schema or record conversion
+occurs. Unsupported Decimal constraints, including multiple_of and bounds finer
+than the unit precision, fail export rather than being ignored.
+
+Other scalar extensions remain separate: nullable values, date/time values,
+Enum/Literal fields, lists, non-ASCII strings, and arbitrary patterns still fail
+export. Decimal support alone does not enable owned trees or references.
 
 ## Raw writes from M
 

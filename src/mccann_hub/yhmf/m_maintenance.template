@@ -1,3 +1,4 @@
+ ; SPDX-License-Identifier: GPL-3.0-or-later
  ; Existing canonical checkpoint formats only. Unknown state blocks every writer.
 available(global)
  new gate,job,raw

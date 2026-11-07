@@ -4,6 +4,12 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Rejects M routine names that collide with generated labels before returning source.
+
+- Adds canonical Decimal inputs to generated M writers with exact fixed-unit bounds
+  and index normalization, preserved record scale, and explicit raw precision limits.
+  Python Decimal validation and existing storage contracts remain unchanged.
+
 - Adds explicit M transaction participants for composing records across models.
   Success leaves commit ownership with the caller; any failure aborts the entire
   active transaction. Existing transaction-owning routines keep their behavior.
