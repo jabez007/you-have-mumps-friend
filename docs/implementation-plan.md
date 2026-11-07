@@ -1133,3 +1133,12 @@ Keep this intentionally weaker lower bound on the frozen v1 warehouse, retaining
 valid dataset and all existing balance/index/reference checks. Label each output row
 with warehouse_schema_version and describe the semantic difference; current partial
 and replacement workflows both use v2. No old latency report is presented as v2 data.
+
+Inventory CI 42345725275 passed both engines, both journaling modes, full native
+suites (2,150 passed per configuration), separate stress checks, demos, and benchmarks.
+Commit the four structured benchmark runs with their actual source identity and
+raw samples. Document current node-difference replacements separately from the
+older benchmark, and state that the v1 quantity-only baseline omits v2 guarantees.
+Refresh the limits and current architecture notes where their earlier adoption,
+M-writer, ordered-index, and stored-computation descriptions became stale. No
+runtime contract changes are needed in this qualification/documentation slice.

@@ -1,7 +1,7 @@
 # ADR 0015: Root-owned stored Decimal sums
 
-Status: library core qualified by [native CI 42344716067](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42344716067);
-inventory application upgrade qualification pending.
+Status: accepted after [core native CI 42344716067](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42344716067)
+and [inventory upgrade CI 42345725275](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42345725275).
 
 ## Problem and existing mechanisms
 
@@ -45,3 +45,14 @@ writes can corrupt it; incremental operations trust a valid managed starting sta
 rather than scan siblings on every update. Full reads detect disagreement. Generated
 M writers reject these models under ADR 0013, so the supported M path cannot change
 rollup inputs. A broader writer or computation contract requires its own design.
+
+## Qualification
+
+Both supported engines passed the complete native suite and separate stress checks,
+with journaling off and before-image journaling on. Coverage includes concurrent
+child writers, total uniqueness contention, parent deletion races, forced restarts,
+late rollback, and resumable warehouse-v1 transformation. The inventory example
+compares virtual and stored totals, and its existing-balance transfers use one
+net-zero patch group. [Native measurements](../inventory-performance.md) retain
+raw samples and distinguish current warehouse-v2 workflows from the direct
+quantity-only lower bound on the frozen warehouse-v1 model.

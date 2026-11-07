@@ -476,8 +476,11 @@ commands. Benchmarks compare equivalent partial and whole-replacement workflows;
 direct node assignment is reported separately as a lower bound. See
 [testing](testing.md), [the example](../examples/inventory/README.md), and
 [inventory measurements](inventory-performance.md). Missing-index diagnostics list
-usable equality paths. Indexed aggregate reads still materialize matching roots;
-optimistic revisions, occurrence projections, and broader migrations remain deferred.
+usable equality paths. Indexed aggregate reads still materialize matching roots.
+Unreleased extensions add bounded occurrence projections, indexed predicate
+intersections, ordered reads, named transforms, resumable adoption, and root-owned
+stored sums. Optimistic revisions and general compute callbacks remain deferred;
+see the [current limitations](known-limitations.md) for the implemented boundaries.
 
 ## 14. Testing strategy
 

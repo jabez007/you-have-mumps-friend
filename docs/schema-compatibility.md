@@ -74,6 +74,14 @@ declare mapper persistence metadata. Changing a virtual display calculation alon
 needs no data migration; using it to change persisted values in a validator still
 follows the application revision policy below.
 
+Stored sums participate through sum_of and the decimal-sum-v1 rollup codec. Adding,
+removing, or changing a dependency requires a reviewed named Transform. An ordinary
+default-zero backfill would discard existing quantities from the total. Transform
+outputs derive and pin target totals before index rebuilding. Models without sums
+retain their existing schema bytes; merely opening a database never converts it.
+The [stored-sum guide](guides/computed-fields.md) defines the numeric and validation
+domain. These dependencies do not change scalar codecs or storage layout one.
+
 Mapper flags are compiled from registry semantics, rather than copied from raw
 Field metadata. Adding `Field()` only for presentation, spelling a default `restrict`
 policy explicitly, or supplying false index flags does not change the contract.

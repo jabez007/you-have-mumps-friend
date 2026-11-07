@@ -17,11 +17,21 @@
 | Distinct decoded value nodes in one policy delete | 10,000 | `MAX_NODES`, `deletions.py` |
 | Parents in one migration batch | 1 to 100 | `MAX_BATCH_SIZE`, `migration_executor.py` |
 | Leaves removed in one job-pruning batch | 1 to 100, default 25 | `prune`, `migration_jobs.py` |
-| Records in one adoption | 100 | `MAX_ADOPTION_RECORDS`, `adoption.py` |
+| Records in single-transaction `adopt()` | 100, also subject to its total node budget | `MAX_ADOPTION_RECORDS`, `adoption.py` |
+| Records in one resumable adoption batch | 1 to 100, default 25; the job can span more than 100 records | `advance`, `adoption_jobs.py` |
 | Bytes in one node value, including the type tag | 32,766 | `MAX_VALUE_BYTES`, `storage.py` |
 | Digits in an integer key | 18, excluding the sign | `MAX_INTEGER_KEY`, `codecs.py` |
 
 Source files are in `src/mccann_hub/yhmf/`.
+
+## Stored sums
+
+The decimal-sum-v1 contract in `rollups.py` accepts finite Decimal source values
+with at most 18 significant digits, at most 18 fractional digits, and magnitude
+below 1E18. It adds exact integer units of 1E-18, with at most 40 digits in the
+aggregate unit count. Target field constraints and index limits also apply.
+Values outside this domain fail rather than round; the active Decimal context
+does not change the result. See [stored sums](../guides/computed-fields.md).
 
 ## Paths and names
 

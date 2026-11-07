@@ -1,9 +1,9 @@
 # Inventory workflow performance
 
-Historical rows on this page predate node-difference saves. Current aggregate
-replacement still loads and validates complete warehouses, but audits existing
-physical nodes and writes only differences. New output labels aggregate_save as
-physical_node_difference. Do not treat older write counts as current behavior.
+Current aggregate replacement loads and validates complete warehouses, audits
+existing physical nodes, and writes only differences. Output labels aggregate_save
+as physical_node_difference. The historical section predates this behavior; its
+write counts do not describe the current implementation.
 
 Current workflow fixtures use warehouse revision two and maintain stored_on_hand
 and its index. Existing-balance transfers use one patch group, leaving a same-warehouse
@@ -67,7 +67,73 @@ quantities belong to separate children. The existing contention benchmark and
 native inventory double-spend test exercise correctness separately; these serial
 measurements do not establish application throughput under contention.
 
-## Qualified native measurements
+## Current stored-total measurements
+
+[CI run 42345725275](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42345725275)
+qualified source ce2a4e67da7e0877b783f2bcbff3f0e4dc68e4d2 on both engines, with
+journaling off and before-image journaling on. Each configuration passed 2,150 tests
+(74 skipped), the native demo, and both benchmarks. Separate stress jobs passed
+25 tests per engine (four skipped).
+The [raw report](benchmarks/native-inventory-stored-totals-2026-11-07.json) contains
+all 84 rows, 2,520 timed samples, environment metadata, and node-call counts.
+
+The r2.02 runner used Python 3.12.12 on an AMD EPYC 7763; the r2.06 runner used
+Python 3.12.3 on an AMD EPYC 9V45. Both used Pydantic 2.14.3. Different hosts prevent
+attributing differences to the engine version. Five warm-ups and 30 samples per
+row follow the method above; p99 values remain in the raw report.
+
+Transfer latency in milliseconds, including one ledger append and maintaining the
+warehouse-v2 stored total/index:
+
+| Engine | Journal | Lots per bin | Partial median | p95 | Replace median | p95 |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| r2.02 | Off | 1 | 1.663 | 1.821 | 2.909 | 3.149 |
+| r2.02 | Off | 50 | 1.695 | 1.811 | 37.493 | 42.009 |
+| r2.02 | Off | 250 | 1.688 | 1.828 | 179.408 | 187.123 |
+| r2.02 | Before-image | 1 | 2.285 | 2.372 | 3.661 | 3.767 |
+| r2.02 | Before-image | 50 | 2.297 | 2.702 | 40.506 | 42.909 |
+| r2.02 | Before-image | 250 | 2.279 | 2.368 | 191.076 | 199.616 |
+| r2.06 | Off | 1 | 0.961 | 0.999 | 1.761 | 1.806 |
+| r2.06 | Off | 50 | 0.982 | 1.010 | 25.536 | 33.162 |
+| r2.06 | Off | 250 | 1.012 | 1.052 | 126.121 | 139.310 |
+| r2.06 | Before-image | 1 | 1.339 | 1.383 | 2.134 | 2.183 |
+| r2.06 | Before-image | 50 | 1.342 | 1.389 | 25.190 | 31.793 |
+| r2.06 | Before-image | 250 | 1.311 | 1.365 | 130.087 | 144.779 |
+
+Observed adapter calls per transfer agree across all four configurations:
+
+| Method | Lots per bin | Gets | Sets | Child enumerations | Tree deletions |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Partial | 1, 50, 250 | 133 | 32 | 4 | 0 |
+| Replace | 1 | 236 | 32 | 46 | 0 |
+| Replace | 50 | 2,539 | 32 | 536 | 0 |
+| Replace | 250 | 11,939 | 32 | 2,536 | 0 |
+
+The equivalent methods write the same changed nodes. Replacement still reads and
+audits unrelated children; partial transfers retain bounded reads. Both leave a
+net-zero stored total unchanged, with the partial group's lack of total/index IO
+also checked by a deterministic path trace. All measured commands committed with
+one callback attempt; these serial runs do not measure contention.
+
+Receive and adjustment change the total. At 250 lots per bin, their median latency
+in milliseconds was:
+
+| Engine | Journal | Receive partial | Receive replace | Adjust partial | Adjust replace |
+| --- | --- | ---: | ---: | ---: | ---: |
+| r2.02 | Off | 1.249 | 179.078 | 1.263 | 179.690 |
+| r2.02 | Before-image | 1.723 | 184.135 | 1.820 | 183.379 |
+| r2.06 | Off | 0.749 | 129.030 | 0.707 | 123.427 |
+| r2.06 | Before-image | 1.078 | 126.180 | 1.073 | 128.951 |
+
+Each partial receive/adjust used 96 gets, 28 sets, four child enumerations, and one
+tree deletion at every measured size. The quantity-only direct row used one get
+and one set. At 250 lots its median ranged from 4.47 to 7.38 microseconds without
+journaling and 84.15 to 92.84 with before-image journaling. That lower bound uses
+warehouse revision one, omits totals and ledger/index/reference maintenance, and
+is not an equivalent workflow. These observations establish bounded partial work
+in this fixture, not production throughput or a comparison with other databases.
+
+## Historical measurements before node-difference saves
 
 [CI run 42294677787](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42294677787)
 qualified source `3bba6bf0b36f422f23bef1d1261be9c8936082e1` on both engines. Each

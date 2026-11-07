@@ -111,10 +111,14 @@ These features remain outside the current implementation:
   time. Older clients honoring the global gate stay blocked conservatively. See
   [maintenance guidance](guides/migrations.md#stop-other-clients-first) and
   [ADR 0009](adr/0009-model-scoped-maintenance.md).
-- Plain M code can read everything, but [M writes](guides/m-access.md#write-from-m) do not
-  maintain indexes, references, or validation. [#25](https://github.com/jabez007/you-have-mumps-friend/issues/25)
-- Index entries hold encoded value tokens, so M code walking an index does not see numeric
-  values in numeric order. [Ordered query work](https://github.com/jabez007/you-have-mumps-friend/issues/15)
-  follows the independent index contract in [ADR 0012](adr/0012-retain-tagged-record-values.md).
+- Raw M SET/KILL bypasses validation, indexes, references, and stored sums. Exported
+  [schema-bound M routines](guides/m-access.md#export-an-explicit-m-writer) maintain
+  a qualified flat ASCII str/int subset and reject unsupported models.
+  Read-only GlobalView mappings can project foreign globals without adopting them.
+- Equality index tokens preserve typed equality, not numeric order. Opt-in ordered-v1
+  indexes provide native numeric/temporal and escaped string ordering within their
+  declared domains. M readers must follow the selected index codec; see
+  [ordered queries](guides/indexes-and-queries.md) and
+  [ADR 0012](adr/0012-retain-tagged-record-values.md).
 
 See also the [limits reference](reference/limits.md).
