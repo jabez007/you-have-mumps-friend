@@ -1,7 +1,7 @@
 # ADR 0013: Schema-bound explicit M writers
 
-Status: accepted after [native prototype CI 42339948201](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42339948201);
-generated writer implementation in progress.
+Status: accepted after [native prototype CI 42339948201](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42339948201)
+and [generated-writer CI 42341009542](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42341009542).
 
 ## Existing mechanisms and experiments
 
@@ -62,3 +62,19 @@ An explicit M API makes supported operations auditable and testable and requires
 regeneration after schema changes. It cannot protect against raw writes or another
 mutating trigger. Applications must route supported writes through the API and
 coordinate other writers; this is not an authorization boundary.
+
+## Qualification
+
+The generated routines passed on r2.02/r2.06 with journaling off and before-image
+journaling on. Tests execute plain M CRUD against managed layout-one records,
+check normal Python queries/indexes, bind legacy schema bytes without conversion,
+reject invalid input/corrupt metadata/maintenance, and conservatively restrict
+incoming references. Forced restarts after index changes restore old state before
+retry. An injected unexpected M error rolls back partial claims and propagates to
+the caller's handler with tlevel zero. Coordinated first inserts produce one unique
+winner while installing schema metadata atomically. The test launcher uses explicit
+M arguments through %XCMD; extra shell arguments alone populate ZCMDLINE instead.
+
+Ruff/C901, mypy, offline tests, both Pydantic matrix versions, executable docs, and
+the installed-wheel smoke test passed. The wheel test exercises the packaged M
+template. No trigger latency or generated-writer throughput claim is made.
