@@ -1,5 +1,23 @@
 # Native mutation benchmark qualification
 
+## Maintenance serialization workload
+
+The disposable native harness runs python -m scripts.benchmark_maintenance when
+YHMF_BENCHMARK=1. It upgrades 1/10/50 inventory warehouses from revision two to
+three, each with two locations and ten lots, in committed batches of five. While
+that job owns the gate, it attempts an unrelated Product index rebuild, checks
+that refusal leaves the checkpoint unchanged, and patches the Product name.
+After finishing the warehouse job through fresh handles, it completes the previously
+refused rebuild and checks totals and indexes.
+
+YHMF_MAINTENANCE_BENCHMARK records immediate refusal latency, unrelated CRUD latency,
+remaining job duration, phase calls, environment, and journal mode. The API refuses
+a second job rather than queuing it. Remaining job duration is a controlled scheduling
+delay, excluding operator pauses; these samples do not establish actual deployment
+waiting time. Native results will inform the decision in
+[ADR 0009](adr/0009-model-scoped-maintenance.md). Offline tests establish workflow
+correctness only. Per-model concurrent maintenance is not implemented by this benchmark.
+
 ## Development-branch save differences
 
 [CI run 42324141174](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42324141174),
