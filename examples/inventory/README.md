@@ -35,6 +35,8 @@ the installed library remains `mccann_hub.yhmf`.
 | Balance | Bin-owned lot key; references Lot and Product | Quantities belong at an exact physical position. |
 | Movement | Independent caller-supplied key; references Lot, Product, and positions' Warehouses | History remains addressable independently of current balances. |
 | Position | Embedded warehouse reference and location/bin names | A movement preserves its historical position without creating independently stored bins. |
+| Supplier | Independent key; owns product memberships | Removing a supplier removes its memberships while products remain independent. |
+| SupplierProduct | Supplier-owned product key; references Product | Each supplier/product pair has one native owned link, with a maintained inverse edge. |
 
 The balance's product reference is intentional denormalization for indexed stock
 queries. The inventory transaction checks it against the lot's product before
@@ -128,6 +130,35 @@ Each result contains a validated Balance, its warehouse `root_key`, and the conc
 `at` path. This preserves the original `stock_by_product` root-page interface while
 providing a public query alternative that reads only matching balance owners. Its cursor
 pages occurrences rather than warehouses. See the [query contract](../../docs/guides/indexes-and-queries.md).
+
+## Products and suppliers
+
+Supplier memberships form a many-to-many relation through owned reference links:
+
+```python
+from examples.inventory import Supplier, SupplierProduct
+
+for supplier in ("S1", "S2"):
+    db.insert(Supplier(id=supplier, name=supplier))
+    db.insert_child(
+        Supplier, supplier, collection=("products",),
+        record=SupplierProduct(id="WIDGET", product=Reference[Product](key="WIDGET")),
+    )
+first = db.referrers(Reference[Product](key="WIDGET"), source=Supplier, limit=1)
+assert first[0].root_key == "S1" and first[0].at == ("products", "WIDGET")
+second = db.referrers(
+    Reference[Product](key="WIDGET"), source=Supplier, limit=1, after=first[-1].cursor
+)
+assert second[0].root_key == "S2"
+db.delete_child(Supplier, "S1", at=("products", "WIDGET"))
+assert db.get(Product, "WIDGET").id == "WIDGET"
+```
+
+The membership validator binds its child key to its product reference. A supplier owns
+only the link, so removing it releases the reverse edge without deleting the product.
+Reverse entries provide the inverse lookup directly; no additional relation storage is
+needed. These optional models use a new Supplier global and leave the existing product,
+warehouse, lot, and movement schemas unchanged.
 
 ## Native inspection
 

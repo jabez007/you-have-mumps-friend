@@ -29,6 +29,7 @@ from .index_rebuilds import IndexRebuildPlan
 from .maintenance import MigrationStatus, load_status, require_available
 from .migrations import MigrationPlan, build_plan
 from .models import Model, Reference
+from .occurrences import Occurrence
 from .owned import OwnedPath
 from .queries import IndexReport, Query, audit_indexes, count_children, scan
 from .queries import children as read_children
@@ -165,6 +166,17 @@ class Database:
     def resolve_many[M: Model](self, refs: Sequence[Reference[M]]) -> list[M]:
         """Resolve a bounded ordered batch, deduplicated only within this read attempt."""
         return queries.resolve_many(self, refs)
+
+    def referrers(
+        self,
+        reference: Reference[Any],
+        *,
+        source: type[Model],
+        limit: int = 100,
+        after: str | None = None,
+    ) -> list[Occurrence]:
+        """Page exact reverse occurrences from a declared source without scanning roots."""
+        return queries.referrers(self, reference, source=source, limit=limit, after=after)
 
     def insert_child(
         self, model: type[Model], key: Key, *, collection: OwnedPath, record: Model

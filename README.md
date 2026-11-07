@@ -87,7 +87,7 @@ metadata nodes:
 | Area | Works today | Not yet |
 | --- | --- | --- |
 | Models | `str`, `int`, `bool`, `float`, `Decimal`, `bytes`, optional fields, embedded objects, keyed children | Dates, enums, lists, computed fields, inheritance |
-| Relationships | References with enforced targets, explicit resolution, bounded batch reads, and `restrict` on delete | `set_null`, `cascade`, many-to-many |
+| Relationships | Enforced references, explicit resolution, bounded inverse reads, owned many-to-many links, `restrict` on delete | `set_null`, `cascade` |
 | Queries | One equality predicate on an index or key, unique indexes, root and child paging, occurrence projections, collection counts | Range, prefix, sorting, several predicates |
 | Writes | Whole-record `save`, scalar `patch`, child insert and delete, restart-safe transactions | Change tracking, deferred unique checks |
 | Migrations | Scalar defaults, index changes, validation-only revisions, resume after interruption | Renames, removals, type changes. A migration blocks the whole database. |

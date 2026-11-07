@@ -283,6 +283,17 @@ their canonical key prefixes in the array. The hash keeps deep owned paths
 from consuming additional index subscripts. Native key-size limits still apply
 to the combined source and target identity.
 
+The bounded `referrers` interface selects
+`^YHMFRef(target_global,encoded_target_key,source_global)` directly, then pages
+source root keys and digest leaves in native order. It decodes the stored location
+to an owned path and verifies the exact source field. M readers can walk those
+same source-key and digest subscripts; there is no additional inverse store.
+For a supplier membership, the source field is stored under
+`^InventorySupplier("s:S1","products","s:WIDGET","product")="r:s:WIDGET"`, and its
+reverse location is `["products","s:WIDGET","product"]` beneath the Product target's
+`"InventorySupplier"` prefix. Removing the owned link removes its reverse occurrence
+and decrements the target count in the same transaction.
+
 Every write atomically changes the source record, reverse entries, and incoming
 counts. A deletion reads the count node directly, which participates in native
 transaction conflict detection. It also checks whether reverse children exist.

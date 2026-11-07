@@ -49,6 +49,10 @@ cursors and exact location validation. Existing root queries retain their interf
 transactions, issue [#22](https://github.com/jabez007/you-have-mumps-friend/issues/22).
 Unfinished migrations still require exact Python source and target declarations.
 
+`referrers` exposes bounded reverse-reference occurrences, and the inventory example
+models supplier/product memberships as owned reference links, issue
+[#14](https://github.com/jabez007/you-have-mumps-friend/issues/14).
+
 ## Defects
 
 | Behavior | What to do for now | Issue |
@@ -62,8 +66,7 @@ These features are not in version 0.5.0:
 - Field types for `date`, `datetime`, `UUID`, `Enum`, `Literal`, `list`, `dict`, and unions
   other than `| None`. [#11](https://github.com/jabez007/you-have-mumps-friend/issues/11)
 - Computed fields ([#17](https://github.com/jabez007/you-have-mumps-friend/issues/17)) and model inheritance ([#18](https://github.com/jabez007/you-have-mumps-friend/issues/18)).
-- `set_null` and `cascade` ([#13](https://github.com/jabez007/you-have-mumps-friend/issues/13)), and many-to-many
-  and inverse relations ([#14](https://github.com/jabez007/you-have-mumps-friend/issues/14)).
+- `set_null` and `cascade` deletion policies. [#13](https://github.com/jabez007/you-have-mumps-friend/issues/13)
 - Range, prefix, sorted, and multi-predicate queries. [#15](https://github.com/jabez007/you-have-mumps-friend/issues/15)
 - Access rules. [#19](https://github.com/jabez007/you-have-mumps-friend/issues/19)
 - Migrations that transform data, such as renames, removals, type changes, default

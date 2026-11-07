@@ -2,9 +2,9 @@
 """Warehouse ownership and independent catalog, lot, and ledger identities."""
 
 from decimal import Decimal
-from typing import Annotated
+from typing import Annotated, Self
 
-from pydantic import ConfigDict
+from pydantic import ConfigDict, model_validator
 
 from mccann_hub.yhmf import ChildField, Children, Field, Model, Reference
 
@@ -22,6 +22,26 @@ class Lot(Model):
     __global__ = "^InventoryLot"
     id: str = Field(primary_key=True, min_length=1)
     product: Reference[Product] = Field(index=True)
+
+
+class SupplierProduct(Model):
+    """An owned membership link; the independently stored Product keeps its lifecycle."""
+
+    id: str = Field(primary_key=True, min_length=1)
+    product: Reference[Product]
+
+    @model_validator(mode="after")
+    def product_identity(self) -> Self:
+        if self.id != self.product.key:
+            raise ValueError("Supplier membership key must match its product reference")
+        return self
+
+
+class Supplier(Model):
+    __global__ = "^InventorySupplier"
+    id: str = Field(primary_key=True, min_length=1)
+    name: str = Field(min_length=1)
+    products: Children[SupplierProduct] = ChildField(key="id")
 
 
 class Balance(Model):
@@ -68,4 +88,4 @@ class Movement(Model):
     occurred_at: str = Field(min_length=1)
 
 
-MODELS = (Product, Lot, Warehouse, Movement)
+MODELS = (Product, Lot, Warehouse, Movement, Supplier)

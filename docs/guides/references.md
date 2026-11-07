@@ -64,6 +64,34 @@ within that result, so copy it explicitly if independent mutable values are need
 Empty batches are permitted. Missing targets raise `NotFound` without exposing keys;
 an unregistered target or mismatched key type raises `SchemaError`.
 
+## Read incoming references
+
+`referrers` reads a bounded, read-only inverse relation directly from maintained reverse
+entries. Supply the registered source model to select its native prefix:
+
+```python
+incoming = db.referrers(lot.product, source=StockLot, limit=25)
+assert [hit.root_key for hit in incoming] == ["L-001"]
+assert incoming[0].at == () and incoming[0].field == "product"
+assert db.referrers(lot.product, source=StockLot, after=incoming[-1].cursor) == []
+```
+
+Each `Occurrence` contains the complete model owning that exact reference. Owned links
+return their child or embedded owner, with its root key and concrete `at` path. Several
+fields in one record produce distinct occurrences. The target's existence and schema are
+checked without loading its aggregate. Each source owner is validated, and the exact
+field and reverse identity must agree; another valid reference cannot hide a stale edge.
+
+Order is native source-root key order, then location digest. Limits are 1 through 1000,
+default 100. Cursors bind to the source schema and target identity. They use the same
+[paging rules](indexes-and-queries.md#query-inside-owned-trees) as equality occurrences.
+The interface checks encountered entries and the count marker's basic consistency;
+it does not audit missing reverse entries by scanning every source record.
+
+For many-to-many relationships, store keyed owned links containing References. Removing
+a link releases its reference; the independent target keeps its lifecycle. The inventory
+example demonstrates [products and suppliers](../../examples/inventory/README.md#products-and-suppliers).
+
 ## Understand deletion
 
 The only deletion policy is `restrict`, and it cannot be disabled, even for optional

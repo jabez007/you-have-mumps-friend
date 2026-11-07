@@ -253,6 +253,15 @@ def resolve_many[M: Model](db: "Database", refs: Sequence[Reference[M]]) -> list
     return db._run(read)
 
 
+def referrers(
+    db: "Database", reference: Reference[Any], *, source: type[Model], limit: int, after: str | None
+) -> list[occurrences.Occurrence]:
+    _limit(limit)
+    return db._run(
+        lambda tx: occurrences.inverse_page(tx, reference, source, limit=limit, after=after)
+    )
+
+
 @dataclass(frozen=True)
 class IndexIssue:
     field: str

@@ -10,13 +10,13 @@ from dataclasses import dataclass
 from dataclasses import field as hidden
 from typing import TYPE_CHECKING, Any
 
-from . import indexes
+from . import indexes, references
 from .codecs import Key, canonical_json, decode_key
 from .errors import NotFound, QueryError, SchemaError, StorageError
-from .models import Model
+from .models import Model, Reference
 from .owned import OwnedPath
 from .records import MAX_RECORD_NODES, encode_leaf, walk_values
-from .registry import FieldSpec, ModelSpec
+from .registry import FieldSpec, ModelSpec, reference_target
 from .storage import Path, Store
 
 if TYPE_CHECKING:
@@ -254,3 +254,57 @@ def validate_root(
     for entry in entries:
         if tx.store.get(entry.path) != entry.location or tx.store.children(entry.path, limit=1):
             raise StorageError("Index occurrence location is missing or corrupt")
+
+
+def _inverse(
+    tx: "Database",
+    spec: ModelSpec,
+    target_model: type[Model],
+    target: Path,
+    identity: str,
+    path: Path,
+) -> Occurrence:
+    raw = tx.store.get(path)
+    if tx.store.children(path, limit=1):
+        raise StorageError("A reverse occurrence leaf has unexpected descendants")
+    location = address(spec, raw, path.subscripts[-1])
+    if location.field.target is not target_model:
+        raise StorageError("Reverse occurrence names a different reference declaration")
+    key = decode_key(path.subscripts[-2])
+    record = read_address(tx, spec, key, location)
+    value = getattr(record, location.field.name)
+    if not isinstance(value, Reference):
+        raise StorageError("Reverse occurrence does not contain its target reference")
+    link = next(
+        iter(
+            references.links_at(
+                tx.registry, spec, spec.path(key), ((location.field, location.relative, value),)
+            )
+        )
+    )
+    if link.target != target or link.index_path != path or link.location != raw:
+        raise StorageError("Reverse occurrence disagrees with its exact source field")
+    cursor = encode_cursor(identity, path.subscripts[-2], path.subscripts[-1])
+    return Occurrence(key, location.at, ".".join(location.declaration), record, cursor)
+
+
+def inverse_page(
+    tx: "Database", reference: Reference[Any], source: type[Model], *, limit: int, after: str | None
+) -> list[Occurrence]:
+    if not isinstance(reference, Reference):
+        raise SchemaError("Inverse reads require a concrete Reference target")
+    target_model = reference_target(type(reference))
+    target_spec = tx._check_schema(tx.registry.spec(target_model))
+    target = target_spec.path(reference.key)
+    if not tx._exists(target_spec, target):
+        raise NotFound("Reference target does not exist")
+    spec = tx._check_schema(tx.registry.spec(source))
+    root = references.reference_root(target)
+    count = references.inbound_count(tx.store, root)
+    prefix = root.child(spec.global_name[1:].encode("ascii"))
+    identity = scope(spec, prefix)
+    cursor = decode_cursor(spec, identity, after)
+    paths = entry_page(tx.store, prefix, limit=limit, after=cursor)
+    if len(paths) > count:
+        raise StorageError("Reverse occurrence page exceeds the stored inbound count")
+    return [_inverse(tx, spec, target_model, target, identity, path) for path in paths]
