@@ -102,3 +102,24 @@ closures, or other arbitrary behavior. Actual publication still belongs after co
 reliable publication across process crashes requires an application-specific durable
 delivery design beyond this issue. The native stress suite remains the correctness
 gate. No attempt-count reduction or performance improvement is claimed.
+
+## Generated M status failures
+
+The owned-writer concurrency tests reproduced the same precommit failure in M:
+an indexed child retained its old values while a concurrent valid deletion removed
+its index. The M writer returned corrupt before TP could validate the stale reads.
+All staged work rolled back, but the diagnostic was false. A coordinated plain-M
+regression returned corrupt before the fix and missing after revalidation.
+
+Generated M owning and participating entry points now share stableabort. Inside an
+active TP, ordinary failure statuses request TRESTART while $trestart < 3, then
+abort all transaction levels if the failure persists. No failed work is committed
+to obtain read validation. Input failures outside an owning transaction still
+return immediately. Missing-transaction and nested-owning guards retain their
+existing behavior. Unexpected engine errors still roll back and propagate.
+
+Participants can therefore rerun the caller's entire TP before reporting failure.
+Recreate database-derived values and reset any mutable path/input variables modified
+inside the restart point. Immutable external inputs may stay outside it. Test drivers
+now reset their reused product key and first child path explicitly; neither API
+mutates the caller's input arrays. Existing caller commit ownership is unchanged.

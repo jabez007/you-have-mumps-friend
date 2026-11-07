@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Revalidates generated M status failures on YottaDB's stable TP attempt, preventing
+  false corruption reports after valid concurrent deletions. Participants may restart
+  the caller's entire transaction before returning a failure status.
+
 - Adds transactional M leaf-child insertion, scalar/reference patching, deletion,
   and caller participants for keyed hierarchies. Existing index/reference layouts,
   collection counts, and exact root/owned sums are maintained together; Python keeps

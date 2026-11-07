@@ -22,9 +22,9 @@ participate(operation,input)
  if '$tlevel quit "transaction"
  set $etrap="if $tlevel trollback"
  set status=$$prepare(operation,.input,.cfg,.values,.key)
- if status'="ok" trollback  quit status
+ if status'="ok" do stableabort quit status
  set status=$$attempt(operation,key,.values,.cfg)
- if status'="ok" trollback
+ if status'="ok" do stableabort
  quit status
 write(operation,input)
  new cfg,values,status,key,$etrap
@@ -35,9 +35,15 @@ write(operation,input)
  tstart ():serial
  ; All database-derived state is recreated inside attempt after a restart.
  set status=$$attempt(operation,key,.values,.cfg)
- if status'="ok" trollback  quit status
+ if status'="ok" do stableabort quit status
  tcommit
  quit "ok"
+stableabort
+ ; Like NativeStore, expose data-dependent failures only from a stable retry.
+ if '$tlevel quit
+ if $trestart<3 trestart
+ trollback
+ quit
 prepare(operation,input,cfg,values,key)
  do config(.cfg)
  if $get(cfg("hierarchy")) quit "operation"

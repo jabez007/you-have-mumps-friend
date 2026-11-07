@@ -21,13 +21,13 @@ owned(operation,rootkey,path,input,participant)
  set $etrap="if $tlevel trollback"
  set status=$$hprepare(operation,rootkey,.path,.input,.cfg,.wire,.parts,.node)
  if status'="ok" do  quit status
- . if participant trollback
+ . if participant do stableabort
  if participant do  quit status
  . set status=$$hattempt(operation,rootkey,.parts,node,.wire,.cfg)
- . if status'="ok" trollback
+ . if status'="ok" do stableabort
  tstart ():serial
  set status=$$hattempt(operation,rootkey,.parts,node,.wire,.cfg)
- if status'="ok" trollback  quit status
+ if status'="ok" do stableabort quit status
  tcommit
  quit "ok"
 hkey(value,cfg)

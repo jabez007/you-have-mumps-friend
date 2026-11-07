@@ -199,6 +199,10 @@ to generated sum values; exact fixed-unit arithmetic never rounds to M's numeric
 insertchildtx, patchchildtx, and deletechildtx participate in an existing caller TP.
 Success leaves it open; any failure aborts all its levels, including earlier flat or
 child participants. Read dependent business values inside the caller's restart point.
+Data-dependent failures are revalidated on the native stable attempt before the
+status is returned. A participant may restart the caller's entire TP first. Reset
+mutable paths/input arrays changed during the attempt as well as re-reading database
+values. See [ADR 0005](../adr/0005-native-validation-restarts.md).
 Each operation enforces its own immediate constraints; the API does not coalesce a
 group's net-zero totals or defer uniqueness across calls. Python patch_many remains
 the grouped mutation interface.
@@ -246,7 +250,10 @@ Existing insert/replace/delete still return nested without rolling back the call
 
 The caller owns the outer restart point. Re-read every database-derived value after
 tstart, including values used to build inputs, so a native restart recomputes the
-whole business operation. Stable IDs and external inputs can be prepared before it.
+whole business operation. Reset any paths or inputs modified during the attempt;
+TSTART ():serial does not restore local variables. Data-dependent failure statuses
+also request stable revalidation before aborting. Stable IDs and external inputs
+can be prepared before the restart point.
 Avoid external effects in retryable code. Participants do not make detached inputs
 safe for dependent calculations. Regenerate existing routines to obtain these entry
 points; schema metadata and record bytes do not change.

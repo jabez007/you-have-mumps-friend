@@ -57,6 +57,7 @@ refpair
  set product("id")=lot("product"),product("sku")="NEW-SKU",product("name")="New product"
  set fail=$get(^YHMFTestStorage("writerInput","fail"))
  tstart ():serial
+ set product("id")=lot("product")
  set status=$$inserttx^YHMFPAPI(.product)
  if status'="ok" write status,"|",$tlevel,! quit
  set status=$$inserttx^YHMFTAPI(.lot)
@@ -117,4 +118,32 @@ ownedcaught
  do ownedpath(.path,.input,0)
  set $etrap="write ""error|"",$tlevel,! set $ecode="""" halt"
  write $$patchchild^YHMFTAPI("MAIN",.path,.input),!
+ quit
+ownedpair
+ new input,path,second,status,fail,firstlocation
+ do ownedpath(.path,.input,0)
+ set fail=$get(^YHMFTestStorage("writerInput","_fail")),second("quantity")=$select(fail:"-1",1:$get(^YHMFTestStorage("writerInput","_second"),"4.25"))
+ set firstlocation=path(2)
+ tstart ():serial
+ set path(2)=firstlocation
+ set status=$$patchchildtx^YHMFTAPI("MAIN",.path,.input)
+ if status'="ok" write status,"|",$tlevel,! quit
+ set path(2)="STORAGE",status=$$patchchildtx^YHMFTAPI("MAIN",.path,.second)
+ if status'="ok" write status,"|",$tlevel,! quit
+ tcommit
+ write status,"|",$tlevel,!
+ quit
+ownedoutside
+ new input,path
+ do ownedpath(.path,.input,0)
+ write $$patchchildtx^YHMFTAPI("MAIN",.path,.input),!
+ quit
+ownednested
+ new input,path,status
+ do ownedpath(.path,.input,0)
+ tstart ():serial
+ tstart ():serial
+ set status=$$patchchild^YHMFTAPI("MAIN",.path,.input)
+ write status,"|",$tlevel,!
+ trollback
  quit
