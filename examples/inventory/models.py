@@ -58,12 +58,14 @@ class Bin(Identified):
 
 
 class Location(Identified):
+    __schema_version__ = 2
     bins: Children[Bin] = ChildField(key="id")
+    stored_on_hand: Decimal = Field(sum_of="bins.balances.quantity", index=True, ge=0)
 
 
 class Warehouse(Identified):
     __global__ = "^InventoryWarehouse"
-    __schema_version__ = 2
+    __schema_version__ = 3
     name: str
     locations: Children[Location] = ChildField(key="id")
     stored_on_hand: Decimal = Field(sum_of="locations.bins.balances.quantity", index=True, ge=0)

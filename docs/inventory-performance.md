@@ -5,12 +5,13 @@ existing physical nodes, and writes only differences. Output labels aggregate_sa
 as physical_node_difference. The historical section predates this behavior; its
 write counts do not describe the current implementation.
 
-Current workflow fixtures use warehouse revision two and maintain stored_on_hand
-and its index. Existing-balance transfers use one patch group, leaving a same-warehouse
-net-zero total untouched. The direct quantity-only lower bound uses frozen revision
+Current workflow fixtures use warehouse revision three and maintain warehouse and
+location stored_on_hand values and their indexes. Existing-balance transfers use one
+patch group, leaving a same-warehouse net-zero root total untouched while updating
+both location totals. The direct quantity-only lower bound uses frozen revision
 one without stored sums, so it leaves a valid dataset while intentionally excluding
 that extra work. New rows identify warehouse_schema_version. Historical measurements
-below predate stored totals and are not current-v2 latency claims.
+below identify their original revision and are not current-v3 latency claims.
 
 Run `YHMF_BENCHMARK=1 bash scripts/test-native.sh -q` with an installed YottaDB
 distribution. In addition to the existing mutation benchmark and native demo,
@@ -67,7 +68,7 @@ quantities belong to separate children. The existing contention benchmark and
 native inventory double-spend test exercise correctness separately; these serial
 measurements do not establish application throughput under contention.
 
-## Current stored-total measurements
+## Historical warehouse-v2 stored-total measurements
 
 [CI run 42345725275](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42345725275)
 qualified source ce2a4e67da7e0877b783f2bcbff3f0e4dc68e4d2 on both engines, with

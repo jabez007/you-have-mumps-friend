@@ -84,9 +84,26 @@ class LegacyWarehouse(LegacyWarehouseIdentity):
     locations: Children[LegacyLocation] = ChildField(key="id")
 
 
-def _warehouse_total(record: LegacyWarehouse) -> Warehouse:
+class WarehouseV2(LegacyWarehouseIdentity):
+    """Frozen root-total contract, before owned location totals."""
+
+    __global__ = "^InventoryWarehouse"
+    __schema_version__ = 2
+    name: str
+    locations: Children[LegacyLocation] = ChildField(key="id")
+    stored_on_hand: Decimal = Field(sum_of="locations.bins.balances.quantity", index=True, ge=0)
+
+
+def _warehouse_total(record: LegacyWarehouse) -> WarehouseV2:
     # The framework derives and pins the target stored sum after normal validation.
-    return Warehouse.model_validate(record.model_dump())
+    return WarehouseV2.model_validate(record.model_dump())
 
 
 WAREHOUSE_TOTALS = Transform("inventory.warehouse.total.v2", _warehouse_total)
+
+
+def _location_totals(record: LegacyWarehouse | WarehouseV2) -> Warehouse:
+    return Warehouse.model_validate(record.model_dump())
+
+
+WAREHOUSE_TOTALS_V3 = Transform("inventory.warehouse.location-totals.v3", _location_totals)

@@ -7,11 +7,14 @@ import pytest
 from examples.inventory import MODELS, BinAddress, Inventory, Lot, Movement, Product, Warehouse
 from examples.inventory.__main__ import seed
 from examples.inventory.migrations import (
-    WAREHOUSE_TOTALS,
+    WAREHOUSE_TOTALS_V3 as WAREHOUSE_TOTALS,
+)
+from examples.inventory.migrations import (
     LegacyBalance,
     LegacyBin,
     LegacyLocation,
     LegacyWarehouse,
+    WarehouseV2,
 )
 from mccann_hub.yhmf import Database, Field, Model, Reference, Registry
 from mccann_hub.yhmf.errors import SchemaMismatch
@@ -86,7 +89,9 @@ def finish(store, status):
 
 def test_warehouse_total_revision_has_independent_golden_and_preserves_reference_contracts():
     golden = FilePath(__file__).with_name("fixtures") / "inventory-warehouse-total-v2.json"
-    assert Registry(*MODELS).spec(Warehouse).snapshot == golden.read_bytes().rstrip(b"\n")
+    assert Registry(WarehouseV2, Product, Lot).spec(
+        WarehouseV2
+    ).snapshot == golden.read_bytes().rstrip(b"\n")
     assert (
         Registry().register(BeforeReferrer).snapshot
         == Registry().register(CurrentReferrer).snapshot
@@ -148,7 +153,7 @@ def test_existing_warehouse_upgrade_is_explicit_resumable_and_preserves_stock_an
     assert {
         path: content
         for path, content in after.items()
-        if path.subscripts[1] not in (b"%m", b"stored_on_hand")
+        if path.subscripts[1] != b"%m" and path.subscripts[-1] != b"stored_on_hand"
     } == before_fields
     assert dump(store, ("^YHMFRef",)) == before_refs
     assert len(db.referrers(Reference[Warehouse](key="MAIN"), source=CurrentReferrer)) == 1

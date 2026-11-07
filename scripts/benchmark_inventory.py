@@ -69,13 +69,15 @@ def setup(store, size, *, quantity_only=False):
                 product=Reference[Product](key="WIDGET"),
                 quantity=quantity,
             )
-        locations[location] = Location(id=location, bins={"B1": Bin(id="B1", balances=balances)})
+        locations[location] = Location(
+            id=location, bins={"B1": Bin(id="B1", balances=balances)}
+        ).model_dump(exclude={"stored_on_hand"} if quantity_only else set())
     db.insert(
         model.model_validate(
             {
                 "id": "MAIN",
                 "name": "Main",
-                "locations": {name: value.model_dump() for name, value in locations.items()},
+                "locations": locations,
             }
         )
     )
@@ -187,7 +189,9 @@ def measure(store, size, method, workflow, iterations):
         "balances_per_bin": size,
         "workflow": workflow,
         "method": method,
-        "warehouse_schema_version": 1 if method == "direct_native" else 2,
+        "warehouse_schema_version": 1
+        if method == "direct_native"
+        else Warehouse.__schema_version__,
         "iterations": iterations,
         "warmup": WARMUP,
         **latencies(elapsed),
@@ -234,7 +238,7 @@ def main():
                         "Warm, single-process, counted native operations. Existing balances; "
                         "one ledger append per workflow. Direct assignment excludes all ledger "
                         "and integrity work, using the frozen v1 warehouse without stored sums. "
-                        "Current workflows maintain the v2 sum/index. "
+                        "Current workflows maintain v3 warehouse and location sums/indexes. "
                         "Disposable region configured by the harness; "
                         "the journaling field records its mode."
                     ),

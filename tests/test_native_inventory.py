@@ -8,7 +8,7 @@ from pathlib import Path as FilePath
 
 import pytest
 
-from examples.inventory import MODELS, Inventory, Movement, Product
+from examples.inventory import MODELS, Inventory, Movement, Product, Warehouse
 from examples.inventory.__main__ import seed
 from mccann_hub.yhmf import Database, NativeStore, Path, Registry
 from tests.test_inventory_example import DOCK, ROOTS, STORAGE, TIME
@@ -61,6 +61,9 @@ def test_competing_moves_cannot_double_spend_stock(inventory):
             worker.wait(timeout=5)
     assert inventory.stock_at(DOCK)[0].quantity == 5
     assert inventory.stock_at(STORAGE)[0].quantity == 15
+    root = inventory.db.get(Warehouse, "MAIN")
+    assert root.locations["DOCK"].stored_on_hand == 5
+    assert root.locations["STORAGE"].stored_on_hand == 15
     assert [movement.id for movement in inventory.history("LOT-001")] == ["00", "01"]
     for model in MODELS:
         assert inventory.db.check_indexes(model).issues == ()
@@ -85,6 +88,7 @@ def test_native_restart_repeats_the_workflow_with_one_stable_ledger_identity(
         inventory.receive("01", "LOT-001", DOCK, Decimal(20), occurred_at=TIME)
     assert observed == [b"T:2026-11-06T12:00:00.000000Z"] * 2
     assert inventory.stock_at(DOCK)[0].quantity == 20
+    assert inventory.db.get(Warehouse, "MAIN", at=("locations", "DOCK")).stored_on_hand == 20
     assert len(inventory.history("LOT-001")) == 1
     assert store.get(Path("^YHMFRef", (Product.__global__[1:].encode(), b"s:WIDGET"))) == b"3"
     for model in MODELS:

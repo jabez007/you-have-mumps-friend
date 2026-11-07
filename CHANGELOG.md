@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Adds indexed inventory location totals in warehouse revision three. Frozen v2
+  declarations and transform bindings remain available for recovery; a distinct
+  explicit transform upgrades v1 or v2 data without changing reference identities.
+
 - Extends stored Decimal sums to owned records, including indexed totals, recursive
   read verification, child initialization, and coalesced partial deltas at each owner.
 
