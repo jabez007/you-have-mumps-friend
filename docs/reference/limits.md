@@ -10,6 +10,9 @@
 | Records in one query page | 1 to 1000, default 100 | `MAX_QUERY_RECORDS`, `queries.py` |
 | Items in `get_many` or `resolve_many` | 0 to 1000, including duplicates | `MAX_QUERY_RECORDS`, `queries.py` |
 | Owners in one `patch_many` call | 1 to 100, no duplicate owner addresses | `snapshot`, `grouped_mutations.py` |
+| Distinct decoded owners in one policy delete | 100, including its initial target | `MAX_OWNERS`, `deletions.py` |
+| Incoming edges across one deletion closure | 1000 | `MAX_EDGES`, `deletions.py` |
+| Distinct decoded value nodes in one policy delete | 10,000 | `MAX_NODES`, `deletions.py` |
 | Parents in one migration batch | 1 to 100 | `MAX_BATCH_SIZE`, `migration_executor.py` |
 | Leaves removed in one job-pruning batch | 1 to 100, default 25 | `prune`, `migration_jobs.py` |
 | Records in one adoption | 100 | `MAX_ADOPTION_RECORDS`, `adoption.py` |

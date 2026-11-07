@@ -71,8 +71,8 @@ def Field(
     **kwargs: Any,
 ) -> Any:
     """Pydantic Field with explicit persistence, index, and relationship metadata."""
-    if on_delete is not None and on_delete != "restrict":
-        raise NotImplementedError("Only on_delete='restrict' is implemented")
+    if on_delete is not None and on_delete not in ("restrict", "set_null", "cascade"):
+        raise NotImplementedError("on_delete supports restrict, set_null, or cascade")
     if "json_schema_extra" in kwargs:
         raise ValueError("json_schema_extra is reserved for mapper metadata")
     metadata: dict[str, Any] = {"primary_key": primary_key}

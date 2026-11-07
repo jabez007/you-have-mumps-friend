@@ -221,7 +221,7 @@ def test_reference_snapshot_records_target_and_policy(db):
     } in declaration["references"]
 
 
-@pytest.mark.parametrize("policy", ["set_null", "cascade", "ignore"])
+@pytest.mark.parametrize("policy", ["ignore"])
 def test_unsupported_delete_policies_fail_explicitly(policy):
     with pytest.raises(NotImplementedError, match="restrict"):
         Field(on_delete=policy)

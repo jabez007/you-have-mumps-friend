@@ -196,7 +196,9 @@ While the gate is held:
 Reference source reads and unrelated scalar patches do not resolve their targets.
 New/changed references to the migrating model block, as do full saves with such
 nonnull references. Removing an incoming reference or its source remains safe.
-Deleting a target referenced by the migrating model still obeys restrict counts.
+Deleting a target referenced by the migrating model cannot inspect that gated source,
+so the complete policy delete fails safely until maintenance ends. Removing unrelated
+sources remains available through their normal operations.
 A mixed-model callback that needs the gated model rolls back staged writes.
 
 Older clients honoring the previous global gate remain blocked on all models. Before

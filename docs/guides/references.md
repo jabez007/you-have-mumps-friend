@@ -38,8 +38,8 @@ Every target must be a registered top-level model. A non-null key must match the
 target's primary-key type and must resolve when the source is written. References also
 work inside embedded objects and owned children.
 
-An optional `Reference[Product] | None` permits `None`. Once set, it still restricts
-deletion. Changing or removing a reference releases the previous target.
+An optional `Reference[Product] | None` permits `None`. The default policy still
+restricts deletion. Changing or removing a reference releases the previous target.
 
 For static key checking, infer a constructor from the registered primary key:
 
@@ -115,9 +115,57 @@ example demonstrates [products and suppliers](../../examples/inventory/README.md
 
 ## Understand deletion
 
-The only deletion policy is `restrict`, and it cannot be disabled, even for optional
-references. `set_null` and cross-record `cascade` raise `NotImplementedError`. Owned
-children still follow their parent.
+Declare the policy on the incoming Reference field:
+
+| Policy | When its target is deleted |
+| --- | --- |
+| restrict, the default | Reject deletion if the source survives the complete cascade. |
+| set_null | Validate and clear this nullable field on its surviving owner. |
+| cascade | Delete the source's nearest keyed owner and its owned subtree. |
+
+```python
+class OptionalLot(Model):
+    __global__ = "^OptionalLot"
+    id: str = Field(primary_key=True)
+    product: Reference[Product] | None = Field(default=None, on_delete="set_null", index=True)
+
+
+optional = Database(MemoryStore(), Registry(Product, OptionalLot))
+optional.insert(Product(id="P"))
+optional.insert(OptionalLot(id="L", product=Reference[Product](key="P")))
+assert optional.delete(Product, "P")
+assert optional.get(OptionalLot, "L").product is None
+assert optional.check_indexes(OptionalLot).issues == ()
+```
+
+For a reference inside an embedded value, cascade removes its nearest keyed child
+or independent root. It does not automatically remove the whole root when the
+reference belongs to a keyed child. Ownership still removes every descendant of a
+deleted owner. A parent deletion dominates overlapping child deletions. Cycles are
+discovered before writes; internal restrict edges do not block deleting the complete
+closure. External restrict edges reject the entire operation.
+
+The transaction validates all encountered sources, combines null changes per owner,
+checks final collection lengths and root budgets, and updates normal indexes,
+unique claims, reverse edges, counts, and values together. Existing partial-validation
+restrictions apply: unknown dependencies in custom ancestor validators can require
+an explicit application workflow. Null-rejecting validators reject the deletion;
+validators cannot retain a dangling reference. Unrelated children and indexes survive.
+
+Register every incoming source declaration, including those in other independent
+globals. Without its Python declaration, the mapper cannot run source validators or
+interpret policy safely. Each delete permits 100 distinct decoded owners, 1000
+incoming edges across the closure, and 10,000 distinct decoded value nodes. Bounds
+raise MutationError before writes; unlink sources in separate explicit transactions
+before retrying a larger deletion. There is no partial progress or background job.
+The target itself counts toward these limits. Native restarts rebuild the plan and
+its cache; ordinary atomic callback retry guidance still applies.
+
+Policy changes alter the source contract. Review plan_migration and run the explicit
+validation/retag migration before using the new declaration. Records and reverse
+edge bytes stay unchanged. Older clients conservatively reject the new source
+identity or continue restricting target deletion. See
+[ADR 0011](../adr/0011-bounded-reference-deletion.md).
 
 ## Create records that link to each other
 

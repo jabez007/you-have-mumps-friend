@@ -1,0 +1,231 @@
+{
+  "codec_version": 1,
+  "declaration": {
+    "additionalProperties": false,
+    "properties": {
+      "cascading": {
+        "anyOf": [
+          {
+            "type": "object"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "yhmf": {
+          "index": true
+        }
+      },
+      "detail": {
+        "additionalProperties": false,
+        "default_factory": true,
+        "properties": {
+          "link": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "yhmf": {
+              "index": true
+            }
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "id": {
+        "codec": "str",
+        "type": "string",
+        "yhmf": {
+          "primary_key": true
+        }
+      },
+      "lines": {
+        "additionalProperties": {
+          "additionalProperties": false,
+          "properties": {
+            "detail": {
+              "additionalProperties": false,
+              "default_factory": true,
+              "properties": {
+                "link": {
+                  "anyOf": [
+                    {
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "yhmf": {
+                    "index": true
+                  }
+                }
+              },
+              "required": [],
+              "type": "object"
+            },
+            "id": {
+              "codec": "str",
+              "type": "string",
+              "yhmf": {
+                "primary_key": true
+              }
+            },
+            "link": {
+              "anyOf": [
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "yhmf": {
+                "index": true
+              }
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "type": "object"
+        },
+        "default_factory": true,
+        "type": "object",
+        "yhmf": {
+          "children_key": "id"
+        }
+      },
+      "optional": {
+        "anyOf": [
+          {
+            "type": "object"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "yhmf": {
+          "index": true
+        }
+      },
+      "protected": {
+        "anyOf": [
+          {
+            "type": "object"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "yhmf": {
+          "index": true
+        }
+      }
+    },
+    "required": [
+      "id"
+    ],
+    "type": "object"
+  },
+  "format_version": 2,
+  "global": "^YHMFTestWarehouse",
+  "hierarchy": [
+    {
+      "field": "detail",
+      "fields": [],
+      "key": null,
+      "kind": "embedded",
+      "version": 1
+    },
+    {
+      "field": "lines",
+      "fields": [
+        {
+          "field": "detail",
+          "fields": [],
+          "key": null,
+          "kind": "embedded",
+          "version": 1
+        }
+      ],
+      "key": "id",
+      "kind": "children",
+      "version": 1
+    }
+  ],
+  "key": "id",
+  "layout": 1,
+  "references": [
+    {
+      "global": "^YHMFTestProduct",
+      "key": "id",
+      "key_codec": "str",
+      "on_delete": "cascade",
+      "path": [
+        "cascading"
+      ]
+    },
+    {
+      "global": "^YHMFTestProduct",
+      "key": "id",
+      "key_codec": "str",
+      "on_delete": "set_null",
+      "path": [
+        "detail",
+        "link"
+      ]
+    },
+    {
+      "global": "^YHMFTestProduct",
+      "key": "id",
+      "key_codec": "str",
+      "on_delete": "set_null",
+      "path": [
+        "lines",
+        "detail",
+        "link"
+      ]
+    },
+    {
+      "global": "^YHMFTestProduct",
+      "key": "id",
+      "key_codec": "str",
+      "on_delete": "cascade",
+      "path": [
+        "lines",
+        "link"
+      ]
+    },
+    {
+      "global": "^YHMFTestProduct",
+      "key": "id",
+      "key_codec": "str",
+      "on_delete": "set_null",
+      "path": [
+        "optional"
+      ]
+    },
+    {
+      "global": "^YHMFTestProduct",
+      "key": "id",
+      "key_codec": "str",
+      "on_delete": "restrict",
+      "path": [
+        "protected"
+      ]
+    }
+  ],
+  "version": 1
+}

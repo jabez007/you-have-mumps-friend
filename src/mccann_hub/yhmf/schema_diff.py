@@ -61,6 +61,7 @@ class _Field:
     unique: bool
     primary: bool
     version: int | None
+    delete_policy: str | None
 
 
 class _Unsupported(Exception):
@@ -150,10 +151,9 @@ class _Fields:
                 raise _Unsupported(path)
             if not all(isinstance(entry.get(key), str) for key in ("global", "key", "on_delete")):
                 raise _Unsupported(path)
-            if (
-                entry.keys() - {"path", "global", "key", "on_delete", "key_codec"}
-                or entry["on_delete"] != "restrict"
-            ):
+            if entry.keys() - {"path", "global", "key", "on_delete", "key_codec"} or entry[
+                "on_delete"
+            ] not in ("restrict", "set_null", "cascade"):
                 raise _Unsupported(path)
             try:
                 Path(entry["global"])
@@ -271,6 +271,7 @@ class _Fields:
         }
         if self.legacy_comparison:
             relation.pop("key_codec", None)
+        policy = relation.pop("on_delete", None)
         return _Field(
             kind,
             signature,
@@ -283,6 +284,7 @@ class _Fields:
             bool(metadata.get("unique")),
             bool(metadata.get("primary_key")),
             self.owned.get(path, {}).get("version"),
+            policy,
         )
 
     def _types(self, kind: str, variants: list[Any], path: tuple[str, ...]) -> bytes:
@@ -390,12 +392,7 @@ def _changed(path: tuple[str, ...], old: _Field, new: _Field) -> list[SchemaChan
                     "identity_changed", path[:-1], destructive=True, requires_manual_review=True
                 )
             )
-    if old.nullable != new.nullable:
-        changes.append(SchemaChange("nullability_changed", path))
-    if old.required != new.required or old.validation != new.validation:
-        changes.append(SchemaChange("validation_changed", path))
-    if old.default_json != new.default_json:
-        changes.append(SchemaChange("default_changed", path, default_json=new.default_json))
+    changes.extend(_validation_changes(path, old, new))
     if old.version != new.version:
         downgrade = (
             old.version is not None and new.version is not None and new.version < old.version
@@ -413,6 +410,19 @@ def _changed(path: tuple[str, ...], old: _Field, new: _Field) -> list[SchemaChan
         )
     elif new.index and old.unique != new.unique:
         changes.append(SchemaChange("index_changed", path, unique=new.unique))
+    return changes
+
+
+def _validation_changes(path: tuple[str, ...], old: _Field, new: _Field) -> list[SchemaChange]:
+    changes = []
+    if old.nullable != new.nullable:
+        changes.append(SchemaChange("nullability_changed", path))
+    if old.delete_policy != new.delete_policy and old.kind == new.kind == "reference":
+        changes.append(SchemaChange("delete_policy_changed", path, requires_manual_review=True))
+    if old.required != new.required or old.validation != new.validation:
+        changes.append(SchemaChange("validation_changed", path))
+    if old.default_json != new.default_json:
+        changes.append(SchemaChange("default_changed", path, default_json=new.default_json))
     return changes
 
 

@@ -8,6 +8,7 @@ from typing import Any, overload
 from . import (
     adoption,
     child_mutations,
+    deletions,
     grouped_mutations,
     index_rebuilds,
     indexes,
@@ -301,14 +302,8 @@ class Database:
             bound = tx._check_schema(spec)
             exists = tx._exists(bound, root)
             if exists:
-                record = tx.get(model, key)
-                old_links = references.links(tx.registry, spec, root, record)
-                old_entries = indexes.entries(spec, root, record)
                 with tx._writing():
-                    references.replace(tx.store, old_links, frozenset())
-                    references.restrict_delete(tx.store, root)
-                    indexes.replace(tx.store, old_entries, frozenset())
-                    tx.store.delete_tree(root)
+                    deletions.delete(tx, spec, key)
             return exists
 
         return self._run(remove)

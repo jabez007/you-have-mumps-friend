@@ -12,6 +12,7 @@ from .schemas import SchemaInspection, SchemaSnapshot, canonical_json
 _STEP_ORDER = {
     "validate_source_schema": 0,
     "manual_change": 10,
+    "review_delete_policy": 10,
     "backfill_field": 20,
     "validate_records": 30,
     "validate_uniqueness": 40,
@@ -31,6 +32,7 @@ _VALIDATION_CHANGES = {
     "validation_changed",
     "default_changed",
     "nullability_changed",
+    "delete_policy_changed",
 }
 
 
@@ -45,8 +47,14 @@ def _owned_paths(
     return result
 
 
+def _unsupported_review_change(change: SchemaChange) -> bool:
+    return change.destructive or (
+        change.requires_manual_review and change.kind != "delete_policy_changed"
+    )
+
+
 def _supported_change(change: SchemaChange, nonscalar: set[tuple[str, ...]]) -> bool:
-    if change.destructive or change.requires_manual_review:
+    if _unsupported_review_change(change):
         return False
     if change.kind in _VALIDATION_CHANGES:
         return True
@@ -149,7 +157,7 @@ class MigrationPlan:
         restricted = tuple(
             f"unsupported_change:{change.kind}:{'.'.join(change.path)}"
             for change in self.changes
-            if change.requires_manual_review or change.destructive
+            if _unsupported_review_change(change)
         )
         if restricted:
             return restricted
@@ -199,7 +207,9 @@ def _field_steps(changes: tuple[SchemaChange, ...]) -> set[MigrationStep]:
     result = set()
     added_paths = {change.path for change in changes if change.kind == "field_added"}
     for change in changes:
-        if change.requires_manual_review:
+        if change.kind == "delete_policy_changed":
+            result.add(MigrationStep("review_delete_policy", change.path))
+        elif change.requires_manual_review:
             result.add(MigrationStep("manual_change", change.path))
         if change.kind == "field_added" and not change.requires_manual_review:
             has_added_parent = any(

@@ -79,7 +79,6 @@ These features are not in version 0.5.0:
 - Stored computed rollups and automatic dependency maintenance. Virtual Python
   properties and Pydantic computed fields are supported on loaded value objects.
   [#17](https://github.com/jabez007/you-have-mumps-friend/issues/17)
-- `set_null` and `cascade` deletion policies. [#13](https://github.com/jabez007/you-have-mumps-friend/issues/13)
 - Range, prefix, sorted, and multi-predicate queries. [#15](https://github.com/jabez007/you-have-mumps-friend/issues/15)
 - Mapper access rules. Apply authorization in the application's trusted service;
   independent M writers require their own enforcement. Database and raw paths do

@@ -130,10 +130,22 @@ Physical nesting should follow ownership, lifecycle, and access patterns rather 
 
 References enforce target existence on each source write. The target must be a
 registered top-level model, and a non-null reference must have the target's key
-type. The default and currently supported deletion policy is `restrict`, including
-optional references. Removing the source or changing its reference releases the
-target. Explicit `set_null` and cross-record cascades are deferred. Owned children
-continue to follow the lifecycle of their physical parent.
+type. The default deletion policy is restrict, including optional references.
+set_null validates and clears nullable fields on surviving owners; cascade deletes
+the nearest keyed source owner. Embedded references belong to their nearest keyed
+child or independent root. Discover the complete bounded closure before deciding
+restrict conflicts; internal edges are removed together and cycles terminate through
+native owner identities. Parent deletion dominates overlapping child deletions.
+Owned descendants continue to follow their physical parent.
+
+Policy deletes allow 100 distinct decoded owners, 1000 incoming edges, and 10,000
+distinct decoded value nodes, failing with MutationError before writes if exceeded.
+Exact source declarations must be registered. Null changes reuse ordinary patch
+validation, including its custom-ancestor restrictions. Final collection lengths and
+root budgets are checked before the union reference/index transition and physical
+deletion. A source under maintenance conservatively blocks the policy delete with
+ReferenceViolation. Policy-only changes use explicit reviewed validation migrations;
+existing restrict snapshots and edge layouts remain unchanged. See ADR 0011.
 
 Source writes, reverse-reference entries, and incoming counts share one native
 transaction. The count provides a direct read for concurrent deletion checks.

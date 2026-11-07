@@ -330,7 +330,9 @@ A non-null reference is `r:` followed by the target's canonical encoded key.
 The target model comes from the declaration. For `Reference[Product]`, key
 `"P42"` persists as `r:s:P42`. Null references use `n:`. Both the target global
 and its primary-key field participate in the source's canonical schema snapshot,
-along with the fixed deletion policy `restrict`.
+along with its declared deletion policy: restrict, set_null, or cascade. Restrict
+remains the implicit default and retains existing snapshot bytes. set_null requires
+a nullable reference. Policies change schema identity, without changing edge layout.
 
 Reverse entries use this layout:
 
@@ -361,8 +363,14 @@ and decrements the target count in the same transaction.
 Every write atomically changes the source record, reverse entries, and incoming
 counts. A deletion reads the count node directly, which participates in native
 transaction conflict detection. It also checks whether reverse children exist.
-Any incoming reference prevents deletion. Deleting a source removes its outgoing
-entries first, so a self-reference alone does not prevent deleting that source.
+Deletion discovers a bounded closure before applying writes. Incoming cascade edges
+delete their nearest keyed source owner; set_null fields on surviving owners are
+validated and cleared; restrict edges from surviving owners block the operation.
+All removed edges and index claims transition as a union, so cycles and overlapping
+ownership do not expose invalid intermediate states. A self-reference alone does not
+block deleting its source. Final child counts and lengths are checked after parent
+dominance, and all changes share the same transaction. Limits and validation rules
+are documented in the [reference guide](guides/references.md#understand-deletion).
 
 Unreferenced targets can retain a count of zero. Deleting the target removes its
 reverse root. Missing or inconsistent entries cause errors when mapper operations

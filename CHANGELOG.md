@@ -4,6 +4,11 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Adds bounded transactional set_null/cascade reference policies, nearest-keyed-owner
+  cascades, cycle handling, union index/reference maintenance, and final collection
+  validation. Policy-only changes require a reviewed explicit metadata migration.
+  Oversized deletion closures fail before writes.
+
 - Adds bounded scalar lists as native numbered nodes, preserving null/empty values,
   whole-list equality/unique indexes, minimal patch writes, and shared root budgets.
   New list fields and item type changes use explicit record transforms initially.

@@ -303,7 +303,7 @@ def _references(
                     "global": field.target.__global__,
                     "key": field.target_key,
                     "key_codec": key_type.__name__,
-                    "on_delete": "restrict",
+                    "on_delete": field.on_delete,
                 }
             )
         elif field.node is not None:

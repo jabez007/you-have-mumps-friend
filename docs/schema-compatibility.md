@@ -53,6 +53,14 @@ scalar JSON defaults. Layout/global codec versions remain one and older snapshot
 are unchanged. Nested nullable Decimal alternatives are inspected with bounded
 flattening; revision-only migrations preserve those existing snapshots and values.
 
+Reference policies participate through the existing references array. Restrict stays
+the default with identical bytes. set_null requires a nullable source; cascade names
+its nearest keyed source owner. A policy-only change is delete_policy_changed with
+explicit review required; the existing validation-only executor can activate it after
+validating and retagging records. It preserves data, index, and reverse-edge bytes.
+Target retargeting remains a separate manual/transform change. Older writers reject
+the changed source identity rather than silently applying an old policy.
+
 Virtual properties and Pydantic computed fields are outside the stored contract.
 They add no nodes, indexes, defaults, or schema changes. A computed field may not
 declare mapper persistence metadata. Changing a virtual display calculation alone

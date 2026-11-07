@@ -40,6 +40,8 @@ class Address:
     declaration: tuple[str, ...]
     field: FieldSpec
     relative: tuple[bytes, ...]
+    keyed_at: OwnedPath = ()
+    keyed_relative: tuple[bytes, ...] = ()
 
 
 def scope(spec: ModelSpec, prefix: Path) -> str:
@@ -143,6 +145,8 @@ def address(spec: ModelSpec, raw: bytes | None, digest: bytes) -> Address:
     fields, index = spec.fields, 0
     at: list[Key] = []
     names: list[str] = []
+    keyed_at: OwnedPath = ()
+    keyed_relative: tuple[bytes, ...] = ()
     while index < len(parts):
         selected = next(
             (item for item in fields if item.name.encode("ascii") == parts[index]), None
@@ -154,11 +158,12 @@ def address(spec: ModelSpec, raw: bytes | None, digest: bytes) -> Address:
         if selected.node is None:
             if index != len(parts):
                 raise StorageError("Occurrence location descends through a scalar field")
-            return Address(tuple(at), tuple(names), selected, parts)
+            return Address(tuple(at), tuple(names), selected, parts, keyed_at, keyed_relative)
         at.append(selected.name)
         if selected.kind == "children":
             at.append(_child_key(selected, parts, index))
             index += 1
+            keyed_at, keyed_relative = tuple(at), parts[:index]
         fields = selected.node.fields
     raise StorageError("Occurrence location must identify a declared leaf field")
 

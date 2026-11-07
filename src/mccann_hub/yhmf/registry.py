@@ -102,6 +102,7 @@ class FieldSpec:
     adapter: TypeAdapter[Any] | None = compiled_field(default=None, repr=False, compare=False)
     choices: Choices | None = compiled_field(default=None, repr=False, compare=False)
     item: "FieldSpec | None" = None
+    on_delete: str = "restrict"
 
 
 @dataclass(frozen=True)
@@ -175,6 +176,10 @@ def _field_spec(model: type[Model], name: str, ancestors: tuple[type[Model], ...
     annotation = scalar_type(model.model_fields[name].annotation)
     metadata = _field_metadata(model, name)
     spec = _field_type_spec(annotation, name, metadata, ancestors)
+    if spec.on_delete == "set_null" and type(None) not in get_args(
+        model.model_fields[name].annotation
+    ):
+        raise SchemaError("set_null requires a nullable Reference field")
     choices = spec.choices if spec.item is None else spec.item.choices
     if choices is not None and choices.kind == "enum" and model.model_config.get("use_enum_values"):
         raise SchemaError("Enum fields do not support use_enum_values=True")
@@ -203,7 +208,12 @@ def _field_type_spec(
         return _list_spec(annotation, name)
     if isinstance(annotation, type) and issubclass(annotation, Reference):
         target = reference_target(annotation)
-        return FieldSpec(name, "reference", target=target, target_key=_key_field(target))
+        policy = metadata.get("on_delete", "restrict")
+        if policy not in ("restrict", "set_null", "cascade"):
+            raise SchemaError("Invalid Reference on_delete policy")
+        return FieldSpec(
+            name, "reference", target=target, target_key=_key_field(target), on_delete=policy
+        )
     if metadata.get("on_delete"):
         raise SchemaError("on_delete requires a Reference field")
     if isinstance(annotation, type) and issubclass(annotation, Model):
@@ -313,7 +323,7 @@ def _reference_declarations(
                     "path": path,
                     "global": _application_global(field.target),
                     "key": field.target_key,
-                    "on_delete": "restrict",
+                    "on_delete": field.on_delete,
                 }
             )
         elif field.node is not None:
@@ -450,3 +460,7 @@ class Registry:
                 "create a fresh registry"
             )
         return spec
+
+    def _spec_for_global(self, global_name: str) -> ModelSpec | None:
+        model = self._globals.get(global_name)
+        return None if model is None else self.spec(model)
