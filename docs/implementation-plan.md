@@ -1585,3 +1585,23 @@ allowed. Test null/value transitions, exact nodes/indexes, uniqueness rollback,
 ambiguous-looking strings, malformed null shapes, and owned patches/restarts. There
 is no stored-format change. Configured C901 passes at ten before this change; extend
 existing seams without another index or nullable serialization subsystem.
+
+### Patch scalars on roots and non-leaf owners, issue 53
+
+Reuse owned(), hprepare/hresolve, attempt(), old(), and the existing index/reference
+transitions. Add patch(key,input) and patchtx(key,input) for roots; allow patchchild
+on non-leaf owners as the same operation at a concrete path. Normalize flat writer
+constants into the existing node configuration for this path. An empty internal path
+addresses the root; insert/delete retain their current path/operation restrictions.
+
+old() recognizes declared immediate child collection markers/count presence without
+walking their contents. Reject unknown fields and malformed/missing immediate shape;
+read and validate owner scalars with the existing compiled rules. Root patches retain
+root metadata rather than owned markers. Only changed indexes/references are updated;
+child subtrees, their indexes, counts, and sums remain untouched. Derived sums stay
+read-only. This introduces no aggregate replacement shortcut or stored-format change.
+
+Test physical equivalence with Python patch, unchanged children, invalid root shapes,
+unique rollback, participants, and a forced restart after index writes. Complete tree
+creation/deletion remains a later issue-53 slice. Configured C901 passes at ten before
+this change; no unrelated Python refactor or threshold change is required.

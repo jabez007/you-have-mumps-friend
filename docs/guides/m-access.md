@@ -113,7 +113,7 @@ From plain M, supply every field as an untagged, named scalar:
  set status=$$delete^PartAPI("P1")
 ```
 
-The generator supports flat non-null scalar and Reference models with ordinary equality
+The generator supports flat qualified scalar and Reference models with ordinary equality
 and unique indexes. It enforces string length and numeric gt/ge/lt/le bounds, with
 ASCII string values and canonical signed integers of at most 18 digits. Strings may
 contain ASCII controls; NUL is forbidden in keys. Python retains its full Unicode
@@ -379,6 +379,38 @@ than the unit precision, fail export rather than being ignored.
 Other scalar extensions remain separate: lists, non-ASCII strings, and arbitrary
 patterns still fail
 export. For owned trees, see [mutate a keyed hierarchy](#mutate-a-keyed-hierarchy).
+
+## Patch a root or a non-leaf owner
+
+patch(key,input) changes explicitly supplied root scalars; patchtx(key,input) is
+its caller-transaction participant. Both flat and hierarchical roots are supported:
+
+```mumps
+ set changes("name")="Receiving warehouse"
+ set status=$$patch^WarehouseAPI("MAIN",.changes)
+```
+
+For a non-leaf owned record, patchchild/patchchildtx use its ordinary concrete path:
+
+```mumps
+ set path(1)="locations",path(2)="DOCK"
+ set changes("label")="Receiving"
+ set status=$$patchchild^SiteAPI("MAIN",.path,.changes)
+```
+
+The declared model must actually contain the scalar being patched. Every patch
+requires at least one supplied field. Keys, derived sums, and whole child collections
+cannot be patched. Qualified nullable scalars use the explicit null form below.
+Validation reads this owner's scalars and immediate collection markers; it does not
+load or validate unrelated descendants. Only affected indexes and references change.
+Child nodes, collection counts, and descendant totals remain intact. This is a bounded
+mutation, not a complete aggregate audit. Unsupported validators still fail export.
+
+Normal transaction, maintenance, reference, and uniqueness checks apply on every
+attempt. Replace remains a complete-record operation. Tree construction, non-leaf
+insertion/deletion, and hierarchical root deletion remain unqualified until their
+separate issue-53 slices. Existing storage bytes and schema identities are unchanged;
+regenerate source for these patch interfaces.
 
 ## Finite string and integer choices
 

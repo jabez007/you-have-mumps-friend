@@ -1,5 +1,11 @@
  ; SPDX-License-Identifier: GPL-3.0-or-later
  ; Leaf child operations under an already managed root; paths alternate names/keys.
+patch(key,input)
+ new path
+ quit $$owned("patch",key,.path,.input,0)
+patchtx(key,input)
+ new path
+ quit $$owned("patch",key,.path,.input,1)
 insertchild(rootkey,path,input)
  quit $$owned("insert",rootkey,.path,.input,0)
 patchchild(rootkey,path,input)
@@ -37,7 +43,10 @@ hkey(value,cfg)
 hprepare(operation,rootkey,path,input,cfg,wire,parts,node)
  new local,index,count,position,field,key,status,maximum
  do config(.cfg)
- if '$get(cfg("hierarchy")) quit "operation"
+ if '$get(cfg("hierarchy")),operation'="patch" quit "operation"
+ if '$get(cfg("hierarchy")) do
+ . merge local=cfg
+ . merge cfg("nodes","")=local
  merge local=cfg("nodes","")
  set key=$$hkey(rootkey,.local)
  if key="invalid" quit "invalid_key"
@@ -47,7 +56,7 @@ hprepare(operation,rootkey,path,input,cfg,wire,parts,node)
  . set count=count+1
  . if index'=count!($data(path(index))'=1) set status="invalid_path"
  if status'="ok" quit status
- if count<1!(count>29) quit "invalid_path"
+ if count>29!((count=0)&(operation'="patch")) quit "invalid_path"
  if (operation="insert")'=(count#2=1) quit "invalid_path"
  for position=1:2:count do  quit:status'="ok"
  . set field=path(position)
@@ -59,14 +68,14 @@ hprepare(operation,rootkey,path,input,cfg,wire,parts,node)
  . if key="invalid" set status="invalid_key" quit
  . set parts(position+1)=key
  if status'="ok" quit status
- if 'cfg("nodes",node,"leaf") quit "operation"
+ if operation'="patch",'cfg("nodes",node,"leaf") quit "operation"
  kill local
  do hconfig(.cfg,node,.parts,.local)
  set local("partial")=(operation="patch")
  if operation="delete" set wire(local("key"))=path(count)
  else  set status=$$input(operation,.input,.local,.wire)
  if status'="ok" quit status
- if operation="patch" set wire(local("key"))=path(count)
+ if operation="patch" set wire(local("key"))=$select(count=0:rootkey,1:path(count))
  if operation="insert" set parts(count+1)=$$hkey(wire(local("key")),.local)
  set maximum=0,field=""
  for  set field=$order(local("tag",field)) quit:field=""  do
@@ -86,7 +95,7 @@ hconfig(rootcfg,node,parts,cfg)
  merge cfg=rootcfg("nodes",node)
  for name="global","fingerprint","snapshot" set cfg(name)=rootcfg(name)
  merge cfg("meta")=rootcfg("meta"),cfg("targets")=rootcfg("targets")
- set cfg("owned")=1,cfg("recordkey")=parts(0)
+ set cfg("owned")=(node'=""),cfg("recordkey")=parts(0)
  quit
 haddress(global,parts,depth)
  new root,index,name

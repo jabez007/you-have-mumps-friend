@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Adds M patch/patchtx for root scalars and extends child patches to non-leaf owners.
+  Reuses transactional validation/index/reference maintenance without loading or
+  replacing unrelated descendants; derived totals and keys remain read-only.
+
 - Adds explicit structured null input for qualified M scalars and choices. Null
   equality entries and absent unique claims match Python, without text sentinels
   or stored-format changes. Missing full-record inputs remain invalid.

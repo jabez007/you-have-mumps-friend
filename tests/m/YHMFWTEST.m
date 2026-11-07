@@ -187,3 +187,27 @@ temporal
  do config^YHMFTAPI(.cfg)
  write $$valid^YHMFTAPI(^YHMFTestStorage("writerInput","day"),"day",.cfg),"|",$$valid^YHMFTAPI(^YHMFTestStorage("writerInput","instant"),"instant",.cfg),!
  quit
+rootpatch
+ new input,key
+ merge input=^YHMFTestStorage("writerInput")
+ set key=$get(input("_key"),"A") kill input("_key")
+ write $$patch^YHMFTAPI(key,.input),!
+ quit
+rootpair
+ new first,second,status
+ set first("quantity")="2"
+ merge second=^YHMFTestStorage("writerInput")
+ tstart ():serial
+ set status=$$patchtx^YHMFTAPI("A",.first)
+ if status'="ok" write status,"|",$tlevel,! quit
+ set status=$$patchtx^YHMFTAPI("B",.second)
+ if status'="ok" write status,"|",$tlevel,! quit
+ tcommit
+ write status,"|",$tlevel,!
+ quit
+ownerpatch
+ new input,path
+ merge input=^YHMFTestStorage("writerInput")
+ set path(1)="locations",path(2)="DOCK"
+ write $$patchchild^YHMFTAPI("MAIN",.path,.input),!
+ quit

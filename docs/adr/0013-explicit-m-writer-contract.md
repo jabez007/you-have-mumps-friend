@@ -237,3 +237,16 @@ claim, as Python does. Missing complete-record input is still invalid. Reference
 containers, lists, boolean choices, and other unqualified families remain rejected.
 Qualification includes native differential, failure, rollback, and restart tests.
 Regenerate source for these capabilities without database conversion.
+
+
+## Root and non-leaf scalar patches, issue 53
+
+Reuse the existing hierarchical mutation path for explicit patch/patchtx root
+interfaces, including flat models. Empty internal ownership paths identify roots;
+non-leaf patchchild uses normal concrete paths. Normalize flat configuration into
+the same owner seam and retain root metadata semantics. old() accepts declared
+collection markers with consistent immediate count presence, without scanning
+unrelated children. Keys, derived fields, collections, and unsupported validation
+remain rejected. Changed indexes/references use the existing transitions, with native
+rollback/restart qualification. Whole aggregate replacement and tree construction/
+deletion retain their separate contracts. No storage or metadata conversion occurs.

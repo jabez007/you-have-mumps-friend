@@ -180,13 +180,20 @@ indexafter(operation,key,values,old,cfg)
  . . if $$hasclaim(values(field),field,.cfg) set ^YHMFUnique(cfg("global"),name,token)=claim
  quit status
 old(root,cfg,values)
- new field,part,raw,status
+ new field,part,raw,status,count
  set status="ok"
  if $get(cfg("owned")) set status=$select($get(@root)="o:1":"ok",1:"corrupt")
  else  set status=$$recordmeta(root,.cfg)
  if status'="ok" quit status
  set field=""
- for  set field=$order(@root@(field)) quit:field=""  if (field'="%m")!$get(cfg("owned")),'$data(cfg("tag",field)) set status="corrupt"
+ for  set field=$order(@root@(field)) quit:field=""  do  quit:status'="ok"
+ . if field="%m",'$get(cfg("owned")) quit
+ . if $data(cfg("tag",field)) quit
+ . if '$data(cfg("children",field)) set status="corrupt" quit
+ . set status=$$hcount($name(@root@(field)),.cfg,field,.count)
+ . if status="ok",(count>0)'=($order(@root@(field,""))'="") set status="corrupt"
+ set field=""
+ for  set field=$order(cfg("children",field)) quit:field=""  if '$data(@root@(field)) set status="corrupt"
  if status'="ok" quit status
  set field=""
  for  set field=$order(cfg("tag",field)) quit:field=""  do  quit:status'="ok"

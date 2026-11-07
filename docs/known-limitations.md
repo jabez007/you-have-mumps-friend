@@ -127,9 +127,9 @@ These features remain outside the current implementation:
   [schema-bound M routines](guides/m-access.md#export-an-explicit-m-writer) maintain
   qualified ASCII str/int/Decimal, finite str/int choices, dates/UTC datetimes,
   their nullable scalar forms, and references, with owning or caller-participating
-  transactions. Keyed hierarchies support leaf-child operations
-  under existing roots, including exact stored sums. Whole aggregate construction,
-  non-leaf mutations, embedded/nullable containers, custom validators, and ordered
+  transactions. Keyed hierarchies support leaf-child operations and root/non-leaf
+  scalar patches under existing roots, including exact stored sums. Whole aggregate
+  construction, non-leaf insertion/deletion, embedded/nullable containers, custom validators, and ordered
   indexes remain outside this M contract
   ([#53](https://github.com/jabez007/you-have-mumps-friend/issues/53),
   [#54](https://github.com/jabez007/you-have-mumps-friend/issues/54),
