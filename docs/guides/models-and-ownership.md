@@ -132,7 +132,8 @@ Setting `allow_inf_nan=True` does not permit nonfinite stored scalars. See the
 A registry compiles field adapters and the partial-validation policy for each declared
 model. Reuse that registry during the application's lifetime. Do not modify annotations,
 configuration, validators, or field metadata after registration. A rebuilt Pydantic
-schema or changed model configuration raises `SchemaError` on access. Other in-place
+schema, changed model configuration, global name, or root/owned application revision
+raises `SchemaError` on access. Other in-place
 Python mutations are unsupported; they are not a schema-migration mechanism.
 
 For an application schema change, define a new model class and registry, then inspect

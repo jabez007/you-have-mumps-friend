@@ -86,3 +86,37 @@ def test_config_changes_cannot_silently_reuse_compiled_rules(store):
     Root.model_config["str_to_lower"] = True
     with pytest.raises(SchemaError, match="changed.*after registration"):
         db.query(Root).where(name="UPPER")
+
+
+@pytest.mark.parametrize("owner", ["root", "child"])
+@pytest.mark.parametrize(
+    "attribute,value",
+    [
+        ("__schema_version__", 2),
+        ("__schema_version__", True),
+        ("__schema_version__", 1.0),
+        ("__global__", "^YHMFTestProduct"),
+    ],
+)
+@pytest.mark.parametrize("installed", [False, True])
+def test_registered_storage_identity_changes_cannot_write_stale_metadata(
+    store, owner, attribute, value, installed
+):
+    from tests.adversarial_support import dump
+
+    class Child(Model):
+        id: int = Field(primary_key=True)
+
+    class Root(Model):
+        __global__ = "^YHMFTestWarehouse"
+        id: int = Field(primary_key=True)
+        children: Children[Child] = ChildField(key="id")
+
+    db = Database(store, Registry(Root))
+    if installed:
+        db.insert(Root(id=1))
+    before = dump(store, ("^YHMFTestWarehouse", "^YHMFTestProduct", "^YHMFSchema"))
+    setattr(Root if owner == "root" else Child, attribute, value)
+    with pytest.raises(SchemaError, match="changed.*after registration"):
+        db.insert(Root(id=2, children={1: Child(id=1)}))
+    assert dump(store, ("^YHMFTestWarehouse", "^YHMFTestProduct", "^YHMFSchema")) == before

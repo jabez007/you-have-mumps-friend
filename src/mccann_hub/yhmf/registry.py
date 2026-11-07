@@ -340,10 +340,36 @@ def _make_spec(model: type[Model], *, legacy: bool = False) -> ModelSpec:
     )
 
 
+@dataclass(frozen=True)
+class _Declaration:
+    owner: type[Model]
+    schema: Any
+    config: ConfigDict
+    global_name: str | None
+    version: int
+
+    def unchanged(self) -> bool:
+        return (
+            self.owner.__pydantic_core_schema__ is self.schema
+            and self.owner.model_config == self.config
+            and self.owner.__global__ == self.global_name
+            and type(self.owner.__schema_version__) is int
+            and self.owner.__schema_version__ == self.version
+        )
+
+
 def _declaration_schemas(
     model: type[Model], fields: tuple[FieldSpec, ...]
-) -> tuple[tuple[type[Model], Any, ConfigDict], ...]:
-    result = [(model, model.__pydantic_core_schema__, model.model_config.copy())]
+) -> tuple[_Declaration, ...]:
+    result = [
+        _Declaration(
+            model,
+            model.__pydantic_core_schema__,
+            model.model_config.copy(),
+            model.__global__,
+            model.__schema_version__,
+        )
+    ]
     for item in fields:
         if item.node is not None:
             result.extend(_declaration_schemas(item.node.model, item.node.fields))
@@ -356,7 +382,7 @@ class Registry:
     def __init__(self, *models: type[Model]) -> None:
         self._specs: dict[type[Model], ModelSpec] = {}
         self._globals: dict[str, type[Model]] = {}
-        self._schemas: dict[type[Model], tuple[tuple[type[Model], Any, ConfigDict], ...]] = {}
+        self._schemas: dict[type[Model], tuple[_Declaration, ...]] = {}
         for model in models:
             self.register(model)
         self.validate_references()
@@ -394,10 +420,7 @@ class Registry:
             spec = self._specs[model]
         except KeyError as exc:
             raise SchemaError("Register the model before database access") from exc
-        if any(
-            owner.__pydantic_core_schema__ is not schema or owner.model_config != config
-            for owner, schema, config in self._schemas[model]
-        ):
+        if any(not declaration.unchanged() for declaration in self._schemas[model]):
             raise SchemaError(
                 "Model declaration changed or was rebuilt after registration; "
                 "create a fresh registry"

@@ -4,6 +4,9 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Rejects registered root/owned global-name or revision mutation before access,
+  preventing new records from mixing stale schema snapshots with changed metadata.
+
 - Adds explicit named record transforms to the existing migration lifecycle, with
   pinned source/output digests, final uniqueness reservations, reference maintenance,
   and a reviewed abort boundary. Root identity and layout changes remain blocked.

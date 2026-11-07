@@ -728,3 +728,15 @@ identity, despite unchanged native target, location, and edge bytes. The regress
 fails for equivalent target rebindings. Exclude that validation-only class from Link
 equality/hash before using distinct source/target bindings; keep all native identity
 fields and target validation intact. No storage or schema change.
+
+### Guard registered storage identities, follow-up to issue 31
+
+Registry captures core-schema identity and config but not __global__ or
+__schema_version__. Mutating a registered revision before first insert can write
+record metadata inconsistent with the installed snapshot; bool/float equality with
+integer revisions can also hide a change. Extend the existing declaration state to
+capture both class variables for root and owned models, enforcing exact int revision
+types. Use a small immutable state value instead of expanding positional tuples.
+Reject mutation before access and require fresh declarations/registries, preserving
+all valid schema bytes. Test empty and installed databases with root/owned changes
+and verify no writes on failure. Existing C901 passes at ten.
