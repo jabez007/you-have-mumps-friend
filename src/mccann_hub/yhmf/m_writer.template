@@ -87,11 +87,7 @@ attempt(operation,key,values,cfg)
  . if operation'="insert" set status="schema" quit
  . if $data(@GLOBAL@)!$data(^YHMFIndex(cfg("global")))!$data(^YHMFUnique(cfg("global")))!$data(^YHMFRef(cfg("global"))) set status="unmanaged" quit
  . set install=1
- if 'install,$get(^YHMFSchema(cfg("global")))'=cfg("fingerprint") quit "schema"
- if 'install,$get(^YHMFSchema(cfg("global"),"snapshot"))'=cfg("snapshot") quit "schema"
- if 'install,$data(^YHMFSchema(cfg("global"),"snapshot"))'=1 quit "schema"
- if 'install,$order(^YHMFSchema(cfg("global"),""))'="snapshot" quit "schema"
- if 'install,$order(^YHMFSchema(cfg("global"),"snapshot"))'="" quit "schema"
+ if 'install,'$$schema(cfg("global"),cfg("fingerprint"),cfg("snapshot")) quit "schema"
  if operation="insert",$data(@root) quit "exists"
  if operation'="insert",'$data(@root) quit "missing"
  if operation'="insert" do  quit:status'="ok" status
@@ -133,14 +129,10 @@ attempt(operation,key,values,cfg)
  quit "ok"
 old(root,cfg,values)
  new field,part,raw,status
- if $data(@root)#2 quit "corrupt"
- if $data(@root@("%m"))#2 quit "corrupt"
- set field="",status="ok"
+ set status=$$recordmeta(root,.cfg)
+ if status'="ok" quit status
+ set field=""
  for  set field=$order(@root@(field)) quit:field=""  if field'="%m",'$data(cfg("tag",field)) set status="corrupt"
- set field=""
- for  set field=$order(@root@("%m",field)) quit:field=""  if '$data(cfg("meta",field)) set status="corrupt"
- set field=""
- for  set field=$order(cfg("meta",field)) quit:field=""  if $data(@root@("%m",field))'=1!($get(@root@("%m",field))'=cfg("meta",field)) set status="corrupt"
  set field=""
  for  set field=$order(cfg("tag",field)) quit:field=""  do
  . if $data(@root@(field))'=1 set status="corrupt" quit
@@ -167,6 +159,7 @@ quote(value)
  . if (code<32)!(code=127) set out=out_"\u00"_$extract("0123456789abcdef",(code\16)+1)_$extract("0123456789abcdef",(code#16)+1) quit
  . set out=out_char
  quit out_$char(34)
+@SCHEMA@
 @DECIMAL@
 @MAINTENANCE@
 config(cfg)

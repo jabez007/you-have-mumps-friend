@@ -125,12 +125,30 @@ def _field_config(
     return result
 
 
-def _template(name: str) -> str:
+def _schema_config(spec: ModelSpec, prefix: tuple[str, ...] = ()) -> list[str]:
+    result = [
+        _set(*prefix, "global", value=spec.global_name[1:]),
+        _set(*prefix, "fingerprint", value=spec.fingerprint.decode("ascii")),
+    ]
+    for key, value in metadata(spec).items():
+        result.append(_set(*prefix, "meta", key.decode("ascii"), value=value.decode("ascii")))
+    snapshot = spec.snapshot.decode("ascii")
+    result.append(_set(*prefix, "snapshot", value=""))
+    subscript = ",".join(_literal(part) for part in (*prefix, "snapshot"))
+    for offset in range(0, len(snapshot), 256):
+        result.append(
+            f" set cfg({subscript})=cfg({subscript})_" + _literal(snapshot[offset : offset + 256])
+        )
+    return result
+
+
+def _template(name: str) -> tuple[str, str]:
     resources = files(__package__)
     result = resources.joinpath("m_writer.template").read_text()
     for marker, filename in (
         ("@MAINTENANCE@", "m_maintenance.template"),
         ("@DECIMAL@", "m_decimal.template"),
+        ("@SCHEMA@", "m_schema.template"),
     ):
         result = result.replace(marker, resources.joinpath(filename).read_text())
     labels = {
@@ -138,9 +156,8 @@ def _template(name: str) -> str:
         for line in result.splitlines()
         if line and not line[0].isspace()
     }
-    if name in labels:
-        raise SchemaError("M routine name collides with a generated entry label")
-    return result
+    # The filename names the M routine independently of its initial label.
+    return result, "%YHMFentry" if name in labels else name
 
 
 def source(spec: ModelSpec, name: str) -> str:
@@ -154,13 +171,7 @@ def source(spec: ModelSpec, name: str) -> str:
     policy = declaration.get("validation_policy", {})
     if policy.keys() - {"str_min_length", "str_max_length"}:
         raise SchemaError("M writer does not support this model's validation policy")
-    config = [
-        _set("global", value=spec.global_name[1:]),
-        _set("key", value=spec.key_field),
-        _set("fingerprint", value=spec.fingerprint.decode("ascii")),
-    ]
-    for key, value in metadata(spec).items():
-        config.append(_set("meta", key.decode("ascii"), value=value.decode("ascii")))
+    config = [_set("key", value=spec.key_field), *_schema_config(spec)]
     for field, rule in declaration["properties"].items():
         config.extend(_field_config(spec, field, rule, policy))
     config.append(
@@ -174,15 +185,9 @@ def source(spec: ModelSpec, name: str) -> str:
             ),
         )
     )
-    snapshot = spec.snapshot.decode("ascii")
-    config.append(_set("snapshot", value=""))
-    for offset in range(0, len(snapshot), 256):
-        config.append(
-            ' set cfg("snapshot")=cfg("snapshot")_' + _literal(snapshot[offset : offset + 256])
-        )
-    template = _template(name)
+    template, entry = _template(name)
     return (
-        name
+        entry
         + " ; SPDX-License-Identifier: GPL-3.0-or-later\n"
         + template.replace("@GLOBAL@", spec.global_name)
         .replace("@KEY@", _literal(spec.key_field))

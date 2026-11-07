@@ -2,6 +2,7 @@
 """M Decimal bytes and exact comparisons agree with the Python persistence contract."""
 
 from decimal import Decimal, localcontext
+from pathlib import Path as FilePath
 
 import pytest
 from hypothesis import HealthCheck, given, settings
@@ -233,7 +234,32 @@ def test_legacy_decimal_binding_preserves_metadata_and_scale(store, m_writer, de
 
 
 @pytest.mark.parametrize("name", ["insert", "prepare", "checkpoint", "decimal"])
-def test_export_rejects_routine_names_colliding_with_generated_labels(name):
+def test_export_uses_private_initial_label_when_routine_name_matches_an_entry(name):
     db = Database(MemoryStore(), Registry(Amount))
-    with pytest.raises(SchemaError, match="collides"):
-        db.m_routine(Amount, name=name)
+    assert db.m_routine(Amount, name=name).startswith("%YHMFentry ; SPDX-License-Identifier")
+
+
+@pytest.mark.native
+@pytest.mark.parametrize("name", ["insert", "decimal", "schema", "recordmeta"])
+def test_routine_names_matching_generated_labels_compile_and_write_native(store, m_writer, name):
+    import subprocess
+
+    db = Database(store, Registry(Amount))
+    _, _, routine, environment = m_writer
+    routine.with_name(name + ".m").write_text(db.m_routine(Amount, name=name))
+    result = subprocess.run(
+        [
+            str(FilePath(environment["ydb_dist"]) / "yottadb"),
+            "-run",
+            "%XCMD",
+            'set input("id")="A",input("value")="12.50" write $$insert^' + name + "(.input),!",
+        ],
+        env=environment,
+        text=True,
+        capture_output=True,
+        timeout=20,
+        check=True,
+    )
+    assert not result.stderr, result.stderr
+    assert result.stdout.strip() == "ok"
+    assert db.get(Amount, "A").value == Decimal("12.50")

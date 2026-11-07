@@ -93,8 +93,8 @@ assert source.startswith("PartAPI ; SPDX-License-Identifier")
 ```
 
 Exporting source reads and verifies current schema metadata without changing it.
-A routine name cannot collide with one of its generated entry labels; export rejects
-such names before producing an uncompilable routine.
+When a routine name matches a generated label, the source uses a private initial
+label. The filename and callable entry points retain the requested routine name.
 If a supported legacy snapshot is installed, the source binds to that exact legacy
 identity. No metadata conversion occurs. If metadata is absent, the first valid M
 insert installs it only if the application global and associated namespaces are

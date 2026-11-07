@@ -1,0 +1,17 @@
+ ; SPDX-License-Identifier: GPL-3.0-or-later
+schema(global,fingerprint,snapshot)
+ if $get(^YHMFSchema(global))'=fingerprint quit 0
+ if $get(^YHMFSchema(global,"snapshot"))'=snapshot quit 0
+ if $data(^YHMFSchema(global,"snapshot"))'=1 quit 0
+ if $order(^YHMFSchema(global,""))'="snapshot" quit 0
+ if $order(^YHMFSchema(global,"snapshot"))'="" quit 0
+ quit 1
+recordmeta(root,cfg)
+ new field,status
+ if $data(@root)#2 quit "corrupt"
+ if $data(@root@("%m"))#2 quit "corrupt"
+ set field="",status="ok"
+ for  set field=$order(@root@("%m",field)) quit:field=""  if '$data(cfg("meta",field)) set status="corrupt"
+ set field=""
+ for  set field=$order(cfg("meta",field)) quit:field=""  if $data(@root@("%m",field))'=1!($get(@root@("%m",field))'=cfg("meta",field)) set status="corrupt"
+ quit status

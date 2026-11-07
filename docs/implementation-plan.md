@@ -1219,6 +1219,41 @@ codecs do not change. Unconstrained M Decimal fields preserve any canonical scal
 within the node bound when its value fits the fixed-unit domain.
 
 The additional M helpers expose a preexisting exporter name collision: a routine
-name equal to an emitted entry label cannot compile. Reject these names before
-export; regression tests fail without this guard. No previously compilable source
-is rejected. The template loader derives the forbidden names from actual labels.
+name equal to the initial label and another emitted entry cannot compile. Use a
+private initial label only when needed, keeping filenames/callable entry points
+compatible. The template loader derives collisions from actual labels; new shared
+helpers must not reserve previously valid routine names. Native tests compile and
+execute these names rather than merely checking a text guard.
+
+### Managed reference fields in M, issue 37
+
+Reuse FieldSpec.target, exact registered target bindings, metadata(), and the existing
+reference entry/count layout. Export reads and binds each referenced target's live
+schema identity without converting metadata. A changed target identity requires
+regeneration even when its global/key identity leaves the source snapshot unchanged.
+Read target fingerprints/snapshots and record metadata in the same TP as link writes.
+Use the existing scoped maintenance check for each target; removals may still release
+links to a migrating target, as Python permits.
+
+M callers supply the target's plain key. Compile its declared str/int key codec and
+encode r:s:key or r:integer exactly; retain the existing ASCII/int-key M subset.
+Reuse ordinary equality/unique indexing. Reverse locations and digests come from the
+same canonical field path, including unindexed references. Validate old edges and
+canonical counts, group changes per target, and add/subtract counts as bounded digit
+strings rather than rounding with M numeric arithmetic. Unchanged edges stay intact.
+Check new target existence after staging source nodes so self-reference insertion
+can see its own managed record. Any failure rolls back data, metadata, claims,
+reverse edges, and counts through both existing TP-owning and participating paths.
+
+Deletes keep conservative restrict behavior rather than executing Python set_null
+or cascade. Validate inbound count/edge presence; a valid zero-count namespace must
+not permanently prevent deletion. Target metadata reads and count writes ensure a
+concurrent Python delete either loses its restriction check or causes the M writer
+to restart and reject a missing target. Test both orders, missing/corrupt targets,
+reference replacement/deletion, self-reference, large exact counts, legacy schema
+bindings, restart, rollback, and multi-model transaction composition on native.
+No persistent layout, source reference identity, or public Python signature changes.
+
+Before reference support, share schema constants and M schema/record-metadata checks
+without changing their validation or stored bytes. This keeps source and referenced
+target bindings on the same implementation, including exact legacy snapshots.

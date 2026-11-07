@@ -4,7 +4,8 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
-- Rejects M routine names that collide with generated labels before returning source.
+- Uses a private initial label when needed to preserve M routine names that match
+  generated operation/helper labels.
 
 - Adds canonical Decimal inputs to generated M writers with exact fixed-unit bounds
   and index normalization, preserved record scale, and explicit raw precision limits.
