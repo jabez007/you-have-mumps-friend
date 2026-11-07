@@ -5,8 +5,9 @@
 The disposable native harness runs python -m scripts.benchmark_maintenance when
 YHMF_BENCHMARK=1. It upgrades 1/10/50 inventory warehouses from revision two to
 three, each with two locations and ten lots, in committed batches of five. While
-that job owns the gate, it attempts an unrelated Product index rebuild, checks
-that refusal leaves the checkpoint unchanged, and patches the Product name.
+that job owns the gate, it attempts an index rebuild of an independent control model,
+which has no inventory references. Refusal leaves the checkpoint unchanged; a control
+name patch demonstrates unrelated CRUD.
 After finishing the warehouse job through fresh handles, it completes the previously
 refused rebuild and checks totals and indexes.
 

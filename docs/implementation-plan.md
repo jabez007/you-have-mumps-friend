@@ -1369,9 +1369,9 @@ typed sorting, scoped root pages, and unchanged stock/reference data.
 ### Measure maintenance serialization before changing its lock protocol, issue 46
 
 Reuse the actual WarehouseV2-to-current named-transform upgrade, scoped maintenance
-gate, Product index-rebuild planner, public job resume APIs, and benchmark counters.
+gate, index-rebuild planner, public job resume APIs, and benchmark counters.
 Measure one attempted unrelated rebuild while a warehouse job is active, unrelated
-Product CRUD latency, remaining active-job duration, and the second job after release.
+control-model CRUD latency, remaining active-job duration, and the second job after release.
 Use 1/10/50 warehouses with two locations and ten lots per location, small committed
 batches, and both native engine/journal configurations. The API refuses a second job
 immediately; it does not queue it, so remaining job duration is an operator scheduling
@@ -1379,6 +1379,10 @@ delay bound for this controlled workload, not an observed production waiting tim
 Do not infer a deployment requirement or implement per-model locks from synthetic
 results alone. Update ADR 0009 with the measured decision and the conflict/reference,
 recovery, activation, and older-client requirements of any future concurrency design.
+
+Use an independent control model with no references to/from the inventory graph.
+Product is connected through balances and is not evidence for disjoint-job behavior;
+do not use the original connected-model probe as unrelated-job qualification.
 
 ### Owned-path M writers and exact sums, issue 38
 

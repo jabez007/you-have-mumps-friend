@@ -12,6 +12,8 @@ def test_inventory_maintenance_workload_refuses_then_completes_the_second_job(wa
     store = MemoryStore()
     row = measure(store, warehouses, lots=2, batch_size=batch)
     assert row["completed"] and row["second_job_completed_after_release"]
+    assert row["second_global"] == "^YHMFMaintControl"
+    assert not row["second_model_has_inventory_references"]
     assert "maintenance gate" in row["refusal"]
     assert row["advance_calls_by_phase"]["backfill"] >= 1
     cleanup(store)
