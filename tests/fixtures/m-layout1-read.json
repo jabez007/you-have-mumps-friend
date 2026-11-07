@@ -1,0 +1,16 @@
+[
+  {"encoded": "n:", "payload": "", "null": true},
+  {"encoded": "b:0", "payload": "0", "null": false},
+  {"encoded": "b:1", "payload": "1", "null": false},
+  {"encoded": "i:0", "payload": "0", "null": false},
+  {"encoded": "i:1234567890123456789012345678901234567890", "payload": "1234567890123456789012345678901234567890", "null": false},
+  {"encoded": "s:", "payload": "", "null": false},
+  {"encoded": "s:雪", "payload": "雪", "null": false},
+  {"encoded": "d:12.50", "payload": "12.50", "null": false},
+  {"encoded": "d:0.123456789012345678901234567890", "payload": "0.123456789012345678901234567890", "null": false},
+  {"encoded": "f:0.0", "payload": "0.0", "null": false},
+  {"encoded": "x:AP8=", "payload": "AP8=", "null": false},
+  {"encoded": "D:2026-11-06", "payload": "2026-11-06", "null": false},
+  {"encoded": "T:2026-11-06T12:00:00.000000Z", "payload": "2026-11-06T12:00:00.000000Z", "null": false},
+  {"encoded": "u:12345678-1234-5678-9abc-def012345678", "payload": "12345678-1234-5678-9abc-def012345678", "null": false}
+]

@@ -860,3 +860,16 @@ validated attempt-local owners without parallel integrity implementations. Exist
 C901 passes at ten. Test nested policies, mixed-policy cycles, closure overlap,
 bounds, null validation, claims/reverse counts, rollback/poisoning, migrations,
 unregistered sources, malformed reverse data, native races, and native restarts.
+
+### Measure record-layout tradeoffs before ordered queries, issue 24
+
+Reuse version-one scalar/key goldens, the existing native M subprocess tests, and
+qualified CI engines. Compare tagged reads and untagged numeric values with real M
+arithmetic, high-precision payloads, bool/int and null/empty distinctions, and native
+subscript collation. Add a small explicit-tag M payload reader, qualified against
+committed goldens; it is not a validator or writer. Preserve existing data/layouts
+while collecting evidence. Record raw outputs per engine/journaling mode and then
+choose whether a record-layout conversion is justified. Ordered index encoding is
+an independent persistence contract; investigate it separately rather than making
+range queries depend on replacing record scalars. No performance claim follows from
+these semantic probes. Python C901 remains at ten; no application API changes.

@@ -50,6 +50,22 @@ This prints `L-001 12.50`.
 > `"d:12.50"+1` is `1`, because M reads the leading text as zero. Strip the tag first:
 > `$extract(value,3,99)+1` is `13.5`.
 
+The sample [YHMFREAD.m](../../examples/m/YHMFREAD.m) provides
+$$payload^YHMFREAD(raw,expected_tag) and $$isnull^YHMFREAD(raw). Put the routine on
+the application's M routine path and specify the tag from its schema:
+
+```m
+ set raw=^Warehouse(7,"bins","s:A01","lots","s:L-001","quantity")
+ write $$payload^YHMFREAD(raw,"d"),!
+```
+
+The helper checks the expected prefix and returns its encoded payload. It does not
+validate canonical numeric syntax, constraints, schema metadata, or index integrity.
+Binary payloads remain base64, dates remain ISO text, and Decimal/large-integer
+payloads retain their exact decimal text. Applying M arithmetic imposes the engine's
+numeric precision/range. Distinguish null with isnull; the empty payload of n: is
+not an empty stored string. Native tests run this reader against committed goldens.
+
 ## Write from M
 
 Wrap related changes in a YottaDB transaction (`tstart` and `tcommit`), so mapper clients
