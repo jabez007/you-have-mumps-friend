@@ -276,3 +276,15 @@ writes. Delete only owners whose declared immediate collections are empty, after
 normal stored-shape validation; populated owners return operation. Keep capacity
 traversal's leaf classification and existing node budget. This is a bounded subset,
 not implicit recursive deletion or whole-aggregate replacement.
+
+
+## Empty hierarchical roots, issue 53
+
+Select the root owner constants through hconfig for ordinary insert/delete while
+retaining the existing preflight and attempt transaction. First insert uses the same
+unmanaged-global check and atomic metadata installation as flat roots. Derive zero
+totals and empty child collections; never evaluate application defaults. Empty delete
+keeps incoming-reference restrictions; populated delete and tree replace still return
+operation. Native qualification covers concurrent first writes, unique contention,
+raw different-key data, initial metadata rollback, and caller restarts. No schema or
+record/index bytes change, and no second initialization/adoption path is introduced.

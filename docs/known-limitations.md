@@ -128,8 +128,8 @@ These features remain outside the current implementation:
   qualified UTF-8 str/int/Decimal, finite str/int choices, dates/UTC datetimes,
   their nullable scalar forms, and references, with owning or caller-participating
   transactions. Keyed hierarchies support leaf-child operations and root/non-leaf
-  scalar patches under existing roots, including exact stored sums. Whole aggregate
-  construction, populated non-leaf deletion, embedded/nullable containers, custom validators, and ordered
+  scalar patches, empty root/branch creation/deletion, and exact stored sums.
+  Populated tree construction/deletion, embedded/nullable containers, custom validators, and ordered
   indexes remain outside this M contract
   ([#53](https://github.com/jabez007/you-have-mumps-friend/issues/53),
   [#54](https://github.com/jabez007/you-have-mumps-friend/issues/54),

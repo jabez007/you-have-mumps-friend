@@ -1640,3 +1640,18 @@ subtree deletion plan and its aggregate constraints. Root insert/delete and comp
 replace remain unchanged in this slice. Retain the leaf classification used by bounded
 capacity traversal. Compare Python physical state, totals/indexes,
 minimum-length refusal, and rollback on both native engines. C901 remains ten.
+
+### Create and delete empty hierarchical roots, issue 53
+
+Reuse hconfig to select a hierarchy's root declaration for ordinary insert/delete,
+including schema metadata, reference bindings, and key limits. Keep replace rejected
+for trees. The shared attempt path already initializes empty collections/zero totals
+and refuses populated deletion. Its existing transaction checks require an empty
+unmanaged global before first metadata installation; no separate initialization path
+or adoption procedure is added. Empty-root deletion keeps incoming-reference checks.
+
+Qualify exact Python node/index equivalence, raw records at same/different keys,
+concurrent first writes with and without a unique collision, participant rollback
+including initial metadata, and forced restarts. Root construction is empty only;
+application defaults/factories and populated tree replacement remain unqualified.
+Schema and storage bytes do not change. Configured C901 remains at ten.

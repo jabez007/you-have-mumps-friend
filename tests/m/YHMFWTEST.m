@@ -233,3 +233,19 @@ emptydelete
  set count=$order(path(""),-1),path(count+1)=input("id")
  write $$deletechild^YHMFTAPI("MAIN",.path),!
  quit
+rootworker(key,name)
+ new input
+ set input("id")=key,input("name")=name
+ write $$insert^YHMFTAPI(.input),!
+ quit
+rootcreatepair
+ new first,second,status
+ set first("id")="A",first("name")="first",second("id")="B",second("name")=^YHMFTestStorage("writerInput","name")
+ tstart ():serial
+ set status=$$inserttx^YHMFTAPI(.first)
+ if status'="ok" write status,"|",$tlevel,! quit
+ set status=$$inserttx^YHMFTAPI(.second)
+ if status'="ok" write status,"|",$tlevel,! quit
+ tcommit
+ write status,"|",$tlevel,!
+ quit

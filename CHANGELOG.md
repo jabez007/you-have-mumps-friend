@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Lets M create and delete empty hierarchical roots through the existing schema
+  installation, transaction, index, and reference checks. Concurrent first-write
+  and participant rollback tests protect against implicit unmanaged-data adoption.
+
 - Lets M create and delete empty non-leaf children. Empty collection markers and
   zero derived totals match Python; collection minimums and normal index/reference
   checks still apply. Populated non-leaf deletion remains guarded.

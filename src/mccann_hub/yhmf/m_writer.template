@@ -45,8 +45,15 @@ stableabort
  trollback
  quit
 prepare(operation,input,cfg,values,key)
+ new rootcfg,parts
  do config(.cfg)
- if $get(cfg("hierarchy")) quit "operation"
+ if $get(cfg("hierarchy")),operation'="insert",operation'="delete" quit "operation"
+ if $get(cfg("hierarchy")) do
+ . merge rootcfg=cfg kill cfg
+ . set parts(0)=""
+ . do hconfig(.rootcfg,"",.parts,.cfg)
+ . set cfg("dataOverhead")=rootcfg("dataOverhead")
+ . kill cfg("recordkey")
  quit $$preflight(operation,.input,.cfg,.values,.key)
 preflight(operation,input,cfg,values,key)
  new status

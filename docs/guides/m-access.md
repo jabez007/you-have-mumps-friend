@@ -124,8 +124,9 @@ returns unsupported without changes. Use Python for those records.
 Export rejects custom Python validators, unsupported constraints or normalization,
 embedded objects, scalar lists, ordered
 indexes, and more than 16 fields per owner. Keyed trees have the separate operations
-below. The generator does not silently omit rules. Every inserted flat/leaf field
-must be supplied even if Python declares a default; defaults/factories are not run.
+below. The generator does not silently omit rules. Every inserted non-derived scalar field must be supplied even if Python declares a
+default; defaults/factories are not run. Empty-root/branch creation derives zero
+stored totals and creates empty declared collections.
 M does not distinguish Python runtime types, so the declaration determines how each
 canonical textual input is encoded. This is validation of the declared M subset,
 not execution of Pydantic in M.
@@ -235,8 +236,7 @@ Regenerate source after schema changes; old bindings fail rather than bypass new
 totals. No layout conversion or root metadata installation occurs through child
 operations. M enforces declared model rules, not inventory service rules or ledger
 workflows. The complete inventory ledger still needs unsupported M ordered/embedded
-contracts and application business checks. Root creation/replacement remains a Python
-operation.
+contracts and application business checks. Populated root creation/replacement remains a Python operation.
 
 New exports memoize SHA-256 of exact serialized locations in the reserved process-local
 %YHMFDigestCache variable. At most 128 entries of at most 4,096 input bytes are retained;
@@ -406,8 +406,8 @@ Child nodes, collection counts, and descendant totals remain intact. This is a b
 mutation, not a complete aggregate audit. Unsupported validators still fail export.
 
 Normal transaction, maintenance, reference, and uniqueness checks apply on every
-attempt. Replace remains a complete-record operation. Root construction and populated branch deletion remain unqualified until their
-separate issue-53 slices. Existing storage bytes and schema identities are unchanged;
+attempt. Replace remains a complete-record operation. Populated tree construction/deletion remains unqualified until its separate
+issue-53 slice. Existing storage bytes and schema identities are unchanged;
 regenerate source for these patch interfaces.
 
 ## Empty owned branches
@@ -428,8 +428,32 @@ validation. Supplied collection markers or derived values return invalid.
 Delete the empty branch with deletechild/deletechildtx and its concrete path. The
 same transaction maintains parent counts, indexes, references, and any ancestor sums.
 A branch containing children returns operation without writes. This operation does
-not recursively delete populated data. Root construction/deletion and complete tree
-replacement retain their separate contracts.
+not recursively delete populated data. Root construction/deletion and complete tree replacement retain their separate
+contracts below.
+
+## Empty hierarchical roots
+
+insert/inserttx can create an empty hierarchical root with its required non-derived
+scalars. Child collections are implicit empty collections; stored totals are derived
+as zero. For example:
+
+```mumps
+ set input("id")="WEST",input("name")="West warehouse"
+ set status=$$insert^WarehouseAPI(.input)
+```
+
+The first insert installs the exact schema metadata only if the application global
+and its framework index/reference namespaces are empty, in the same transaction.
+Raw records at any key return unmanaged. Concurrent first writers revalidate after
+native restarts. Caller participants roll back initial metadata along with records
+and indexes if a later participant fails. This never implicitly adopts existing data.
+
+Delete/deletetx can remove an empty hierarchical root, enforcing incoming reference
+restrictions. A populated root returns operation without writes. Root replacement
+and populated tree construction/deletion remain unqualified. Use explicit child
+inserts to build the hierarchy incrementally. Application defaults/factories are not
+run; supplied collection markers/derived totals are invalid. Existing schemas/data
+need no conversion. Regenerate source for these capabilities.
 
 ## Finite string and integer choices
 
