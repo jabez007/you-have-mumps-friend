@@ -112,7 +112,8 @@ These features remain outside the current implementation:
 
 - A migration or rebuild blocks its affected model and reference validation that
   needs that model. Unrelated CRUD can proceed; only one maintenance job runs at a
-  time ([#46](https://github.com/jabez007/you-have-mumps-friend/issues/46)). Older
+  time ([#46](https://github.com/jabez007/you-have-mumps-friend/issues/46)).
+  The measured decision retains this limit; it does not add concurrent jobs. Older
   clients honoring the global gate stay blocked conservatively. See
   [maintenance guidance](guides/migrations.md#stop-other-clients-first) and
   [ADR 0009](adr/0009-model-scoped-maintenance.md).

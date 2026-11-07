@@ -64,3 +64,31 @@ canonical flat checkpoint grammar. It validates fields, domains, ordering, suppo
 formats, active phase, identity, and the owning schema barrier. Unknown fields/formats
 fail closed. No job metadata changes or process-local scope caches are introduced.
 Earlier exported routines keep their conservative global gate behavior.
+
+## Concurrent maintenance decision, issue 46
+
+Retain one active job after the inventory scheduling measurement. This deliberately
+defers concurrent maintenance; unrelated ordinary CRUD remains supported. The API
+refuses a second job immediately rather than queuing it. The
+[native report](../performance.md#maintenance-serialization-workload) measures
+warehouse-v2-to-v3 conversion and a genuinely disjoint control-model rebuild on
+r2.02/r2.06 with journaling off/on. Refusals took 0.183–0.448 ms; indexed control CRUD
+took 0.213–0.840 ms. Remaining work ranged from 58 ms for one small warehouse to
+4.35 seconds for 50, with batches of five. Both jobs ultimately verified correctly.
+These controlled observations contain no actual production queue or operator pauses.
+
+The workload does not demonstrate enough scheduling pain to justify changing the
+existing ownership protocol. It also cannot rule out that requirement in a larger
+deployment. Reopen the decision with measured delayed-job durations, model/reference
+graphs, batch profiles, and recovery requirements. Product is reference-connected
+to warehouses, so the original Product probe is not disjoint-job evidence.
+
+A future design must cover global/schema/index ownership, incoming and outgoing
+reference dependencies, deterministic conflict detection before activation, and
+job interruption/resume/pruning while other jobs remain active. Migration, rebuild,
+and adoption must share those rules. Existing fingerprint barriers help protect
+data access but do not define multi-job ownership. Activation must explicitly handle
+both global-gate clients and scoped clients that understand only one checkpoint;
+older maintenance executors must not clear ownership or recover the wrong job.
+No new metadata format, lock ordering, or process-local scope cache is introduced
+on the strength of a small synthetic benchmark.

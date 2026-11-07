@@ -1,0 +1,438 @@
+{
+  "environments": [
+    {
+      "aggregate_save": "physical_node_difference",
+      "cpu_model": "AMD EPYC 9V45 96-Core Processor",
+      "format_version": 1,
+      "journaling": false,
+      "logical_cpus": 4,
+      "methodology": "Inventory warehouse-v2-to-v3 transform. Refuse an independent control index rebuild; verify the active checkpoint is unchanged. Time unrelated CRUD and remaining batches, then complete the refused rebuild. Fresh handles resume batches; no operator pauses or queue are measured. Synthetic scheduling evidence, not a production waiting-time prediction.",
+      "platform": "Linux-6.8.0-1070-azure-x86_64-with-glibc2.35",
+      "pydantic": "2.14.3",
+      "python": "3.12.12",
+      "results": [
+        {
+          "advance_calls_by_phase": {
+            "activate": 1,
+            "backfill": 2,
+            "clear_indexes": 10,
+            "retag": 2,
+            "validate": 2,
+            "verify": 2
+          },
+          "batch_size": 5,
+          "completed": true,
+          "counts_including_verification_and_second_job": {
+            "atomic": 39,
+            "attempts": 42,
+            "children": 281,
+            "delete_tree": 46,
+            "get": 3107,
+            "set": 221
+          },
+          "locations_per_warehouse": 2,
+          "lots_per_location": 10,
+          "refusal": "A migration holds the mapper maintenance gate",
+          "refusal_ms": 0.199189,
+          "remaining_job_ms": 58.181348,
+          "second_global": "^YHMFMaintControl",
+          "second_job_completed_after_release": true,
+          "second_model_has_inventory_references": false,
+          "total_after_refusal_ms": 58.460838,
+          "unrelated_crud_ms": 0.230957,
+          "warehouses": 1
+        },
+        {
+          "advance_calls_by_phase": {
+            "activate": 1,
+            "backfill": 3,
+            "clear_indexes": 83,
+            "retag": 3,
+            "validate": 3,
+            "verify": 3
+          },
+          "batch_size": 5,
+          "completed": true,
+          "counts_including_verification_and_second_job": {
+            "atomic": 125,
+            "attempts": 128,
+            "children": 2471,
+            "delete_tree": 424,
+            "get": 27131,
+            "set": 1901
+          },
+          "locations_per_warehouse": 2,
+          "lots_per_location": 10,
+          "refusal": "A migration holds the mapper maintenance gate",
+          "refusal_ms": 0.183065,
+          "remaining_job_ms": 372.132987,
+          "second_global": "^YHMFMaintControl",
+          "second_job_completed_after_release": true,
+          "second_model_has_inventory_references": false,
+          "total_after_refusal_ms": 372.383463,
+          "unrelated_crud_ms": 0.21291,
+          "warehouses": 10
+        },
+        {
+          "advance_calls_by_phase": {
+            "activate": 1,
+            "backfill": 11,
+            "clear_indexes": 411,
+            "retag": 11,
+            "validate": 11,
+            "verify": 11
+          },
+          "batch_size": 5,
+          "completed": true,
+          "counts_including_verification_and_second_job": {
+            "atomic": 525,
+            "attempts": 528,
+            "children": 12231,
+            "delete_tree": 2104,
+            "get": 134091,
+            "set": 9389
+          },
+          "locations_per_warehouse": 2,
+          "lots_per_location": 10,
+          "refusal": "A migration holds the mapper maintenance gate",
+          "refusal_ms": 0.188894,
+          "remaining_job_ms": 1819.063945,
+          "second_global": "^YHMFMaintControl",
+          "second_job_completed_after_release": true,
+          "second_model_has_inventory_references": false,
+          "total_after_refusal_ms": 1819.318177,
+          "unrelated_crud_ms": 0.214873,
+          "warehouses": 50
+        }
+      ],
+      "source_commit": "dd3b28a36c30d96e35db579d14b8a36cbe387ed1",
+      "yottadb": "pywr v0.10.0 YottaDB r2.02 Linux x86_64"
+    },
+    {
+      "aggregate_save": "physical_node_difference",
+      "cpu_model": "AMD EPYC 9V45 96-Core Processor",
+      "format_version": 1,
+      "journaling": true,
+      "logical_cpus": 4,
+      "methodology": "Inventory warehouse-v2-to-v3 transform. Refuse an independent control index rebuild; verify the active checkpoint is unchanged. Time unrelated CRUD and remaining batches, then complete the refused rebuild. Fresh handles resume batches; no operator pauses or queue are measured. Synthetic scheduling evidence, not a production waiting-time prediction.",
+      "platform": "Linux-6.8.0-1070-azure-x86_64-with-glibc2.35",
+      "pydantic": "2.14.3",
+      "python": "3.12.12",
+      "results": [
+        {
+          "advance_calls_by_phase": {
+            "activate": 1,
+            "backfill": 2,
+            "clear_indexes": 10,
+            "retag": 2,
+            "validate": 2,
+            "verify": 2
+          },
+          "batch_size": 5,
+          "completed": true,
+          "counts_including_verification_and_second_job": {
+            "atomic": 39,
+            "attempts": 42,
+            "children": 281,
+            "delete_tree": 46,
+            "get": 3107,
+            "set": 221
+          },
+          "locations_per_warehouse": 2,
+          "lots_per_location": 10,
+          "refusal": "A migration holds the mapper maintenance gate",
+          "refusal_ms": 0.236155,
+          "remaining_job_ms": 64.440088,
+          "second_global": "^YHMFMaintControl",
+          "second_job_completed_after_release": true,
+          "second_model_has_inventory_references": false,
+          "total_after_refusal_ms": 64.934561,
+          "unrelated_crud_ms": 0.441734,
+          "warehouses": 1
+        },
+        {
+          "advance_calls_by_phase": {
+            "activate": 1,
+            "backfill": 3,
+            "clear_indexes": 83,
+            "retag": 3,
+            "validate": 3,
+            "verify": 3
+          },
+          "batch_size": 5,
+          "completed": true,
+          "counts_including_verification_and_second_job": {
+            "atomic": 125,
+            "attempts": 128,
+            "children": 2471,
+            "delete_tree": 424,
+            "get": 27131,
+            "set": 1901
+          },
+          "locations_per_warehouse": 2,
+          "lots_per_location": 10,
+          "refusal": "A migration holds the mapper maintenance gate",
+          "refusal_ms": 0.214041,
+          "remaining_job_ms": 399.889631,
+          "second_global": "^YHMFMaintControl",
+          "second_job_completed_after_release": true,
+          "second_model_has_inventory_references": false,
+          "total_after_refusal_ms": 400.38157,
+          "unrelated_crud_ms": 0.450577,
+          "warehouses": 10
+        },
+        {
+          "advance_calls_by_phase": {
+            "activate": 1,
+            "backfill": 11,
+            "clear_indexes": 411,
+            "retag": 11,
+            "validate": 11,
+            "verify": 11
+          },
+          "batch_size": 5,
+          "completed": true,
+          "counts_including_verification_and_second_job": {
+            "atomic": 525,
+            "attempts": 528,
+            "children": 12231,
+            "delete_tree": 2104,
+            "get": 134091,
+            "set": 9389
+          },
+          "locations_per_warehouse": 2,
+          "lots_per_location": 10,
+          "refusal": "A migration holds the mapper maintenance gate",
+          "refusal_ms": 0.218628,
+          "remaining_job_ms": 1988.479075,
+          "second_global": "^YHMFMaintControl",
+          "second_job_completed_after_release": true,
+          "second_model_has_inventory_references": false,
+          "total_after_refusal_ms": 1988.95498,
+          "unrelated_crud_ms": 0.435093,
+          "warehouses": 50
+        }
+      ],
+      "source_commit": "dd3b28a36c30d96e35db579d14b8a36cbe387ed1",
+      "yottadb": "pywr v0.10.0 YottaDB r2.02 Linux x86_64"
+    },
+    {
+      "aggregate_save": "physical_node_difference",
+      "cpu_model": "AMD EPYC 7763 64-Core Processor",
+      "format_version": 1,
+      "journaling": false,
+      "logical_cpus": 4,
+      "methodology": "Inventory warehouse-v2-to-v3 transform. Refuse an independent control index rebuild; verify the active checkpoint is unchanged. Time unrelated CRUD and remaining batches, then complete the refused rebuild. Fresh handles resume batches; no operator pauses or queue are measured. Synthetic scheduling evidence, not a production waiting-time prediction.",
+      "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+      "pydantic": "2.14.3",
+      "python": "3.12.3",
+      "results": [
+        {
+          "advance_calls_by_phase": {
+            "activate": 1,
+            "backfill": 2,
+            "clear_indexes": 10,
+            "retag": 2,
+            "validate": 2,
+            "verify": 2
+          },
+          "batch_size": 5,
+          "completed": true,
+          "counts_including_verification_and_second_job": {
+            "atomic": 39,
+            "attempts": 42,
+            "children": 281,
+            "delete_tree": 46,
+            "get": 3107,
+            "set": 221
+          },
+          "locations_per_warehouse": 2,
+          "lots_per_location": 10,
+          "refusal": "A migration holds the mapper maintenance gate",
+          "refusal_ms": 0.390429,
+          "remaining_job_ms": 133.563556,
+          "second_global": "^YHMFMaintControl",
+          "second_job_completed_after_release": true,
+          "second_model_has_inventory_references": false,
+          "total_after_refusal_ms": 134.101331,
+          "unrelated_crud_ms": 0.457144,
+          "warehouses": 1
+        },
+        {
+          "advance_calls_by_phase": {
+            "activate": 1,
+            "backfill": 3,
+            "clear_indexes": 83,
+            "retag": 3,
+            "validate": 3,
+            "verify": 3
+          },
+          "batch_size": 5,
+          "completed": true,
+          "counts_including_verification_and_second_job": {
+            "atomic": 125,
+            "attempts": 128,
+            "children": 2471,
+            "delete_tree": 424,
+            "get": 27131,
+            "set": 1901
+          },
+          "locations_per_warehouse": 2,
+          "lots_per_location": 10,
+          "refusal": "A migration holds the mapper maintenance gate",
+          "refusal_ms": 0.371594,
+          "remaining_job_ms": 842.976359,
+          "second_global": "^YHMFMaintControl",
+          "second_job_completed_after_release": true,
+          "second_model_has_inventory_references": false,
+          "total_after_refusal_ms": 843.491301,
+          "unrelated_crud_ms": 0.438519,
+          "warehouses": 10
+        },
+        {
+          "advance_calls_by_phase": {
+            "activate": 1,
+            "backfill": 11,
+            "clear_indexes": 411,
+            "retag": 11,
+            "validate": 11,
+            "verify": 11
+          },
+          "batch_size": 5,
+          "completed": true,
+          "counts_including_verification_and_second_job": {
+            "atomic": 525,
+            "attempts": 528,
+            "children": 12231,
+            "delete_tree": 2104,
+            "get": 134091,
+            "set": 9389
+          },
+          "locations_per_warehouse": 2,
+          "lots_per_location": 10,
+          "refusal": "A migration holds the mapper maintenance gate",
+          "refusal_ms": 0.386813,
+          "remaining_job_ms": 4137.827965,
+          "second_global": "^YHMFMaintControl",
+          "second_job_completed_after_release": true,
+          "second_model_has_inventory_references": false,
+          "total_after_refusal_ms": 4138.338419,
+          "unrelated_crud_ms": 0.435654,
+          "warehouses": 50
+        }
+      ],
+      "source_commit": "dd3b28a36c30d96e35db579d14b8a36cbe387ed1",
+      "yottadb": "pywr v0.10.0 YottaDB r2.06 Linux x86_64"
+    },
+    {
+      "aggregate_save": "physical_node_difference",
+      "cpu_model": "AMD EPYC 7763 64-Core Processor",
+      "format_version": 1,
+      "journaling": true,
+      "logical_cpus": 4,
+      "methodology": "Inventory warehouse-v2-to-v3 transform. Refuse an independent control index rebuild; verify the active checkpoint is unchanged. Time unrelated CRUD and remaining batches, then complete the refused rebuild. Fresh handles resume batches; no operator pauses or queue are measured. Synthetic scheduling evidence, not a production waiting-time prediction.",
+      "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+      "pydantic": "2.14.3",
+      "python": "3.12.3",
+      "results": [
+        {
+          "advance_calls_by_phase": {
+            "activate": 1,
+            "backfill": 2,
+            "clear_indexes": 10,
+            "retag": 2,
+            "validate": 2,
+            "verify": 2
+          },
+          "batch_size": 5,
+          "completed": true,
+          "counts_including_verification_and_second_job": {
+            "atomic": 39,
+            "attempts": 42,
+            "children": 281,
+            "delete_tree": 46,
+            "get": 3107,
+            "set": 221
+          },
+          "locations_per_warehouse": 2,
+          "lots_per_location": 10,
+          "refusal": "A migration holds the mapper maintenance gate",
+          "refusal_ms": 0.427349,
+          "remaining_job_ms": 144.453402,
+          "second_global": "^YHMFMaintControl",
+          "second_job_completed_after_release": true,
+          "second_model_has_inventory_references": false,
+          "total_after_refusal_ms": 145.375495,
+          "unrelated_crud_ms": 0.8401,
+          "warehouses": 1
+        },
+        {
+          "advance_calls_by_phase": {
+            "activate": 1,
+            "backfill": 3,
+            "clear_indexes": 83,
+            "retag": 3,
+            "validate": 3,
+            "verify": 3
+          },
+          "batch_size": 5,
+          "completed": true,
+          "counts_including_verification_and_second_job": {
+            "atomic": 125,
+            "attempts": 128,
+            "children": 2471,
+            "delete_tree": 424,
+            "get": 27131,
+            "set": 1901
+          },
+          "locations_per_warehouse": 2,
+          "lots_per_location": 10,
+          "refusal": "A migration holds the mapper maintenance gate",
+          "refusal_ms": 0.419314,
+          "remaining_job_ms": 896.306844,
+          "second_global": "^YHMFMaintControl",
+          "second_job_completed_after_release": true,
+          "second_model_has_inventory_references": false,
+          "total_after_refusal_ms": 897.202238,
+          "unrelated_crud_ms": 0.816366,
+          "warehouses": 10
+        },
+        {
+          "advance_calls_by_phase": {
+            "activate": 1,
+            "backfill": 11,
+            "clear_indexes": 411,
+            "retag": 11,
+            "validate": 11,
+            "verify": 11
+          },
+          "batch_size": 5,
+          "completed": true,
+          "counts_including_verification_and_second_job": {
+            "atomic": 525,
+            "attempts": 528,
+            "children": 12231,
+            "delete_tree": 2104,
+            "get": 134091,
+            "set": 9389
+          },
+          "locations_per_warehouse": 2,
+          "lots_per_location": 10,
+          "refusal": "A migration holds the mapper maintenance gate",
+          "refusal_ms": 0.448097,
+          "remaining_job_ms": 4352.370211,
+          "second_global": "^YHMFMaintControl",
+          "second_job_completed_after_release": true,
+          "second_model_has_inventory_references": false,
+          "total_after_refusal_ms": 4353.154797,
+          "unrelated_crud_ms": 0.707973,
+          "warehouses": 50
+        }
+      ],
+      "source_commit": "dd3b28a36c30d96e35db579d14b8a36cbe387ed1",
+      "yottadb": "pywr v0.10.0 YottaDB r2.06 Linux x86_64"
+    }
+  ],
+  "source_commit": "dd3b28a36c30d96e35db579d14b8a36cbe387ed1",
+  "source_run": "https://github.com/jabez007/you-have-mumps-friend/actions/runs/42394084555"
+}

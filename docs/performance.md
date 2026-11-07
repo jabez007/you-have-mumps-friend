@@ -19,6 +19,33 @@ waiting time. Native results will inform the decision in
 [ADR 0009](adr/0009-model-scoped-maintenance.md). Offline tests establish workflow
 correctness only. Per-model concurrent maintenance is not implemented by this benchmark.
 
+[Native run 42394084555](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42394084555)
+qualified dd3b28a36c30d96e35db579d14b8a36cbe387ed1 on both engines and journal
+modes. The [raw report](benchmarks/native-maintenance-serialization-2026-11-07.json)
+contains 12 controlled jobs. The second target is ^YHMFMaintControl, whose declaration
+and records have no inventory references. The earlier Product probe was connected
+to warehouses and is excluded from this disjoint-job evidence.
+
+| Engine | Journal | Remaining job ms, 1 / 10 / 50 warehouses | Refusal ms | Unrelated indexed CRUD ms |
+| --- | --- | ---: | ---: | ---: |
+| r2.02 | Off | 58.2 / 372.1 / 1819.1 | 0.183–0.199 | 0.213–0.231 |
+| r2.02 | Before-image | 64.4 / 399.9 / 1988.5 | 0.214–0.236 | 0.435–0.451 |
+| r2.06 | Off | 133.6 / 843.0 / 4137.8 | 0.372–0.390 | 0.436–0.457 |
+| r2.06 | Before-image | 144.5 / 896.3 / 4352.4 | 0.419–0.448 | 0.708–0.840 |
+
+Refusal and CRUD ranges span the three different workload sizes; these are single
+observations, not percentile estimates. The r2.02 host used an AMD EPYC 9V45 and
+Python 3.12.12; r2.06 used an EPYC 7763 and Python 3.12.3. Both used Pydantic 2.14.3.
+Host differences prevent isolating engine-version effects. Final verification and
+the second completed rebuild are outside the reported remaining first-job duration.
+
+Retain one active maintenance job. This sample reaches about 4.35 seconds with 50
+small warehouses and deliberately small batches; it provides no production queue
+evidence justifying a multi-job ownership/recovery protocol. It does not establish
+that larger deployments never need concurrent maintenance. Reconsider from measured
+operator delays and actual dependency graphs. Batch sizing and index-clear phase
+calls are visible in the report and should be measured before adding new locks.
+
 ## Development-branch save differences
 
 [CI run 42324141174](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42324141174),
