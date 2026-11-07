@@ -528,3 +528,20 @@ root query entry checks through the same existing entry builders. Preserve root
 query signatures, storage layout, and fingerprints. Tests cover bounded reads,
 pagination/cursor scope, corruption, rollback, native adapters, and inventory paths.
 Existing C901 passes at ten; keep parsing and traversal responsibilities separate.
+
+### Read-only inverse relations, issue 14
+
+Reuse reverse-reference counts and concrete leaves, the occurrence decoder, native
+two-level paging, typed owner reads, and normal Link generation. Expose
+referrers(reference, source=SourceModel, limit=100, after=cursor). Requiring the source
+declaration selects its native prefix directly and supplies Python validation;
+there is no scan across model globals. Verify the target's schema and record metadata
+without loading its aggregate. Validate every exact source field and reverse edge.
+
+Return the same Occurrence values and cursor semantics as equality projection.
+Counts remain authoritative metadata, not a full reverse-index audit. No new relation
+storage is needed. Demonstrate many-to-many with Supplier.products keyed owned links
+referencing independent Products; inverse reads retrieve supplier links directly.
+Add only the Supplier global, leaving existing inventory contracts unchanged. Cover
+typed pagination, null/changed/removed links, corruption, rollback, restrict deletion,
+and bounded work on memory and native adapters. C901 passes at ten.

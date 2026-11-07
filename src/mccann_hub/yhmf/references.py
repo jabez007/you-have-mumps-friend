@@ -50,7 +50,8 @@ def links_at(
     return frozenset(result)
 
 
-def _inbound_count(store: Store, root: Path) -> int:
+def inbound_count(store: Store, root: Path) -> int:
+    """Read the canonical count and check edge presence without enumerating sources."""
     value = store.get(root)
     if value is None:
         count = 0
@@ -84,7 +85,7 @@ def replace(store: Store, old: frozenset[Link], new: frozenset[Link]) -> None:
         deltas[reference_root(link.target)] += 1
     for link in removed:
         deltas[reference_root(link.target)] -= 1
-    counts = {root: _inbound_count(store, root) + delta for root, delta in deltas.items()}
+    counts = {root: inbound_count(store, root) + delta for root, delta in deltas.items()}
     if any(count < 0 for count in counts.values()):
         raise StorageError("Reverse-reference count would become negative")
     for link in removed:
@@ -97,7 +98,7 @@ def replace(store: Store, old: frozenset[Link], new: frozenset[Link]) -> None:
 
 def restrict_delete(store: Store, target: Path) -> None:
     root = reference_root(target)
-    if _inbound_count(store, root):
+    if inbound_count(store, root):
         raise ReferenceViolation(
             "Record is still referenced; remove or change those references first"
         )
