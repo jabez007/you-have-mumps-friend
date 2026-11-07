@@ -1380,6 +1380,48 @@ Do not infer a deployment requirement or implement per-model locks from syntheti
 results alone. Update ADR 0009 with the measured decision and the conflict/reference,
 recovery, activation, and older-client requirements of any future concurrency design.
 
+### Owned-path M writers and exact sums, issue 38
+
+Reuse generated scalar validation, schema/record bindings, TP ownership and participant
+policy, ordinary index claims, reference transitions, and decimal-sum-v1 source/total
+domains. First separate owner declarations from global bindings in the exporter and
+share the flat preflight/index transition without behavior changes, in its own commit.
+Then export keyed ownership trees whose nodes use the qualified scalar/reference
+subset and local validation. Continue rejecting embedded/nullable containers and
+custom validators, including SupplierProduct; do not translate Python callbacks.
+
+Add insertchild(root_key, collection, input), patchchild(root_key, at, changes), and
+deletechild(root_key, at), plus explicit tx participants. M path arrays alternate
+declared collection names and plain keys, matching Python addresses. Initial operations
+target leaf children under an already managed root; Python constructs/replaces the
+aggregate. Existing whole-record M labels refuse hierarchical roots explicitly rather
+than store incomplete records. Flat routines keep their existing behavior.
+
+Resolve and verify root metadata, schema, ancestor o:1/c:N markers, and identities
+inside each attempt. Address only the leaf, changed secondary entries, and affected
+ancestor totals. Reuse record_budget's fixed-width-count approach for insertion;
+only variable-width structural branches require bounded traversal. Enforce collection,
+path, node, and numeric limits before persistent changes. Unchanged references do not
+resolve targets or touch reverse counts during scalar patches. Maintain dotted index
+names, concrete locations, reference edges/counts, and all surviving indexed totals in
+the same TP. Any owning or participating failure rolls back all work.
+
+Concrete owned locations require the existing SHA-256 digest of canonical ASCII JSON.
+Precomputed flat digests cannot cover arbitrary child keys. Avoid a new plugin/native
+dependency or storage identity: implement bounded SHA-256 using YottaDB byte/bit
+intrinsics and exact 32-bit arithmetic, qualified against hashlib and standard vectors.
+Use bounded signed decimal digit arithmetic for up-to-40-digit fixed-unit sum changes;
+native 18-digit arithmetic cannot represent the contract. Qualify primitives separately
+before integrating mutations. The algorithms follow
+[FIPS 180-4](https://csrc.nist.gov/pubs/fips/180-4/final) and documented
+[YottaDB bit operations](https://docs.yottadb.com/ProgrammersGuide/functions.html).
+
+Test physical Python/M equivalence, direct quantity deltas without sibling traversal,
+capacity/count limits, target/ref/unique failures, self-contained tx composition,
+forced restarts, late rollback, concurrent Python writers and deletion races on both
+engines/journal modes. Preserve old schema/layout bytes; regenerate source for new
+capabilities. Existing C901 passes at ten; keep that threshold unchanged.
+
 Before reference support, share schema constants and M schema/record-metadata checks
 without changing their validation or stored bytes. This keeps source and referenced
 target bindings on the same implementation, including exact legacy snapshots.

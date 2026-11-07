@@ -11,7 +11,7 @@ from .canonical_schema import schema_document
 from .codecs import canonical_json
 from .decimal_math import units
 from .errors import SchemaError
-from .models import Reference
+from .models import Model, Reference
 from .ordered import value_key
 from .records import metadata
 from .registry import FieldSpec, ModelSpec, NodeSpec, scalar_type, supports_local_validation
@@ -95,9 +95,13 @@ def _scalar_config(name: str, rule: dict[str, Any], policy: dict[str, Any]) -> l
 
 
 def _reference_config(
-    spec: ModelSpec, field: FieldSpec, rule: dict[str, Any], targets: dict[type, ModelSpec]
+    model: type[Model],
+    global_name: str,
+    field: FieldSpec,
+    rule: dict[str, Any],
+    targets: dict[type, ModelSpec],
 ) -> list[str]:
-    annotation = scalar_type(spec.model.model_fields[field.name].annotation)
+    annotation = scalar_type(model.model_fields[field.name].annotation)
     if (
         rule.keys() - {"type", "default", "default_factory", "yhmf"}
         or rule.get("type") != "object"
@@ -123,7 +127,7 @@ def _reference_config(
                 _overhead(
                     "^YHMFRef",
                     target.global_name[1:].encode(),
-                    spec.global_name[1:].encode(),
+                    global_name[1:].encode(),
                     b"0" * 64,
                     variables=2,
                 )
@@ -133,13 +137,14 @@ def _reference_config(
 
 
 def _field_config(
-    spec: ModelSpec,
+    node: NodeSpec,
+    global_name: str,
     name: str,
     rule: dict[str, Any],
     policy: dict[str, Any],
     targets: dict[type, ModelSpec],
 ) -> list[str]:
-    field = next(field for field in spec.fields if field.name == name)
+    field = next(field for field in node.fields if field.name == name)
     if (
         field.kind not in {"scalar", "reference"}
         or field.choices is not None
@@ -147,7 +152,7 @@ def _field_config(
     ):
         raise SchemaError(f"M writer does not support field {name!r}")
     result = (
-        _reference_config(spec, field, rule, targets)
+        _reference_config(node.model, global_name, field, rule, targets)
         if field.kind == "reference"
         else _scalar_config(name, rule, policy)
     )
@@ -164,7 +169,7 @@ def _field_config(
                 value=str(
                     _overhead(
                         "^YHMFIndex",
-                        spec.global_name[1:].encode(),
+                        global_name[1:].encode(),
                         name.encode(),
                         digest.encode(),
                         variables=2,
@@ -242,7 +247,7 @@ def source(spec: ModelSpec, name: str, *, targets: tuple[ModelSpec, ...] = ()) -
             ]
         )
     for field, rule in declaration["properties"].items():
-        config.extend(_field_config(spec, field, rule, policy, bindings))
+        config.extend(_field_config(node, spec.global_name, field, rule, policy, bindings))
     config.append(
         _set(
             "dataOverhead",

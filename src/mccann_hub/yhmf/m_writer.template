@@ -39,8 +39,10 @@ write(operation,input)
  tcommit
  quit "ok"
 prepare(operation,input,cfg,values,key)
- new status
  do config(.cfg)
+ quit $$preflight(operation,.input,.cfg,.values,.key)
+preflight(operation,input,cfg,values,key)
+ new status
  set status=$$input(operation,.input,.cfg,.values)
  if status'="ok" quit status
  set key=values(cfg("key"))
