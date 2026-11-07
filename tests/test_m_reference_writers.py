@@ -236,13 +236,15 @@ def test_m_references_keep_legacy_target_binding_without_conversion(store, refer
 
 
 @pytest.mark.native
-@pytest.mark.parametrize("key", ["bad\0key", "雪", "X" * 1000])
-def test_unrepresentable_reference_keys_fail_before_source_installation(
-    store, reference_writer, key
+@pytest.mark.parametrize(
+    "key,status", [("bad\0key", "invalid"), ("雪", "references"), ("X" * 1000, "key_size")]
+)
+def test_invalid_or_absent_reference_keys_leave_source_unchanged(
+    store, reference_writer, key, status
 ):
     _, run, _, _ = reference_writer()
     before = dump(store, namespaces())
-    assert run("insert", {"id": "L", "product": key}) in {"invalid", "key_size"}
+    assert run("insert", {"id": "L", "product": key}) == status
     assert dump(store, namespaces()) == before
 
 

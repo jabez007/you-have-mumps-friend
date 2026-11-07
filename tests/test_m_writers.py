@@ -189,7 +189,6 @@ def test_generated_m_crud_matches_python_nodes_indexes_and_claims(store, m_write
     "data",
     [
         values(name=""),
-        values(name="雪"),
         values(quantity="-1"),
         values(quantity="1000"),
         values(quantity="01"),
