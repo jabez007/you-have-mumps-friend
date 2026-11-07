@@ -58,8 +58,8 @@ missing fractional digits, and other noncanonical stored forms.
 
 Within each temporal type, encoded payloads sort chronologically. They are tagged
 strings, not M numeric values; numeric coercion is not date arithmetic. Equality
-indexes normalize equivalent timezone offsets to the same instant. This does not
-add range-query APIs or change general index ordering.
+indexes normalize equivalent timezone offsets to the same instant. Ordinary equality tokens retain their existing order; range queries require the
+separate opt-in ordered-v1 index codec.
 
 New temporal fields declare date-v1 or datetime-utc-v1 codecs in schema format two.
 Temporal bounds have temporal_minimum/maximum/exclusiveMinimum/exclusiveMaximum

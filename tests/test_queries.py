@@ -78,15 +78,15 @@ def test_explicit_scan_is_bounded_and_paginated(db):
     assert [product.id for product in db.scan(Product, limit=2, after=2)] == [10]
 
 
-def test_query_requires_one_predicate(db):
+def test_query_requires_at_least_one_predicate_and_rejects_repeated_fields(db):
     with pytest.raises(QueryError):
         db.query(Product).all()
     with pytest.raises(QueryError):
         db.query(Product).where()
     with pytest.raises(QueryError):
-        db.query(Product).where(category="stock", sku="SKU1")
+        db.query(Product).where(category="stock").where(category="other")
     with pytest.raises(QueryError):
-        db.query(Product).where(category="stock").where(sku="SKU1")
+        db.query(Product).where(category="stock").range("category", ge="a")
 
 
 @pytest.mark.parametrize("limit", [0, -1, 1001, True])

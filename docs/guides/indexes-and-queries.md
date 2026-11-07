@@ -112,8 +112,7 @@ selection. It remains usable when that value/owner has been deleted. Cursors exp
 encoded positions, are not encrypted, and do not freeze a snapshot across calls.
 
 Existing equality queries retain their root-key and version-one occurrence cursors.
-Descending order, root continuation in value order, and mixed predicates are not
-part of this slice. An unsupported plan fails rather than sorting an unbounded
+Descending order and root continuation in value order remain deferred. An unsupported plan fails rather than sorting an unbounded
 scan in Python.
 
 ## General index rules
@@ -147,9 +146,10 @@ assert query.all(limit=25, after="P1") == []
 assert db.query(CatalogProduct).where(id="P1").explain().strategy == "direct_key"
 ```
 
-A query accepts one equality predicate on a declared index or the primary key. An
-unindexed or unknown field raises `QueryError`. Filter values must satisfy the declared
-field type and constraints.
+A query accepts up to eight predicates on declared indexes or the primary key.
+An unindexed or unknown field raises QueryError. Filter values must satisfy the
+declared field type and constraints. Single-predicate APIs retain their existing
+pagination behavior.
 
 `where` applies the field's declared constraints and its owning model's configuration,
 including string normalization and strictness. A nested field uses its owned model's
@@ -160,10 +160,53 @@ Predicates validate one field, including its `Annotated` validation metadata. Th
 run decorator-based `field_validator` methods or model validators that require a complete
 record. For those transformations, pass the stored value.
 
+## Combine indexed predicates
+
+```python
+combined = db.query(CatalogProduct).where(price=Decimal("12.5"), sku="SKU1")
+assert [product.id for product in combined.all()] == ["P1"]
+assert [predicate.field for predicate in combined.explain().predicates] == ["price", "sku"]
+assert combined.explain().strategy == "index_intersection"
+```
+
+Multiple keyword equalities and chained where calls form an AND. range and prefix
+can also be chained with predicates on other indexed fields. Declare each field's
+constraints once; combine its range endpoints in one range call. Unknown/unindexed
+fields and more than eight predicates fail at construction. A query is immutable:
+adding predicates returns a new query and leaves the original usable.
+
+The first predicate supplies candidate roots and their order. Other equality
+predicates probe the index directly at each candidate key. Other range/prefix
+predicates walk their index for a witness under the same shared 1000-visit budget.
+This is a simple bounded plan: selective predicates first usually require less work.
+There is no cost estimator or automatic reordering. One shared bound applies to
+candidate visits and all probes, including repeated secondary range walks. Large
+intersections can therefore exhaust their budget even when few records match.
+
+Call order_by(field) after the predicates to choose an ordered index as the candidate
+walk. For example, where(category="stock").order_by("price") requires price to have
+ordered=True. This also requires that a concrete occurrence of that field exists.
+Results are ascending; each root appears once, at its first matching sort occurrence.
+For owned fields, predicates match independently under the root: one child may
+satisfy one predicate while another satisfies the other. Sorting uses the first sort
+occurrence under the matching root, rather than a same-child join.
+
+Combined queries return complete roots through all(). Occurrence projection is
+rejected because independent witnesses can have different owners. Equality-anchor
+queries can continue with the last returned root key; direct-key and ordered-anchor
+queries reject key cursors. Narrow ordered intersections to bound a report. Returned
+roots and each index witness are validated in the same transaction. These reads
+never enumerate the data global or repair missing/corrupt indexes.
+
+explain().predicates lists each field's operation, index strategy, and visit bound,
+without values. The bounds are shared, not multiplied by the number of predicates.
+The parent plan identifies the candidate field and any ordered field. Record/owner
+materialization retains the existing 10,000-node per-aggregate bound.
+
 ## Page through results
 
-`all` defaults to 100 root records and accepts limits from 1 through 1000. Results use
-native primary-key order. Pass the last returned key as `after` to continue. Each page
+For equality and key selections, all defaults to 100 root records and accepts limits
+from 1 through 1000. Results use native primary-key order. Pass the last returned key as `after` to continue. Each page
 uses its own transaction, so pages do not share a snapshot.
 
 To list records without a filter, ask for a bounded page explicitly:
@@ -216,8 +259,8 @@ It does not return the children themselves.
 
 ## Explain and check
 
-`explain` reports a `direct_key`, `equality_index`, or `ordered_index` plan without
-filter values, including the visit bound for an ordered walk.
+explain reports direct_key, equality_index, ordered_index, or index_intersection
+without filter values, including per-predicate plans and applicable shared visit bounds.
 
 `check_indexes` checks expected secondary entries and unique claims for a bounded page
 of records:

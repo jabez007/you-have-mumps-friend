@@ -5,7 +5,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal, cast
 
-from . import index_scans, indexes, occurrences
+from . import index_scans, indexes, occurrences, query_intersections
 from .codecs import Key, decode_key, encode_key
 from .errors import NotFound, QueryError, SchemaError, StorageError
 from .models import Model, Reference
@@ -26,12 +26,31 @@ def _limit(limit: int) -> None:
 
 
 @dataclass(frozen=True)
-class QueryPlan:
+class PredicatePlan:
     strategy: Literal["direct_key", "equality_index", "ordered_index"]
+    field: str
+    operation: Literal["equality", "range", "prefix", "ordered"]
+    maximum_index_visits: int = index_scans.MAX_VISITS
+
+
+@dataclass(frozen=True)
+class QueryPlan:
+    strategy: Literal["direct_key", "equality_index", "ordered_index", "index_intersection"]
     global_name: str
     field: str
     maximum_limit: int = MAX_QUERY_RECORDS
     maximum_index_visits: int | None = None
+    predicates: tuple[PredicatePlan, ...] = ()
+    order_field: str | None = None
+
+
+def _predicate_plan(term: query_intersections.Predicate) -> PredicatePlan:
+    if term.selection is not None:
+        return PredicatePlan("ordered_index", term.name, term.selection.kind)
+    strategy: Literal["direct_key", "equality_index"] = (
+        "direct_key" if term.definition is None else "equality_index"
+    )
+    return PredicatePlan(strategy, term.name, "equality")
 
 
 class Query[M: Model]:
@@ -44,6 +63,7 @@ class Query[M: Model]:
         value: Any = None,
         definition: indexes.Definition | None = None,
         selection: index_scans.Selection | None = None,
+        predicates: tuple[query_intersections.Predicate, ...] = (),
     ) -> None:
         self._db = db
         self._model = model
@@ -51,11 +71,31 @@ class Query[M: Model]:
         self._value = value
         self._definition = definition
         self._selection = selection
+        self._predicates = predicates
+
+    def _term(self) -> query_intersections.Predicate:
+        assert self._field is not None
+        return query_intersections.Predicate(
+            self._field, self._definition, self._value, self._selection
+        )
+
+    def _combine(self, queries: tuple["Query[M]", ...]) -> "Query[M]":
+        current = self._predicates or ((self._term(),) if self._field is not None else ())
+        predicates = current + tuple(query._term() for query in queries)
+        query_intersections.check_predicates(predicates)
+        anchor = self if self._field is not None else queries[0]
+        return Query(
+            self._db,
+            self._model,
+            field=anchor._field,
+            value=anchor._value,
+            definition=anchor._definition,
+            selection=anchor._selection,
+            predicates=predicates,
+        )
 
     def _ordered(self, name: str) -> indexes.Definition:
         self._db._ensure_active()
-        if self._field is not None:
-            raise QueryError("Specify one query selection")
         definitions = indexes.definitions(self._db.registry.spec(self._model))
         definition = next((d for d in definitions if d.name == name), None)
         if definition is None or definition.field.index_codec != "ordered-v1":
@@ -65,13 +105,14 @@ class Query[M: Model]:
         return definition
 
     def _selected(self, selection: index_scans.Selection) -> "Query[M]":
-        return Query(
+        selected = Query(
             self._db,
             self._model,
             field=selection.definition.name,
             definition=selection.definition,
             selection=selection,
         )
+        return selected if self._field is None else self._combine((selected,))
 
     def range(
         self, field: str, *, gt: Any = None, ge: Any = None, lt: Any = None, le: Any = None
@@ -109,12 +150,28 @@ class Query[M: Model]:
         return self._selected(index_scans.Selection(definition, "prefix", text=text))
 
     def order_by(self, field: str) -> "Query[M]":
-        return self._selected(index_scans.Selection(self._ordered(field), "ordered"))
+        selection = index_scans.Selection(self._ordered(field), "ordered")
+        if self._field is None:
+            return self._selected(selection)
+        if self._selection is not None and self._selection.kind == "ordered":
+            raise QueryError("Specify order_by once after the predicates")
+        return Query(
+            self._db,
+            self._model,
+            field=field,
+            definition=selection.definition,
+            selection=selection,
+            predicates=self._predicates or (self._term(),),
+        )
 
     def where(self, **equals: Any) -> "Query[M]":
         self._db._ensure_active()
-        if self._field is not None or len(equals) != 1:
-            raise QueryError("Queries support exactly one equality predicate")
+        if not equals or len(equals) > query_intersections.MAX_PREDICATES:
+            raise QueryError("Specify between one and eight equality predicates")
+        if self._field is not None or len(equals) > 1:
+            return self._combine(
+                tuple(self._equality(name, value) for name, value in equals.items())
+            )
         name, value = next(iter(equals.items()))
         return self._equality(name, value)
 
@@ -143,21 +200,47 @@ class Query[M: Model]:
         if self._field is None:
             raise QueryError("Specify an indexed equality or primary key; use scan for enumeration")
         spec = self._db.registry.spec(self._model)
+        plans = tuple(_predicate_plan(term) for term in self._predicates or (self._term(),))
+        if self._predicates:
+            return QueryPlan(
+                "index_intersection",
+                spec.global_name,
+                self._field,
+                maximum_index_visits=index_scans.MAX_VISITS,
+                predicates=plans,
+                order_field=self._field if self._selection is not None else None,
+            )
         if self._selection is not None:
             return QueryPlan(
                 "ordered_index",
                 spec.global_name,
                 self._field,
                 maximum_index_visits=index_scans.MAX_VISITS,
+                predicates=plans,
+                order_field=self._field,
             )
         strategy: Literal["direct_key", "equality_index"] = (
             "equality_index" if self._definition is not None else "direct_key"
         )
-        return QueryPlan(strategy, spec.global_name, self._field)
+        return QueryPlan(strategy, spec.global_name, self._field, predicates=plans)
 
     def all(self, *, limit: int = 100, after: Key | None = None) -> list[M]:
         _limit(limit)
         self.explain()
+        if self._predicates:
+            return cast(
+                list[M],
+                self._db._run(
+                    lambda tx: query_intersections.roots(
+                        tx,
+                        tx.registry.spec(self._model),
+                        self._term(),
+                        self._predicates,
+                        limit=limit,
+                        after=after,
+                    )
+                ),
+            )
         if self._selection is not None:
             if after is not None:
                 raise QueryError("Ordered root reads use no key cursor; page with occurrences()")
@@ -229,6 +312,10 @@ class Query[M: Model]:
         """Return complete owners of equality occurrences at their concrete paths."""
         _limit(limit)
         self.explain()
+        if self._predicates:
+            raise QueryError(
+                "Combined predicates return roots through all(); occurrences is ambiguous"
+            )
         if self._definition is None:
             raise QueryError("Occurrence projection requires an equality index")
         definition = self._definition

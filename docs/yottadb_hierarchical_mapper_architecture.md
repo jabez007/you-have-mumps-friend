@@ -281,7 +281,10 @@ Ordered walks seek value subscripts directly, then root keys and concrete locati
 with 1000 combined value/occurrence visits per call. Occurrence cursors are scoped to
 the installed schema and selection. Ordered root reads deduplicate roots within the
 bounded result; continuation uses concrete occurrences to avoid an unbounded root
-deduplication history. Equality cursors retain their existing formats and semantics.
+deduplication history. Equality cursors retain their existing formats and semantics. Up to eight declared
+predicates use a candidate index and bounded witness probes under one shared visit
+budget. Explain reports each predicate. Owned predicates match independently under
+a root; combined occurrence projection is rejected rather than implying a join.
 
 Joins, full-text search, complex aggregates, and arbitrary SQL compatibility remain outside the initial scope.
 

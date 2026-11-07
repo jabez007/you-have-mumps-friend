@@ -92,7 +92,7 @@ for release boundaries.
 | --- | --- | --- |
 | Models | Primitive scalars, dates, UTC datetimes, UUID values, Enum/Literal choices, scalar lists, optional fields, embedded objects, keyed children, Python field inheritance, virtual computed values | Stored rollups, shared-global variants |
 | Relationships | Enforced references, explicit resolution, bounded inverse reads, owned many-to-many links, bounded `restrict`/`set_null`/`cascade` deletion | Unbounded or background cascades |
-| Queries | Indexed equality, ordered range/prefix/ascending reads, unique indexes, root and child paging, occurrence projections, collection counts | Several predicates, descending order, ordered root cursors |
+| Queries | Indexed equality, bounded predicate intersections, ordered range/prefix/ascending reads, unique indexes, root and child paging, occurrence projections, collection counts | Descending order, ordered root cursors |
 | Writes | Whole-record `save`, scalar `patch`, explicit `patch_many` groups, child insert and delete, restart-safe transactions | Change tracking, callback-wide deferred unique checks |
 | Migrations | Scalar defaults, index changes, validation-only revisions, explicit record transforms, resume after interruption, model-scoped access | Root identity/layout changes; only one maintenance job at a time |
 | M access | Read every node, write valid scalars | Writes that maintain indexes and references |

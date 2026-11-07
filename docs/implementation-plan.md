@@ -968,3 +968,18 @@ This avoids a misleading root-key cursor across differently ordered value groups
 an unbounded cross-page duplicate set. Descending traversal and root-page cursors
 are deferred; no reverse in-memory sort masquerades as an index seek. Follow with
 bounded multi-predicate intersections as a separate slice. Existing C901 passes at ten.
+
+### Bounded predicate intersections, issue 15
+
+Extend immutable Query selections to at most eight indexed/key predicates. Preserve
+single-predicate execution and cursor formats. Reuse the first selection as the
+candidate index (or an explicit ascending order_by index), probe other equality
+indexes at each exact candidate key, and walk other ordered selections under one
+shared 1000-visit budget. Read and validate complete returned roots only after every
+index has a witness, using existing validate_root and read_indexed checks. No data
+global is enumerated. Explain lists each predicate and the candidate/order field,
+without values. Owned predicates are independent existential matches under a root;
+they do not imply that one child satisfies both. Reject duplicate field predicates
+and ambiguous multi-predicate occurrence projection initially. Equality-anchor root
+paging retains native key cursors; ordered anchors retain their explicit no-root-
+cursor limitation. This avoids creating another cursor contract or implicit joins.

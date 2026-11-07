@@ -4,6 +4,11 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Adds up to eight indexed/key predicates with one shared work budget, explicit
+  ascending candidate order, per-predicate explain plans, and independently matched
+  owned witnesses. Keeps single-predicate cursor formats and rejects ambiguous
+  combined occurrence projections.
+
 - Adds bounded native ordered range, literal-prefix, and ascending query walks,
   schema/query-scoped occurrence cursors, exact owner checks, and explicit visit
   budgets. Equality pagination remains compatible.
