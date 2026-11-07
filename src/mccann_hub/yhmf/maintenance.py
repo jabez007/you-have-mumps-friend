@@ -70,7 +70,7 @@ class MigrationStatus:
 
     migration_id: str
     global_name: str
-    source_fingerprint: str
+    source_fingerprint: str | None
     target_fingerprint: str
     phase: str = "validate"
     validated: int = 0
@@ -84,9 +84,9 @@ class MigrationStatus:
     def __post_init__(self) -> None:
         job_path(self.migration_id)
         Path(self.global_name)
-        for fingerprint in (self.source_fingerprint, self.target_fingerprint):
-            if not isinstance(fingerprint, str) or not re.fullmatch(r"[0-9a-f]{64}", fingerprint):
-                raise StorageError("Invalid migration fingerprint")
+        _schema_identities(
+            self.source_fingerprint, self.target_fingerprint, self.operation_fingerprint
+        )
         if self.phase not in PHASES:
             raise StorageError("Invalid migration phase")
         if type(self.pruning) is not bool or (
@@ -120,9 +120,18 @@ class MigrationStatus:
         return result
 
 
+def _schema_identities(source: str | None, target: str, operation: str | None) -> None:
+    if source is None and operation is None:
+        raise StorageError("An absent source requires an explicit maintenance operation")
+    fingerprints = (target,) if source is None else (source, target)
+    for fingerprint in fingerprints:
+        if not isinstance(fingerprint, str) or not re.fullmatch(r"[0-9a-f]{64}", fingerprint):
+            raise StorageError("Invalid migration fingerprint")
+
+
 def save_status(store: Store, status: MigrationStatus) -> None:
     document = status.to_dict(include_cursor=True)
-    document["format_version"] = 1
+    document["format_version"] = 2 if status.source_fingerprint is None else 1
     store.set(job_path(status.migration_id), canonical_json(document))
 
 
@@ -135,8 +144,10 @@ def load_status(store: Store, migration_id: str) -> MigrationStatus:
         if canonical_json(document) != raw:
             raise ValueError("Invalid checkpoint encoding")
         version = document.pop("format_version")
-        if type(version) is not int or version != 1:
+        if type(version) is not int or version not in (1, 2):
             raise ValueError("Unsupported checkpoint format")
+        if (version == 2) != (document.get("source_fingerprint") is None):
+            raise ValueError("Checkpoint version disagrees with its source schema")
         document["cursor"] = bytes.fromhex(document["cursor"])
         status = MigrationStatus(**document)
     except (ValueError, TypeError, KeyError, AttributeError, RecursionError, MigrationError) as exc:
@@ -166,4 +177,5 @@ def inspected_fingerprint(
     status = load_status(store, owner)
     if status.global_name != global_name or status.phase in {"complete", "aborted"}:
         raise StorageError("Schema barrier does not match an active migration")
-    return status.source_fingerprint.encode("ascii"), owner
+    source = status.source_fingerprint
+    return source.encode("ascii") if source is not None else None, owner

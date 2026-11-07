@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Recognizes explicit absent-source maintenance checkpoints in format two while
+  preserving existing format-one bytes and reporting no installed schema during
+  initial-adoption barriers.
+
 - Adds read-only GlobalView/MappedField projections for foreign native globals,
   complete model validation, shared-node piece decoding, and bounded native-key
   paging without schema installation or source rewriting.

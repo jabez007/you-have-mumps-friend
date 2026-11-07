@@ -108,6 +108,8 @@ def load_operation(store: Store, status: MigrationStatus) -> dict[str, Any]:
 
 def saved_snapshots(store: Store, status: MigrationStatus) -> tuple[bytes, bytes]:
     require_retained(status)
+    if status.source_fingerprint is None:
+        raise MigrationError("Initial adoption requires its own maintenance executor")
     root = job_path(status.migration_id)
     source, target = (
         store.get(root.child(b"source_snapshot")),

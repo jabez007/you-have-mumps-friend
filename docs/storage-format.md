@@ -183,7 +183,7 @@ and barrier, and refuse access to that job's model. Unrelated models remain usab
 maintenance jobs themselves remain serialized. Older clients honoring the global
 gate continue to block conservatively. Schema inspection and planning remain available. The migrating model's
 installed fingerprint is temporarily `migration:` followed by the identifier;
-its source snapshot stays installed for inspection. This barrier also makes
+its source snapshot stays installed for inspection when one exists. This barrier also makes
 older clients reject that model through their existing fingerprint checks.
 Raw YottaDB writers must be coordinated by the operator. No new metadata is needed
 for scoped access; the existing checkpoint already identifies the affected global.
@@ -193,6 +193,20 @@ canonical JSON with format version 1, source and target fingerprints, a phase,
 four record counters, and a hexadecimal encoded-key cursor. Status diagnostics
 omit the cursor unless explicitly requested. Each checkpoint belongs to the
 same transaction as its batch's data changes.
+
+Initial-adoption checkpoints use format version two and source_fingerprint: null,
+requiring an explicit hashed maintenance operation. Existing source-bound jobs
+retain their exact format-one representation. A version-two job cannot carry a
+source fingerprint, and format one cannot omit it. Older readers reject the new
+version; current readers reject unknown or mixed versions. This checkpoint format
+is independent of schema-representation, application-schema, and record-layout
+versions. MigrationStatus.source_fingerprint is correspondingly optional.
+
+For initial adoption, only the maintenance marker is published under YHMFSchema;
+there is no installed snapshot before activation. Inspection reports no installed
+schema and includes the active job id. The prospective target snapshot lives only
+in the job journal. Normal access remains blocked by the shared gate/barrier. A
+missing source is never replaced with a fabricated installed schema.
 
 Index rebuild jobs add an `operation_fingerprint` field to their format-one
 checkpoint. It is the lowercase SHA-256 hexadecimal digest of the canonical
