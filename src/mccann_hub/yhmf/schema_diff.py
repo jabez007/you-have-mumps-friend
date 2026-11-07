@@ -275,11 +275,13 @@ class _Fields:
                 raise _Unsupported(path)
             format_name = variant.get("format")
             if format_name is not None and (
-                format_name not in {"binary", "date", "date-time"} or name != "string"
+                format_name not in {"binary", "date", "date-time", "uuid"} or name != "string"
             ):
                 raise _Unsupported(path)
-            if format_name in {"date", "date-time"}:
-                codec = "date-v1" if format_name == "date" else "datetime-utc-v1"
+            if format_name in {"date", "date-time", "uuid"}:
+                codec = {"date": "date-v1", "date-time": "datetime-utc-v1", "uuid": "uuid-v1"}[
+                    format_name
+                ]
                 if variant.get("codec", codec if self.legacy_comparison else None) != codec:
                     raise _Unsupported(path)
                 types.append((name, format_name, codec))

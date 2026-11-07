@@ -30,6 +30,10 @@ values define their defaults and temporal bounds; no Pydantic JSON Schema output
 participates. Existing scalar declarations retain their exact bytes. A string-to-date
 or string-to-datetime conversion is a real type change requiring a named transform.
 
+UUID fields use uuid-v1 with canonical lowercase strings for defaults. Unknown UUID
+codec markers fail comparison safely. UUID field support does not extend primary
+keys or change the identities of earlier primitive/temporal fields.
+
 Virtual properties and Pydantic computed fields are outside the stored contract.
 They add no nodes, indexes, defaults, or schema changes. A computed field may not
 declare mapper persistence metadata. Changing a virtual display calculation alone

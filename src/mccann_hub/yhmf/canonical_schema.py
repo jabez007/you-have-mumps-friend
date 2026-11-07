@@ -11,6 +11,7 @@ import types
 from datetime import date, datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any, Union, cast, get_args, get_origin
+from uuid import UUID
 
 from pydantic import (
     AfterValidator,
@@ -77,15 +78,22 @@ def numeric_rule(value: Any) -> str:
     return f"{'-' if sign else ''}{coefficient}E{power}"
 
 
+def _metadata_scalar(value: Any) -> Any:
+    if type(value) in (date, datetime):
+        return temporal.literal(value)
+    if type(value) is UUID:
+        return str(value)
+    return value
+
+
 def _value(value: Any) -> Any:
+    value = _metadata_scalar(value)
     if (
         value is None
         or type(value) in (str, bool, int)
         or (type(value) is float and math.isfinite(value))
     ):
         return value
-    if type(value) in (date, datetime):
-        return temporal.literal(value)
     if isinstance(value, Decimal):
         if not value.is_finite():
             raise SchemaError("Schema defaults and constraints must be finite")
@@ -151,6 +159,8 @@ def _rules(field: FieldInfo, *, temporal: bool = False) -> dict[str, Any]:
 
 def _scalar(annotation: Any) -> dict[str, Any]:
     mapping = {str: "string", int: "integer", bool: "boolean", float: "number"}
+    if annotation is UUID:
+        return {"codec": "uuid-v1", "type": "string", "format": "uuid"}
     if annotation in (date, datetime):
         return {
             "codec": "date-v1" if annotation is date else "datetime-utc-v1",

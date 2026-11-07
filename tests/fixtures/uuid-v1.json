@@ -1,0 +1,57 @@
+{
+  "schema": {
+    "codec_version": 1,
+    "declaration": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "codec": "str",
+          "type": "string",
+          "yhmf": {
+            "primary_key": true
+          }
+        },
+        "token": {
+          "anyOf": [
+            {
+              "codec": "uuid-v1",
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "yhmf": {
+            "index": true,
+            "unique": true
+          }
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    },
+    "format_version": 2,
+    "global": "^YHMFTestProduct",
+    "key": "id",
+    "layout": 1,
+    "version": 1
+  },
+  "values": [
+    {
+      "encoded": "u:00000000-0000-0000-0000-000000000000",
+      "input": "00000000-0000-0000-0000-000000000000"
+    },
+    {
+      "encoded": "u:12345678-1234-5678-9abc-def012345678",
+      "input": "12345678-1234-5678-9abc-def012345678"
+    },
+    {
+      "encoded": "u:ffffffff-ffff-ffff-ffff-ffffffffffff",
+      "input": "ffffffff-ffff-ffff-ffff-ffffffffffff"
+    }
+  ]
+}

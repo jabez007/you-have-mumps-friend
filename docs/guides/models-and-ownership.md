@@ -238,3 +238,13 @@ or fold presentation. Use pure validators that accept this persisted representat
 Date/datetime defaults and bounds must be representable; datetime bounds need a timezone.
 The new codecs do not change existing schema identities. Converting a stored string
 field requires an explicit named record transform.
+
+## UUID values
+
+Use uuid.UUID for identifier-valued fields. Equality and unique indexes compare the
+complete 128-bit identifier. Reads return UUID objects, and defaults can be UUID
+objects reconstructed by the existing literal-default migration path. Stored UUIDs
+use lowercase hyphenated text with a dedicated type tag; alternative raw encodings
+fail safely. Primary keys remain str/int, so use a unique UUID scalar when the model
+also needs the existing native key contract. Version-specific Pydantic UUID aliases
+are outside the supported metadata set for now.

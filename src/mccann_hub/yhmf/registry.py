@@ -10,6 +10,7 @@ from dataclasses import field as compiled_field
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Any, Literal, Union, get_args, get_origin
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, TypeAdapter
 
@@ -22,7 +23,7 @@ from .selectors import ReferenceFactory, reference_factory
 from .storage import Path
 
 _NAME = re.compile(r"[A-Za-z][A-Za-z0-9_]*\Z")
-_SCALARS = {str, int, bool, float, Decimal, bytes, date, datetime}
+_SCALARS = {str, int, bool, float, Decimal, bytes, date, datetime, UUID}
 
 
 def scalar_type(annotation: Any) -> Any:

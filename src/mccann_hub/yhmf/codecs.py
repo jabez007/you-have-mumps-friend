@@ -10,11 +10,12 @@ from collections.abc import Callable
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 from typing import Any
+from uuid import UUID
 
 from . import temporal
 from .errors import StorageError
 
-type Scalar = str | int | bool | float | Decimal | bytes | date | datetime | None
+type Scalar = str | int | bool | float | Decimal | bytes | date | datetime | UUID | None
 type Key = str | int
 LAYOUT_VERSION = 1
 MAX_INTEGER_KEY = 999_999_999_999_999_999
@@ -80,6 +81,7 @@ _ENCODERS: dict[type[Any], Callable[[Any], bytes]] = {
     float: _encode_float,
     date: temporal.encode,
     datetime: temporal.encode,
+    UUID: lambda value: b"u:" + str(value).encode("ascii"),
 }
 
 
@@ -118,6 +120,8 @@ def decode_scalar(value: bytes) -> Scalar:
             result = base64.b64decode(payload, validate=True)
         elif tag in {b"D", b"T"}:
             result = temporal.decode(tag, payload)
+        elif tag == b"u":
+            result = UUID(payload.decode("ascii"))
         else:
             result = _decode_number(tag, payload)
         if not separator or encode_scalar(result) != value:

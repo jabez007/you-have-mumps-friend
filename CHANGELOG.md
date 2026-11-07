@@ -4,6 +4,9 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Adds UUID scalar fields, versioned canonical metadata, equality/unique indexes,
+  and literal defaults. Primary-key codecs remain str/int.
+
 - Moves the inventory example's ledger to UTC datetime timestamps at application
   schema revision two, with frozen v1 declarations and an explicit resumable
   conversion. ISO string inputs remain accepted; returned timestamps are datetime.

@@ -40,6 +40,7 @@ can be stricter; the engine's errors propagate.
 | Bytes | `x:` plus standard padded Base64 | `x:AP8=` |
 | Date | `D:` plus fixed-width Gregorian date | `D:2026-11-06` |
 | Datetime | `T:` plus fixed-width UTC instant with six fractional digits | `T:2026-11-06T12:00:00.000000Z` |
+| UUID | `u:` plus lowercase hyphenated 128-bit identifier | `u:12345678-1234-5678-9abc-def012345678` |
 
 Nonfinite numbers and unsupported types are rejected. Node values have a
 prototype limit of 32766 bytes, including the type tag. An absent node returns
@@ -63,6 +64,12 @@ JSON literal validation. Unknown temporal codecs fail comparison safely. Layout 
 global codec version remain one; all earlier scalar tags and schema bytes remain
 unchanged. Older clients reject these new declarations/tags rather than reinterpret
 them. Golden fixtures temporal-v1.json and temporal-schema-v1.json fix the contracts.
+
+UUID fields declare uuid-v1 and use standard UUID objects. Uppercase, compact, and
+braced raw encodings are rejected by reencoding. The version/variant bits are preserved;
+plain UUID fields do not restrict them. Keys remain str/int: UUID is supported as a
+scalar and equality/unique value, not as a primary-key codec. Defaults are canonical
+UUID strings in metadata. uuid-v1.json fixes encoded boundary values and the schema.
 Decoders reject invalid and noncanonical encodings.
 
 The [golden scalar fixtures](../tests/fixtures/scalars.json) contain literal
