@@ -1,6 +1,6 @@
 # ADR 0014: Resumable adoption with an explicitly absent source schema
 
-Status: implemented; native executor qualification pending.
+Status: accepted and qualified by [native CI 42342515333](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42342515333).
 
 ## Existing mechanisms
 
@@ -42,3 +42,17 @@ The explicit absent-source checkpoint reuses existing infrastructure and fails s
 on older readers. It widens MigrationStatus.source_fingerprint's type; existing job
 values and serialized bytes remain unchanged. Installed v0.3/v0.4 data is not rewritten
 or invalidated merely by opening a database.
+
+## Qualification
+
+Both supported engines and both journaling modes passed. Tests resume 203 owned
+records with cyclic self-references across reopened handles, verify unchanged field
+bytes and normal index/reference behavior, and test cross-batch unique conflicts.
+Fault injection covers journal creation, reservations, partial index/reference and
+metadata writes, verification checkpoints, and activation. Native restart and
+coordinated competing adoption/first-insert processes pass. Early abort restores
+absent metadata; committed backfill resumes; terminal pruning remains bounded.
+The plain-M foreign projection also passed without rewriting its source nodes.
+
+Ruff/C901, mypy, both Pydantic versions, 1091 offline tests, executable documentation,
+packaging, and an installed-wheel adoption workflow passed before native execution.
