@@ -177,3 +177,19 @@ not provide Python patch_many's net-zero coalescing or deferred group claims.
 New managed child operations require existing metadata and never adopt raw data.
 No schema/layout bytes change. Existing flat APIs retain their behavior; older
 source must be regenerated for these capabilities and rejects changed bindings.
+
+## Stored-value readability, issue 49
+
+Keep incoming M inputs on their qualified conservative domain. Existing stored
+values have a separate classification. Recognized values outside M's capabilities
+return unsupported without writes. This is a refusal to validate or manipulate the
+value, not a claim of Python validity. Definite malformed tags, syntax, object shape,
+identity, or enforceable constraint violations remain corrupt. Reuse the existing
+UTF-8, integer, and Decimal parsers rather than add another codec.
+
+For stored Decimals inside the exact unit domain, apply precision constraints to
+the coefficient with trailing zeros removed and normalize signed/scaled zero for
+validation only. Preserve the original payload for unaffected fields and ordinary
+index normalization. Do not depend on ambient Decimal context or rewrite databases
+to make valid existing data fit the input subset. Schema/layout bytes and Python
+validation are unchanged; older exported source needs regeneration.

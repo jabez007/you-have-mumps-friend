@@ -117,8 +117,8 @@ The generator supports flat non-null scalar and Reference models with ordinary e
 and unique indexes. It enforces string length and numeric gt/ge/lt/le bounds, with
 ASCII string values and canonical signed integers of at most 18 digits. Strings may
 contain ASCII controls; NUL is forbidden in keys. Python retains its full Unicode
-and scalar integer domains. An existing record outside the M value subset cannot
-be changed/deleted with this routine. Use Python for those records.
+and scalar integer domains. An existing record outside the M stored-value domain
+returns unsupported without changes. Use Python for those records.
 
 Export rejects custom Python validators, unsupported constraints or normalization,
 nullable values, embedded objects, scalar lists, choices, ordered
@@ -145,10 +145,24 @@ gate check until regenerated; their installed schema bindings do not change.
 
 The transaction-owning entry points return ok, exists, missing, invalid, invalid_key,
 key_size, schema,
-unmanaged, maintenance, corrupt, unique, references, or nested. Their failure
+unmanaged, maintenance, corrupt, unsupported, unique, references, or nested. Their failure
 statuses leave the call's database state unchanged. Unexpected engine errors roll back the
 owned transaction and propagate to the caller's error handler. They are not
 reported as success or silently converted into a validation failure.
+
+unsupported means an existing value has a recognized storage shape but M cannot
+validate or manipulate it within its qualified domain. It does not certify that
+Python would accept the record. For example, an existing Unicode string, an integer
+over 18 digits, or a Decimal outside the fixed-unit domain is refused without writes.
+Invalid tags, markers, identities, malformed scalar text, and enforceable constraint
+violations still return corrupt.
+
+Stored Decimal precision checks remove trailing zeros and treat every signed or
+scaled zero as zero. Python-written 1.5000000, 0E-7, and 0E+18 are therefore readable
+when their normalized values satisfy the declaration and exact unit limits. Patches
+to other fields preserve those original payload bytes. Incoming M inputs keep the
+raw precision restrictions described above. Regenerate existing routines for these
+diagnostics and stored-value checks; installed data needs no conversion.
 
 The [ADR](../adr/0013-explicit-m-writer-contract.md) records the trigger comparison
 and initial contract. No trigger is installed by export or generated CRUD. Do not
@@ -333,8 +347,9 @@ form, with an exponent of at most 18 digits. Nonfinite inputs are rejected.
 
 This is an explicit M input subset. Python retains its full finite Decimal domain
 and existing validation behavior. A value outside this subset remains readable
-and writable through Python. The generated M routine refuses to replace/delete
-an existing record outside its supported subset. No schema or record conversion
+and writable through Python. Stored values use normalized precision checks within
+the exact unit domain, so trailing zeros alone do not prevent replacement/deletion.
+Values outside that domain return unsupported. No schema or record conversion
 occurs. Unsupported Decimal constraints, including multiple_of and bounds finer
 than the unit precision, fail export rather than being ignored.
 

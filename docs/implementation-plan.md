@@ -1450,3 +1450,25 @@ projections against changed lower values, inclusivity, and unbounded selections.
 The committed fixture also protects unaffected cursor bytes. Both storage adapters
 exercise the same tests. The configured C901 check passes at ten before this change;
 no threshold changes or unrelated cleanup are needed.
+
+### Separate stored readability from M input acceptance, issue 49
+
+Reuse old(), valid(), the Decimal parser and exact unit comparisons, and the existing
+UTF-8/natural-number helpers. old() currently applies the input subset to stored
+values and labels every refusal corrupt. Add one stored-value classification seam:
+definite syntax, tag, shape, or enforceable constraint violations remain corrupt;
+well-formed values outside the qualified M domain return unsupported. Unsupported
+means M cannot validate or manipulate the value, not that Python has certified it.
+
+For supported finite Decimals, validate stored precision using the exact coefficient
+with trailing zeros removed, treating every signed/scaled zero as zero. Keep raw
+payloads intact so unrelated patches preserve scale. Incoming inputs retain the
+conservative raw precision contract and all existing rejection tests. A parser
+marker distinguishes valid Decimal syntax outside the fixed-unit domain from
+malformed text. Reuse the stored check for existing sum targets. No schema/layout
+conversion or Python validation change is involved.
+
+Native tests cover all reported Decimal forms, flat and owned writes, unchanged
+payload bytes, unsupported Unicode/wide integers/Decimals, malformed values, and
+rollback. Compare normal queries/indexes and Python mutations after successful M
+writes. C901 remains ten; no unrelated cleanup is proposed.

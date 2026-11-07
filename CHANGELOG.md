@@ -4,6 +4,12 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Separates stored-value readability from generated M input validation. Supported
+  stored Decimals use normalized precision checks while retaining their raw bytes.
+  Well-formed values outside the M subset return unsupported, and definite syntax,
+  shape, identity, and constraint damage remains corrupt. Incoming input restrictions
+  and existing schema/storage bytes stay unchanged.
+
 - Binds descending range cursors to both bounds and their inclusivity. Earlier
   descending range cursors must restart from the first page. Ascending, descending
   ordered, and prefix cursor identities remain unchanged. Schema and record bytes

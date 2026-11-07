@@ -29,14 +29,13 @@ decimal(value,number)
  . set power=$select(scientific:exponent,1:0-$length(fraction))
  . do digits(.number,1,power)
  . set number("units")="0",number("coefficient")="0",number("power")=0,number("valid")=1
- if scientific,(exponent<-18)!(exponent>21) quit 0
  set power=$select(scientific:exponent,1:0)-$length(fraction)
  set adjusted=$length(coefficient)-1+power
  if 'scientific,adjusted<-6 quit 0
  if scientific,(power'>0)&(adjusted'<-6) quit 0
  do digits(.number,$length(coefficient),power)
  for  quit:$extract(coefficient,$length(coefficient))'="0"  set coefficient=$extract(coefficient,1,$length(coefficient)-1),power=power+1
- if power<-18!($length(coefficient)+power+18>40) quit 0
+ if power<-18!($length(coefficient)+power+18>40) set number("outside")=1 quit 0
  set number("units")=$select(sign:"-",1:"")_coefficient
  for i=1:1:power+18 set number("units")=number("units")_"0"
  set number("coefficient")=$select(sign:"-",1:"")_coefficient,number("power")=power
@@ -49,10 +48,13 @@ digits(number,count,power)
  set number("digits")=$select(power'<0:count+power,count>number("places"):count,1:number("places"))
  set number("whole")=number("digits")-number("places")
  quit
-dvalid(value,field,cfg)
+dvalid(value,field,cfg,stored)
  new number,comparison
  if '$$decimal(value,.number) quit 0
  if $get(cfg("source",field)),$$sourceunits(value)="invalid" quit 0
+ if $get(stored) do
+ . do digits(.number,$length(number("coefficient"))-($extract(number("coefficient"))="-"),number("power"))
+ . if number("units")="0" set number("whole")=0
  if $data(cfg("digits",field)),number("digits")>cfg("digits",field) quit 0
  if $data(cfg("places",field)),number("places")>cfg("places",field) quit 0
  if $data(cfg("digits",field)),$data(cfg("places",field)),number("whole")>$select(cfg("digits",field)>cfg("places",field):cfg("digits",field)-cfg("places",field),1:0) quit 0

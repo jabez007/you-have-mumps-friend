@@ -175,10 +175,52 @@ def test_existing_python_decimal_outside_wire_domain_is_preserved(decimal_writer
     db, run = decimal_writer()
     db.insert(Amount(id="A", value=Decimal("1E-19")))
     before = dump(store, (Amount.__global__, "^YHMFSchema", "^YHMFIndex", "^YHMFUnique"))
-    assert run("replace", {"id": "A", "value": "1"}) == "corrupt"
+    assert run("replace", {"id": "A", "value": "1"}) == "unsupported"
     assert db.get(Amount, "A").value == Decimal("1E-19")
     assert dump(store, (Amount.__global__, "^YHMFSchema", "^YHMFIndex", "^YHMFUnique")) == before
     assert store.get(schema_path(Amount.__global__)) is not None
+
+
+@pytest.mark.native
+@pytest.mark.parametrize("text", ["1.5000000", "0E-7", "0E+18", "-0E-7", "1E+2", "1.50E+3"])
+@pytest.mark.parametrize("operation", ["replace", "delete"])
+def test_python_valid_stored_decimal_scale_is_readable_without_broadening_inputs(
+    store, decimal_writer, text, operation
+):
+    db, run = decimal_writer(Limited)
+    db.insert(Limited(id="A", value=Decimal(text)))
+    assert store.get(Path(Limited.__global__, (b"s:A", b"value"))) == b"d:" + text.encode()
+    data = {"id": "A", "value": "2"} if operation == "replace" else {"id": "A"}
+    assert run(operation, data) == "ok"
+    if operation == "replace":
+        assert db.get(Limited, "A").value == 2
+    else:
+        assert db.scan(Limited) == []
+    assert db.check_indexes(Limited).issues == ()
+
+
+@pytest.mark.native
+@pytest.mark.parametrize("text", ["1E-19", "1.1E-18", "1E+22"])
+def test_well_formed_stored_decimals_outside_m_units_are_unsupported(store, decimal_writer, text):
+    db, run = decimal_writer()
+    db.insert(Amount(id="A", value=Decimal(text)))
+    roots = (Amount.__global__, "^YHMFSchema", "^YHMFIndex", "^YHMFUnique")
+    before = dump(store, roots)
+    assert run("replace", {"id": "A", "value": "1"}) == "unsupported"
+    assert run("delete", {"id": "A"}) == "unsupported"
+    assert dump(store, roots) == before
+
+
+@pytest.mark.native
+@pytest.mark.parametrize("raw", [b"d:garbage", b"d:01", b"d:NaN", b"d:+1", b"d:-1", b"i:1"])
+def test_malformed_or_definitely_invalid_stored_values_remain_corrupt(store, decimal_writer, raw):
+    db, run = decimal_writer(Limited)
+    db.insert(Limited(id="A", value=Decimal(1)))
+    store.set(Path(Limited.__global__, (b"s:A", b"value")), raw)
+    roots = (Limited.__global__, "^YHMFSchema", "^YHMFIndex", "^YHMFUnique")
+    before = dump(store, roots)
+    assert run("delete", {"id": "A"}) == "corrupt"
+    assert dump(store, roots) == before
 
 
 @pytest.mark.native

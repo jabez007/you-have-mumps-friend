@@ -80,13 +80,6 @@ deferred uniqueness is not supported. See [the example](guides/indexes-and-queri
 
 ## Open defects
 
-- Generated M patch and delete return `corrupt` for a record whose stored values
-  Python accepts but the M input subset does not. Examples are a Decimal with more
-  trailing zeros than its `decimal_places`, such as `1.5000000` for six places, a
-  non-ASCII string, or an integer over 18 digits. The record is not damaged. Change
-  or delete it through Python. To keep Decimal results writable from M, quantize them
-  to the declared places before saving.
-  [#49](https://github.com/jabez007/you-have-mumps-friend/issues/49)
 - A failing M participant (`inserttx`, `patchchildtx`, and the other `*tx` entry
   points) raises `%YDB-E-TRESTNOT` inside a plain `tstart`, instead of returning its
   status. The transaction still rolls back. Start the caller's transaction with
@@ -147,6 +140,9 @@ These features remain outside the current implementation:
   [#54](https://github.com/jabez007/you-have-mumps-friend/issues/54),
   [#55](https://github.com/jabez007/you-have-mumps-friend/issues/55)).
   Unsupported declarations stay rejected.
+  Existing values outside the M stored-value domain return unsupported without
+  writes. Normalized stored Decimal scale is supported; Unicode strings, wide
+  integers, and Decimals outside the exact unit domain still require Python.
   Read-only GlobalView mappings can project foreign globals without adopting them.
   Newly generated routines validate maintenance scope;
   older exported source retains its conservative global-gate check until regenerated.

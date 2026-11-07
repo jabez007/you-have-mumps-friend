@@ -76,11 +76,11 @@ input(operation,input,cfg,values)
  set field=""
  for  set field=$order(cfg("tag",field)) quit:field=""  if '$data(values(field)) set status="invalid"
  quit status
-valid(value,field,cfg)
+valid(value,field,cfg,stored)
  new i,good
  if $zlength(value)>32764 quit 0
  if cfg("tag",field)="r" quit $$refvalid(value,field,.cfg)
- if cfg("tag",field)="d" quit $$dvalid(value,field,.cfg)
+ if cfg("tag",field)="d" quit $$dvalid(value,field,.cfg,+$get(stored))
  if cfg("tag",field)="s" do  quit good
  . set good=($length(value)'<cfg("min",field))&($length(value)'>cfg("max",field))
  . for i=1:1:$length(value) if $ascii(value,i)>127 set good=0 quit
@@ -106,8 +106,8 @@ attempt(operation,key,values,cfg,previous)
  if operation="insert",$data(@root) quit "exists"
  if operation'="insert",'$data(@root) quit "missing"
  if operation'="insert" do  quit:status'="ok" status
+ . if $get(@root@(cfg("key")))'=$$scalar(values(cfg("key")),cfg("key"),.cfg) set status="corrupt" quit
  . set status=$$old(root,.cfg,.old)
- . if status="ok",old(cfg("key"))'=values(cfg("key")) set status="corrupt"
  if $get(cfg("partial")) do
  . set field=""
  . for  set field=$order(old(field)) quit:field=""  if '$data(values(field)) set values(field)=old(field)
@@ -173,8 +173,9 @@ old(root,cfg,values)
  if status'="ok" quit status
  set field=""
  for  set field=$order(@root@(field)) quit:field=""  if (field'="%m")!$get(cfg("owned")),'$data(cfg("tag",field)) set status="corrupt"
+ if status'="ok" quit status
  set field=""
- for  set field=$order(cfg("tag",field)) quit:field=""  do
+ for  set field=$order(cfg("tag",field)) quit:field=""  do  quit:status'="ok"
  . if $data(@root@(field))'=1 set status="corrupt" quit
  . set raw=@root@(field)
  . if $extract(raw,1,2)'=(cfg("tag",field)_":") set status="corrupt" quit
@@ -182,9 +183,26 @@ old(root,cfg,values)
  . if cfg("tag",field)="r",cfg("targets",cfg("ref",field),"keytag")="s" do  quit:status'="ok"
  . . if $extract(part,1,2)'="s:" set status="corrupt" quit
  . . set part=$extract(part,3,$length(part))
- . if '$$valid(part,field,.cfg) set status="corrupt" quit
+ . set status=$$storedscalar(part,field,.cfg)
+ . if status'="ok" quit
  . set values(field)=part
  quit status
+storedscalar(value,field,cfg)
+ new tag,magnitude,number,index,ascii
+ if $zlength(value)>32764 quit "unsupported"
+ set tag=cfg("tag",field)
+ if tag="r" set tag=cfg("targets",cfg("ref",field),"keytag")
+ if tag="s",'$$utf8(value) quit "corrupt"
+ if tag="s" do  quit:'ascii "unsupported"
+ . set ascii=1
+ . for index=1:1:$zlength(value) if $zascii(value,index)>127 set ascii=0 quit
+ if tag="i" do  quit:magnitude="invalid" "corrupt"
+ . set magnitude=$extract(value,1+($extract(value)="-"),$length(value))
+ . if '$$natural(magnitude)!(value="-0") set magnitude="invalid"
+ if tag="i",$length(magnitude)>18 quit "unsupported"
+ if tag="d",'$$decimal(value,.number) quit $select($get(number("outside")):"unsupported",1:"corrupt")
+ if cfg("tag",field)="r",value[$char(0) quit "unsupported"
+ quit $select($$valid(value,field,.cfg,1):"ok",1:"corrupt")
 token(value,field,cfg)
  if cfg("tag",field)="d" quit "v:"_$$quote($$dtoken(value))
  quit "v:"_$$quote($$scalar(value,field,.cfg))

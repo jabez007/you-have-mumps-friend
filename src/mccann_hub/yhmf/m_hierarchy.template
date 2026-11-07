@@ -197,7 +197,7 @@ hsums(operation,node,parts,values,previous,cfg,rootcfg)
  . if $data(@path)'=1!($extract(raw,1,2)'="d:") set status="corrupt" quit
  . kill local,before,after merge local=rootcfg("nodes",target)
  . set local("global")=rootcfg("global"),before(field)=$extract(raw,3,$length(raw))
- . if '$$dvalid(before(field),field,.local) set status="corrupt" quit
+ . if '$$dvalid(before(field),field,.local,1) set status="corrupt" quit
  . new number
  . if '$$decimal(before(field),.number) set status="corrupt" quit
  . set total=$$dadd(number("units"),delta)

@@ -39,6 +39,50 @@ def values(key="A", sku="S", name="Stock", quantity="1"):
     return {"id": key, "sku": sku, "name": name, "quantity": quantity}
 
 
+@pytest.mark.native
+@pytest.mark.parametrize("field,value", [("name", "caf\u00e9"), ("quantity", 10**30)])
+def test_python_values_outside_m_input_subset_are_unsupported_and_unchanged(
+    store, m_writer, field, value
+):
+    db, run, _, _ = m_writer
+    if field == "name":
+        db.insert(MRecord(id="A", sku="S", name=value, quantity=1))
+    else:
+
+        class WideInteger(MRecord):
+            quantity: int = Field(ge=0)
+
+        db = Database(store, Registry(WideInteger))
+        _, _, routine, _ = m_writer
+        routine.write_text(db.m_routine(WideInteger, name="YHMFTAPI"))
+        routine.with_suffix(".o").unlink(missing_ok=True)
+        db.insert(WideInteger(id="A", sku="S", name="Stock", quantity=value))
+    from tests.adversarial_support import dump
+
+    roots = (MRecord.__global__, "^YHMFSchema", "^YHMFIndex", "^YHMFUnique")
+    before = dump(store, roots)
+    assert run("replace", values()) == "unsupported"
+    assert run("delete", {"id": "A"}) == "unsupported"
+    assert dump(store, roots) == before
+
+
+@pytest.mark.native
+@pytest.mark.parametrize("damage", ["utf8", "missing", "tag", "extra", "identity"])
+def test_damaged_stored_strings_and_identity_stay_corrupt(store, m_writer, damage):
+    _, run, _, _ = m_writer
+    assert run("insert", values()) == "ok"
+    root = Path(MRecord.__global__, (b"s:A",))
+    if damage == "missing":
+        store.delete_tree(root.child(b"name"))
+    elif damage == "extra":
+        store.set(root.child(b"unexpected"), b"s:x")
+    elif damage == "identity":
+        store.set(root.child(b"id"), "s:caf\u00e9".encode())
+    else:
+        store.set(root.child(b"name"), b"s:\x80" if damage == "utf8" else b"i:1")
+    assert run("replace", values()) == "corrupt"
+
+
 def test_export_is_read_only_and_keeps_the_complete_installed_identity(read_only_store):
     db = setup(read_only_store)
     source = db.m_routine(MRecord, name="ProductAPI")

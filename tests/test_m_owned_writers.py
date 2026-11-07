@@ -564,6 +564,38 @@ def test_native_owned_sums_exceed_m_numeric_precision_without_rounding(store, ow
 
 
 @pytest.mark.native
+@pytest.mark.parametrize("text", ["1.5000000", "0E-7", "0E+18", "1E+2", "1.50E+3"])
+def test_owned_stored_decimal_scale_does_not_block_mutations_or_change_unrelated_payloads(
+    store, variant_writer, text
+):
+    db, run, _, _ = variant_writer(Warehouse, warehouse_values({"LOT-001": text}, {}))
+    path = Path(
+        "^InventoryWarehouse",
+        (
+            b"s:MAIN",
+            b"locations",
+            b"s:DOCK",
+            b"bins",
+            b"s:B1",
+            b"balances",
+            b"s:LOT-001",
+            b"quantity",
+        ),
+    )
+    original = store.get(path)
+    assert original == b"d:" + text.encode()
+    assert run("ownedpatch", {"product": "WIDGET"}) == "ok"
+    assert store.get(path) == original
+    assert db.check_indexes(Warehouse).issues == ()
+    assert run("ownedpatch", {"quantity": "2"}) == "ok"
+    assert db.get(Warehouse, "MAIN").stored_on_hand == 2
+    assert db.check_indexes(Warehouse).issues == ()
+    assert run("owneddelete", {}) == "ok"
+    assert db.get(Warehouse, "MAIN").stored_on_hand == 0
+    assert db.check_indexes(Warehouse).issues == ()
+
+
+@pytest.mark.native
 def test_owned_deletion_preserves_the_roots_existing_incoming_ledger_references(
     store, owned_writer
 ):
