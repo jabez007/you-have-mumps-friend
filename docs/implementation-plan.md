@@ -1472,3 +1472,19 @@ Native tests cover all reported Decimal forms, flat and owned writes, unchanged
 payload bytes, unsupported Unicode/wide integers/Decimals, malformed values, and
 rollback. Compare normal queries/indexes and Python mutations after successful M
 writes. C901 remains ten; no unrelated cleanup is proposed.
+
+### Document and qualify restartable caller transactions, issue 50
+
+Reuse stableabort and the existing participant drivers. YottaDB takes restartability
+from the outermost TSTART, so a nested TSTART () cannot enable it for a bare outer
+TSTART. Preserve stable read revalidation instead of returning potentially stale
+failure statuses. The qualified caller interface requires TSTART () or TSTART *;
+SERIAL is optional. No unqualified engine introspection or new status guard is added.
+
+Add native cases for plain and nested nonrestartable callers, a prior successful
+participant followed by invalid input or a duplicate, and caller error-trap cleanup.
+An engine restart refusal can reach the caller with an active transaction level even
+after staged data is restored. Require the caller's error handler to TROLLBACK before
+continuing. Verify data, schema, and indexes independently after the expected error.
+Also qualify a restartable outer TSTART () without SERIAL. This is a documented
+precondition and regression coverage, with no stored-format or writer-code change.

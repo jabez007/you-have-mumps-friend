@@ -211,6 +211,8 @@ nodes untouched. Decimal wire limits, including raw precision constraints, also 
 to generated sum values; exact fixed-unit arithmetic never rounds to M's numeric precision.
 
 insertchildtx, patchchildtx, and deletechildtx participate in an existing caller TP.
+The outermost TP must permit restarts, as described under
+[caller transactions](#compose-writes-in-a-caller-transaction).
 Success leaves it open; any failure aborts all its levels, including earlier flat or
 child participants. Read dependent business values inside the caller's restart point.
 Data-dependent failures are revalidated on the native stable attempt before the
@@ -242,8 +244,14 @@ Newly exported routines also provide inserttx(input), replacetx(input), and
 deletetx(key). These participants require an existing transaction and return transaction if none is active. A successful
 participant leaves the caller's transaction level unchanged and never commits it.
 
+The outermost transaction must enable restarts. Use TSTART (), a saved-variable
+list, or TSTART *. SERIAL is optional. A nested TSTART () does not enable restarts
+for a bare outer TSTART. This requirement applies even to failures detected before
+database writes, because participants revalidate failure statuses with TRESTART.
+See the [YottaDB TSTART contract](https://docs.yottadb.com/ProgrammersGuide/commands.html#tstart).
+
 ```m
- tstart ():serial
+ tstart ()
  set status=$$inserttx^PartAPI(.first)
  if status'="ok" quit
  set status=$$inserttx^PartAPI(.second)
@@ -255,12 +263,19 @@ Supply complete field inputs as above. This code belongs in a callable M routine
 with its own input/error reporting. The two participants may come from different
 exported models. Index and schema changes commit with both records.
 
-Every participant failure status aborts the entire active transaction, including
-all nesting levels and earlier successful operations. Unexpected errors also roll
+Within this restartable caller contract, every participant failure status aborts the
+entire active transaction, including all nesting levels and earlier successful operations. Unexpected errors also roll
 back before propagating to the caller's handler. After failure, tlevel is zero.
 The caller must stop the workflow instead of proceeding as though earlier writes
 survived. An attempted commit of that failed transaction cannot commit partial data.
 Existing insert/replace/delete still return nested without rolling back the caller.
+
+Bare TSTART is unsupported. A successful call under a bare TSTART does not qualify
+that caller for failure handling or concurrency. A failure can raise TRESTNOT and
+TRESTLOC instead of returning a status. Restart refusal can bypass the writer's local
+error trap and reach the caller with a positive tlevel after staged data is restored.
+The caller's error handler must TROLLBACK any active TP and end the failed workflow.
+Do not rely on an unsupported caller automatically reaching tlevel zero.
 
 The caller owns the outer restart point. Re-read every database-derived value after
 tstart, including values used to build inputs, so a native restart recomputes the

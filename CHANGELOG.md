@@ -4,6 +4,11 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Clarifies that generated M participants require a restartable outer transaction.
+  Native regressions cover bare and nested nonrestartable callers, error-trap
+  cleanup, and TSTART () without SERIAL. Bare TSTART can raise TRESTNOT instead of
+  a status; the caller must roll back any active TP in its error handler.
+
 - Separates stored-value readability from generated M input validation. Supported
   stored Decimals use normalized precision checks while retaining their raw bytes.
   Well-formed values outside the M subset return unsupported, and definite syntax,

@@ -93,6 +93,16 @@ for missing context. The caller owns the outer restart point and must rebuild al
 database-derived inputs there. This extension initially composes supported flat
 models, independently of future hierarchical support.
 
+The outermost caller transaction must permit restarts, for example TSTART (), a
+saved-variable list, or TSTART *. SERIAL is optional. Nested TSTART arguments do not
+change a nonrestartable outer transaction. Bare TSTART remains unsupported: even
+invalid-input failures request stable revalidation and can raise TRESTNOT/TRESTLOC.
+The engine can restore staged data while leaving a positive transaction level at
+the caller's handler. That handler must TROLLBACK an active TP and end the workflow.
+Native tests assert prior participant data/schema/index restoration and caller
+cleanup. Preserve stable revalidation; no unqualified restartability detector or
+special-case stale-status return is introduced.
+
 Scoped maintenance passed both engines, both journaling modes, and native stress in
 [CI 42379543484](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42379543484).
 The coordinated test restores its normal routine after the rendezvous; source

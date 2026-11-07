@@ -80,11 +80,6 @@ deferred uniqueness is not supported. See [the example](guides/indexes-and-queri
 
 ## Open defects
 
-- A failing M participant (`inserttx`, `patchchildtx`, and the other `*tx` entry
-  points) raises `%YDB-E-TRESTNOT` inside a plain `tstart`, instead of returning its
-  status. The transaction still rolls back. Start the caller's transaction with
-  `tstart ()` or `tstart ():serial`.
-  [#50](https://github.com/jabez007/you-have-mumps-friend/issues/50)
 - `all()` on an ordered selection raises `QueryError` above about 500 records with
   distinct values, because each value costs two of the 1,000 index visits. Keep the
   limit at 500 or less, or use `page()` and follow its cursor.
@@ -143,6 +138,9 @@ These features remain outside the current implementation:
   Existing values outside the M stored-value domain return unsupported without
   writes. Normalized stored Decimal scale is supported; Unicode strings, wide
   integers, and Decimals outside the exact unit domain still require Python.
+  Participants require a restartable outer transaction. Bare TSTART is unsupported
+  and can raise TRESTNOT instead of a failure status; the caller's error handler must
+  roll back any active TP. See [the caller contract](guides/m-access.md#compose-writes-in-a-caller-transaction).
   Read-only GlobalView mappings can project foreign globals without adopting them.
   Newly generated routines validate maintenance scope;
   older exported source retains its conservative global-gate check until regenerated.

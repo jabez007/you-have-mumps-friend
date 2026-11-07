@@ -55,3 +55,33 @@ nestedpair
  if $tlevel tcommit
  write "outer|",$tlevel,!
  quit
+restartablepair
+ tstart ()
+ do pair
+ if $tlevel tcommit
+ write "outer|",$tlevel,!
+ quit
+plainparticipant
+ new input,other,status,nested,$etrap
+ merge input=^YHMFTestStorage("writerInput")
+ set nested=$get(input("_nested"))
+ kill input("_nested")
+ set other("id")="B",other("value")=1
+ set $etrap="do plainerror^YHMFPART"
+ tstart
+ if nested tstart ()
+ set status=$$inserttx^YHMFOAPI(.other)
+ if status'="ok" write "unexpected|",status,! halt
+ set status=$$inserttx^YHMFTAPI(.input)
+ if status'="ok" write "unexpected|",status,! halt
+ if nested tcommit
+ tcommit
+ write "ok|",$tlevel,!
+ quit
+plainerror
+ new fault
+ set fault=$zstatus
+ if $tlevel trollback
+ set $ecode=""
+ write $select(fault["TRESTNOT":"TRESTNOT",1:"unexpected"),"|",$tlevel,!
+ halt

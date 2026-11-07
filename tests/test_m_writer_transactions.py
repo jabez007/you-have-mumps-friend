@@ -7,6 +7,7 @@ import pytest
 from mccann_hub.yhmf import Database, Field, Model, Path, Registry
 from mccann_hub.yhmf.schemas import schema_path
 from tests import test_m_writers
+from tests.adversarial_support import dump
 from tests.test_m_writer_maintenance import replace_source
 from tests.test_m_writers import MRecord, values
 from tests.test_native_schema_safety import ready
@@ -19,6 +20,53 @@ class Other(Model):
     __global__ = "^YHMFTestOrder"
     id: str = Field(primary_key=True)
     value: int = Field(unique=True, ge=0, le=100)
+
+
+@pytest.mark.parametrize("nested", [False, True])
+@pytest.mark.parametrize("failure", ["invalid", "duplicate"])
+def test_nonrestartable_outer_transaction_errors_restore_prior_participant_data(
+    store, participants, nested, failure
+):
+    db, other, _, _, _, environment = participants
+    data = values()
+    if failure == "duplicate":
+        db.insert(MRecord(id="A", sku="S", name="Stock", quantity=1))
+    else:
+        data["quantity"] = "-1"
+    data["_nested"] = "1" if nested else "0"
+    namespaces = (
+        MRecord.__global__,
+        Other.__global__,
+        "^YHMFSchema",
+        "^YHMFIndex",
+        "^YHMFUnique",
+        "^YHMFRef",
+    )
+    before = dump(store, namespaces)
+    root = Path("^YHMFTestStorage", (b"writerInput",))
+    for field, value in data.items():
+        store.set(root.child(field.encode()), value.encode())
+    result = subprocess.run(
+        [str(FilePath(environment["ydb_dist"]) / "yottadb"), "-run", "plainparticipant^YHMFPART"],
+        env=environment,
+        text=True,
+        capture_output=True,
+        timeout=20,
+        check=True,
+    )
+    assert result.stdout.strip() == "TRESTNOT|0"
+    assert all("TRESTNOT" in line or "TRESTLOC" in line for line in result.stderr.splitlines())
+    assert dump(store, namespaces) == before
+    assert other.scan(Other) == []
+    assert db.check_indexes(MRecord).issues == other.check_indexes(Other).issues == ()
+
+
+def test_restartable_outer_without_serial_commits_and_aborts_all_levels(participants):
+    db, other, run, _, _, _ = participants
+    assert run("restartablepair", values()) == "pending|2\nok|1\nouter|0"
+    assert db.get(MRecord, "A").quantity == other.get(Other, "B").value == 1
+    assert run("restartablepair", values()) == "exists|0\nouter|0"
+    assert db.check_indexes(MRecord).issues == other.check_indexes(Other).issues == ()
 
 
 @pytest.fixture

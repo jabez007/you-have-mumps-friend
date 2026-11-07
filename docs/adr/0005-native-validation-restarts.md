@@ -123,3 +123,9 @@ Recreate database-derived values and reset any mutable path/input variables modi
 inside the restart point. Immutable external inputs may stay outside it. Test drivers
 now reset their reused product key and first child path explicitly; neither API
 mutates the caller's input arrays. Existing caller commit ownership is unchanged.
+
+Caller TPs must be restartable from the outermost TSTART. A bare outer TSTART cannot
+support stableabort, even when a nested TSTART () is restartable in isolation. In
+that unsupported context the engine raises TRESTNOT/TRESTLOC and can unwind past
+the writer's local error trap. The caller must roll back any active TP in its own
+handler. Keep this precondition explicit instead of disabling stable read validation.
