@@ -1323,6 +1323,15 @@ warehouse-v2 declarations before upgrading the inventory location example. Compa
 native contention for no sums, root sums, and root plus location sums before claiming
 scalability. Current C901 passes; keep the maximum of ten.
 
+The owned-sum contention benchmark reuses CountedStore, latency/environment output,
+and public atomic/patch calls. The existing contention launcher dispatches its
+older fixed workload script, so retain a small benchmark-local spawn/barrier runner
+instead of introducing a generic job framework. Compare two independent child
+writers within/across locations over three repeats and three indexed-total layouts.
+Preserve all samples, attempt/retry counts, adapter calls, and final integrity checks.
+Run from the disposable native harness in all engine/journal CI configurations;
+offline tests verify logical workload equivalence only.
+
 Before reference support, share schema constants and M schema/record-metadata checks
 without changing their validation or stored bytes. This keeps source and referenced
 target bindings on the same implementation, including exact legacy snapshots.

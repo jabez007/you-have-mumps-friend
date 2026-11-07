@@ -21,6 +21,22 @@ environment, raw latency samples, percentiles, counts, and workload description.
 Offline benchmark tests verify equivalent final states and instrumentation only.
 They provide no native latency evidence.
 
+The same disposable harness runs python -m scripts.benchmark_rollups. Its
+YHMF_ROLLUP_CONTENTION_BENCHMARK report compares no sums, an indexed root sum, and
+indexed root plus owned sums. Two processes increment distinct existing children
+within one location or across two locations. Each fixture has 50 items per location;
+three coordinated bursts contain 30 commits per worker per configuration. Connection
+warmup and setup are excluded. Reports retain raw samples, callback attempts/retries,
+throughput, node calls, environment, and journal mode. Final reads independently
+check every quantity and total and audit the indexes.
+
+This isolates the choice of stored totals within that synthetic workload. Native
+block and index contention can occur even without shared logical totals, and a root
+total is already shared across both locations. Compare all three layouts rather
+than attributing every retry to the owned field. These results do not predict a
+deployment's conflict rate or justify storing totals at every level. Raw native
+measurements will be linked after the new workload actually executes in CI.
+
 ## Workload and method
 
 Each fixture contains one product, 1/50/250 independent lots, and a warehouse with
