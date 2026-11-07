@@ -13,7 +13,7 @@ from . import indexes, migration_claims, references
 from .codecs import canonical_json, decode_key
 from .errors import MigrationError, SchemaMismatch, StorageError
 from .maintenance import MigrationStatus, job_path
-from .migration_records import check_metadata, field_nodes, validate_target_metadata
+from .migration_records import check_metadata, field_digest, field_nodes, validate_target_metadata
 from .models import Model
 from .records import input_values, metadata, record_values
 from .registry import ModelSpec, Registry, reference_fields
@@ -93,20 +93,6 @@ def _convert(binding: Binding, root: Path, source: Model) -> tuple[Model, dict[P
     return result, field_nodes(binding.target, root, result)
 
 
-def _digest(root: Path, nodes: dict[Path, bytes]) -> str:
-    """Version-one digest: length-delimited relative paths and exact encoded values."""
-    digest = hashlib.sha256()
-    for path, value in sorted(nodes.items(), key=lambda item: item[0].subscripts):
-        parts = path.subscripts[len(root.subscripts) :]
-        digest.update(len(parts).to_bytes(1))
-        for part in parts:
-            digest.update(len(part).to_bytes(4))
-            digest.update(part)
-        digest.update(len(value).to_bytes(4))
-        digest.update(value)
-    return digest.hexdigest()
-
-
 def _digest_path(status: MigrationStatus, key: bytes) -> Path:
     return job_path(status.migration_id).child(b"records", hashlib.sha256(key).hexdigest().encode())
 
@@ -121,7 +107,11 @@ def _pin(
     key = root.subscripts[0]
     path = _digest_path(status, key)
     expected = canonical_json(
-        {"key": key.hex(), "source": _digest(root, before), "target": _digest(root, after)}
+        {
+            "key": key.hex(),
+            "source": field_digest(root, before),
+            "target": field_digest(root, after),
+        }
     )
     current = store.get(path)
     if status.phase == "validate" and current is None:
@@ -144,7 +134,7 @@ def _verify_digest(
             or document["key"] != key.hex()
             or type(document["source"]) is not str
             or not re.fullmatch(r"[0-9a-f]{64}", document["source"])
-            or document["target"] != _digest(root, nodes)
+            or document["target"] != field_digest(root, nodes)
         ):
             raise ValueError("Invalid transform digest")
     except (ValueError, TypeError, KeyError, RecursionError) as exc:

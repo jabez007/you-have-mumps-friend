@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Shared record and reference validation while maintenance holds the schema barrier."""
 
+import hashlib
+
 from . import references
 from .errors import StorageError
 from .models import Model
@@ -51,3 +53,17 @@ def validate_target_metadata(
         else:
             spec = check_schema(store, spec)
         check_metadata(store, spec, link.target)
+
+
+def field_digest(root: Path, nodes: dict[Path, bytes]) -> str:
+    """Version-one digest: length-delimited relative paths and exact encoded values."""
+    digest = hashlib.sha256()
+    for path, value in sorted(nodes.items(), key=lambda item: item[0].subscripts):
+        parts = path.subscripts[len(root.subscripts) :]
+        digest.update(len(parts).to_bytes(1))
+        for part in parts:
+            digest.update(len(part).to_bytes(4))
+            digest.update(part)
+        digest.update(len(value).to_bytes(4))
+        digest.update(value)
+    return digest.hexdigest()

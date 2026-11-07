@@ -1031,3 +1031,37 @@ Unknown extra source nodes are intentionally outside the projection. There is no
 write method or implicit migration. Qualify a sample produced by actual plain M,
 native key order, shared-node decoding, missing/invalid input, and no writes. A
 resumable managed-layout adoption job remains the separate second slice of #26.
+
+### Resumable layout-one adoption, second slice of issue 26
+
+Reuse adoption's exact-byte record audit, maintenance ownership/checkpoints, pinned
+snapshots, migration uniqueness reservations, ordinary index/reference transitions,
+and bounded terminal pruning. Keep adopt()'s existing single-transaction limits.
+Add explicit begin_adoption/advance_adoption calls for larger exact-layout globals,
+with validate/backfill/verify/activate phases and 1–100 records per batch. No foreign
+format conversion is implicit; GlobalView remains the read-only mapping boundary.
+
+Initial adoption has no installed source. Represent source_fingerprint=None only in
+a new checkpoint format two, with a hashed adoption operation and target snapshot.
+Existing jobs retain format-one bytes. Old clients reject the unknown new checkpoint;
+new clients read both. Publish only a maintenance marker during the job, with no
+installed snapshot until final activation. Inspection reports unmanaged/uninstalled
+plus the job id, and ordinary access stays blocked for the adopted model. Retain
+shared gate/ownership, completion, and pruning paths rather than a second job store.
+
+Validate exact field bytes, pin each record's field digest, reserve all unique claims,
+and check reference targets before backfill. In bounded backfill batches revalidate
+pinned data/claims and target liveness, install record metadata and normal secondary
+structures atomically, then verify them before activation. Self-references may target
+other exact-layout records in the same adopted global without requiring premature
+installed metadata. Existing managed reference targets retain normal metadata checks.
+Framework writes are blocked; raw writers must be stopped, as for existing migrations.
+
+Abort restores completely absent installed metadata before any backfill commits.
+After committed metadata/index/reference writes, require resume; do not advertise a
+rollback that would need to reconstruct arbitrary former state. Counts/digests detect
+changed/deleted/new records during the supported stopped-writer lifecycle. Add fault
+injection, reopening on every batch, wrong-executor/unknown-checkpoint rejection,
+uniqueness/reference failures, native restarts, and concurrent initialization tests.
+First extract the existing digest and adoption preflight/read seams without changing
+behavior. Current C901 passes at ten; preserve all existing migration/adoption tests.

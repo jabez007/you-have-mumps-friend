@@ -18,8 +18,8 @@ if TYPE_CHECKING:
 MAX_ADOPTION_RECORDS = 100
 
 
-def prepare(store: Store, spec: ModelSpec) -> tuple[tuple[Path, Model], ...]:
-    """Validate every byte before metadata or secondary structures are installed."""
+def require_unmanaged(store: Store, spec: ModelSpec) -> None:
+    """Require absent managed metadata/secondary structures and no root value."""
     if has_data(store, schema_path(spec.global_name)):
         raise StorageError("Adoption requires completely absent installed schema metadata")
     root = Path(spec.global_name)
@@ -28,21 +28,27 @@ def prepare(store: Store, spec: ModelSpec) -> tuple[tuple[Path, Model], ...]:
     for name in ("^YHMFIndex", "^YHMFUnique", "^YHMFRef"):
         if has_data(store, Path(name, (spec.global_name[1:].encode("ascii"),))):
             raise StorageError("Adoption requires absent index and inbound-reference namespaces")
+
+
+def prepare(store: Store, spec: ModelSpec) -> tuple[tuple[Path, Model], ...]:
+    """Validate every byte before metadata or secondary structures are installed."""
+    require_unmanaged(store, spec)
+    root = Path(spec.global_name)
     keys = store.children(root, limit=MAX_ADOPTION_RECORDS + 1)
     if len(keys) > MAX_ADOPTION_RECORDS:
         raise StorageError("Adoption supports at most 100 records per global")
     result = []
     budget = 0
     for key in keys:
-        path, record, count = _record(store, spec, key)
+        path, value, count = read_record(store, spec, key)
         budget += count
         if budget > MAX_RECORD_NODES:
             raise StorageError("Adoption exceeds its total node budget")
-        result.append((path, record))
+        result.append((path, value))
     return tuple(result)
 
 
-def _record(store: Store, spec: ModelSpec, key: bytes) -> tuple[Path, Model, int]:
+def read_record(store: Store, spec: ModelSpec, key: bytes) -> tuple[Path, Model, int]:
     path = spec.path(decode_key(key))
     record = spec.model.model_validate(record_values(spec, path, store))
     if spec.path(getattr(record, spec.key_field)) != path:
