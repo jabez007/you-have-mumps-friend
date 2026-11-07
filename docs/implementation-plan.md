@@ -1359,6 +1359,13 @@ forever. all() retains strict budget failure instead of returning a truncated li
 This avoids an unbounded cross-page seen set and makes large duplicate groups
 pageable without weakening the configured visit limit.
 
+The concrete newest-movement report needs an ordered occurred_at index. Advance
+Movement to application revision three with the existing additive index migration,
+preserving record bytes. Freeze MovementV2 and retain the original UTC-v2 named
+transform for recovery. A distinct UTC-ordered-v3 transform handles direct v1-to-v3
+conversion. Test resuming old v2 jobs before adding the index, timestamp/key ties,
+typed sorting, scoped root pages, and unchanged stock/reference data.
+
 Before reference support, share schema constants and M schema/record-metadata checks
 without changing their validation or stored bytes. This keeps source and referenced
 target bindings on the same implementation, including exact legacy snapshots.

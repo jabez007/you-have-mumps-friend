@@ -37,7 +37,24 @@ class LegacyMovement(Model):
     occurred_at: str = Field(min_length=1)
 
 
-def _timestamp(record: LegacyMovement) -> Movement:
+class MovementV2(Model):
+    """Frozen UTC datetime contract before the ordered timestamp index."""
+
+    __global__ = "^InventoryMovement"
+    __schema_version__ = 2
+    model_config = ConfigDict(frozen=True)
+    id: str = Field(primary_key=True, min_length=1)
+    kind: str = Field(pattern=r"^(receive|move|adjust)$")
+    product: Reference[Product] = Field(index=True)
+    lot: Reference[Lot] = Field(index=True)
+    quantity: Annotated[Decimal, Field(max_digits=18, decimal_places=6)]
+    source: LegacyPosition | None = None
+    destination: LegacyPosition
+    reason: str = Field(min_length=1)
+    occurred_at: datetime
+
+
+def _timestamp(record: LegacyMovement) -> MovementV2:
     # Conversion deliberately accepts only historical ISO strings, independently
     # of future service input conveniences or the wall clock.
     try:
@@ -49,12 +66,19 @@ def _timestamp(record: LegacyMovement) -> Movement:
         raise ValueError(
             "Legacy movement timestamp requires a representable aware instant"
         ) from None
-    return Movement.model_validate(
+    return MovementV2.model_validate(
         record.model_dump(exclude={"occurred_at"}) | {"occurred_at": instant}
     )
 
 
 MOVEMENT_TIMESTAMPS = Transform("inventory.movement.utc.v2", _timestamp)
+
+
+def _ordered_timestamp(record: LegacyMovement) -> Movement:
+    return Movement.model_validate(_timestamp(record).model_dump())
+
+
+MOVEMENT_TIMESTAMPS_V3 = Transform("inventory.movement.utc-ordered.v3", _ordered_timestamp)
 
 
 class LegacyWarehouseIdentity(Model):

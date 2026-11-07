@@ -174,7 +174,8 @@ the total or its index. See [computed fields](../../docs/guides/computed-fields.
 
 ## Upgrade an existing ledger
 
-Movement schema revision two changes occurred_at from string to datetime. Opening a
+Movement schema revision two changes occurred_at from string to datetime; revision
+three adds an ordered timestamp index for bounded newest-first reports. Opening a
 v1 database with current MODELS does not convert its data; ledger access fails with
 SchemaMismatch until an explicit migration. Warehouse revision two independently
 adds the stored total; upgrade existing warehouses before resuming ledger writes
@@ -187,15 +188,15 @@ maintenance lifecycle. This helper shows both a new job and resume by retained I
 
 ```python
 from examples.inventory import Movement
-from examples.inventory.migrations import LegacyMovement, MOVEMENT_TIMESTAMPS
+from examples.inventory.migrations import LegacyMovement, MOVEMENT_TIMESTAMPS_V3
 
-ledger_plan = db.plan_migration(Movement, transform=MOVEMENT_TIMESTAMPS)
+ledger_plan = db.plan_migration(Movement, transform=MOVEMENT_TIMESTAMPS_V3)
 
 
 def upgrade_ledger(current, reviewed_plan, migration_id=None):
     status = (
         current.begin_migration(
-            LegacyMovement, Movement, plan=reviewed_plan, transform=MOVEMENT_TIMESTAMPS
+            LegacyMovement, Movement, plan=reviewed_plan, transform=MOVEMENT_TIMESTAMPS_V3
         )
         if migration_id is None
         else current.migration_status(migration_id)
@@ -203,7 +204,7 @@ def upgrade_ledger(current, reviewed_plan, migration_id=None):
     while status.phase != "complete":
         status = current.advance_migration(
             status.migration_id, LegacyMovement, Movement,
-            transform=MOVEMENT_TIMESTAMPS, batch_size=25,
+            transform=MOVEMENT_TIMESTAMPS_V3, batch_size=25,
         )
     return status
 
@@ -212,13 +213,37 @@ def upgrade_ledger(current, reviewed_plan, migration_id=None):
 # result = upgrade_ledger(db, ledger_plan)
 ```
 
-The fresh demo above already uses revision two, so it needs no upgrade. For an
+The fresh demo uses revision three. An installed v2 ledger uses MovementV2 as source
+and the ordinary additive migration plan to Movement, without a transform. The
+timestamp node bytes are unchanged. Finish interrupted v1-to-v2 jobs with frozen
+MovementV2 and the original MOVEMENT_TIMESTAMPS before starting the index migration.
+For an
 existing v1 ledger, retain the job ID and coordinate raw readers/writers before
 starting. Invalid, naive, or out-of-calendar historical timestamps fail the validation
 pass without changing records; early abort remains available. Later committed work
 requires resume or backup restore, as the [transform guide](../../docs/guides/record-transforms.md)
 explains. Migration tests preserve stock data, references, indexes, and ledger IDs
 across interruption, and compare UTC instants after activation.
+
+For a bounded newest-first lot report, use its reference predicate and timestamp
+index. Root pages return each movement once on stable data, including timestamp
+ties ordered by descending root key:
+
+```python
+from examples.inventory import Lot
+from mccann_hub.yhmf import Reference
+
+occurred = db.field(Movement, lambda movement: movement.occurred_at)
+recent = db.query(Movement).where(lot=Reference[Lot](key="LOT-001")).order_by(
+    occurred, direction="desc"
+)
+recent_page = recent.page(limit=20)
+assert recent.explain().order_direction == "desc"
+# Continue with recent.page(after=recent_page.cursor) while cursor is not None.
+```
+
+Progress pages can contain no records; follow their cursor until None. Independent
+query predicates still match under the root rather than implying a child join.
 
 ## Queries and bounds
 

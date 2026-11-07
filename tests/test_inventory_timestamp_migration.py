@@ -16,7 +16,14 @@ from examples.inventory import (
     Warehouse,
 )
 from examples.inventory.__main__ import seed
-from examples.inventory.migrations import MOVEMENT_TIMESTAMPS, LegacyMovement, LegacyPosition
+from examples.inventory.migrations import (
+    MOVEMENT_TIMESTAMPS_V3 as MOVEMENT_TIMESTAMPS,
+)
+from examples.inventory.migrations import (
+    LegacyMovement,
+    LegacyPosition,
+    MovementV2,
+)
 from mccann_hub.yhmf import Database, Reference, Registry
 from mccann_hub.yhmf.errors import MigrationError, SchemaMismatch
 from tests.adversarial_support import dump
@@ -153,7 +160,10 @@ def test_invalid_legacy_timestamp_rolls_back_and_allows_early_abort(store, stamp
 
 def test_ledger_datetime_schema_has_a_separate_reviewed_golden():
     golden = FilePath(__file__).with_name("fixtures") / "inventory-movement-datetime-v2.json"
-    assert Registry(*MODELS).spec(Movement).snapshot == golden.read_bytes().rstrip(b"\n")
+    models = tuple(model for model in MODELS if model is not Movement)
+    assert Registry(*models, MovementV2).spec(MovementV2).snapshot == golden.read_bytes().rstrip(
+        b"\n"
+    )
 
 
 def test_inventory_accepts_datetime_input_and_returns_a_utc_datetime(store):

@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Adds the inventory movement timestamp index in schema revision three, enabling
+  bounded newest-first reports. Frozen v2 bindings and its original UTC transform
+  remain available; v2-to-v3 uses an explicit additive index migration.
+
 - Adds bounded ordered root pages with query/direction-scoped cursors and canonical
   owned-field witnesses. Progress pages can contain no records; all() retains strict
   budget failure and stable-dataset pagination returns each root once.

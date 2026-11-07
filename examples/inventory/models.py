@@ -95,7 +95,7 @@ class Position(Model):
 
 class Movement(Identified):
     __global__ = "^InventoryMovement"
-    __schema_version__ = 2
+    __schema_version__ = 3
     model_config = ConfigDict(frozen=True)
     kind: str = Field(pattern=r"^(receive|move|adjust)$")
     product: Reference[Product] = Field(index=True)
@@ -104,7 +104,7 @@ class Movement(Identified):
     source: Position | None = None
     destination: Position
     reason: str = Field(min_length=1)
-    occurred_at: datetime
+    occurred_at: datetime = Field(ordered=True)
 
 
 MODELS = (Product, Lot, Warehouse, Movement, Supplier)
