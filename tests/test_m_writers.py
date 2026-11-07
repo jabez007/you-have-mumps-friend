@@ -98,21 +98,16 @@ def test_export_rejects_invalid_routine_names(store, name):
         "pattern",
         "hook",
         "normalization",
-        "embedded",
         "many",
         "wrong_constraint",
     ],
 )
 def test_unsupported_writer_contracts_fail_at_export(store, kind):
-    class Item(Model):
-        id: str = Field(primary_key=True)
-
     annotations = {
         "decimal_rule": (Decimal, Field(multiple_of=Decimal("0.25"))),
         "pattern": (str, Field(pattern="^[A-Z]+$")),
         "hook": (Annotated[str, AfterValidator(lambda value: value)], Field()),
         "normalization": (str, Field()),
-        "embedded": (Item, Field()),
         "many": (str, Field()),
         "wrong_constraint": (str, Field(ge=1)),
     }

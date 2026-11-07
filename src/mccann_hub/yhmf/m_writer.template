@@ -47,7 +47,7 @@ stableabort
 prepare(operation,input,cfg,values,key)
  new rootcfg,parts
  do config(.cfg)
- if $get(cfg("hierarchy")),operation'="insert",operation'="delete" quit "operation"
+ if $get(cfg("collections")),operation'="insert",operation'="delete" quit "operation"
  if $get(cfg("hierarchy")) do
  . merge rootcfg=cfg kill cfg
  . set parts(0)=""
@@ -68,12 +68,18 @@ preflight(operation,input,cfg,values,key)
 input(operation,input,cfg,values)
  quit $$inputnode(operation,$name(input),.cfg,.values)
 inputnode(operation,source,cfg,values)
- new field,status
+ new field,status,childcfg,childvalues
  if $data(@source)#2 quit "invalid"
  set field="",status="ok"
  for  set field=$order(@source@(field)) quit:field=""  do  quit:status'="ok"
- . if '$data(cfg("tag",field)) set status="invalid" quit
  . if operation="delete",field'=cfg("key") set status="invalid" quit
+ . if $data(cfg("embedded",field)) do  quit
+ . . if operation="patch"!($data(@source@(field))'=10) set status="invalid" quit
+ . . kill childcfg,childvalues
+ . . merge childcfg=cfg("nodes",cfg("embedded",field)),childcfg("nodes")=cfg("nodes"),childcfg("targets")=cfg("targets")
+ . . set status=$$inputnode(operation,$name(@source@(field)),.childcfg,.childvalues)
+ . . if status="ok" merge values(field)=childvalues set values(field)="o:1"
+ . if '$data(cfg("tag",field)) set status="invalid" quit
  . if operation="patch",field=cfg("key") set status="invalid" quit
  . if $data(cfg("derived",field)) set status="invalid" quit
  . if $data(@source@(field))'=1 do  quit
@@ -92,6 +98,8 @@ inputnode(operation,source,cfg,values)
  . . set values(field)="0"
  . . if '$$valid("0",field,.cfg) set status="invalid"
  . if '$data(values(field)) set status="invalid"
+ set field=""
+ for  set field=$order(cfg("embedded",field)) quit:field=""  if '$data(values(field)) set status="invalid"
  set field=""
  for  set field=$order(cfg("children",field)) quit:field=""  if cfg("minchildren",field)>0,status="ok" set status="collection_limit"
  quit status
@@ -135,7 +143,7 @@ attempt(operation,key,values,cfg,previous)
  if operation="insert",$data(@root) quit "exists"
  if operation'="insert",'$data(@root) quit "missing"
  if operation'="insert" do  quit:status'="ok" status
- . if $get(@root@(cfg("key")))'=$$scalar(values(cfg("key")),cfg("key"),.cfg) set status="corrupt" quit
+ . if cfg("key")'="",$get(@root@(cfg("key")))'=$$scalar(values(cfg("key")),cfg("key"),.cfg) set status="corrupt" quit
  . set status=$$old(root,.cfg,.old)
  . if status="ok",operation="delete" set status=$$hempty(root,.cfg)
  if $get(cfg("partial")) do
@@ -152,6 +160,8 @@ attempt(operation,key,values,cfg,previous)
  if status'="ok" quit status
  if install set ^YHMFSchema(cfg("global"))=cfg("fingerprint"),^YHMFSchema(cfg("global"),"snapshot")=cfg("snapshot")
  if operation="delete" do  quit status
+ . set status=$$echange(operation,root,.values,.cfg,recordkey)
+ . if status'="ok" quit
  . set status=$$refchange(operation,recordkey,.values,.old,.cfg)
  . if status="ok" do
  . . if '$get(cfg("owned")) kill ^YHMFRef(cfg("global"),recordkey)
@@ -164,8 +174,10 @@ attempt(operation,key,values,cfg,previous)
  . set field=""
  . for  set field=$order(cfg("children",field)) quit:field=""  set @root@(field)="c:0"
  set field=""
- for  set field=$order(values(field)) quit:field=""  if $get(@root@(field))'=$$scalar(values(field),field,.cfg) set @root@(field)=$$scalar(values(field),field,.cfg)
- quit $$refchange(operation,recordkey,.values,.old,.cfg)
+ for  set field=$order(values(field)) quit:field=""  if $data(cfg("tag",field)),$get(@root@(field))'=$$scalar(values(field),field,.cfg) set @root@(field)=$$scalar(values(field),field,.cfg)
+ set status=$$refchange(operation,recordkey,.values,.old,.cfg)
+ if status'="ok" quit status
+ quit $$echange(operation,root,.values,.cfg,recordkey)
 indexbefore(operation,key,values,old,cfg)
  new field,status,token,index,claim,name
  set status="ok",field=""
@@ -208,11 +220,15 @@ old(root,cfg,values)
  for  set field=$order(@root@(field)) quit:field=""  do  quit:status'="ok"
  . if field="%m",'$get(cfg("owned")) quit
  . if $data(cfg("tag",field)) quit
+ . if $data(cfg("embedded",field)) set status=$$eshape($name(@root@(field))) quit
  . if '$data(cfg("children",field)) set status="corrupt" quit
  . set status=$$hcount($name(@root@(field)),.cfg,field,.count)
  . if status="ok",(count>0)'=($order(@root@(field,""))'="") set status="corrupt"
  set field=""
  for  set field=$order(cfg("children",field)) quit:field=""  if '$data(@root@(field)) set status="corrupt"
+ if status'="ok" quit status
+ set field=""
+ for  set field=$order(cfg("embedded",field)) quit:field=""  if '$data(@root@(field)) set status="corrupt"
  if status'="ok" quit status
  set field=""
  for  set field=$order(cfg("tag",field)) quit:field=""  do  quit:status'="ok"
@@ -264,6 +280,7 @@ scalar(value,field,cfg)
 @SUMMATH@
 @SHA256@
 @HIERARCHY@
+@EMBEDDED@
 @MAINTENANCE@
 config(cfg)
 @CONFIG@

@@ -95,6 +95,9 @@ hconfig(rootcfg,node,parts,cfg)
  for name="global","fingerprint","snapshot" set cfg(name)=rootcfg(name)
  merge cfg("meta")=rootcfg("meta"),cfg("targets")=rootcfg("targets")
  set cfg("owned")=(node'=""),cfg("recordkey")=parts(0)
+ if $get(rootcfg("embeddedtree")) do
+ . merge cfg("nodes")=rootcfg("nodes"),cfg("parts")=parts
+ . set cfg("embeddedtree")=1
  quit
 haddress(global,parts,depth)
  new root,index,name

@@ -1,0 +1,25 @@
+ ; SPDX-License-Identifier: GPL-3.0-or-later
+ ; Complete embedded writes reuse the same per-owner attempt/index/reference path.
+eshape(path)
+ quit $select($get(@path)="o:1":"ok",1:"corrupt")
+echange(operation,root,values,cfg,recordkey)
+ new field,parts,depth,childcfg,childvalues,status,name,maximum
+ if $get(cfg("partial")) quit "ok"
+ if '$data(cfg("embedded")) quit "ok"
+ merge parts=cfg("parts")
+ set parts(0)=recordkey,depth=$order(parts(""),-1),field="",status="ok"
+ for  set field=$order(cfg("embedded",field)) quit:field=""  do  quit:status'="ok"
+ . set parts(depth+1)=field
+ . kill childcfg,childvalues
+ . do hconfig(.cfg,cfg("embedded",field),.parts,.childcfg)
+ . set childcfg("address")=$name(@root@(field)),maximum=0,name=""
+ . for  set name=$order(childcfg("tag",name)) quit:name=""  do  quit:status'="ok"
+ . . if $zlength(name)>maximum set maximum=$zlength(name)
+ . . if $data(childcfg("index",name))!$data(childcfg("ref",name)) set status=$$hwhere(.parts,depth+1,name,.childcfg)
+ . if status'="ok" quit
+ . if '$$hbound(cfg("global"),.parts,maximum) set status="key_size" quit
+ . if operation'="delete" merge childvalues=values(field)
+ . if operation'="delete",'$$refbound(recordkey,.childvalues,.childcfg) set status="key_size" quit
+ . set status=$$attempt(operation,recordkey,.childvalues,.childcfg)
+ ; YHMF embedded changes complete: all descendants await caller commit.
+ quit status

@@ -25,6 +25,7 @@ def _template(name: str) -> tuple[str, str]:
         ("@SUMMATH@", "m_sum_math.template"),
         ("@SHA256@", "m_sha256.template"),
         ("@HIERARCHY@", "m_hierarchy.template"),
+        ("@EMBEDDED@", "m_embedded.template"),
         ("@SCHEMA@", "m_schema.template"),
         ("@REFERENCES@", "m_references.template"),
     ):

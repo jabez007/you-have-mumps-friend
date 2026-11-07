@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Compile bounded keyed ownership using the ordinary M scalar/reference rules."""
+"""Compile bounded keyed and embedded ownership with ordinary M field rules."""
 
 from collections.abc import Iterator
 from dataclasses import dataclass
@@ -15,6 +15,7 @@ class _Owner:
     path: tuple[str, ...]
     node: NodeSpec
     declaration: dict[str, Any]
+    keyed: bool = True
 
     @property
     def name(self) -> str:
@@ -22,16 +23,24 @@ class _Owner:
 
 
 def _owners(
-    node: NodeSpec, declaration: dict[str, Any], path: tuple[str, ...] = ()
+    node: NodeSpec, declaration: dict[str, Any], path: tuple[str, ...] = (), *, keyed: bool = True
 ) -> Iterator[_Owner]:
-    yield _Owner(path, node, declaration)
+    yield _Owner(path, node, declaration, keyed)
     for field in node.fields:
         if field.node is None:
             continue
         rule = declaration["properties"][field.name]
-        if field.kind != "children" or rule.get("type") != "object":
-            raise SchemaError("M writers require nonnullable Children for owned collections")
-        yield from _owners(field.node, rule["additionalProperties"], path + (field.name,))
+        if field.kind == "children":
+            if not keyed or rule.get("type") != "object":
+                raise SchemaError("M writers require nonnullable Children outside embedded objects")
+            child, child_keyed = rule["additionalProperties"], True
+        else:
+            if rule.get("type") != "object" or len(path) >= 14 or not field.node.fields:
+                raise SchemaError(
+                    "M embedded objects require nonempty nonnullable declarations at depth <=14"
+                )
+            child, child_keyed = rule, False
+        yield from _owners(field.node, child, path + (field.name,), keyed=child_keyed)
 
 
 def _nested(prefix: tuple[str, ...], constants: list[str]) -> list[str]:
@@ -62,24 +71,54 @@ def _collection(owner: _Owner, field: FieldSpec, rule: dict[str, Any]) -> list[s
     ]
 
 
+def _container(owner: _Owner, field: FieldSpec, rule: dict[str, Any]) -> list[str]:
+    if field.kind == "children":
+        return _collection(owner, field, rule)
+    allowed = {
+        "type",
+        "properties",
+        "required",
+        "additionalProperties",
+        "validation_policy",
+        "default",
+        "default_factory",
+        "yhmf",
+    }
+    if rule.keys() - allowed:
+        raise SchemaError("M writer cannot enforce the embedded declaration")
+    return [_set("embedded", field.name, value=".".join(owner.path + (field.name,)))]
+
+
+def _width(node: NodeSpec) -> int:
+    return len(node.fields) + sum(
+        _width(field.node)
+        for field in node.fields
+        if field.kind == "embedded" and field.node is not None
+    )
+
+
 def _node_config(owner: _Owner, spec: ModelSpec, targets: dict[type, ModelSpec]) -> list[str]:
     node, declaration = owner.node, owner.declaration
-    if not node.local_validation or len(node.fields) > 16 or node.key_field is None:
+    if (
+        not node.local_validation
+        or len(node.fields) > 16
+        or (owner.keyed and node.key_field is None)
+    ):
         raise SchemaError(
-            "M owned nodes require at most 16 fields, a key, and no custom validation"
+            "M owned nodes require <=16 fields, a key when keyed, and no custom validation"
         )
     policy = declaration.get("validation_policy", {})
     if policy.keys() - {"str_min_length", "str_max_length"}:
         raise SchemaError("M writer does not support this owner's validation policy")
     result = [
-        _set("key", value=node.key_field),
-        _set("width", value=str(len(node.fields))),
-        _set("leaf", value=str(int(all(field.node is None for field in node.fields)))),
+        _set("key", value=node.key_field or ""),
+        _set("width", value=str(_width(node))),
+        _set("leaf", value=str(int(all(field.kind != "children" for field in node.fields)))),
     ]
     for field in node.fields:
         rule = declaration["properties"][field.name]
         if field.node is not None:
-            result.extend(_collection(owner, field, rule))
+            result.extend(_container(owner, field, rule))
             continue
         result.extend(_field_config(node, spec.global_name, field.name, rule, policy, targets))
         dotted = ".".join(owner.path + (field.name,))
@@ -112,7 +151,19 @@ def compile_hierarchy(
     owners = tuple(_owners(node, declaration))
     if len(owners) > 64:
         raise SchemaError("M writers support at most 64 owned declarations")
-    result = [_set("hierarchy", value="1")]
+    result = [
+        _set("hierarchy", value="1"),
+        _set(
+            "collections",
+            value=str(
+                int(
+                    any(field.kind == "children" for owner in owners for field in owner.node.fields)
+                )
+            ),
+        ),
+        _set("embeddedtree", value=str(int(any(not owner.keyed for owner in owners)))),
+    ]
+    by_name = {owner.name: owner for owner in owners}
     for owner in owners:
         result.extend(_nested(("nodes", owner.name), _node_config(owner, spec, targets)))
     ordinal = 0
@@ -123,6 +174,8 @@ def compile_hierarchy(
             ordinal += 1
             source = owner.path + tuple(field.sum_of.split("."))
             source_owner = ".".join(source[:-1])
+            if not by_name[source_owner].keyed:
+                raise SchemaError("M writers do not yet support embedded rollup sources")
             prefix = ("sumtargets", str(ordinal))
             result.extend(
                 [

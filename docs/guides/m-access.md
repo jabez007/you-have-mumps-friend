@@ -122,7 +122,7 @@ full scalar integer domain. An existing record outside the M stored-value domain
 returns unsupported without changes. Use Python for those records.
 
 Export rejects custom Python validators, unsupported constraints or normalization,
-embedded objects, scalar lists, and more than 16 fields per owner. Keyed trees have the separate operations
+nullable embedded objects, scalar lists, and more than 16 fields per owner. Keyed trees have the separate operations
 below. The generator does not silently omit rules. Every inserted non-derived scalar field must be supplied even if Python declares a
 default; defaults/factories are not run. Empty-root/branch creation derives zero
 stored totals and creates empty declared collections.
@@ -224,7 +224,7 @@ group's net-zero totals or defer uniqueness across calls. Python patch_many rema
 the grouped mutation interface.
 
 Hierarchical whole insert/replace/delete labels return operation without writes.
-Populated non-leaf deletion, embedded or nullable containers, and custom Python
+Populated non-leaf deletion, nullable containers, and custom Python
 validators remain unsupported. Supplier still fails export because SupplierProduct
 has a custom model validator. Up to 64 keyed declarations with 16 fields per owner
 are supported. New statuses include operation, invalid_path, collection_limit, and
@@ -546,6 +546,29 @@ Unsupported values fail validation before persistence; native key budgets still 
 Root/owned patches touch only the affected ordered indexes. Whole replacements,
 unique failures, rollback, and restarts use the same index transition code as equality
 indexes. Regenerate source to enable this capability on existing ordered schemas.
+
+## Complete non-null embedded objects
+
+Complete insert/replace operations accept nested M arrays for non-null embedded
+models. Their ordinary o:1 markers, scalar tags, dotted indexes, concrete location
+digests, and reverse references match Python. For example, a declared Position with
+warehouse/location/bin fields takes input("destination","warehouse")="MAIN",
+input("destination","location")="DOCK", and input("destination","bin")="B1".
+Supply all nested non-derived fields; storage markers are not input values.
+
+The same owner validation/index/reference code runs recursively inside the outer
+transaction. A nested failure restores root fields, claims, edges, and initial schema
+metadata together. Native restarts repeat the whole write. Scalar patches preserve
+untouched embedded subtrees; they reject embedded-object replacement through patch.
+A model containing Children still cannot use complete tree replace.
+
+This qualification covers nonempty embedded models without child collections inside
+them, to 14 declared ownership segments, 64 declarations, and 16 fields per owner.
+Custom validators and unsupported field/container constraints remain rejected.
+Embedded rollup sources and nullable embedded containers remain separate work.
+Fixed embedded node widths participate in the ordinary 10,000-node record budget,
+including keyed-child insertion. No schema/data conversion is required; regenerate
+source for these capabilities.
 
 ## Raw writes from M
 

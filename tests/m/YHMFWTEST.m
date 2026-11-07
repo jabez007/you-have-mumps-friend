@@ -252,3 +252,9 @@ rootcreatepair
 orderedkey
  write $$onumber^YHMFTAPI(^YHMFTestStorage("writerInput","value")),!
  quit
+embeddedchild
+ new input,path
+ merge input=^YHMFTestStorage("writerInput")
+ set path(1)="items"
+ write $$insertchild^YHMFTAPI("MAIN",.path,.input),!
+ quit

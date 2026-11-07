@@ -299,3 +299,20 @@ Use byte-oriented NUL/SOH escaping for strings, canonical D:/T: bytes for tempor
 values, and z:null without a unique claim. Root/owned patches and stored sums retain
 their existing transition paths. Native differential/restart tests qualify these
 identities; raw records, schema metadata, and index namespaces remain unchanged.
+
+
+## Non-null embedded owners, issue 54
+
+Compile keyless embedded owners and retain the existing o:1 hierarchy. Complete
+writes validate nested local arrays by trusted addresses, then recursively invoke
+attempt at each embedded owner inside the same outer TP. Reuse hwhere, ordinary
+index claims, references, and schema checks; no parallel serializer/index subsystem
+or flattened persistent representation is added. Scalar patches validate immediate
+embedded presence while leaving unrelated descendants untouched.
+
+Qualify nonempty non-null embedded models without child collections inside them,
+with at most 14 declared ownership segments and the existing 64-declaration/16-field
+bounds. Include fixed embedded widths in record capacity. Reject embedded rollup
+sources until their delta composition is qualified. Nullable embedded objects are
+a separate step. Differential, malformed-data, rollback, restart, and near-budget
+native tests qualify this subset. Schema/layout bytes remain unchanged.

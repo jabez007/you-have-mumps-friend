@@ -1672,6 +1672,26 @@ cover every qualified key family, null/unique transitions, failed claims, root a
 owned patches, ordered queries, and generated exact numerics on both native engines.
 The baseline C901 check passes at ten; retain the threshold and the current index seam.
 
+### Persist nonnullable embedded objects from M, issue 54
+
+Reuse owner declarations, input/old validation, attempt, hconfig/hwhere, and ordinary
+index/reference transitions. Compile embedded owners as keyless nodes. Complete
+record/owner writes validate nested M input arrays, then invoke the same attempt
+logic recursively at each o:1 embedded address, inside the existing outer TP.
+Concrete index names, locations, digests, root identities, and reverse edges retain
+Python's layout. Partial scalar patches leave embedded subtrees untouched.
+
+Start with nonnullable embedded objects without child collections inside them.
+Include their fixed node widths in existing capacity accounting. Reject embedded
+rollup sources until delta composition is qualified; reject custom validators and
+unsupported declarations as before. Bound embedded declaration depth to 14 and keep
+64 declarations/16 fields per owner. Nullable embedded objects are a separate slice.
+Complete tree replacement remains rejected where Children are present. No extra
+persistence/index layer, flattening representation, or storage conversion is added.
+Native differential tests cover nested records, indexes/references, replacement,
+partial preservation, malformed shapes, unique failure, rollback, and restart. The
+configured C901 check passes at ten before implementation; keep that threshold.
+
 
 ### Address M input nodes without unbounded copies, issue 54
 

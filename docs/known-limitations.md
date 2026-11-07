@@ -129,7 +129,7 @@ These features remain outside the current implementation:
   their nullable scalar forms, and references, with owning or caller-participating
   transactions. Keyed hierarchies support leaf-child operations and root/non-leaf
   scalar patches, empty root/branch creation/deletion, and exact stored sums.
-  Populated tree construction/deletion, embedded/nullable containers, custom validators, and scalar lists
+  Populated tree construction/deletion, nullable containers, custom validators, embedded rollup sources, and scalar lists
   remain outside this M contract
   ([#53](https://github.com/jabez007/you-have-mumps-friend/issues/53),
   [#54](https://github.com/jabez007/you-have-mumps-friend/issues/54),

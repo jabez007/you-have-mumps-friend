@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Qualifies complete M writes of non-null embedded objects using existing owner
+  validation/index/reference transitions. Nested failures and restarts remain atomic,
+  scalar patches preserve embedded subtrees, and fixed widths count toward capacity.
+
 - Qualifies M ordered-v1 writes for supported scalar/choice families and nullable
   forms, preserving native numeric/string/temporal keys and existing unique claims.
   Exact numeric construction avoids native precision loss.
