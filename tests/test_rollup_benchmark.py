@@ -27,6 +27,7 @@ def test_rollup_benchmark_layouts_verify_identical_final_quantities(mode, patter
     monkeypatch.setattr(benchmark, "processes", serial_processes)
     row = benchmark.measure(store, mode, pattern, 2, 3, 2)
     assert row["commits"] == row["callback_attempts"] == 4
+    assert row["samples_us"] == [1] * 4
     assert row["callback_retries"] == 0
     assert row["totals"] == mode
     assert row["pattern"] == pattern

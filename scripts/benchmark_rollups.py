@@ -192,6 +192,7 @@ def measure(store, mode, pattern, workers, size, iterations):
         "elapsed_s": elapsed,
         "commits_per_second": commits / elapsed,
         "operations_per_commit": {key: value / commits for key, value in sorted(counts.items())},
+        "samples_us": samples,
         **latencies(samples),
     }
 
