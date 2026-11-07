@@ -507,6 +507,21 @@ def test_owned_transaction_boundaries_preserve_callers_and_reject_missing_transa
 
 
 @pytest.mark.native
+def test_repeated_owned_patches_reuse_only_the_pure_location_hash(variant_writer):
+    db, run, routine, _ = variant_writer(Warehouse, warehouse_values({"LOT-001": "1"}, {}))
+    source = routine.read_text()
+    marker = "\nsha256(value)\n"
+    assert source.count(marker) == 1
+    replace_source(
+        routine, source.replace(marker, marker + " set %YHMFHashCalls=$get(%YHMFHashCalls)+1\n")
+    )
+    assert run("ownedcached", {"quantity": "2"}) == "ok|calls|1"
+    root = db.get(Warehouse, "MAIN")
+    assert root.stored_on_hand == root.locations["DOCK"].stored_on_hand == 3
+    assert db.check_indexes(Warehouse).issues == ()
+
+
+@pytest.mark.native
 def test_second_owned_participant_restarts_the_entire_caller_without_double_applying_totals(
     store, owned_writer
 ):

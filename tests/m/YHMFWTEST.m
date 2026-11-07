@@ -76,6 +76,41 @@ hashes
  . set value=^YHMFTestStorage("writerInput",key),result=$$sha256^YHMFTAPI(value)
  . write $select(result="":"invalid",1:result),!
  quit
+digests
+ new key,value,result,count
+ kill %YHMFDigestCache,%YHMFHashCalls
+ set key=""
+ for  set key=$order(^YHMFTestStorage("writerInput",key)) quit:key=""  do
+ . set value=^YHMFTestStorage("writerInput",key),result=$$locationhash^YHMFTAPI(value)
+ . write $select(result="":"invalid",1:result),!
+ set key="",count=0
+ for  set key=$order(%YHMFDigestCache("values",key)) quit:key=""  set count=count+1
+ write "calls|",$get(%YHMFHashCalls),"|entries|",count,"|declared|",$get(%YHMFDigestCache("count")),!
+ quit
+digestrestart
+ new result
+ kill %YHMFDigestCache,%YHMFHashCalls
+ tstart ()
+ set result=$$locationhash^YHMFTAPI("restart-safe-location")
+ if $trestart=0 trestart
+ trollback
+ write result,"|calls|",$get(%YHMFHashCalls),!
+ quit
+digestversion
+ kill %YHMFDigestCache,%YHMFHashCalls
+ set %YHMFDigestCache="old-algorithm",%YHMFDigestCache("values","abc")="wrong",%YHMFDigestCache("count")=1000
+ write $$locationhash^YHMFTAPI("abc"),"|",%YHMFDigestCache("count"),!
+ quit
+ownedcached
+ new input,path,status
+ do ownedpath(.path,.input,0)
+ kill %YHMFDigestCache,%YHMFHashCalls
+ set status=$$patchchild^YHMFTAPI("MAIN",.path,.input)
+ if status'="ok" write status,! quit
+ set input("quantity")=input("quantity")+1
+ set status=$$patchchild^YHMFTAPI("MAIN",.path,.input)
+ write status,"|calls|",$get(%YHMFHashCalls),!
+ quit
 arithmetic
  new key,value,result
  set key=""

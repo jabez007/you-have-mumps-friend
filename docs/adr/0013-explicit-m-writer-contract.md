@@ -203,3 +203,20 @@ validation only. Preserve the original payload for unaffected fields and ordinar
 index normalization. Do not depend on ambient Decimal context or rewrite databases
 to make valid existing data fit the input subset. Schema/layout bytes and Python
 validation are unchanged; older exported source needs regeneration.
+
+## Bounded location memoization, issue 47
+
+Cache only SHA-256 of the exact canonical location bytes. The reserved process-local
+%YHMFDigestCache contains an algorithm marker and at most 128 entries, each with
+at most 4,096 input bytes. Clear entries at capacity. Normal M local scoping and TP
+restoration apply; entries are pure and remain correct even when retained through
+a restart. No database invalidation protocol is needed. Never put schema, records,
+index claims, references, counts, or transaction decisions in this cache.
+
+The public writer still validates all live state on every attempt. Stored digests
+remain byte-identical and source regeneration adds no schema/layout conversion.
+The native benchmark compares otherwise identical generated source with and without
+memoization, including cold misses and a working set above the entry cap. Separate
+products versus one shared product expose reverse-count contention alongside native
+block conflicts. Raw samples, hash calls, and TP attempts separate latency gains
+from retry counts. No native hashing dependency or new persisted hash format is added.

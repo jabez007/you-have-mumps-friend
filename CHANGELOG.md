@@ -4,6 +4,11 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Memoizes exact M location digests in a process-local cache capped at 128 entries.
+  SHA-256 bytes and storage identities are unchanged. Metadata and transaction state
+  remain live-validated. Native benchmark controls compare warm, cold, eviction, and
+  shared/separate-product contention workloads.
+
 - Explains ordered all() budget exhaustion in terms of its requested result ceiling
   and directs callers to bounded page() continuation. Documents distinct-value cost
   and filtered cases without imposing a misleading 500-result cap or changing the

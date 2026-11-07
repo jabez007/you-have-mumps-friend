@@ -125,7 +125,7 @@ hwhere(parts,depth,field,cfg)
  if depth=0 quit "ok"
  set location="["
  for index=1:1:depth set location=location_$$quote(parts(index))_","
- set location=location_$$quote(field)_"]",cfg("location",field)=location,cfg("digest",field)=$$sha256(location)
+ set location=location_$$quote(field)_"]",cfg("location",field)=location,cfg("digest",field)=$$locationhash(location)
  quit $select(cfg("digest",field)="":"key_size",1:"ok")
 hcount(path,cfg,field,count)
  new marker

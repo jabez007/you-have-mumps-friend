@@ -10,6 +10,7 @@ import pytest
 from mccann_hub.yhmf.decimal_math import from_units, units
 from mccann_hub.yhmf.errors import StorageError
 from tests import test_m_writers
+from tests.test_m_writer_maintenance import replace_source
 
 m_writer = test_m_writers.m_writer
 
@@ -36,6 +37,31 @@ def test_native_m_sha256_vectors_and_padding_boundaries_match_hashlib(store, m_w
     expected = [hashlib.sha256(value.encode()).hexdigest() for value in messages]
     assert run("hashes", data).splitlines() == expected
     assert run("hashes", {"0": "a" * 4097}) == "invalid"
+
+
+@pytest.mark.native
+def test_location_digest_cache_is_bounded_byte_identical_and_survives_retry(m_writer):
+    _, run, routine, _ = m_writer
+    source = routine.read_text()
+    marker = "\nsha256(value)\n"
+    assert source.count(marker) == 1
+    replace_source(
+        routine, source.replace(marker, marker + " set %YHMFHashCalls=$get(%YHMFHashCalls)+1\n")
+    )
+    messages = [f'["items","s:{i}","quantity"]' for i in range(160)]
+    messages += [messages[0], messages[-1]]
+    result = run("digests", {str(i): value for i, value in enumerate(messages)}).splitlines()
+    assert result[:-1] == [hashlib.sha256(value.encode()).hexdigest() for value in messages]
+    _, calls, _, entries, _, declared = result[-1].split("|")
+    assert 160 < int(calls) < len(messages)
+    assert 0 < int(entries) == int(declared) <= 128
+    expected = hashlib.sha256(b"restart-safe-location").hexdigest()
+    assert run("digestrestart", {}) == expected + "|calls|1"
+    assert run("digestversion", {}) == hashlib.sha256(b"abc").hexdigest() + "|1"
+    assert run("digests", {"0": "x" * 4097}).splitlines() == [
+        "invalid",
+        "calls||entries|0|declared|",
+    ]
 
 
 @pytest.mark.native

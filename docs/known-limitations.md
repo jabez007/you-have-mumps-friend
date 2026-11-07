@@ -143,9 +143,10 @@ These features remain outside the current implementation:
   Read-only GlobalView mappings can project foreign globals without adopting them.
   Newly generated routines validate maintenance scope;
   older exported source retains its conservative global-gate check until regenerated.
-- Generated M writes are slower than the same Python writes. On one 12-core host, an
-  inventory balance insert and delete took 14.8 to 29.2 ms from M and 1.6 ms from
-  Python. The pure-M SHA-256 location digests take most of the M time. [#47](https://github.com/jabez007/you-have-mumps-friend/issues/47)
+- New M exports use bounded process-local location digest memoization. Cold/new
+  paths still compute pure-M SHA-256, and cache reuse does not eliminate shared
+  counters or engine block conflicts. See the controlled
+  [M writer workload](performance.md#generated-m-location-digest-workload).
 - The inventory example stores every bin and balance under its warehouse root. Each
   child insert walks the warehouse's locations and bins to check the 10,000-node root
   budget, in Python and in M, so insert cost grows with the number of bins. By count of

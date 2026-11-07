@@ -1504,3 +1504,24 @@ case without describing 500 as a universal safe limit. Regressions cover 700 dis
 roots, full continuation, and a filtered query whose first match lies beyond the
 budget. They use both existing adapters. No new budget setting or query interface is
 needed. C901 passes at ten before the change and the threshold remains unchanged.
+
+### Bound repeated M location hashing, issue 47
+
+Reuse sha256, hwhere, the existing inventory declarations, native test driver, and
+benchmark environment/latency helpers. Keep SHA-256 and every stored digest byte.
+Memoize only the exact canonical location string in a reserved process-local
+%YHMFDigestCache namespace. Bound it to 128 entries of at most 4,096 bytes each and
+clear the entries at capacity. A format marker separates its contents from future
+algorithms. Never cache schema, record, index, reference, count, or transaction state.
+Pure digest entries remain correct through TP restarts without database invalidation.
+
+Qualify cache hits, eviction, byte equality, and restart behavior on native. Compare
+the production writer with an otherwise identical exported control that bypasses
+only memoization. Measure insert/patch/delete separately, warm paths, cleared-cache
+paths, and a working set larger than the cache. Instrument hash calls and TP attempts
+with process-local counters, not persistent writes. Include one process and four
+processes with separate products versus a shared product to expose reference-count
+and block contention. Keep setup, compilation, and coordinated start outside timing.
+Verify quantities, totals, indexes, and reverse references after each case. Report
+raw samples and environment with native r2.02/r2.06, journaling off/on. A C call-out
+is deferred unless the cold-path measurements justify its added dependency.

@@ -498,3 +498,30 @@ Reproduce only against a disposable configured native environment:
 bash scripts/test-native.sh -k diagnose_native_insertion_conflicts -q
 YHMF_JOURNALING=1 bash scripts/test-native.sh -k diagnose_native_insertion_conflicts -q
 ```
+
+## Generated M location digest workload
+
+The disposable native harness runs python -m scripts.benchmark_m_writers when
+YHMF_BENCHMARK=1. Its YHMF_M_WRITER_BENCHMARK report contains the environment, raw
+per-operation samples, medians/p95, hash calls, TP attempts/retries, final cache sizes,
+and worker/parent burst duration. Latencies use M's microsecond clock around each
+public child operation. Samples are buffered until the measured burst completes.
+Parent duration includes release and report collection. Python control rows time
+the matching public insert/patch/delete cycle and retain measured node-call totals.
+
+The uncached control is the same generated source with only locationhash bypassed
+in hwhere. Both variants retain process-local hash-call and attempt counters, with
+no extra persistent writes. Setup, compilation, three warmup cycles, and coordinated
+start are excluded. Cold rows clear the cache before each operation outside timing.
+Churn uses 70 distinct lot paths, exceeding the 128-entry cache once field digests
+are counted. Hot rows reuse one lot. Four-worker hot cases compare separate products
+and lots with a shared product and separate lots, exposing reference-count sharing
+as well as engine block conflicts. Final reads verify empty balances, zero totals,
+indexes, outgoing edges, and the catalog's incoming counts.
+
+This workload uses inventory warehouse revision three with root and location totals.
+It measures generic balance mutations without a movement ledger or inventory service
+workflow. Cold misses retain pure-M SHA-256 cost. Memoization never caches database
+state and cannot eliminate native block conflicts or shared counter updates. Fixed
+case order, instrumentation, small fixtures, and host differences limit general
+throughput or cross-version conclusions. Offline tests establish no native latency.

@@ -238,6 +238,14 @@ workflows. The complete inventory ledger still needs unsupported M temporal/embe
 types and application business checks. Root creation/replacement remains a Python
 operation.
 
+New exports memoize SHA-256 of exact serialized locations in the reserved process-local
+%YHMFDigestCache variable. At most 128 entries of at most 4,096 input bytes are retained;
+the entries are cleared at capacity. This caches a pure function, never schema,
+record, index, reference, count, or transaction state. Normal M NEW/KILL and TP local
+variable restoration determine cache lifetime. A reused entry remains valid across
+restarts because its answer depends only on its exact input bytes. KILL of this
+reserved variable clears only the cache. Regenerate older routines to obtain it.
+
 ## Compose writes in a caller transaction
 
 Newly exported routines also provide inserttx(input), replacetx(input), and

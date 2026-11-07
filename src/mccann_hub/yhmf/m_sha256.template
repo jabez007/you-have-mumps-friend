@@ -1,5 +1,17 @@
  ; SPDX-License-Identifier: GPL-3.0-or-later
  ; Bounded SHA-256 for concrete ASCII JSON locations; FIPS 180-4 section 6.2.
+locationhash(value)
+ new digest
+ if $zlength(value)>4096 quit ""
+ ; Reserved process-local state contains only a pure function of the exact bytes.
+ if $get(%YHMFDigestCache)'="sha256-locations-v1" kill %YHMFDigestCache set %YHMFDigestCache="sha256-locations-v1"
+ set digest=$get(%YHMFDigestCache("values",value))
+ if digest'="" quit digest
+ set digest=$$sha256(value)
+ if digest="" quit ""
+ if $get(%YHMFDigestCache("count"))'<128 kill %YHMFDigestCache set %YHMFDigestCache="sha256-locations-v1"
+ set %YHMFDigestCache("count")=$get(%YHMFDigestCache("count"))+1,%YHMFDigestCache("values",value)=digest
+ quit digest
 sha256(value)
  new h,k,w,a,b,c,d,e,f,g,j,i,offset,word,s0,s1,ch,maj,t1,t2,initial,constants,message,length,result
  if $zlength(value)>4096 quit ""
