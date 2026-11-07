@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Fail-closed export of schema-bound, flat ASCII str/int/Decimal M writers."""
+"""Fail-closed export of schema-bound, flat scalar/Reference M writers."""
 
 import hashlib
 import re
@@ -11,9 +11,10 @@ from .canonical_schema import schema_document
 from .codecs import canonical_json
 from .decimal_math import units
 from .errors import SchemaError
+from .models import Reference
 from .ordered import value_key
 from .records import metadata
-from .registry import ModelSpec, NodeSpec
+from .registry import FieldSpec, ModelSpec, NodeSpec, scalar_type, supports_local_validation
 
 _NAME = re.compile(r"[A-Za-z][A-Za-z0-9]{0,30}\Z")
 _BOUNDS = {"minimum": "ge", "maximum": "le", "exclusiveMinimum": "gt", "exclusiveMaximum": "lt"}
@@ -93,18 +94,67 @@ def _scalar_config(name: str, rule: dict[str, Any], policy: dict[str, Any]) -> l
     return result
 
 
+def _reference_config(
+    spec: ModelSpec, field: FieldSpec, rule: dict[str, Any], targets: dict[type, ModelSpec]
+) -> list[str]:
+    annotation = scalar_type(spec.model.model_fields[field.name].annotation)
+    if (
+        rule.keys() - {"type", "default", "default_factory", "yhmf"}
+        or rule.get("type") != "object"
+        or annotation.model_config != Reference.model_config
+        or set(annotation.model_fields) != {"key"}
+        or annotation.model_fields["key"].annotation != Reference.model_fields["key"].annotation
+        or annotation.model_fields["key"].metadata
+        or annotation.model_fields["key"].validation_alias is not None
+        or not supports_local_validation(annotation)
+    ):
+        raise SchemaError("M writer references require standard Reference validation")
+    assert field.target is not None
+    target = targets.get(field.target)
+    if target is None:
+        raise SchemaError("M writer reference target has no trusted schema binding")
+    return [
+        _set("tag", field.name, value="r"),
+        _set("ref", field.name, value=target.global_name[1:]),
+        _set(
+            "refOverhead",
+            field.name,
+            value=str(
+                _overhead(
+                    "^YHMFRef",
+                    target.global_name[1:].encode(),
+                    spec.global_name[1:].encode(),
+                    b"0" * 64,
+                    variables=2,
+                )
+            ),
+        ),
+    ]
+
+
 def _field_config(
-    spec: ModelSpec, name: str, rule: dict[str, Any], policy: dict[str, Any]
+    spec: ModelSpec,
+    name: str,
+    rule: dict[str, Any],
+    policy: dict[str, Any],
+    targets: dict[type, ModelSpec],
 ) -> list[str]:
     field = next(field for field in spec.fields if field.name == name)
-    if field.kind != "scalar" or field.choices is not None or field.index_codec != "equality-v1":
+    if (
+        field.kind not in {"scalar", "reference"}
+        or field.choices is not None
+        or field.index_codec != "equality-v1"
+    ):
         raise SchemaError(f"M writer does not support field {name!r}")
-    result = _scalar_config(name, rule, policy)
-    if field.index:
+    result = (
+        _reference_config(spec, field, rule, targets)
+        if field.kind == "reference"
+        else _scalar_config(name, rule, policy)
+    )
+    if field.index or field.kind == "reference":
         location = canonical_json([name])
         digest = hashlib.sha256(location).hexdigest()
         result += [
-            _set("index", name, value="1"),
             _set("location", name, value=location.decode("ascii")),
             _set("digest", name, value=digest),
             _set("unique", name, value=str(int(field.unique))),
@@ -122,6 +172,8 @@ def _field_config(
                 ),
             ),
         ]
+    if field.index:
+        result.append(_set("index", name, value="1"))
     return result
 
 
@@ -149,6 +201,7 @@ def _template(name: str) -> tuple[str, str]:
         ("@MAINTENANCE@", "m_maintenance.template"),
         ("@DECIMAL@", "m_decimal.template"),
         ("@SCHEMA@", "m_schema.template"),
+        ("@REFERENCES@", "m_references.template"),
     ):
         result = result.replace(marker, resources.joinpath(filename).read_text())
     labels = {
@@ -160,7 +213,7 @@ def _template(name: str) -> tuple[str, str]:
     return result, "%YHMFentry" if name in labels else name
 
 
-def source(spec: ModelSpec, name: str) -> str:
+def source(spec: ModelSpec, name: str, *, targets: tuple[ModelSpec, ...] = ()) -> str:
     """Export source only. The routine installs metadata only on its first valid insert."""
     if not isinstance(name, str) or not _NAME.fullmatch(name):
         raise SchemaError("M routine names require an ASCII letter and at most 30 letters/digits")
@@ -172,8 +225,24 @@ def source(spec: ModelSpec, name: str) -> str:
     if policy.keys() - {"str_min_length", "str_max_length"}:
         raise SchemaError("M writer does not support this model's validation policy")
     config = [_set("key", value=spec.key_field), *_schema_config(spec)]
+    bindings = {target.model: target for target in targets}
+    for target in targets:
+        prefix = ("targets", target.global_name[1:])
+        config.extend(_schema_config(target, prefix))
+        config.extend(
+            [
+                _set(*prefix, "key", value=target.key_field),
+                _set(
+                    *prefix,
+                    "keytag",
+                    value="s"
+                    if target.model.model_fields[target.key_field].annotation is str
+                    else "i",
+                ),
+            ]
+        )
     for field, rule in declaration["properties"].items():
-        config.extend(_field_config(spec, field, rule, policy))
+        config.extend(_field_config(spec, field, rule, policy, bindings))
     config.append(
         _set(
             "dataOverhead",

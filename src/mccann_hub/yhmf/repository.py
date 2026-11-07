@@ -45,7 +45,7 @@ from .owned import resolve as resolve_owner
 from .queries import IndexReport, Query, audit_indexes, count_children, scan
 from .queries import children as read_children
 from .records import input_values, metadata, record_nodes, record_values, validate_stored
-from .registry import ModelSpec, Registry
+from .registry import ModelSpec, Registry, reference_fields
 from .schemas import SchemaInspection, check_schema, inspect_schema, schema_path
 from .selectors import ModelPath
 from .storage import Path, Store
@@ -334,9 +334,17 @@ class Database:
 
     def m_routine(self, model: type[Model], *, name: str) -> str:
         """Export an explicit M writer for its supported schema/validation subset."""
-        return self._run(
-            lambda tx: m_writers.source(tx._check_schema(tx.registry.spec(model)), name)
-        )
+
+        def export(tx: Database) -> str:
+            spec = tx._check_schema(tx.registry.spec(model))
+            targets = {}
+            for field in reference_fields(spec.fields):
+                assert field.target is not None
+                target = tx._check_schema(tx.registry.spec(field.target))
+                targets[target.global_name] = target
+            return m_writers.source(spec, name, targets=tuple(targets.values()))
+
+        return self._run(export)
 
     def inspect_schema(self, model: type[Model]) -> SchemaInspection:
         """Inspect metadata atomically without requiring a matching installed schema."""

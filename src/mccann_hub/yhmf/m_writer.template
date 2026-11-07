@@ -47,6 +47,7 @@ prepare(operation,input,cfg,values,key)
  if cfg("tag",cfg("key"))="s" set key="s:"_key
  if key[$char(0) quit "invalid_key"
  if cfg("dataOverhead")+(2*$zlength(key))>1019 quit "key_size"
+ if operation'="delete",'$$refbound(key,.values,.cfg) quit "key_size"
  quit "ok"
 input(operation,input,cfg,values)
  new field,status
@@ -66,6 +67,7 @@ input(operation,input,cfg,values)
 valid(value,field,cfg)
  new i,good
  if $zlength(value)>32764 quit 0
+ if cfg("tag",field)="r" quit $$refvalid(value,field,.cfg)
  if cfg("tag",field)="d" quit $$dvalid(value,field,.cfg)
  if cfg("tag",field)="s" do  quit good
  . set good=($length(value)'<cfg("min",field))&($length(value)'>cfg("max",field))
@@ -93,7 +95,8 @@ attempt(operation,key,values,cfg)
  if operation'="insert" do  quit:status'="ok" status
  . set status=$$old(root,.cfg,.old)
  . if status="ok",old(cfg("key"))'=values(cfg("key")) set status="corrupt"
- if operation="delete",$data(^YHMFRef(cfg("global"),key)) quit "references"
+ if operation="delete" do  quit:status'="ok" status
+ . set status=$$incoming(cfg("global"),key)
  ; YHMF writer checkpoint: native tests can pause this attempt before index writes.
  set status="ok",field=""
  for  set field=$order(cfg("index",field)) quit:field=""  do  quit:status'="ok"
@@ -120,13 +123,15 @@ attempt(operation,key,values,cfg)
  . . set ^YHMFIndex(cfg("global"),field,token,key,cfg("digest",field))=cfg("location",field)
  . . if cfg("unique",field) set ^YHMFUnique(cfg("global"),field,token)=claim
  if install set ^YHMFSchema(cfg("global"))=cfg("fingerprint"),^YHMFSchema(cfg("global"),"snapshot")=cfg("snapshot")
- if operation="delete" kill @root quit "ok"
+ if operation="delete" do  quit status
+ . set status=$$refchange(operation,key,.values,.old,.cfg)
+ . if status="ok" kill ^YHMFRef(cfg("global"),key),@root
  if operation="insert" do
  . set field=""
  . for  set field=$order(cfg("meta",field)) quit:field=""  set @root@("%m",field)=cfg("meta",field)
  set field=""
- for  set field=$order(values(field)) quit:field=""  if $get(@root@(field))'=(cfg("tag",field)_":"_values(field)) set @root@(field)=cfg("tag",field)_":"_values(field)
- quit "ok"
+ for  set field=$order(values(field)) quit:field=""  if $get(@root@(field))'=$$scalar(values(field),field,.cfg) set @root@(field)=$$scalar(values(field),field,.cfg)
+ quit $$refchange(operation,key,.values,.old,.cfg)
 old(root,cfg,values)
  new field,part,raw,status
  set status=$$recordmeta(root,.cfg)
@@ -139,12 +144,18 @@ old(root,cfg,values)
  . set raw=@root@(field)
  . if $extract(raw,1,2)'=(cfg("tag",field)_":") set status="corrupt" quit
  . set part=$extract(raw,3,$length(raw))
+ . if cfg("tag",field)="r",cfg("targets",cfg("ref",field),"keytag")="s" do  quit:status'="ok"
+ . . if $extract(part,1,2)'="s:" set status="corrupt" quit
+ . . set part=$extract(part,3,$length(part))
  . if '$$valid(part,field,.cfg) set status="corrupt" quit
  . set values(field)=part
  quit status
 token(value,field,cfg)
  if cfg("tag",field)="d" quit "v:"_$$quote($$dtoken(value))
- quit "v:"_$$quote(cfg("tag",field)_":"_value)
+ quit "v:"_$$quote($$scalar(value,field,.cfg))
+scalar(value,field,cfg)
+ if cfg("tag",field)="r" quit "r:"_$$refkey(value,field,.cfg)
+ quit cfg("tag",field)_":"_value
 quote(value)
  new out,i,code,char
  set out=$char(34)
@@ -159,6 +170,7 @@ quote(value)
  . if (code<32)!(code=127) set out=out_"\u00"_$extract("0123456789abcdef",(code\16)+1)_$extract("0123456789abcdef",(code#16)+1) quit
  . set out=out_char
  quit out_$char(34)
+@REFERENCES@
 @SCHEMA@
 @DECIMAL@
 @MAINTENANCE@

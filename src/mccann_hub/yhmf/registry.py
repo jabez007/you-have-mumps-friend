@@ -37,7 +37,7 @@ def scalar_type(annotation: Any) -> Any:
     return annotation
 
 
-def _nested_model_schema(value: dict[str, Any], model: type[Model]) -> bool:
+def _nested_model_schema(value: dict[str, Any], model: type[BaseModel]) -> bool:
     inner = value
     while str(inner.get("type", "")).startswith("function-"):
         wrapped = inner.get("schema")
@@ -54,7 +54,7 @@ def _nested_model_schema(value: dict[str, Any], model: type[Model]) -> bool:
     )
 
 
-def _has_functions(value: Any, model: type[Model]) -> bool:
+def _has_functions(value: Any, model: type[BaseModel]) -> bool:
     if isinstance(value, list):
         return any(_has_functions(item, model) for item in value)
     if not isinstance(value, dict):
@@ -71,7 +71,7 @@ def _has_functions(value: Any, model: type[Model]) -> bool:
     return any(_has_functions(item, model) for item in value.values())
 
 
-def supports_local_validation(model: type[Model]) -> bool:
+def supports_local_validation(model: type[BaseModel]) -> bool:
     """Classify declarations whose partial validation cannot depend on descendants."""
     return not (
         model.__pydantic_post_init__

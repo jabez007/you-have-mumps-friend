@@ -43,3 +43,28 @@ decimal
  if valid write "|",number("units"),"|",$$dtoken^YHMFTAPI(^YHMFTestStorage("writerInput","value"))
  write !
  quit
+counter
+ write $$counter^YHMFTAPI(^YHMFTestStorage("writerInput","value"),^YHMFTestStorage("writerInput","delta")),!
+ quit
+refworker(id,product)
+ new input
+ set input("id")=id,input("product")=product
+ write $$insert^YHMFTAPI(.input),!
+ quit
+refpair
+ new product,lot,status,fail
+ set lot("id")=^YHMFTestStorage("writerInput","id"),lot("product")=^YHMFTestStorage("writerInput","product")
+ set product("id")=lot("product"),product("sku")="NEW-SKU",product("name")="New product"
+ set fail=$get(^YHMFTestStorage("writerInput","fail"))
+ tstart ():serial
+ set status=$$inserttx^YHMFPAPI(.product)
+ if status'="ok" write status,"|",$tlevel,! quit
+ set status=$$inserttx^YHMFTAPI(.lot)
+ if status'="ok" write status,"|",$tlevel,! quit
+ if fail do
+ . set product("id")="COLLIDE"
+ . set status=$$inserttx^YHMFPAPI(.product)
+ if status'="ok" write status,"|",$tlevel,! quit
+ tcommit
+ write status,"|",$tlevel,!
+ quit

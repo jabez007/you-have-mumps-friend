@@ -42,15 +42,15 @@ Defaults are not filled; callers supply all fields. Unknown fields and descendan
 under a scalar input fail. Preserve existing layout/metadata/index bytes exactly.
 
 Updates validate the existing record and its expected index/claim identities before
-releasing/reclaiming changed entries. Delete conservatively refuses any inbound
-reference namespace; it does not execute Python cascade/set_null policies. Newly
+releasing/reclaiming changed entries. Delete conservatively refuses active inbound
+references; it does not execute Python cascade/set_null policies. Newly
 exported routines validate both existing checkpoint formats and barrier ownership
 inside the write transaction, blocking only the affected model. Unknown/corrupt
 state blocks all writes. Earlier exported routines keep the global block until
 regenerated. Unexpected native errors roll back the owned TP and propagate to the
 caller's handler.
 
-Owned trees, references as fields, ordered indexes, scalar lists, stored rollups,
+Owned trees, ordered indexes, scalar lists, stored rollups,
 custom validators, nullable values, and non-ASCII input remain unsupported by this
 initial generator. Thus supported M writes cannot change rollup inputs. A future extension must implement the complete affected invariants
 before accepting those models.
@@ -120,3 +120,26 @@ Transaction participants passed both engines, both journaling modes, and stress 
 [CI 42380034303](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42380034303),
 including two-model rollback, nested caller levels, forced restarts, and a concurrent
 Python update observed by the restarted M business calculation.
+
+
+## Managed reference extension
+
+Compile flat nonnullable Reference fields from FieldSpec and their exact registered
+live target bindings. M callers provide plain keys; record and index encodings use
+the target's existing str/int codec. Source and target schema checks share the same
+M implementation. Customized Reference validation/configuration/aliases fail export.
+Targets need not support M writes, because existence checks read their metadata and
+primary identity rather than their aggregates.
+
+Stage source nodes before checking new targets so self-reference and earlier
+participants are visible. Validate old reverse entries and canonical counts, group
+count deltas, then update reverse edges/counts in the same TP. Exact digit-string
+increment/decrement avoids native numeric rounding. Failure aborts every staged
+change through the existing owning/participating entry points. Scoped maintenance
+blocks target-dependent writes but permits link removal. Target schema changes
+require regenerated source routines without changing source reference identities.
+
+M deletes remain restrict-only regardless of declared Python policies. Positive
+incoming counts block deletion; corrupt metadata fails closed. A valid zero-count
+namespace can be removed on deletion, matching the established Python lifecycle.
+No persisted layout or metadata conversion is introduced.

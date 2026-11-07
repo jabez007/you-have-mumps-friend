@@ -113,7 +113,7 @@ From plain M, supply every field as an untagged, named scalar:
  set status=$$delete^PartAPI("P1")
 ```
 
-The generator supports flat non-null str/int/Decimal models with ordinary equality
+The generator supports flat non-null scalar and Reference models with ordinary equality
 and unique indexes. It enforces string length and numeric gt/ge/lt/le bounds, with
 ASCII string values and canonical signed integers of at most 18 digits. Strings may
 contain ASCII controls; NUL is forbidden in keys. Python retains its full Unicode
@@ -121,7 +121,7 @@ and scalar integer domains. An existing record outside the M value subset cannot
 be changed/deleted with this routine. Use Python for those records.
 
 Export rejects custom Python validators, unsupported constraints or normalization,
-nullable values, owned trees, references as fields, scalar lists, choices, ordered
+nullable values, owned trees, scalar lists, choices, ordered
 indexes, and more than 16 fields. It does not silently omit these rules. Every field
 must be supplied even if Python declares a default; defaults/factories are not run.
 M does not distinguish Python runtime types, so the declaration determines how each
@@ -134,8 +134,9 @@ All live schema/record/index checks and derived reads repeat after a restart. Ch
 to data, equality entries, and unique claims commit or roll back together. Existing
 records and expected claim ownership are checked before replacement/deletion. A
 failed uniqueness claim cannot leave released old claims. Delete conservatively
-refuses any incoming reference namespace, including sources with cascade/set_null
-policies; Python handles those policies. Newly exported routines validate the live
+refuses active inbound references, including sources with cascade/set_null policies;
+Python handles those policies. Invalid count/edge metadata fails closed. A valid
+zero-count namespace is removed when its target is deleted. Newly exported routines validate the live
 maintenance checkpoint and its schema barrier in the write transaction. They block
 the affected model while unrelated writes can proceed. Corrupt or unknown checkpoint
 formats fail closed. Existing exported routines retain their conservative global
@@ -188,6 +189,61 @@ Avoid external effects in retryable code. Participants do not make detached inpu
 safe for dependent calculations. Regenerate existing routines to obtain these entry
 points; schema metadata and record bytes do not change.
 
+## Write references from M
+
+```python
+from mccann_hub.yhmf import Database, Field, MemoryStore, Model, Reference, Registry
+
+
+class CatalogProduct(Model):
+    __global__ = "^MReferenceProduct"
+    id: str = Field(primary_key=True, min_length=1)
+    name: str = Field(min_length=1)
+
+
+class CatalogLot(Model):
+    __global__ = "^MReferenceLot"
+    id: str = Field(primary_key=True, min_length=1)
+    product: Reference[CatalogProduct] = Field(index=True)
+
+
+catalog = Database(MemoryStore(), Registry(CatalogProduct, CatalogLot))
+product_source = catalog.m_routine(CatalogProduct, name="ProductAPI")
+lot_source = catalog.m_routine(CatalogLot, name="LotAPI")
+```
+
+```m
+ set product("id")="P1",product("name")="Widget"
+ set status=$$insert^ProductAPI(.product)
+ set lot("id")="L1",lot("product")="P1"
+ set status=$$insert^LotAPI(.lot)
+```
+
+Supply the target's plain key, without the stored r: or s: prefixes. The declared
+target key codec determines its interpretation. M reference keys use the current
+ASCII string or canonical 18-digit integer subset. Target creation must precede a
+new link. Participants can create the target and source in the same caller TP.
+
+Export binds each registered target's exact schema snapshot and fingerprint,
+including supported legacy metadata. Writes recheck those bindings and managed
+record metadata inside the transaction. Targets may be Python-managed models
+outside the M writer subset; linking does not rewrite or load their aggregates.
+After a target schema changes, regenerate referring routines even when the source
+schema's global/key reference identity remains unchanged.
+
+Record fields, secondary/unique indexes, reverse entries, and inbound counts commit
+or roll back together. Counts use exact bounded digit-string arithmetic. Missing or
+untrusted targets and corrupt edge/count metadata leave no partial source records
+or metadata installation. Self-reference insertion can see its own staged record;
+M deletion still conservatively refuses every active incoming reference.
+
+A target under maintenance blocks new links and full replacements that validate
+that target. Deleting a source can release its existing links during target
+maintenance, as Python permits. Concurrent target deletion and link creation cannot
+commit a dangling managed reference. Raw writes remain outside these guarantees.
+Customized Reference key validation, configuration, constraints, and aliases are
+rejected at export rather than omitted.
+
 ## Decimal input contract
 
 Decimal fields accept canonical Python Decimal text whose value is exactly
@@ -215,7 +271,7 @@ than the unit precision, fail export rather than being ignored.
 
 Other scalar extensions remain separate: nullable values, date/time values,
 Enum/Literal fields, lists, non-ASCII strings, and arbitrary patterns still fail
-export. Decimal support alone does not enable owned trees or references.
+export. Owned trees remain a separate extension.
 
 ## Raw writes from M
 
@@ -225,12 +281,12 @@ operations.
 
 | M write | Mapper result |
 | --- | --- |
-| A correctly tagged value to an unindexed scalar, within its constraints | Works. `get` returns the new value. |
+| A correctly tagged value to an unindexed scalar without a stored dependency, within its constraints | Works. `get` returns the new value. |
 | An untagged value, such as `set ^X(...)=5` | `get` raises `StorageError`. |
 | A tagged value that breaks a declared constraint | `get` raises `ValidationError`. |
 | A new value in an indexed field | A query on the old value raises `StorageError`. A query on the new value returns nothing. `check_indexes` reports `missing_or_corrupt_entry`. |
 | A new child without updating the collection's `c:N` | `get` raises `StorageError`. |
-| A new child with the complete subtree and the updated `c:N` | Works for an unindexed child with no references. |
+| A new child with the complete subtree and the updated `c:N` | Works for an unindexed child with no references or stored dependencies. |
 
 The mapper refuses to read a bad write and does not repair it. Until you restore the value,
 that record is unreadable through the mapper.
@@ -240,6 +296,7 @@ M writes bypass the following:
 - Pydantic validation, including custom validators.
 - Equality indexes and unique claims. A [rebuild](index-rebuilds.md) restores these.
 - Reference existence checks, reverse entries, and inbound counts. No tool repairs these.
+- Stored sums and their declared dependencies. Incremental updates assume managed inputs.
 
 Stop raw writers during [migrations](migrations.md#stop-other-clients-first) and
 [index rebuilds](index-rebuilds.md).

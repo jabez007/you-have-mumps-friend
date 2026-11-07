@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Adds managed reference fields to generated M writers, exact target schema bindings,
+  reverse entries and counts, scoped target maintenance, and transaction composition.
+  Valid zero-count namespaces no longer prevent M target deletion.
+
 - Uses a private initial label when needed to preserve M routine names that match
   generated operation/helper labels.
 

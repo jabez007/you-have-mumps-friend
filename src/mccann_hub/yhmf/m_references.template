@@ -1,0 +1,96 @@
+ ; SPDX-License-Identifier: GPL-3.0-or-later
+refkey(value,field,cfg)
+ if cfg("targets",cfg("ref",field),"keytag")="s" quit "s:"_value
+ quit value
+refvalid(value,field,cfg)
+ new i,tag,good
+ if value[$char(0) quit 0
+ set tag=cfg("targets",cfg("ref",field),"keytag")
+ if tag="s" do  quit good
+ . set good=1
+ . for i=1:1:$length(value) if $ascii(value,i)>127 set good=0 quit
+ if value'=+value quit 0
+ if ($length(value)-($extract(value)="-"))>18 quit 0
+ quit (value?1.18N)!(value?1"-"1.18N)
+refbound(key,values,cfg)
+ new field,encoded
+ set field=""
+ for  set field=$order(cfg("ref",field)) quit:field=""  do  quit:encoded="invalid"
+ . set encoded=$$refkey(values(field),field,.cfg)
+ . if cfg("refOverhead",field)+(2*$zlength(key))+(2*$zlength(encoded))>1019 set encoded="invalid"
+ quit $get(encoded)'="invalid"
+incoming(global,key)
+ new root,count,present
+ set root=$name(^YHMFRef(global,key)),count=$get(@root,"0"),present=($order(@root@(""))'="")
+ if '$$natural(count) quit "corrupt"
+ if (count'="0")'=present quit "corrupt"
+ quit $select(count="0":"ok",1:"references")
+reftarget(value,field,cfg)
+ new global,target,root,key,status,name
+ set global=cfg("ref",field)
+ if '$$available(global) quit "maintenance"
+ merge target=cfg("targets",global)
+ set name="^"_global,key=$$refkey(value,field,.cfg),root=$name(@name@(key))
+ if '$data(@root) quit "references"
+ if '$$schema(global,target("fingerprint"),target("snapshot")) quit "schema"
+ set status=$$recordmeta(root,.target)
+ if status'="ok" quit status
+ if $get(@root@(target("key")))'=(target("keytag")_":"_value) quit "corrupt"
+ quit "ok"
+refpath(value,field,key,cfg)
+ quit $name(^YHMFRef(cfg("ref",field),$$refkey(value,field,.cfg),cfg("global"),key,cfg("digest",field)))
+refroot(value,field,cfg)
+ quit $name(^YHMFRef(cfg("ref",field),$$refkey(value,field,.cfg)))
+refchange(operation,key,values,old,cfg)
+ new field,status,before,after,removed,added,deltas,counts,root,next,count,present
+ set field="",status="ok"
+ for  set field=$order(cfg("ref",field)) quit:field=""  do  quit:status'="ok"
+ . if operation'="delete" set status=$$reftarget(values(field),field,.cfg)
+ . if status'="ok" quit
+ . set before="",after=""
+ . if operation'="insert" do
+ . . set before=$$refpath(old(field),field,key,.cfg)
+ . . if $data(@before)'=1!($get(@before)'=cfg("location",field)) set status="corrupt"
+ . if operation'="delete" set after=$$refpath(values(field),field,key,.cfg)
+ . if before=after do  quit
+ . . if before'="" set root=$$refroot(old(field),field,.cfg),deltas(root)=$get(deltas(root))
+ . if after'="",$data(@after) set status="corrupt" quit
+ . if before'="" set removed(before)=1,root=$$refroot(old(field),field,.cfg),deltas(root)=$get(deltas(root))-1
+ . if after'="" set added(after)=cfg("location",field),root=$$refroot(values(field),field,.cfg),deltas(root)=$get(deltas(root))+1
+ if status'="ok" quit status
+ set root=""
+ for  set root=$order(deltas(root)) quit:root=""  do  quit:status'="ok"
+ . set count=$get(@root,"0"),present=($order(@root@(""))'="")
+ . if '$$natural(count)!((count'="0")'=present) set status="corrupt" quit
+ . set next=$$counter(count,deltas(root))
+ . if next="invalid" set status="corrupt" quit
+ . set counts(root)=next
+ if status'="ok" quit status
+ ; YHMF reference checkpoint: target reads and count validation precede edge changes.
+ set root=""
+ for  set root=$order(removed(root)) quit:root=""  kill @root
+ set root=""
+ for  set root=$order(added(root)) quit:root=""  set @root=added(root)
+ set root=""
+ for  set root=$order(counts(root)) quit:root=""  if deltas(root) set @root=counts(root)
+ ; YHMF reference changes complete: caller still owns commit.
+ quit "ok"
+counter(value,delta)
+ new i,up
+ if '$$natural(value) quit "invalid"
+ if delta<-16!(delta>16) quit "invalid"
+ set up=(delta>0)
+ for i=1:1:$select(up:delta,1:0-delta) do  quit:value="invalid"
+ . set value=$$countone(value,up)
+ quit value
+countone(value,up)
+ new i,digit,suffix,result
+ if 'up,value="0" quit "invalid"
+ set i=$length(value)
+ for  quit:i=0  quit:$extract(value,i)'=$select(up:"9",1:"0")  set i=i-1
+ set suffix=$translate($extract(value,i+1,$length(value)),$select(up:"9",1:"0"),$select(up:"0",1:"9"))
+ if i=0 set result="1"_suffix
+ else  set digit=$extract(value,i)+$select(up:1,1:-1),result=$extract(value,1,i-1)_digit_suffix
+ if $length(result)>1,$extract(result)="0" set result=$extract(result,2,$length(result))
+ if $length(result)>32766 quit "invalid"
+ quit result
