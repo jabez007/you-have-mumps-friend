@@ -343,11 +343,12 @@ additive migrations retain their phases and recovery behavior.
 
 Expose value-free execution blockers in plan documents so structural limitations
 are distinct from manual review. A record validation or normalization failure in
-the initial validation-only pass aborts the job and restores the source in the
-same transaction. Raise its error after that transaction commits; an engine
-restart can therefore revalidate the read set. Storage faults remain resumable
-failures, and failures after retagging cannot automatically restore the source.
-Reuse the maintenance abort helper inside the owned transaction, never nest TP.
+the initial validation-only pass rolls back before restoring source access in a
+separate transaction pinned to the rejected checkpoint. Native stable-error retries
+revalidate failures before exposing them. Storage faults remain resumable failures,
+and failures after retagging cannot automatically restore the source. If another
+worker changes the checkpoint before restoration, retain maintenance for inspection
+and resume. Reuse the maintenance abort helper; never nest TP.
 Preserve application values, indexes, metadata formats, and legacy bindings.
 
 Regression tests cover the reported five changes, stricter constraints, owned
@@ -572,3 +573,17 @@ References keep their existing roles, and shared-global variants are deferred.
 Verify byte-identical contracts, legacy metadata, indexes, and additive migrations.
 This is a behavior-preserving example refactor, with no mapper API or storage
 change. Existing C901 passes at ten.
+
+### Rollback before automatic migration abort, issues 2 and 33
+
+An adversarial validator exposed a defect in the original automatic-abort design:
+returning an error sentinel committed writes made by the rejecting validator.
+Adapter-level instrumentation cannot prove that arbitrary validation is read-only.
+Raise the rejection through Store.atomic, preserving native stable-error retries
+and rolling back every database write. Only then restore the source with the
+existing abort mechanism, comparing the current checkpoint to the rejected one
+inside its transaction. A concurrent change fails conservatively under maintenance.
+There is a brief maintenance interval between rollback and restoration; interruption
+there is recoverable by retry or explicit abort. No metadata format changes.
+The regression fails before the fix (stored amount 4 instead of 2). Add native raw
+write coverage and checkpoint-race coverage. Existing C901 passes at ten.

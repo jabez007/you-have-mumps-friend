@@ -2,7 +2,7 @@
 """Validation-only migrations preserve field bytes and recover source access."""
 
 import pytest
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 
 from mccann_hub.yhmf import (
     ChildField,
@@ -269,6 +269,66 @@ def test_autoabort_itself_is_transactional_and_can_be_retried(store, monkeypatch
         db.advance_migration(status.migration_id, Before, Invalid)
     assert db.migration_status(status.migration_id).phase == "aborted"
     assert old.get(Before, 1).amount == 2
+
+
+@pytest.mark.parametrize("write", ["adapter", pytest.param("raw", marks=pytest.mark.native)])
+def test_failed_validation_cannot_commit_database_side_effects_when_restoring_source(store, write):
+    if write == "raw" and not isinstance(store, NativeStore):
+        pytest.skip("Requires native calls outside the adapter")
+    old = Database(store, Registry(Before))
+    old.insert(Before(id=1))
+    amount = Path(Before.__global__, (b"1", b"amount"))
+
+    class Invalid(Before):
+        __schema_version__ = 2
+
+        @model_validator(mode="after")
+        def reject_with_an_untracked_effect(self):
+            # Validators should be pure. Even a misbehaving one must not turn a
+            # rejected migration into committed application writes.
+            if write == "raw":
+                yottadb = pytest.importorskip("yottadb")
+                yottadb.set(amount.global_name, amount.subscripts, b"i:4")
+            else:
+                store.set(amount, b"i:4")
+            raise ValueError("reject")
+
+    db = Database(store, Registry(Invalid))
+    status = db.begin_migration(Before, Invalid, plan=db.plan_migration(Invalid))
+    with pytest.raises(MigrationError):
+        db.advance_migration(status.migration_id, Before, Invalid)
+    assert db.migration_status(status.migration_id).phase == "aborted"
+    assert old.get(Before, 1).amount == 2
+    assert old.check_indexes(Before).issues == ()
+
+
+def test_automatic_abort_cannot_overwrite_another_workers_checkpoint(store, monkeypatch):
+    from mccann_hub.yhmf import migration_jobs
+
+    class Target(Before):
+        amount: int = Field(default=2, le=3, index=True)
+
+    old = Database(store, Registry(Before))
+    old.insert(Before(id=1))
+    old.insert(Before(id=2, amount=4))
+    db = Database(store, Registry(Target))
+    status = db.begin_migration(Before, Target, plan=db.plan_migration(Target))
+    real_abort, progressed = migration_jobs.abort, []
+
+    def compete_before_abort(store, migration_id, *, expected=None):
+        progressed.append(db.advance_migration(migration_id, Before, Target, batch_size=1))
+        return real_abort(store, migration_id, expected=expected)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(migration_jobs, "abort", compete_before_abort)
+        with pytest.raises(MigrationError, match="checkpoint changed"):
+            db.advance_migration(status.migration_id, Before, Target, batch_size=2)
+    assert progressed[0].validated == 1
+    assert db.migration_status(status.migration_id) == progressed[0]
+    assert store.get(GATE) == status.migration_id.encode("ascii")
+    db.abort_migration(status.migration_id)
+    assert old.get(Before, 1).amount == 2
+    assert old.get(Before, 2).amount == 4
 
 
 @pytest.mark.native

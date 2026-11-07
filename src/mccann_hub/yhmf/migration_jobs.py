@@ -138,8 +138,18 @@ def abort_owned(store: Store, status: MigrationStatus) -> MigrationStatus:
     return result
 
 
-def abort(store: Store, migration_id: str) -> MigrationStatus:
-    return store.atomic(lambda: abort_owned(store, load_status(store, migration_id)))
+def abort(
+    store: Store, migration_id: str, *, expected: MigrationStatus | None = None
+) -> MigrationStatus:
+    def attempt() -> MigrationStatus:
+        status = load_status(store, migration_id)
+        if expected is not None and status != expected:
+            raise MigrationError(
+                "Migration checkpoint changed after validation failed; inspect and resume the job"
+            )
+        return abort_owned(store, status)
+
+    return store.atomic(attempt)
 
 
 def prune(store: Store, migration_id: str, *, batch_size: int) -> bool:

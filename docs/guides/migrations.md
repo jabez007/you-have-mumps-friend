@@ -305,9 +305,14 @@ checkpoint commit together. A failed batch rolls back and leaves the gate held a
 preceding checkpoint, so partly migrated data never reaches callers. Normal status output
 leaves out record keys. `status.to_dict(include_cursor=True)` exposes the encoded cursor.
 
-For a validation-only plan, rejection during the initial validation pass instead marks
-the job aborted and restores source access atomically. This includes validators that
-would change existing field bytes. Storage faults remain resumable failures. Later passes
+For a validation-only plan, rejection during the initial validation pass rolls back
+the failed transaction, then atomically marks the job aborted and restores source
+access in a separate transaction. This includes validators that would change existing
+field bytes. Restoration checks that the rejected checkpoint has not changed. If
+another worker advanced it, access stays gated; inspect the status and resume.
+An interruption between rollback and restoration also leaves a resumable job. Even
+database writes made by a rejecting validator roll back; external side effects cannot
+be undone and validators must remain pure. Storage faults remain resumable failures. Later passes
 keep maintenance held on failure; resume with the exact saved declarations. Automatic
 restoration never publishes partially retagged records.
 

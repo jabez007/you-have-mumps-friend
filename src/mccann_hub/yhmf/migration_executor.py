@@ -50,9 +50,12 @@ class _RecordRejected(MigrationError):
     """Target validation cannot preserve a stored record without transforming it."""
 
 
-@dataclass(frozen=True)
-class _Rejected:
-    message: str
+class _ValidationRejected(MigrationError):
+    """Abort the failed TP before restoring access at its unchanged checkpoint."""
+
+    def __init__(self, message: str, status: MigrationStatus):
+        super().__init__(message)
+        self.status = status
 
 
 def _bind(
@@ -230,7 +233,7 @@ def advance(
     if type(batch_size) is not int or not 1 <= batch_size <= MAX_BATCH_SIZE:
         raise MigrationError("Migration batch size must be between 1 and 100")
 
-    def attempt() -> MigrationStatus | _Rejected:
+    def attempt() -> MigrationStatus:
         status = load_status(store, migration_id)
         migration_jobs.require_schema_operation(store, status)
         saved = migration_jobs.saved_snapshots(store, status)
@@ -250,25 +253,24 @@ def advance(
             return migration_cleanup.advance(store, status, binding.cleanup_roots, limit=batch_size)
         return _advance_batch(store, binding, status, batch_size)
 
-    result = store.atomic(attempt)
-    if isinstance(result, _Rejected):
-        raise MigrationError(result.message)
-    return result
+    try:
+        return store.atomic(attempt)
+    except _ValidationRejected as exc:
+        # Even validators can write through raw native APIs. Raising out of TP
+        # must discard those writes before a separate TP restores source access.
+        migration_jobs.abort(store, migration_id, expected=exc.status)
+        raise MigrationError(str(exc)) from None
 
 
 def _advance_batch(
     store: Store, binding: _Binding, status: MigrationStatus, limit: int
-) -> MigrationStatus | _Rejected:
+) -> MigrationStatus:
     try:
         return _batch(store, binding, status, limit)
     except _RecordRejected as exc:
         if status.phase != "validate" or not binding.plan.validation_only:
             raise
-        # Validation-only preparation writes no reservations or application data.
-        # Commit the restored barrier with the validated read set, then raise
-        # outside TP. Restarts can therefore reconsider changed source records.
-        migration_jobs.abort_owned(store, status)
-        return _Rejected(str(exc))
+        raise _ValidationRejected(str(exc), status) from None
 
 
 def _completed_binding(status: MigrationStatus, binding: _Binding) -> MigrationStatus:
