@@ -4,6 +4,9 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Fixes schema inspection of nullable Decimal alternatives, allowing revision-only
+  migrations without changing snapshots, stored values, or indexes.
+
 - Adds homogeneous str/int/bool Enum and Literal fields with canonical choice
   domains, primitive node encodings, strict stored-value restoration, and indexes.
   Enum domain changes require an explicit transform; literal defaults use the

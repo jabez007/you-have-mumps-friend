@@ -180,14 +180,30 @@ class _Fields:
         return cast(dict[str, Any], schema)
 
     def _variants(self, raw: dict[str, Any], path: tuple[str, ...]) -> tuple[list[Any], bool]:
-        variants = raw.get("anyOf", [raw])
-        if not isinstance(variants, list) or not variants:
-            raise _Unsupported(path)
-        resolved = [self._resolve(item, path) for item in variants]
+        resolved = self._resolved_variants(raw, path)
         nonnull = [item for item in resolved if item.get("type") != "null"]
         if not nonnull:
             raise _Unsupported(path)
         return nonnull, len(nonnull) != len(resolved)
+
+    def _resolved_variants(self, raw: dict[str, Any], path: tuple[str, ...]) -> list[Any]:
+        resolved: list[Any] = []
+        pending = [(raw, 0)]
+        while pending:
+            item, depth = pending.pop()
+            if depth > 31 or len(resolved) + len(pending) >= 128:
+                raise _Unsupported(path)
+            item = self._resolve(item, path)
+            if "anyOf" not in item:
+                resolved.append(item)
+                continue
+            variants = item["anyOf"]
+            if not isinstance(variants, list) or not variants or len(variants) > 128:
+                raise _Unsupported(path)
+            inherited = {key: value for key, value in item.items() if key != "anyOf"}
+            for variant in reversed(variants):
+                pending.append(({**inherited, **self._resolve(variant, path)}, depth + 1))
+        return resolved
 
     def _walk(self, schema: Any, prefix: tuple[str, ...]) -> None:
         schema = self._resolve(schema, prefix)

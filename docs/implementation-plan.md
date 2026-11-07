@@ -811,3 +811,12 @@ ordinary scalar-default executor. Existing primitive/default migration behavior 
 all stored contracts remain unchanged. Test physical shape, corruption, limits,
 index claims, shrink/null transitions, grouped swaps, rollback/restarts, owned lists,
 transform recovery, and both Pydantic/native matrices. Existing C901 passes at ten.
+
+List migration checks reproduced an older inspector defect: a revision-only
+migration of Decimal | None was reported unsupported because its canonical nullable
+wrapper contains Decimal's number/string alternatives. Flatten resolved anyOf
+branches with bounds of 31 levels and 128 alternatives, carrying inherited rules
+into every leaf. Keep ambiguous unions rejected by the existing type signatures.
+No snapshot or record bytes change. Deliver this regression fix separately before
+list integration; its memory/native test verifies validation-only activation and
+unchanged Decimal bytes/indexes.
