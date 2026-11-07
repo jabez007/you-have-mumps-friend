@@ -996,3 +996,18 @@ Compare with an explicit M routine that validates a complete fixed input before
 changing a record and its index in one owned transaction. These are experiments,
 not an enabled production writer API. Inspect native results before choosing the
 supported writer path or promising stored rollups. Existing C901 passes at ten.
+
+### Initial generated M writer, issue 25
+
+The native prototypes passed their first full runs on both engines. Implement ADR
+0013's conservative subset by reusing compiled ModelSpec/NodeSpec, canonical schema
+rules, metadata(), and normal index entry constants. A small source generator and
+fixed M routine template form one export boundary, not a schema compiler framework.
+Database.m_routine returns source bound to the currently verified canonical/legacy
+identity without writing metadata. The M routine checks exact live schema bytes,
+handles empty-global first installation transactionally, and fails closed on models
+whose validation/ownership/index contracts it cannot implement. ASCII str/int with
+length/numeric bounds is the initial M value domain; Python's domain is unchanged.
+Test canonical byte compatibility, unsupported declarations/values, CRUD/indexes,
+unique failures, metadata corruption, maintenance, native error rollback, restarts,
+and two-process contention. No installed trigger is part of the supported API.

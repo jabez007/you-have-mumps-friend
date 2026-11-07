@@ -12,6 +12,7 @@ from . import (
     grouped_mutations,
     index_rebuilds,
     indexes,
+    m_writers,
     migration_executor,
     migration_jobs,
     mutations,
@@ -328,6 +329,12 @@ class Database:
     ) -> IndexReport:
         """Check expected entries and claims for a bounded page of records."""
         return audit_indexes(self, model, limit=limit, after=after)
+
+    def m_routine(self, model: type[Model], *, name: str) -> str:
+        """Export an explicit M writer for its supported schema/validation subset."""
+        return self._run(
+            lambda tx: m_writers.source(tx._check_schema(tx.registry.spec(model)), name)
+        )
 
     def inspect_schema(self, model: type[Model]) -> SchemaInspection:
         """Inspect metadata atomically without requiring a matching installed schema."""

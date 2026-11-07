@@ -288,6 +288,11 @@ a root; combined occurrence projection is rejected rather than implying a join.
 
 Joins, full-text search, complex aggregates, and arbitrary SQL compatibility remain outside the initial scope.
 
+Plain M writers use a schema-bound generated routine for the explicitly supported
+flat ASCII str/int subset. It owns TP, verifies exact metadata, and maintains normal
+equality/unique identities. Unsupported validation/ownership contracts fail at export;
+raw SET/KILL remain outside mapper guarantees. See [ADR 0013](adr/0013-explicit-m-writer-contract.md).
+
 ## 10. Schema evolution
 
 Python model declarations are the source of truth for intended schema.

@@ -1,8 +1,8 @@
 # Read and write the data from M
 
 YHMF stores data as ordinary globals, so M routines can reach it without Python. Reads
-work today. Writes work only within the limits below, because M code does not run Pydantic
-validation or maintain indexes.
+work directly. For writes, export the schema-bound routine below; raw writes bypass
+validation and bookkeeping.
 
 The outputs below come from a live YottaDB r2.06 database that holds the warehouse from
 [get started](../getting-started.md):
@@ -73,7 +73,82 @@ all digits. [ADR 0012](../adr/0012-retain-tagged-record-values.md) keeps record 
 and treats ordered indexes as a separate contract. These are semantic observations;
 no timing was measured.
 
-## Write from M
+## Export an explicit M writer
+
+```python
+from mccann_hub.yhmf import Database, Field, MemoryStore, Model, Registry
+
+
+class Part(Model):
+    __global__ = "^Part"
+    id: str = Field(primary_key=True, min_length=1)
+    sku: str = Field(unique=True, min_length=1)
+    quantity: int = Field(ge=0, le=999)
+
+
+parts = Database(MemoryStore(), Registry(Part))
+source = parts.m_routine(Part, name="PartAPI")
+assert source.startswith("PartAPI ; SPDX-License-Identifier")
+# Write source to PartAPI.m on your application's routine path.
+```
+
+Exporting source reads and verifies current schema metadata without changing it.
+If a supported legacy snapshot is installed, the source binds to that exact legacy
+identity. No metadata conversion occurs. If metadata is absent, the first valid M
+insert installs it only if the application global and associated namespaces are
+empty, in the same transaction as the record and indexes. Other unmanaged globals
+require explicit adoption. Regenerate routines after activating a changed schema.
+
+From plain M, supply every field as an untagged, named scalar:
+
+```m
+ new input,status
+ set input("id")="P1",input("sku")="SKU1",input("quantity")=25
+ set status=$$insert^PartAPI(.input)
+ ; status="ok"; Python get() and indexed queries now see the record.
+ set input("quantity")=30
+ set status=$$replace^PartAPI(.input)
+ set status=$$delete^PartAPI("P1")
+```
+
+The initial generator supports flat non-null str/int models with ordinary equality
+and unique indexes. It enforces string length and numeric gt/ge/lt/le bounds, with
+ASCII string values and canonical signed integers of at most 18 digits. Strings may
+contain ASCII controls; NUL is forbidden in keys. Python retains its full Unicode
+and scalar integer domains. An existing record outside the M value subset cannot
+be changed/deleted with this routine. Use Python for those records.
+
+Export rejects custom Python validators, unsupported constraints or normalization,
+nullable values, owned trees, references as fields, scalar lists, choices, ordered
+indexes, and more than 16 fields. It does not silently omit these rules. Every field
+must be supplied even if Python declares a default; defaults/factories are not run.
+M does not distinguish Python runtime types, so the declaration determines how each
+canonical textual input is encoded. This is validation of the declared M subset,
+not execution of Pydantic in M.
+
+Each call owns one native transaction and rejects a caller with nonzero tlevel.
+All live schema/record/index checks and derived reads repeat after a restart. Changes
+to data, equality entries, and unique claims commit or roll back together. Existing
+records and expected claim ownership are checked before replacement/deletion. A
+failed uniqueness claim cannot leave released old claims. Delete conservatively
+refuses any incoming reference namespace, including sources with cascade/set_null
+policies; Python handles those policies. Any maintenance gate blocks the initial M
+API, even if it belongs to an unrelated model.
+
+The returned status is ok, exists, missing, invalid, invalid_key, key_size, schema,
+unmanaged, maintenance, corrupt, unique, references, or nested. Failure statuses
+leave the call's database state unchanged. Unexpected engine errors roll back the
+owned transaction and propagate to the caller's error handler. They are not
+reported as success or silently converted into a validation failure.
+
+The [ADR](../adr/0013-explicit-m-writer-contract.md) records the trigger comparison
+and initial contract. No trigger is installed by export or generated CRUD. Do not
+combine these writers with external triggers that mutate managed data/indexes.
+Multi-record M transactions and hierarchical writers require further design. Since
+this generator rejects owned trees, it cannot update future stored-rollup inputs.
+Raw writes remain outside the managed guarantees and are not an authorization path.
+
+## Raw writes from M
 
 Wrap related changes in a YottaDB transaction (`tstart` and `tcommit`), so mapper clients
 never see a partial change. The table shows what each kind of write does to later mapper

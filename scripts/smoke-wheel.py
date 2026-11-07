@@ -99,10 +99,25 @@ def smoke_transform(store):
     assert db.check_indexes(Converted).issues == ()
 
 
+def smoke_m_export(store):
+    class Flat(Model):
+        __global__ = "^YHMFWheelMExport"
+        id: str = Field(primary_key=True)
+        sku: str = Field(unique=True)
+        quantity: int = Field(ge=0)
+
+    db = Database(store, Registry(Flat))
+    source = db.m_routine(Flat, name="WheelMAPI")
+    assert source.startswith("WheelMAPI ; SPDX-License-Identifier")
+    assert "@CONFIG@" not in source
+    assert not db.inspect_schema(Flat).installed
+
+
 def main():
     assert mccann_hub.__file__ is None
     assert version("mccann-hub-yhmf") == __version__
     store = MemoryStore()
+    smoke_m_export(store)
     old = Database(store, Registry(Before))
     for number, sku in enumerate(("one", None, None)):
         old.insert(Before(id=str(number), sku=sku, price=Decimal(f"{number + 1}.00")))

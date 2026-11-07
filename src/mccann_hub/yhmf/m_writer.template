@@ -1,0 +1,148 @@
+ ; SPDX-License-Identifier: GPL-3.0-or-later
+ ; Generated schema-bound writer: complete ASCII str/int records only.
+ quit
+insert(input)
+ quit $$write("insert",.input)
+replace(input)
+ quit $$write("replace",.input)
+delete(key)
+ new input
+ set input(@KEY@)=key
+ quit $$write("delete",.input)
+write(operation,input)
+ new cfg,values,status,key,$etrap
+ if $tlevel quit "nested"
+ set $etrap="if $tlevel trollback"
+ do config(.cfg)
+ set status=$$input(operation,.input,.cfg,.values)
+ if status'="ok" quit status
+ set key=values(cfg("key"))
+ if cfg("tag",cfg("key"))="s" set key="s:"_key
+ if key[$char(0) quit "invalid_key"
+ if cfg("dataOverhead")+(2*$zlength(key))>1019 quit "key_size"
+ tstart ():serial
+ ; All database-derived state is recreated inside attempt after a restart.
+ set status=$$attempt(operation,key,.values,.cfg)
+ if status'="ok" trollback  quit status
+ tcommit
+ quit "ok"
+input(operation,input,cfg,values)
+ new field,status
+ if $data(input)#2 quit "invalid"
+ set field="",status="ok"
+ for  set field=$order(input(field)) quit:field=""  do  quit:status'="ok"
+ . if '$data(cfg("tag",field)) set status="invalid" quit
+ . if operation="delete",field'=cfg("key") set status="invalid" quit
+ . if $data(input(field))'=1 set status="invalid" quit
+ . if '$$valid(input(field),field,.cfg) set status="invalid" quit
+ . set values(field)=input(field)
+ if status'="ok" quit status
+ if operation="delete" quit $select($data(values(cfg("key"))):"ok",1:"invalid")
+ set field=""
+ for  set field=$order(cfg("tag",field)) quit:field=""  if '$data(values(field)) set status="invalid"
+ quit status
+valid(value,field,cfg)
+ new i,good
+ if $zlength(value)>32764 quit 0
+ if cfg("tag",field)="s" do  quit good
+ . set good=($length(value)'<cfg("min",field))&($length(value)'>cfg("max",field))
+ . for i=1:1:$length(value) if $ascii(value,i)>127 set good=0 quit
+ if value'=+value quit 0
+ if ($length(value)-($extract(value)="-"))>18 quit 0
+ if (value'?1.18N)&(value'?1"-"1.18N) quit 0
+ if $data(cfg("ge",field)),value<cfg("ge",field) quit 0
+ if $data(cfg("gt",field)),value'>cfg("gt",field) quit 0
+ if $data(cfg("le",field)),value>cfg("le",field) quit 0
+ if $data(cfg("lt",field)),value'<cfg("lt",field) quit 0
+ quit 1
+attempt(operation,key,values,cfg)
+ new old,field,status,install,root,claim,token,index
+ if $data(^YHMFMigration("gate")) quit "maintenance"
+ set install=0,root=$name(@GLOBAL@(key))
+ if '$data(^YHMFSchema(cfg("global"))) do  quit:status'="ok" status
+ . set status="ok"
+ . if operation'="insert" set status="schema" quit
+ . if $data(@GLOBAL@)!$data(^YHMFIndex(cfg("global")))!$data(^YHMFUnique(cfg("global")))!$data(^YHMFRef(cfg("global"))) set status="unmanaged" quit
+ . set install=1
+ if 'install,$get(^YHMFSchema(cfg("global")))'=cfg("fingerprint") quit "schema"
+ if 'install,$get(^YHMFSchema(cfg("global"),"snapshot"))'=cfg("snapshot") quit "schema"
+ if 'install,$data(^YHMFSchema(cfg("global"),"snapshot"))'=1 quit "schema"
+ if 'install,$order(^YHMFSchema(cfg("global"),""))'="snapshot" quit "schema"
+ if 'install,$order(^YHMFSchema(cfg("global"),"snapshot"))'="" quit "schema"
+ if operation="insert",$data(@root) quit "exists"
+ if operation'="insert",'$data(@root) quit "missing"
+ if operation'="insert" do  quit:status'="ok" status
+ . set status=$$old(root,.cfg,.old)
+ . if status="ok",old(cfg("key"))'=values(cfg("key")) set status="corrupt"
+ if operation="delete",$data(^YHMFRef(cfg("global"),key)) quit "references"
+ ; YHMF writer checkpoint: native tests can pause this attempt before index writes.
+ set status="ok",field=""
+ for  set field=$order(cfg("index",field)) quit:field=""  do  quit:status'="ok"
+ . if operation="insert" quit
+ . set token=$$token(old(field),field,.cfg),index=$name(^YHMFIndex(cfg("global"),field,token,key,cfg("digest",field)))
+ . set claim="["_$$quote(key)_","_cfg("location",field)_"]"
+ . if $data(@index)'=1!($get(@index)'=cfg("location",field)) set status="corrupt" quit
+ . if cfg("unique",field),$get(^YHMFUnique(cfg("global"),field,token))'=claim set status="corrupt" quit
+ . if cfg("unique",field),$data(^YHMFUnique(cfg("global"),field,token))'=1 set status="corrupt" quit
+ . if operation="replace",old(field)=values(field) quit
+ . kill @index
+ . if cfg("unique",field) kill ^YHMFUnique(cfg("global"),field,token)
+ if status'="ok" quit status
+ if operation'="delete" do  quit:status'="ok" status
+ . set field=""
+ . for  set field=$order(cfg("index",field)) quit:field=""  do  quit:status'="ok"
+ . . if operation="replace",old(field)=values(field) quit
+ . . if cfg("overhead",field)+(2*$zlength(key))+(2*$zlength(values(field)))+8>1019 set status="key_size" quit
+ . . set token=$$token(values(field),field,.cfg)
+ . . if cfg("overhead",field)+(2*$zlength(key))+(2*$zlength(token))>1019 set status="key_size" quit
+ . . set claim="["_$$quote(key)_","_cfg("location",field)_"]"
+ . . if cfg("unique",field),$data(^YHMFUnique(cfg("global"),field,token)) set status="unique" quit
+ . . if $data(^YHMFIndex(cfg("global"),field,token,key,cfg("digest",field))) set status="corrupt" quit
+ . . set ^YHMFIndex(cfg("global"),field,token,key,cfg("digest",field))=cfg("location",field)
+ . . if cfg("unique",field) set ^YHMFUnique(cfg("global"),field,token)=claim
+ if install set ^YHMFSchema(cfg("global"))=cfg("fingerprint"),^YHMFSchema(cfg("global"),"snapshot")=cfg("snapshot")
+ if operation="delete" kill @root quit "ok"
+ if operation="insert" do
+ . set field=""
+ . for  set field=$order(cfg("meta",field)) quit:field=""  set @root@("%m",field)=cfg("meta",field)
+ set field=""
+ for  set field=$order(values(field)) quit:field=""  if $get(@root@(field))'=(cfg("tag",field)_":"_values(field)) set @root@(field)=cfg("tag",field)_":"_values(field)
+ quit "ok"
+old(root,cfg,values)
+ new field,part,raw,status
+ if $data(@root)#2 quit "corrupt"
+ if $data(@root@("%m"))#2 quit "corrupt"
+ set field="",status="ok"
+ for  set field=$order(@root@(field)) quit:field=""  if field'="%m",'$data(cfg("tag",field)) set status="corrupt"
+ set field=""
+ for  set field=$order(@root@("%m",field)) quit:field=""  if '$data(cfg("meta",field)) set status="corrupt"
+ set field=""
+ for  set field=$order(cfg("meta",field)) quit:field=""  if $data(@root@("%m",field))'=1!($get(@root@("%m",field))'=cfg("meta",field)) set status="corrupt"
+ set field=""
+ for  set field=$order(cfg("tag",field)) quit:field=""  do
+ . if $data(@root@(field))'=1 set status="corrupt" quit
+ . set raw=@root@(field)
+ . if $extract(raw,1,2)'=(cfg("tag",field)_":") set status="corrupt" quit
+ . set part=$extract(raw,3,$length(raw))
+ . if '$$valid(part,field,.cfg) set status="corrupt" quit
+ . set values(field)=part
+ quit status
+token(value,field,cfg)
+ quit "v:"_$$quote(cfg("tag",field)_":"_value)
+quote(value)
+ new out,i,code,char
+ set out=$char(34)
+ for i=1:1:$length(value) do
+ . set char=$extract(value,i),code=$ascii(char)
+ . if (code=34)!(code=92) set out=out_$char(92)_char quit
+ . if code=8 set out=out_"\b" quit
+ . if code=9 set out=out_"\t" quit
+ . if code=10 set out=out_"\n" quit
+ . if code=12 set out=out_"\f" quit
+ . if code=13 set out=out_"\r" quit
+ . if (code<32)!(code=127) set out=out_"\u00"_$extract("0123456789abcdef",(code\16)+1)_$extract("0123456789abcdef",(code#16)+1) quit
+ . set out=out_char
+ quit out_$char(34)
+config(cfg)
+@CONFIG@
+ quit

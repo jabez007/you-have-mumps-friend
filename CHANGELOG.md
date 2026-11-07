@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Adds read-only export of schema-bound M writer routines for an explicit flat
+  ASCII str/int validation subset, transactional schema initialization, equality
+  indexes and unique claims, and conservative reference/maintenance refusal.
+
 - Adds up to eight indexed/key predicates with one shared work budget, explicit
   ascending candidate order, per-predicate explain plans, and independently matched
   owned witnesses. Keeps single-predicate cursor formats and rejects ambiguous
