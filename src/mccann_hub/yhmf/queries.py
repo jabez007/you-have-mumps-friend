@@ -116,6 +116,9 @@ class Query[M: Model]:
         if self._field is not None or len(equals) != 1:
             raise QueryError("Queries support exactly one equality predicate")
         name, value = next(iter(equals.items()))
+        return self._equality(name, value)
+
+    def _equality(self, name: str, value: Any) -> "Query[M]":
         spec = self._db.registry.spec(self._model)
         if name == spec.key_field:
             field = next(field for field in spec.fields if field.name == name)
