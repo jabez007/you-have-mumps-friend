@@ -4,6 +4,9 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Adds order_by(direction="desc") for bounded reverse index walks, including reverse
+  occurrence cursors and explicit null/tie ordering. Ascending remains the default.
+
 - Adds bounded reverse traversal to Store.children, preserving forward defaults,
   native numeric/string collation, and transaction signal propagation.
 

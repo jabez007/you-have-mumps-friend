@@ -87,7 +87,7 @@ These features remain outside the current implementation:
 - General computed callbacks, sums of derived sums, and reference-based dependencies.
   Root and owned Decimal sums through owned paths and virtual Pydantic fields are supported;
   see [computed fields](guides/computed-fields.md).
-- Descending order and ordered root continuation cursors. [#42](https://github.com/jabez007/you-have-mumps-friend/issues/42)
+- Ordered root continuation cursors. [#42](https://github.com/jabez007/you-have-mumps-friend/issues/42)
   Combined queries reject occurrence projections by design, because independent matches
   can have different owners.
 - Mapper access rules. Apply authorization in the application's trusted service;
@@ -119,15 +119,12 @@ These features remain outside the current implementation:
   [ADR 0009](adr/0009-model-scoped-maintenance.md).
 - Raw M SET/KILL bypasses validation, indexes, references, and stored sums. Exported
   [schema-bound M routines](guides/m-access.md#export-an-explicit-m-writer) maintain
-  a qualified flat ASCII str/int subset and reject unsupported models.
+  a qualified flat ASCII str/int/Decimal and reference subset, with owning or
+  caller-participating transactions. Unsupported declarations remain rejected.
   Read-only GlobalView mappings can project foreign globals without adopting them.
-  Extending those routines is tracked for
-  [other scalar types](https://github.com/jabez007/you-have-mumps-friend/issues/36),
-  [references](https://github.com/jabez007/you-have-mumps-friend/issues/37),
-  [owned trees and stored sums](https://github.com/jabez007/you-have-mumps-friend/issues/38), and
-  [multi-record transactions](https://github.com/jabez007/you-have-mumps-friend/issues/39).
-- Any maintenance job blocks generated M routines, even for an unrelated model.
-  [#40](https://github.com/jabez007/you-have-mumps-friend/issues/40)
+  [Owned trees and stored sums](https://github.com/jabez007/you-have-mumps-friend/issues/38)
+  remain the next M extension. Newly generated routines validate maintenance scope;
+  older exported source retains its conservative global-gate check until regenerated.
 - Equality index tokens preserve typed equality, not numeric order. Opt-in ordered-v1
   indexes provide native numeric/temporal and escaped string ordering within their
   declared domains. M readers must follow the selected index codec; see

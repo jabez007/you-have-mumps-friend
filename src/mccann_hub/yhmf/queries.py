@@ -2,7 +2,7 @@
 """Bounded key and equality-index plans with explicit record scans and audits."""
 
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, Any, Literal, cast
 
 from . import index_scans, indexes, occurrences, query_intersections
@@ -43,6 +43,7 @@ class QueryPlan:
     maximum_index_visits: int | None = None
     predicates: tuple[PredicatePlan, ...] = ()
     order_field: str | None = None
+    order_direction: Literal["asc", "desc"] | None = None
 
 
 def _predicate_plan(term: query_intersections.Predicate) -> PredicatePlan:
@@ -150,15 +151,27 @@ class Query[M: Model]:
         indexes.index_root(self._db.registry.spec(self._model), definition, text)
         return self._selected(index_scans.Selection(definition, "prefix", text=text))
 
-    def order_by(self, field: str | QueryField[M, Any]) -> "Query[M]":
+    def order_by(
+        self, field: str | QueryField[M, Any], *, direction: Literal["asc", "desc"] = "asc"
+    ) -> "Query[M]":
         self._db._ensure_active()
+        if direction not in ("asc", "desc"):
+            raise QueryError("Order direction must be 'asc' or 'desc'")
         if isinstance(field, QueryField):
             field = bind_field(self._db.registry.spec(self._model), field)
-        selection = index_scans.Selection(self._ordered(field), "ordered")
+        selection = index_scans.Selection(self._ordered(field), "ordered", direction=direction)
         if self._field is None:
             return self._selected(selection)
         if self._selection is not None and self._selection.kind == "ordered":
             raise QueryError("Specify order_by once after the predicates")
+        if self._selection is not None and self._field == field and not self._predicates:
+            return Query(
+                self._db,
+                self._model,
+                field=field,
+                definition=self._definition,
+                selection=replace(self._selection, direction=direction),
+            )
         return Query(
             self._db,
             self._model,
@@ -214,6 +227,7 @@ class Query[M: Model]:
                 maximum_index_visits=index_scans.MAX_VISITS,
                 predicates=plans,
                 order_field=self._field if self._selection is not None else None,
+                order_direction=self._selection.direction if self._selection is not None else None,
             )
         if self._selection is not None:
             return QueryPlan(
@@ -223,6 +237,7 @@ class Query[M: Model]:
                 maximum_index_visits=index_scans.MAX_VISITS,
                 predicates=plans,
                 order_field=self._field,
+                order_direction=self._selection.direction,
             )
         strategy: Literal["direct_key", "equality_index"] = (
             "equality_index" if self._definition is not None else "direct_key"

@@ -92,12 +92,17 @@ def decode_cursor(spec: ModelSpec, identity: str, token: str | None) -> tuple[by
 
 
 def entry_page(
-    store: Store, prefix: Path, *, limit: int, after: tuple[bytes, bytes] | None
+    store: Store,
+    prefix: Path,
+    *,
+    limit: int,
+    after: tuple[bytes, bytes] | None,
+    reverse: bool = False,
 ) -> tuple[Path, ...]:
     """Walk root keys and their digest leaves; never enumerate unrelated record trees."""
     if store.get(prefix) is not None:
         raise StorageError("Unexpected value at an occurrence namespace")
-    keys = (after[0],) if after else store.children(prefix, limit=1)
+    keys = (after[0],) if after else store.children(prefix, limit=1, reverse=reverse)
     digest = after[1] if after else b""
     result: list[Path] = []
     while keys and len(result) < limit:
@@ -105,10 +110,14 @@ def entry_page(
         root = prefix.child(key)
         if store.get(root) is not None:
             raise StorageError("Unexpected value at an occurrence record prefix")
-        markers = store.children(root, limit=limit - len(result), after=digest)
+        markers = store.children(root, limit=limit - len(result), after=digest, reverse=reverse)
         result.extend(root.child(marker) for marker in markers)
         digest = b""
-        keys = store.children(prefix, limit=1, after=key) if len(result) < limit else ()
+        keys = (
+            store.children(prefix, limit=1, after=key, reverse=reverse)
+            if len(result) < limit
+            else ()
+        )
     return tuple(result)
 
 

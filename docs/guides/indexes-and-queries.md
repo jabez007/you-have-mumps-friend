@@ -84,7 +84,7 @@ assert prices.query(PricePoint).where(price=Decimal("12.5")).all()[0].id == "A"
 assert prices.plan_index_rebuild(PricePoint).to_dict()["indexes"][0]["codec"] == "ordered-v1"
 ```
 
-These physical index values support explicit range, literal-prefix, and ascending
+These physical index values support explicit range, literal-prefix, and directional
 ordered queries. M can also walk the value subscripts in native order. Record scalar bytes and
 their precision/scale remain unchanged; unique claims use the same canonical index
 value as equality lookup. Noncanonical aliases cannot make separate valid claims.
@@ -107,7 +107,7 @@ abort an early additive job or correct its input/binding before resuming. Automa
 abort retains its existing validation-only semantics. Ordinary index rebuilds
 preserve the installed codec and include it in their review output.
 
-## Range, prefix, and ascending order
+## Range, prefix, and direction
 
 ```python
 prices.insert(PricePoint(id="B", price=Decimal("25")))
@@ -116,6 +116,7 @@ assert [point.id for point in selected.all()] == ["A"]
 assert selected.explain().strategy == "ordered_index"
 assert selected.explain().maximum_index_visits == 1000
 assert [point.id for point in prices.query(PricePoint).order_by("price").all()] == ["A", "B"]
+assert [point.id for point in prices.query(PricePoint).order_by("price", direction="desc").all()] == ["B", "A"]
 first = selected.occurrences(limit=1)[0]
 assert selected.occurrences(after=first.cursor) == []
 ```
@@ -124,7 +125,7 @@ range requires at least one endpoint; gt/ge and lt/le are exclusive/inclusive lo
 and upper bounds. Endpoints use the field's adapter, normalization, constraints, and
 ordered numeric limits. Numeric and date/time ranges follow native value order;
 ties follow native root-key order and location digest. Nulls are excluded from
-ranges and sort last in order_by. An inverted range fails clearly.
+ranges and sort last ascending, first descending. An inverted range fails clearly.
 
 prefix(field, text) requires an ordered string field and treats text as a literal
 prefix of the stored value. It intentionally does not apply full-value length,
@@ -148,8 +149,18 @@ selection. It remains usable when that value/owner has been deleted. Cursors exp
 encoded positions, are not encrypted, and do not freeze a snapshot across calls.
 
 Existing equality queries retain their root-key and version-one occurrence cursors.
-Descending order and root continuation in value order remain deferred. An unsupported plan fails rather than sorting an unbounded
+Root continuation in value order remains deferred. An unsupported plan fails rather than sorting an unbounded
 scan in Python.
+
+Descending reverses ordered value, root-key, and location-digest traversal. The
+occurrence stream is the exact reverse of ascending, including ties and nulls.
+For roots with several occurrences, the first matching value is the minimum
+ascending and maximum descending, so distinct-root lists need not reverse exactly.
+explain().order_direction reports the direction; cursors from the other direction
+are rejected. Store.children(reverse=True) uses YDBPython's
+[subscript_previous](https://docs.yottadb.net/MultiLangProgGuide/pythonprogram.html#python-subscript-previous)
+through the existing native transaction/error wrapper. Custom stores must implement
+the optional reverse keyword to support descending plans.
 
 ## General index rules
 
@@ -222,7 +233,8 @@ intersections can therefore exhaust their budget even when few records match.
 Call order_by(field) after the predicates to choose an ordered index as the candidate
 walk. For example, where(category="stock").order_by("price") requires price to have
 ordered=True. This also requires that a concrete occurrence of that field exists.
-Results are ascending; each root appears once, at its first matching sort occurrence.
+The default is ascending; direction="desc" reverses the index walk. Each root appears
+once, at its first matching sort occurrence in that direction.
 For owned fields, predicates match independently under the root: one child may
 satisfy one predicate while another satisfies the other. Sorting uses the first sort
 occurrence under the matching root, rather than a same-child join.

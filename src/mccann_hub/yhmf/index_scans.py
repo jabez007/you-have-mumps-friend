@@ -36,6 +36,7 @@ class Selection:
     include_lower: bool = True
     include_upper: bool = True
     text: str | None = field(default=None, repr=False)
+    direction: Literal["asc", "desc"] = "asc"
 
     def accepts(self, value: Any) -> bool:
         value = primitive(value)
@@ -54,6 +55,13 @@ class Selection:
         )
 
     def start(self) -> tuple[bytes, bool]:
+        if self.direction == "desc":
+            if self.text is not None:
+                # UTF-8 never emits FF; this is an exclusive upper prefix bound.
+                return ordered.value_key(self.text) + b"\xff", False
+            if self.upper is not None:
+                return ordered.value_key(self.upper), self.include_upper
+            return b"", False
         if self.text is not None:
             return ordered.value_key(self.text), True
         if self.lower is not None:
@@ -65,12 +73,17 @@ class Selection:
             return not token.startswith(ordered.value_key(self.text))
         if self.kind != "range":
             return False
-        value, high = primitive(value), primitive(self.upper)
-        return (
-            value is None
-            or high is not None
-            and (value > high or value == high and not self.include_upper)
-        )
+        return self._past_bound(primitive(value))
+
+    def _past_bound(self, value: Any) -> bool:
+        descending = self.direction == "desc"
+        if value is None:
+            return not descending
+        bound = primitive(self.lower if descending else self.upper)
+        inclusive = self.include_lower if descending else self.include_upper
+        if bound is None:
+            return False
+        return (value < bound if descending else value > bound) or value == bound and not inclusive
 
 
 def decode_value(definition: indexes.Definition, token: bytes) -> Any:
@@ -112,6 +125,8 @@ def identity(spec: ModelSpec, selection: Selection) -> str:
         None if selection.upper is None else ordered.value_key(selection.upper).hex(),
         selection.include_upper,
     ]
+    if selection.direction == "desc":
+        data.append("desc")
     return hashlib.sha256(canonical_json(data)).hexdigest()
 
 
@@ -186,7 +201,10 @@ def entries(
         store.get(namespace.child(start)) is not None
         or bool(store.children(namespace.child(start), limit=1))
     )
-    tokens = (start,) if present else store.children(namespace, limit=1, after=start)
+    reverse = selection.direction == "desc"
+    tokens = (
+        (start,) if present else store.children(namespace, limit=1, after=start, reverse=reverse)
+    )
     if not present:
         cursor = None
     while tokens:
@@ -197,13 +215,15 @@ def entries(
             break
         prefix = namespace.child(token)
         position = (cursor[1], cursor[2]) if cursor is not None else None
-        while paths := occurrences.entry_page(store, prefix, limit=1, after=position):
+        while selection.accepts(value) and (
+            paths := occurrences.entry_page(store, prefix, limit=1, after=position, reverse=reverse)
+        ):
             budget.visit()
             path = paths[0]
             yield value, path
             position = path.subscripts[-2], path.subscripts[-1]
         cursor = None
-        tokens = store.children(namespace, limit=1, after=token)
+        tokens = store.children(namespace, limit=1, after=token, reverse=reverse)
 
 
 def page(
