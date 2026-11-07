@@ -39,6 +39,14 @@ last-writer-wins: two readers can each change a copy, and the later save replace
 of the earlier result. [ADR 0003](../adr/0003-detached-write-concurrency.md) explains
 this choice.
 
+Optimistic revisions and automatic change tracking remain separate deferred
+features after reviewing the inventory write paths. For detached editing, explicitly
+choose an application conflict policy; save does not compare a revision token.
+Atomic callbacks re-read current state on retry, while patch preserves unrelated
+fields. Neither converts a detached arithmetic result into a safe increment.
+See ADR 0003 for the managed M writer and deployment requirements of any future
+optional conflict-checking API.
+
 save compares the complete desired aggregate with storage and writes only physical
 node differences. It still reads and validates the aggregate, and its physical audit
 traverses existing nodes to remove raw extras. A stale field value still replaces a

@@ -101,6 +101,8 @@ These features remain outside the current implementation:
 - Automatic change tracking and optimistic revisions. save validates and compares
   the full aggregate, writing only physical node differences. It remains
   last-writer-wins. [#45](https://github.com/jabez007/you-have-mumps-friend/issues/45)
+  records the separate deferral decisions; [ADR 0003](adr/0003-detached-write-concurrency.md)
+  gives the workload evidence and criteria for reconsidering each feature.
 
 ## Operating limits
 

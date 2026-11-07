@@ -1290,6 +1290,19 @@ changes canonical metadata and requires explicit migration; test both validation
 failure recovery and a named correcting transform. Add a golden fixture and qualify
 it on both supported Pydantic versions. Existing touched functions pass C901 <= 10.
 
+### Detached concurrency decisions, issue 45
+
+Review Inventory.receive/move/adjust, existing native detached/atomic rendezvous
+tests, replacement node diffs, and generated M transaction participants. The sample
+uses retry-local reads and patch groups, with no detached editing workflow. Keep
+save's intentional last-writer-wins contract. Update ADR 0003 with separate decisions
+to defer optional revisions and automatic tracking, their evidence, and concrete
+reconsideration criteria. A root revision would add contention to independent child
+writes and needs a managed-writer activation protocol; tracking would add mutable
+object lifecycle without removing validation dependencies. No API, stored metadata,
+or code changes are justified by this workload. Re-run the existing concurrency
+regressions and documentation checks; complexity is unchanged.
+
 Before reference support, share schema constants and M schema/record-metadata checks
 without changing their validation or stored bytes. This keeps source and referenced
 target bindings on the same implementation, including exact legacy snapshots.
