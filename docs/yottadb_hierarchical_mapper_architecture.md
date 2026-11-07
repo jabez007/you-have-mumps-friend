@@ -164,9 +164,11 @@ Layout one stores a record like this:
 ```
 
 The [storage contract](storage-format.md) defines these encodings. Type tags make
-values self-describing, but M code must strip them before arithmetic, and tagged
-index values do not sort in numeric order. Section 16 asks whether a later
-layout should change this.
+values self-describing, and M code must strip them before arithmetic. Native semantic
+probes qualified this reader contract on both supported engines. ADR 0012 retains
+record layout one: untagged text still has the engine's arithmetic precision limits.
+Ordered indexes will have a separate explicit codec and migration contract under
+issue 15; existing equality tokens do not sort in numeric order.
 
 Framework metadata uses reserved field names. Application-defined names must not collide with reserved names.
 
@@ -497,8 +499,9 @@ Before finalizing the public API, several questions need focused prototypes:
 8. What licensing guidance should the project provide for downstream applications?
 9. What should a per-model maintenance gate do at its edges, such as references and
    multi-model transactions? See [#21](https://github.com/jabez007/you-have-mumps-friend/issues/21).
-10. Should a later storage layout use native M values and ordered index subscripts,
-    given the tradeoff against self-describing values? See [#24](https://github.com/jabez007/you-have-mumps-friend/issues/24).
+10. Record-value choice is resolved by [ADR 0012](adr/0012-retain-tagged-record-values.md):
+    retain tagged records and version ordered indexes independently. Qualify those
+    index codecs and bounded query APIs under [#15](https://github.com/jabez007/you-have-mumps-friend/issues/15).
 
 ## 17. Implementation status
 

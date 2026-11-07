@@ -1,0 +1,223 @@
+{
+  "ci_run": "https://github.com/jabez007/you-have-mumps-friend/actions/runs/42334917767",
+  "method": "Native M semantic probes and 14 layout-one reader goldens; no latency benchmark. Engine observation is M $ZVERSION compatibility text; qualified_yottadb comes from the CI job.",
+  "results": [
+    {
+      "journaling": false,
+      "observations": {
+        "engine": [
+          "GT.M V7.0-005 Linux x86_64"
+        ],
+        "index_token": [
+          "v:\"i:10\"",
+          "v:\"i:2\""
+        ],
+        "large_arithmetic": [
+          "1234567890123456780000000000000000000000"
+        ],
+        "large_payload": [
+          "1234567890123456789012345678901234567890"
+        ],
+        "native_string_numeric_key_collision": [
+          "string"
+        ],
+        "null_empty_equal": [
+          "0"
+        ],
+        "numeric_key": [
+          "2",
+          "10"
+        ],
+        "payload_add": [
+          "13.5"
+        ],
+        "plain_add": [
+          "13.5"
+        ],
+        "plain_bool_int_equal": [
+          "1"
+        ],
+        "precise_arithmetic": [
+          ".123456789012345678"
+        ],
+        "precise_payload": [
+          "0.123456789012345678901234567890"
+        ],
+        "string_key": [
+          "s:10",
+          "s:2"
+        ],
+        "tagged_add": [
+          "1"
+        ],
+        "tagged_bool_int_equal": [
+          "0"
+        ]
+      },
+      "qualified_yottadb": "r2.02"
+    },
+    {
+      "journaling": true,
+      "observations": {
+        "engine": [
+          "GT.M V7.0-005 Linux x86_64"
+        ],
+        "index_token": [
+          "v:\"i:10\"",
+          "v:\"i:2\""
+        ],
+        "large_arithmetic": [
+          "1234567890123456780000000000000000000000"
+        ],
+        "large_payload": [
+          "1234567890123456789012345678901234567890"
+        ],
+        "native_string_numeric_key_collision": [
+          "string"
+        ],
+        "null_empty_equal": [
+          "0"
+        ],
+        "numeric_key": [
+          "2",
+          "10"
+        ],
+        "payload_add": [
+          "13.5"
+        ],
+        "plain_add": [
+          "13.5"
+        ],
+        "plain_bool_int_equal": [
+          "1"
+        ],
+        "precise_arithmetic": [
+          ".123456789012345678"
+        ],
+        "precise_payload": [
+          "0.123456789012345678901234567890"
+        ],
+        "string_key": [
+          "s:10",
+          "s:2"
+        ],
+        "tagged_add": [
+          "1"
+        ],
+        "tagged_bool_int_equal": [
+          "0"
+        ]
+      },
+      "qualified_yottadb": "r2.02"
+    },
+    {
+      "journaling": false,
+      "observations": {
+        "engine": [
+          "GT.M V7.1-002 Linux x86_64"
+        ],
+        "index_token": [
+          "v:\"i:10\"",
+          "v:\"i:2\""
+        ],
+        "large_arithmetic": [
+          "1234567890123456780000000000000000000000"
+        ],
+        "large_payload": [
+          "1234567890123456789012345678901234567890"
+        ],
+        "native_string_numeric_key_collision": [
+          "string"
+        ],
+        "null_empty_equal": [
+          "0"
+        ],
+        "numeric_key": [
+          "2",
+          "10"
+        ],
+        "payload_add": [
+          "13.5"
+        ],
+        "plain_add": [
+          "13.5"
+        ],
+        "plain_bool_int_equal": [
+          "1"
+        ],
+        "precise_arithmetic": [
+          ".123456789012345678"
+        ],
+        "precise_payload": [
+          "0.123456789012345678901234567890"
+        ],
+        "string_key": [
+          "s:10",
+          "s:2"
+        ],
+        "tagged_add": [
+          "1"
+        ],
+        "tagged_bool_int_equal": [
+          "0"
+        ]
+      },
+      "qualified_yottadb": "r2.06"
+    },
+    {
+      "journaling": true,
+      "observations": {
+        "engine": [
+          "GT.M V7.1-002 Linux x86_64"
+        ],
+        "index_token": [
+          "v:\"i:10\"",
+          "v:\"i:2\""
+        ],
+        "large_arithmetic": [
+          "1234567890123456780000000000000000000000"
+        ],
+        "large_payload": [
+          "1234567890123456789012345678901234567890"
+        ],
+        "native_string_numeric_key_collision": [
+          "string"
+        ],
+        "null_empty_equal": [
+          "0"
+        ],
+        "numeric_key": [
+          "2",
+          "10"
+        ],
+        "payload_add": [
+          "13.5"
+        ],
+        "plain_add": [
+          "13.5"
+        ],
+        "plain_bool_int_equal": [
+          "1"
+        ],
+        "precise_arithmetic": [
+          ".123456789012345678"
+        ],
+        "precise_payload": [
+          "0.123456789012345678901234567890"
+        ],
+        "string_key": [
+          "s:10",
+          "s:2"
+        ],
+        "tagged_add": [
+          "1"
+        ],
+        "tagged_bool_int_equal": [
+          "0"
+        ]
+      },
+      "qualified_yottadb": "r2.06"
+    }
+  ],
+  "source_commit": "58602c7bf32060f140137808c1c064fc3c60954f"
+}

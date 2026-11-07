@@ -47,6 +47,8 @@ New here? Start with [get started](getting-started.md), then read
   - [0008 Application authorization boundary](adr/0008-application-authorization-boundary.md)
   - [0009 Model-scoped maintenance](adr/0009-model-scoped-maintenance.md)
   - [0010 Explicit record transforms](adr/0010-explicit-record-transforms.md)
+  - [0011 Bounded reference deletion](adr/0011-bounded-reference-deletion.md)
+  - [0012 Tagged records and independent ordered indexes](adr/0012-retain-tagged-record-values.md)
 
 ## Check the evidence
 

@@ -29,6 +29,10 @@ can be stricter; the engine's errors propagate.
 
 ## Scalar values
 
+[ADR 0012](adr/0012-retain-tagged-record-values.md) retains tagged layout-one record
+values after native M semantic probes. Ordered index encoding is a separate versioned
+contract; it does not require replacing record scalars or adopting raw native writes.
+
 | Type | Encoding | Example |
 | --- | --- | --- |
 | Null | `n:` | `n:` |

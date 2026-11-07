@@ -66,6 +66,13 @@ payloads retain their exact decimal text. Applying M arithmetic imposes the engi
 numeric precision/range. Distinguish null with isnull; the empty payload of n: is
 not an empty stored string. Native tests run this reader against committed goldens.
 
+The [native observations](../benchmarks/native-value-semantics-2026-11-06.json) cover
+both supported engines and journaling modes. They show the same precision loss when
+M performs arithmetic on long untagged numeric text, while text payload reads retain
+all digits. [ADR 0012](../adr/0012-retain-tagged-record-values.md) keeps record tags
+and treats ordered indexes as a separate contract. These are semantic observations;
+no timing was measured.
+
 ## Write from M
 
 Wrap related changes in a YottaDB transaction (`tstart` and `tcommit`), so mapper clients

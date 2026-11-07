@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Retains tagged record layout one after native M arithmetic/collation probes on
+  both qualified engines and journaling modes. Adds a golden-tested M payload reader
+  and records the separate versioning decision for future ordered indexes.
+
 - Adds bounded transactional set_null/cascade reference policies, nearest-keyed-owner
   cascades, cycle handling, union index/reference maintenance, and final collection
   validation. Policy-only changes require a reviewed explicit metadata migration.

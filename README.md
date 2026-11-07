@@ -84,6 +84,9 @@ metadata nodes:
 
 ## What works today
 
+This table includes unreleased changes on main. See [the changelog](CHANGELOG.md)
+for release boundaries.
+
 | Area | Works today | Not yet |
 | --- | --- | --- |
 | Models | Primitive scalars, dates, UTC datetimes, UUID values, Enum/Literal choices, scalar lists, optional fields, embedded objects, keyed children, Python field inheritance, virtual computed values | Stored rollups, shared-global variants |

@@ -1,6 +1,7 @@
 # Known limitations
 
-This page lists behavior in version 0.5.0 that can surprise you. Each item links to its
+This page covers the current checkout, including unreleased changes after 0.5.0.
+Each item links to its
 issue in the [issue tracker](https://github.com/jabez007/you-have-mumps-friend/issues).
 
 The development branch fixes swallowed native control signals and outer-handle
@@ -72,7 +73,7 @@ deferred uniqueness is not supported. See [the example](guides/indexes-and-queri
 
 ## Missing features
 
-These features are not in version 0.5.0:
+These features remain outside the current implementation:
 
 - Nested/model/reference lists, Annotated list-item declarations, arbitrary `dict`, and unions
   other than `| None`. [#11](https://github.com/jabez007/you-have-mumps-friend/issues/11)
@@ -107,6 +108,7 @@ These features are not in version 0.5.0:
 - Plain M code can read everything, but [M writes](guides/m-access.md#write-from-m) do not
   maintain indexes, references, or validation. [#25](https://github.com/jabez007/you-have-mumps-friend/issues/25)
 - Index entries hold encoded value tokens, so M code walking an index does not see numeric
-  values in numeric order. [#24](https://github.com/jabez007/you-have-mumps-friend/issues/24)
+  values in numeric order. [Ordered query work](https://github.com/jabez007/you-have-mumps-friend/issues/15)
+  follows the independent index contract in [ADR 0012](adr/0012-retain-tagged-record-values.md).
 
 See also the [limits reference](reference/limits.md).
