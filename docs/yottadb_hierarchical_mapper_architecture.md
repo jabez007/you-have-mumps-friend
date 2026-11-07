@@ -293,6 +293,11 @@ flat ASCII str/int subset. It owns TP, verifies exact metadata, and maintains no
 equality/unique identities. Unsupported validation/ownership contracts fail at export;
 raw SET/KILL remain outside mapper guarantees. See [ADR 0013](adr/0013-explicit-m-writer-contract.md).
 
+Foreign layouts can be read through explicit GlobalView/MappedField projections.
+These use native paths and pure decoders, validate complete flat scalar models, and
+never install metadata, indexes, or rewrite the source. They provide no managed
+write or reference/ownership guarantees.
+
 ## 10. Schema evolution
 
 Python model declarations are the source of truth for intended schema.

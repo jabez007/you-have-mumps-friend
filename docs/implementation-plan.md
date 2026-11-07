@@ -1011,3 +1011,23 @@ length/numeric bounds is the initial M value domain; Python's domain is unchange
 Test canonical byte compatibility, unsupported declarations/values, CRUD/indexes,
 unique failures, metadata corruption, maintenance, native error rollback, restarts,
 and two-process contention. No installed trigger is part of the supported API.
+
+### Read-only projections of existing globals, first slice of issue 26
+
+Reuse Model/Registry's field and complete-model validation, Store transactions,
+Path validation, and existing query-page limits. Add GlobalView and MappedField as
+an explicit read-only projection of trusted native paths, with caller-supplied pure
+decoders. Each model field maps to a relative native node; several fields may decode
+pieces of the same node. Native untagged keys use the declared str/int primary-key
+type. get and bounded scan never install metadata, indexes, or rewrite source data.
+Require flat, unindexed projection declarations and complete field mappings; validate
+the complete returned object and exact primary-key identity. Defaults apply only
+when a mapped node is absent, through normal Pydantic validation. This keeps foreign
+storage interpretation separate from managed CRUD/adoption instead of fabricating
+an installed schema or an adapter that silently emulates the managed layout.
+
+A view does not promise ownership/reference/index integrity for foreign writers.
+Unknown extra source nodes are intentionally outside the projection. There is no
+write method or implicit migration. Qualify a sample produced by actual plain M,
+native key order, shared-node decoding, missing/invalid input, and no writes. A
+resumable managed-layout adoption job remains the separate second slice of #26.

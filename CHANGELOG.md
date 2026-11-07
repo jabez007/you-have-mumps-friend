@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Adds read-only GlobalView/MappedField projections for foreign native globals,
+  complete model validation, shared-node piece decoding, and bounded native-key
+  paging without schema installation or source rewriting.
+
 - Adds read-only export of schema-bound M writer routines for an explicit flat
   ASCII str/int validation subset, transactional schema initialization, equality
   indexes and unique claims, and conservative reference/maintenance refusal.
