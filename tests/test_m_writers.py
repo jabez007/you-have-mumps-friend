@@ -277,7 +277,7 @@ def test_concurrent_first_m_inserts_have_one_unique_winner(store, m_writer):
     try:
         for key in ["A", "B"]:
             worker = subprocess.Popen(
-                [command, "-run", "worker^YHMFWTEST", key, "S"],
+                [command, "-run", "%XCMD", f'do worker^YHMFWTEST("{key}","S")'],
                 env=environment,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
@@ -285,7 +285,14 @@ def test_concurrent_first_m_inserts_have_one_unique_winner(store, m_writer):
                 text=True,
             )
             workers.append(worker)
-            ready(worker)
+            try:
+                ready(worker)
+            except AssertionError:
+                worker.kill()
+                output, error = worker.communicate(timeout=5)
+                raise AssertionError(
+                    f"M worker failed before rendezvous: {output} {error}"
+                ) from None
         statuses = []
         for worker in workers:
             output, error = worker.communicate("go\n", timeout=20)
