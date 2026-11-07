@@ -33,6 +33,30 @@ def test_atomic_return_and_rollback(store):
     assert store.atomic(lambda: 42) == 42
 
 
+def test_canonical_decimal_subscripts_use_native_numeric_collation(store):
+    root = Path("^YHMFTestStorage")
+    expected = (
+        b"-100",
+        b"-.5",
+        b"0",
+        b".0000000000000000001",
+        b".25",
+        b"1.5",
+        b"2",
+        b"10",
+        b"-0",
+        b".1000000000000000001",
+        b"0.1",
+        b"01",
+        b"1.00",
+        b"s:2",
+    )
+    for key in reversed(expected):
+        store.set(root.child(key), b"value")
+    assert store.children(root, limit=100) == expected
+    assert store.children(root, limit=2, after=b".25") == (b"1.5", b"2")
+
+
 @pytest.mark.parametrize("name", ["Warehouse", "^", "^a(b)", "^a_b", "^a" + "b" * 31])
 def test_global_validation(name):
     with pytest.raises(StorageError):

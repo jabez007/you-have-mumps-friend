@@ -6,6 +6,7 @@ import re
 from collections.abc import Callable
 from contextvars import ContextVar
 from dataclasses import dataclass
+from decimal import Decimal
 from threading import RLock
 from typing import Protocol, cast
 
@@ -14,6 +15,7 @@ from .errors import StorageError, TransactionError, YHMFError
 MAX_VALUE_BYTES = 32_766
 _GLOBAL = re.compile(r"\^[A-Za-z%][A-Za-z0-9]{0,30}\Z")
 _INTEGER = re.compile(rb"(?:0|-[1-9][0-9]*|[1-9][0-9]*)\Z")
+_FRACTION = re.compile(rb"-?(?:[1-9][0-9]*\.[0-9]*[1-9]|\.[0-9]*[1-9])\Z")
 
 
 @dataclass
@@ -102,9 +104,13 @@ def subtree_nodes(store: Store, root: Path, *, limit: int) -> dict[Path, bytes]:
     return result
 
 
-def _collation(value: bytes) -> tuple[int, int | bytes]:
+def _collation(value: bytes) -> tuple[int, int | Decimal | bytes]:
     if _INTEGER.fullmatch(value):
         return (0, int(value))
+    if _FRACTION.fullmatch(value):
+        number = Decimal(value.decode("ascii"))
+        if len(number.as_tuple().digits) <= 18 and -43 <= number.adjusted() < 47:
+            return (0, number)
     return (1, value)
 
 

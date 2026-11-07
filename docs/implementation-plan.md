@@ -917,3 +917,11 @@ and multi-predicate query plans; do not claim those APIs in this prerequisite sl
 
 First extract the existing field-index declaration checks from _field_spec without
 changing behavior, keeping secondary declaration rules cohesive and C901 at ten.
+
+Ordered numeric keys exposed an adapter gap: MemoryStore collated only canonical
+integers numerically, so -.5 and 1.5 sorted as strings. The new shared-adapter golden
+fails on memory before the fix. Recognize canonical fractional syntax within the
+engine's 18-significant-digit/range domain using exact Decimal comparisons, keeping
+noncanonical numeric-looking strings distinct. Existing str/int key encodings and
+record bytes remain unchanged. Qualify the same golden on native CI before adding
+ordered index declarations.
