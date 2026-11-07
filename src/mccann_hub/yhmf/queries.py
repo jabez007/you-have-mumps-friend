@@ -11,6 +11,7 @@ from .errors import NotFound, QueryError, SchemaError, StorageError
 from .models import Model, Reference
 from .mutations import read_owner
 from .owned import OwnedPath, Owner, require_object, resolve_collection
+from .query_intersections import RootPage
 from .registry import reference_target, scalar_type
 from .selectors import FieldPredicate, QueryField, bind_field
 from .storage import Path
@@ -247,6 +248,10 @@ class Query[M: Model]:
     def all(self, *, limit: int = 100, after: Key | None = None) -> list[M]:
         _limit(limit)
         self.explain()
+        if self._selection is not None:
+            if after is not None and not isinstance(after, str):
+                raise QueryError("Ordered reads require a root-page cursor, not a key cursor")
+            return list(self._root_page(limit=limit, after=after, strict=True).records)
         if self._predicates:
             return cast(
                 list[M],
@@ -261,10 +266,6 @@ class Query[M: Model]:
                     )
                 ),
             )
-        if self._selection is not None:
-            if after is not None:
-                raise QueryError("Ordered root reads use no key cursor; page with occurrences()")
-            return self._ordered_roots(limit)
 
         def read(tx: "Database") -> list[M]:
             spec = tx.registry.spec(self._model)
@@ -288,32 +289,29 @@ class Query[M: Model]:
 
         return self._db._run(read)
 
-    def _ordered_roots(self, limit: int) -> list[M]:
-        assert self._selection is not None
-        selection = self._selection
+    def page(self, *, limit: int = 100, after: str | None = None) -> RootPage[M]:
+        """Continue an ordered root read using its canonical occurrence cursor."""
+        return self._root_page(limit=limit, after=after, strict=False)
 
-        def read(tx: "Database") -> list[M]:
-            spec = tx._check_schema(tx.registry.spec(self._model))
-            result, seen = [], set()
-            for value, path in index_scans.entries(
-                tx.store, spec, selection, after=None, budget=index_scans.Budget()
-            ):
-                key, _, _ = occurrences.read_indexed(
-                    tx, spec, selection.definition, indexes.normalized(value), path
+    def _root_page(self, *, limit: int, after: str | None, strict: bool) -> RootPage[M]:
+        _limit(limit)
+        self.explain()
+        if self._selection is None:
+            raise QueryError("Root page() requires an ordered index selection")
+        return cast(
+            RootPage[M],
+            self._db._run(
+                lambda tx: query_intersections.ordered_page(
+                    tx,
+                    tx.registry.spec(self._model),
+                    self._term(),
+                    self._predicates or (self._term(),),
+                    limit=limit,
+                    after=after,
+                    strict=strict,
                 )
-                if key in seen:
-                    continue
-                record = tx.get(self._model, key)
-                occurrences.validate_root(
-                    tx, spec, selection.definition, value, path.subscripts[-2], record
-                )
-                result.append(record)
-                seen.add(key)
-                if len(result) == limit:
-                    break
-            return result
-
-        return self._db._run(read)
+            ),
+        )
 
     def _indexed_record(self, tx: "Database", key: bytes) -> M:
         try:

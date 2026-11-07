@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Adds bounded ordered root pages with query/direction-scoped cursors and canonical
+  owned-field witnesses. Progress pages can contain no records; all() retains strict
+  budget failure and stable-dataset pagination returns each root once.
+
 - Adds order_by(direction="desc") for bounded reverse index walks, including reverse
   occurrence cursors and explicit null/tie ordering. Ascending remains the default.
 

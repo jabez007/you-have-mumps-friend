@@ -135,22 +135,22 @@ in the declared index; they never enumerate the application global.
 
 All these calls bound execution to 1000 combined value-subscript and occurrence
 visits. Each value group costs one visit, and each concrete occurrence another.
-If this bound is exhausted before satisfying the requested limit or completing the
-walk, QueryError is raised and no incomplete result is returned as a success.
+For all() and occurrences(), if this bound is exhausted before satisfying the
+requested limit or completing the walk, QueryError is raised.
 Narrow the selection or use smaller occurrence pages. The result limit remains
 1–1000. Limits bound returned items; they do not authorize an unbounded search.
 
 Ordered all() returns distinct roots, ranked by the first matching occurrence, and
-materializes those complete aggregates. It starts from the beginning on each call
-and rejects key-based after cursors. Use occurrences(limit=..., after=...) for
-continuation and efficient child-owner projections. Its version-two cursor records
+materializes those complete aggregates. Use page() to obtain a RootPage with records
+and a continuation cursor. all(after=page.cursor) also accepts that root cursor;
+ordinary record keys are not ordered cursors. Use occurrences(limit=..., after=...)
+for efficient child-owner projections. Its version-two cursor records
 the ordered value and concrete location, and is scoped to the schema and full
 selection. It remains usable when that value/owner has been deleted. Cursors expose
 encoded positions, are not encrypted, and do not freeze a snapshot across calls.
 
 Existing equality queries retain their root-key and version-one occurrence cursors.
-Root continuation in value order remains deferred. An unsupported plan fails rather than sorting an unbounded
-scan in Python.
+An unsupported plan fails rather than sorting an unbounded scan in Python.
 
 Descending reverses ordered value, root-key, and location-digest traversal. The
 occurrence stream is the exact reverse of ascending, including ties and nulls.
@@ -161,6 +161,35 @@ are rejected. Store.children(reverse=True) uses YDBPython's
 [subscript_previous](https://docs.yottadb.net/MultiLangProgGuide/pythonprogram.html#python-subscript-previous)
 through the existing native transaction/error wrapper. Custom stores must implement
 the optional reverse keyword to support descending plans.
+
+```python
+ordered_prices = prices.query(PricePoint).order_by("price", direction="desc")
+cursor = None
+price_ids = []
+while True:
+    page = ordered_prices.page(limit=1, after=cursor)
+    price_ids.extend(point.id for point in page.records)
+    if page.cursor is None:
+        break
+    cursor = page.cursor
+assert price_ids == ["B", "A"]
+```
+
+page() stops at its record limit, at its visit budget, or at completion. It may return
+empty records and a non-null cursor after skipping duplicates or rejected roots;
+continue until cursor is None. The cursor advances only after fully checked index
+positions. If one candidate cannot fit the visit budget, QueryError still requires
+a narrower query. all() retains its strict budget error, without partial success.
+
+A root is emitted only at its canonical first matching sort occurrence. This avoids
+duplicates across pages without an unbounded remembered-key set, including owned
+fields whose values interleave across roots. Canonical selection uses the already
+loaded aggregate, bounded to 10,000 nodes; it does not scan other roots. Index walks
+and predicate probes share the 1,000-visit budget. Root/occurrence cursors are distinct
+and bind the schema, direction, selection, and every predicate. Exactly-once root
+pagination requires an unchanged dataset. Concurrent sort/predicate mutations may
+move records across the cursor and cause repeats or omissions; there is no snapshot
+across calls. Cursors survive deletion of their previous owner/value group.
 
 ## General index rules
 
@@ -239,10 +268,10 @@ For owned fields, predicates match independently under the root: one child may
 satisfy one predicate while another satisfies the other. Sorting uses the first sort
 occurrence under the matching root, rather than a same-child join.
 
-Combined queries return complete roots through all(). Occurrence projection is
+Combined queries return complete roots through all() or ordered page(). Occurrence projection is
 rejected because independent witnesses can have different owners. Equality-anchor
 queries can continue with the last returned root key; direct-key and ordered-anchor
-queries reject key cursors. Narrow ordered intersections to bound a report. Returned
+queries reject key cursors; ordered page() supplies its own scoped cursor. Returned
 roots and each index witness are validated in the same transaction. These reads
 never enumerate the data global or repair missing/corrupt indexes.
 

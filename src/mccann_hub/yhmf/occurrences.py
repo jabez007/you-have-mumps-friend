@@ -17,7 +17,7 @@ from .models import Model, Reference
 from .owned import OwnedPath
 from .records import MAX_RECORD_NODES, value_nodes, walk_values
 from .registry import FieldSpec, ModelSpec, reference_target
-from .storage import Path, Store
+from .storage import Path, Store, child_page
 
 if TYPE_CHECKING:
     from .repository import Database
@@ -102,7 +102,7 @@ def entry_page(
     """Walk root keys and their digest leaves; never enumerate unrelated record trees."""
     if store.get(prefix) is not None:
         raise StorageError("Unexpected value at an occurrence namespace")
-    keys = (after[0],) if after else store.children(prefix, limit=1, reverse=reverse)
+    keys = (after[0],) if after else child_page(store, prefix, limit=1, reverse=reverse)
     digest = after[1] if after else b""
     result: list[Path] = []
     while keys and len(result) < limit:
@@ -110,11 +110,11 @@ def entry_page(
         root = prefix.child(key)
         if store.get(root) is not None:
             raise StorageError("Unexpected value at an occurrence record prefix")
-        markers = store.children(root, limit=limit - len(result), after=digest, reverse=reverse)
+        markers = child_page(store, root, limit=limit - len(result), after=digest, reverse=reverse)
         result.extend(root.child(marker) for marker in markers)
         digest = b""
         keys = (
-            store.children(prefix, limit=1, after=key, reverse=reverse)
+            child_page(store, prefix, limit=1, after=key, reverse=reverse)
             if len(result) < limit
             else ()
         )

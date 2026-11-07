@@ -87,8 +87,7 @@ These features remain outside the current implementation:
 - General computed callbacks, sums of derived sums, and reference-based dependencies.
   Root and owned Decimal sums through owned paths and virtual Pydantic fields are supported;
   see [computed fields](guides/computed-fields.md).
-- Ordered root continuation cursors. [#42](https://github.com/jabez007/you-have-mumps-friend/issues/42)
-  Combined queries reject occurrence projections by design, because independent matches
+- Combined queries reject occurrence projections by design, because independent matches
   can have different owners.
 - Mapper access rules. Apply authorization in the application's trusted service;
   independent M writers require their own enforcement. Database and raw paths do

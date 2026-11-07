@@ -1351,6 +1351,14 @@ and predicates; exactly-once pagination is promised only for a stable dataset.
 Combined occurrence projections remain ambiguous and rejected. Existing touched
 functions pass C901 <= 10; do not increase the threshold.
 
+Root pages need bounded progress even when skipped duplicate occurrences consume
+the whole visit budget. page() may return no records with a non-null continuation
+cursor; None means completion. The cursor advances only past fully checked positions.
+If not even one candidate can be evaluated, raise rather than repeat the same cursor
+forever. all() retains strict budget failure instead of returning a truncated list.
+This avoids an unbounded cross-page seen set and makes large duplicate groups
+pageable without weakening the configured visit limit.
+
 Before reference support, share schema constants and M schema/record-metadata checks
 without changing their validation or stored bytes. This keeps source and referenced
 target bindings on the same implementation, including exact legacy snapshots.

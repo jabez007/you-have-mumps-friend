@@ -9,6 +9,7 @@ from .migrations import MigrationPlan, MigrationStep
 from .models import ChildField, Children, Field, Model, Reference
 from .occurrences import Occurrence
 from .queries import IndexReport, PredicatePlan, QueryPlan
+from .query_intersections import RootPage
 from .registry import Registry
 from .repository import Database
 from .schema_diff import SchemaChange, compare_schemas
@@ -43,6 +44,7 @@ __all__ = [
     "Registry",
     "Reference",
     "ReferenceFactory",
+    "RootPage",
     "SchemaInspection",
     "SchemaChange",
     "SchemaSnapshot",

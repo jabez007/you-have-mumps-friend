@@ -15,7 +15,7 @@ from . import indexes, occurrences, ordered
 from .codecs import canonical_json, decode_scalar
 from .errors import QueryError, StorageError
 from .registry import ModelSpec, scalar_type
-from .storage import Path, Store
+from .storage import Path, Store, child_page
 
 if TYPE_CHECKING:
     from .repository import Database
@@ -138,7 +138,7 @@ def encode_cursor(scope: str, value: bytes, path: Path) -> str:
 
 
 def decode_cursor(
-    spec: ModelSpec, selection: Selection, token: str | None
+    spec: ModelSpec, selection: Selection, token: str | None, *, scope: str | None = None
 ) -> tuple[bytes, bytes, bytes] | None:
     if token is None:
         return None
@@ -155,8 +155,9 @@ def decode_cursor(
             or not all(type(part) is str for part in data[1:])
         ):
             raise ValueError
-        version, scope, value, key, digest = data
-        if type(version) is not int or version != 2 or scope != identity(spec, selection):
+        version, saved, value, key, digest = data
+        scope = identity(spec, selection) if scope is None else scope
+        if type(version) is not int or version != 2 or saved != scope:
             raise ValueError
         value_raw = bytes.fromhex(value)
         if value_raw.hex() != value or not selection.accepts(
@@ -180,12 +181,22 @@ class Budget:
 
     def visit(self) -> None:
         if self.remaining == 0:
-            raise QueryError("Query exceeded its 1000 index-visit budget; narrow the range or page")
+            raise VisitLimit("Query exceeded its 1000 index-visit budget; narrow the range or page")
         self.remaining -= 1
 
 
+class VisitLimit(QueryError):
+    """Internal distinction allowing a bounded root page to return safe progress."""
+
+
 def entries(
-    store: Store, spec: ModelSpec, selection: Selection, *, after: str | None, budget: Budget
+    store: Store,
+    spec: ModelSpec,
+    selection: Selection,
+    *,
+    after: str | None,
+    budget: Budget,
+    scope: str | None = None,
 ) -> Iterator[tuple[Any, Path]]:
     definition = selection.definition
     namespace = Path(
@@ -193,7 +204,7 @@ def entries(
     )
     if store.get(namespace) is not None:
         raise StorageError("Unexpected value at an ordered-index namespace")
-    cursor = decode_cursor(spec, selection, after)
+    cursor = decode_cursor(spec, selection, after, scope=scope)
     start, inclusive = selection.start()
     if cursor is not None:
         start, inclusive = cursor[0], True
@@ -203,7 +214,7 @@ def entries(
     )
     reverse = selection.direction == "desc"
     tokens = (
-        (start,) if present else store.children(namespace, limit=1, after=start, reverse=reverse)
+        (start,) if present else child_page(store, namespace, limit=1, after=start, reverse=reverse)
     )
     if not present:
         cursor = None
@@ -223,7 +234,7 @@ def entries(
             yield value, path
             position = path.subscripts[-2], path.subscripts[-1]
         cursor = None
-        tokens = store.children(namespace, limit=1, after=token, reverse=reverse)
+        tokens = child_page(store, namespace, limit=1, after=token, reverse=reverse)
 
 
 def page(

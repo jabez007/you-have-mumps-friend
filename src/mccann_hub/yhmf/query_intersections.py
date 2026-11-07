@@ -1,21 +1,31 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Explicit bounded index witnesses for conjunctive root queries."""
 
+import hashlib
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 from . import index_scans, indexes, occurrences
-from .codecs import Key, decode_key, encode_key
+from .codecs import Key, canonical_json, decode_key, encode_key
 from .errors import NotFound, QueryError, StorageError
 from .models import Model
+from .records import walk_values
 from .registry import ModelSpec
-from .storage import Path
+from .storage import Path, _collation
 
 if TYPE_CHECKING:
     from .repository import Database
 
 MAX_PREDICATES = 8
+
+
+@dataclass(frozen=True)
+class RootPage[M: Model]:
+    """A bounded root page; cursor resumes after its last fully checked position."""
+
+    records: tuple[M, ...] = field(repr=False)
+    cursor: str | None = field(repr=False)
 
 
 @dataclass(frozen=True)
@@ -145,3 +155,92 @@ def roots(
             if len(result) == limit:
                 break
     return result
+
+
+def _root_scope(spec: ModelSpec, anchor: Predicate, predicates: tuple[Predicate, ...]) -> str:
+    assert anchor.selection is not None
+    terms = [
+        [
+            term.name,
+            index_scans.identity(spec, term.selection)
+            if term.selection is not None
+            else indexes.normalized(term.value).hex(),
+        ]
+        for term in sorted(predicates, key=lambda term: term.name)
+    ]
+    data = ["ordered-roots-v1", index_scans.identity(spec, anchor.selection), terms]
+    return hashlib.sha256(canonical_json(data)).hexdigest()
+
+
+def _representative(
+    tx: "Database", spec: ModelSpec, selection: index_scans.Selection, key: bytes, record: Model
+) -> Path:
+    matches = (
+        (field, path, value)
+        for field, path, value in walk_values(spec.fields, record)
+        if field is selection.definition.field and selection.accepts(value)
+    )
+    entries = indexes.entries_at(spec, spec.path(decode_key(key)), matches)
+    if not entries:
+        raise StorageError("Ordered root has no authoritative matching occurrence")
+    choose = max if selection.direction == "desc" else min
+    first = choose(
+        entries,
+        key=lambda entry: (_collation(entry.path.subscripts[-3]), entry.path.subscripts[-1]),
+    )
+    if tx.store.get(first.path) != first.location or tx.store.children(first.path, limit=1):
+        raise StorageError("Canonical ordered root occurrence is missing or corrupt")
+    indexes.validate_claim(tx.store, first)
+    return first.path
+
+
+def ordered_page(
+    tx: "Database",
+    spec: ModelSpec,
+    anchor: Predicate,
+    predicates: tuple[Predicate, ...],
+    *,
+    limit: int,
+    after: str | None,
+    strict: bool = False,
+) -> RootPage[Model]:
+    spec = tx._check_schema(spec)
+    assert anchor.selection is not None and anchor.definition is not None
+    selection, budget = anchor.selection, index_scans.Budget()
+    scope = _root_scope(spec, anchor, predicates)
+    result, seen, cursor = [], set(), None
+    try:
+        for value, path in index_scans.entries(
+            tx.store, spec, selection, after=after, budget=budget, scope=scope
+        ):
+            occurrences.read_indexed(tx, spec, anchor.definition, indexes.normalized(value), path)
+            if path.subscripts[-2] not in seen:
+                record = _ordered_record(tx, spec, anchor, predicates, budget, value, path)
+                seen.add(path.subscripts[-2])
+                if record is not None:
+                    result.append(record)
+            cursor = index_scans.encode_cursor(scope, path.subscripts[-3], path)
+            if len(result) == limit:
+                return RootPage(tuple(result), cursor)
+    except index_scans.VisitLimit:
+        if strict or cursor is None:
+            raise
+        return RootPage(tuple(result), cursor)
+    return RootPage(tuple(result), None)
+
+
+def _ordered_record(
+    tx: "Database",
+    spec: ModelSpec,
+    anchor: Predicate,
+    predicates: tuple[Predicate, ...],
+    budget: index_scans.Budget,
+    value: Any,
+    path: Path,
+) -> Model | None:
+    encoded = path.subscripts[-2]
+    record = _record(tx, spec, encoded, predicates, budget, anchor=anchor, anchor_value=value)
+    assert anchor.selection is not None
+    if record is None or _representative(tx, spec, anchor.selection, encoded, record) != path:
+        return None
+    return record

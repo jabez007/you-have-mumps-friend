@@ -2,7 +2,7 @@
 
 **Architectural specification: v0.5**
 
-**Date:** November 6, 2026
+**Date:** November 7, 2026
 
 **Status:** Implemented through v0.5 with the limitations below
 
@@ -268,7 +268,7 @@ Creating, modifying, or deleting an indexed value must update the index in the s
 Unique constraints must explicitly define null handling, key normalization, and contention behavior.
 
 The query API supports direct keys, bounded hierarchical traversal, indexed equality,
-ordered range/prefix/ascending reads, explicit bounded scans, and query explanation:
+ordered range/prefix/directional reads, bounded root pages, explicit scans, and query explanation:
 
 ```python illustrative
 query = db.query(Warehouse).where(**{"bins.lots.product": Reference[Product](key="P42")})
@@ -279,9 +279,12 @@ A missing index must not silently cause an unbounded database scan. Applications
 
 Ordered walks seek value subscripts directly, then root keys and concrete locations,
 with 1000 combined value/occurrence visits per call. Occurrence cursors are scoped to
-the installed schema and selection. Ordered root reads deduplicate roots within the
-bounded result; continuation uses concrete occurrences to avoid an unbounded root
-deduplication history. Equality cursors retain their existing formats and semantics. Up to eight declared
+the installed schema, selection, and direction. Ordered root pages emit each root at
+its canonical first matching occurrence, computed from its bounded aggregate. Their
+query-scoped cursor advances past fully checked positions; empty progress pages
+preserve the visit bound without unbounded deduplication history. all() retains strict
+budget failure. Exactly-once pagination requires stable data across calls. Typed
+field selectors feed the same planner. Equality cursors retain their formats. Up to eight declared
 predicates use a candidate index and bounded witness probes under one shared visit
 budget. Explain reports each predicate. Owned predicates match independently under
 a root; combined occurrence projection is rejected rather than implying a join.
@@ -289,8 +292,10 @@ a root; combined occurrence projection is rejected rather than implying a join.
 Joins, full-text search, complex aggregates, and arbitrary SQL compatibility remain outside the initial scope.
 
 Plain M writers use a schema-bound generated routine for the explicitly supported
-flat ASCII str/int subset. It owns TP, verifies exact metadata, and maintains normal
-equality/unique identities. Unsupported validation/ownership contracts fail at export;
+flat ASCII str/int/Decimal and reference subset. It owns TP or participates in a
+caller TP, verifies exact metadata, and maintains equality/unique and reverse-reference
+identities. New exports validate maintenance scope. Participant failures abort the
+whole caller transaction. Unsupported validation/ownership contracts fail at export;
 raw SET/KILL remain outside mapper guarantees. See [ADR 0013](adr/0013-explicit-m-writer-contract.md).
 
 Foreign layouts can be read through explicit GlobalView/MappedField projections.
@@ -303,10 +308,10 @@ journal with an explicitly absent source schema and bounded validate/build/verif
 passes. Only final activation publishes installed metadata; early abort restores
 absence. No managed data format is fabricated for foreign globals.
 
-Root Decimal fields may declare a bounded owned sum. A shared secondary transition
-combines validated quantity deltas per root and maintains the total and normal index
+Root or owned Decimal fields may declare a bounded owned sum. A shared secondary transition
+combines validated quantity deltas per concrete target path and maintains totals and normal index
 entries in one TP, without sibling reads. Root/ancestor custom validation, arbitrary
-compute callbacks, reference dependencies, and owned stored sums are rejected initially.
+compute callbacks, reference dependencies, and sums of derived sums are rejected.
 Whole writes derive totals; complete owner reads verify them. Source numeric domains
 and decimal-sum-v1 dependencies are explicit schema contracts. The shared total is
 an intentional contention point. See [ADR 0015](adr/0015-root-owned-stored-sums.md).
@@ -478,7 +483,7 @@ direct node assignment is reported separately as a lower bound. See
 [inventory measurements](inventory-performance.md). Missing-index diagnostics list
 usable equality paths. Indexed aggregate reads still materialize matching roots.
 Unreleased extensions add bounded occurrence projections, indexed predicate
-intersections, ordered reads, named transforms, resumable adoption, and root-owned
+intersections, directional root pages, named transforms, resumable adoption, and root/owned
 stored sums. Optimistic revisions and general compute callbacks remain deferred;
 see the [current limitations](known-limitations.md) for the implemented boundaries.
 

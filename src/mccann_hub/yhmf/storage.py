@@ -76,6 +76,15 @@ class Store(Protocol):
     def atomic[T](self, callback: Callable[[], T]) -> T: ...
 
 
+def child_page(
+    store: Store, path: Path, *, limit: int, after: bytes = b"", reverse: bool = False
+) -> tuple[bytes, ...]:
+    """Keep forward runtime calls compatible with stores predating reverse traversal."""
+    if reverse:
+        return store.children(path, limit=limit, after=after, reverse=True)
+    return store.children(path, limit=limit, after=after)
+
+
 def _check_value(value: bytes) -> None:
     if not isinstance(value, bytes) or len(value) > MAX_VALUE_BYTES:
         raise StorageError("Node values must be bytes of length at most 32766")
