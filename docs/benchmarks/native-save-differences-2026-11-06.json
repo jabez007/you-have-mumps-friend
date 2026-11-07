@@ -1,0 +1,1065 @@
+{
+  "ci_run": 42324141174,
+  "runs": [
+    {
+      "source_commit": "97439a87de2efd87996a2f69789de4fa09325154",
+      "cpu_model": "AMD EPYC 7763 64-Core Processor",
+      "platform": "Linux-6.8.0-1070-azure-x86_64-with-glibc2.35",
+      "python": "3.12.12",
+      "pydantic": "2.14.3",
+      "yottadb": "pywr v0.10.0 YottaDB r2.02 Linux x86_64",
+      "journaling": false,
+      "aggregate_save": "physical_node_difference",
+      "warmup_iterations": 5,
+      "rows": [
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 587.38,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 18.0,
+            "get": 60.0,
+            "set": 1.0
+          },
+          "p95_us": 609.09,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 1456.49,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 45.0,
+            "get": 141.0,
+            "set": 1.0
+          },
+          "p95_us": 1641.93,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 10160.2,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 315.0,
+            "get": 951.0,
+            "set": 1.0
+          },
+          "p95_us": 10418.94,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 96014.92,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 3015.0,
+            "get": 9051.0,
+            "set": 1.0
+          },
+          "p95_us": 104002.65,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 948.48,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 20.0,
+            "delete_tree": 1.0,
+            "get": 81.0,
+            "set": 2.0
+          },
+          "p95_us": 961.37,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 3981.22,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 65.0,
+            "delete_tree": 1.0,
+            "get": 261.0,
+            "set": 2.0
+          },
+          "p95_us": 4133.65,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 33490.43,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 515.0,
+            "delete_tree": 1.0,
+            "get": 2061.0,
+            "set": 2.0
+          },
+          "p95_us": 40673.85,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 340158.05,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 5015.0,
+            "delete_tree": 1.0,
+            "get": 20061.0,
+            "set": 2.0
+          },
+          "p95_us": 345438.25,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 974.13,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 20.0,
+            "delete_tree": 2.0,
+            "get": 82.0,
+            "set": 3.0
+          },
+          "p95_us": 993.6,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 4008.01,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 65.0,
+            "delete_tree": 2.0,
+            "get": 262.0,
+            "set": 3.0
+          },
+          "p95_us": 4086.01,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 33594.24,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 515.0,
+            "delete_tree": 2.0,
+            "get": 2062.0,
+            "set": 3.0
+          },
+          "p95_us": 40679.64,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 339931.83,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 5015.0,
+            "delete_tree": 2.0,
+            "get": 20062.0,
+            "set": 3.0
+          },
+          "p95_us": 346812.29,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 1001.09,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 22.0,
+            "delete_tree": 2.0,
+            "get": 84.0,
+            "set": 5.0
+          },
+          "p95_us": 1043.97,
+          "workload": "reference"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 4064.01,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 67.0,
+            "delete_tree": 2.0,
+            "get": 268.5,
+            "set": 5.0
+          },
+          "p95_us": 4186.87,
+          "workload": "reference"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 33747.12,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 517.0,
+            "delete_tree": 2.0,
+            "get": 2068.5,
+            "set": 5.0
+          },
+          "p95_us": 40687.42,
+          "workload": "reference"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 339343.0,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 5017.0,
+            "delete_tree": 2.0,
+            "get": 20068.5,
+            "set": 5.0
+          },
+          "p95_us": 345831.96,
+          "workload": "reference"
+        }
+      ]
+    },
+    {
+      "source_commit": "97439a87de2efd87996a2f69789de4fa09325154",
+      "cpu_model": "AMD EPYC 7763 64-Core Processor",
+      "platform": "Linux-6.8.0-1070-azure-x86_64-with-glibc2.35",
+      "python": "3.12.12",
+      "pydantic": "2.14.3",
+      "yottadb": "pywr v0.10.0 YottaDB r2.02 Linux x86_64",
+      "journaling": true,
+      "aggregate_save": "physical_node_difference",
+      "warmup_iterations": 5,
+      "rows": [
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 860.88,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 18.0,
+            "get": 60.0,
+            "set": 1.0
+          },
+          "p95_us": 999.48,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 1739.71,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 45.0,
+            "get": 141.0,
+            "set": 1.0
+          },
+          "p95_us": 1945.64,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 10433.71,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 315.0,
+            "get": 951.0,
+            "set": 1.0
+          },
+          "p95_us": 10767.37,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 96237.11,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 3015.0,
+            "get": 9051.0,
+            "set": 1.0
+          },
+          "p95_us": 104500.79,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 1278.3,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 20.0,
+            "delete_tree": 1.0,
+            "get": 81.0,
+            "set": 2.0
+          },
+          "p95_us": 1942.11,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 4382.1,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 65.0,
+            "delete_tree": 1.0,
+            "get": 261.0,
+            "set": 2.0
+          },
+          "p95_us": 4575.85,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 33985.5,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 515.0,
+            "delete_tree": 1.0,
+            "get": 2061.0,
+            "set": 2.0
+          },
+          "p95_us": 41471.34,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 341716.24,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 5015.0,
+            "delete_tree": 1.0,
+            "get": 20061.0,
+            "set": 2.0
+          },
+          "p95_us": 348662.45,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 1330.0,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 20.0,
+            "delete_tree": 2.0,
+            "get": 82.0,
+            "set": 3.0
+          },
+          "p95_us": 1525.36,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 4362.1,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 65.0,
+            "delete_tree": 2.0,
+            "get": 262.0,
+            "set": 3.0
+          },
+          "p95_us": 4779.59,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 34047.08,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 515.0,
+            "delete_tree": 2.0,
+            "get": 2062.0,
+            "set": 3.0
+          },
+          "p95_us": 41069.22,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 341350.12,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 5015.0,
+            "delete_tree": 2.0,
+            "get": 20062.0,
+            "set": 3.0
+          },
+          "p95_us": 348724.05,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 1345.38,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 22.0,
+            "delete_tree": 2.0,
+            "get": 84.0,
+            "set": 5.0
+          },
+          "p95_us": 1547.66,
+          "workload": "reference"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 4520.84,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 67.0,
+            "delete_tree": 2.0,
+            "get": 268.5,
+            "set": 5.0
+          },
+          "p95_us": 4934.68,
+          "workload": "reference"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 34186.73,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 517.0,
+            "delete_tree": 2.0,
+            "get": 2068.5,
+            "set": 5.0
+          },
+          "p95_us": 41329.03,
+          "workload": "reference"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 340421.59,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 5017.0,
+            "delete_tree": 2.0,
+            "get": 20068.5,
+            "set": 5.0
+          },
+          "p95_us": 353565.69,
+          "workload": "reference"
+        }
+      ]
+    },
+    {
+      "source_commit": "97439a87de2efd87996a2f69789de4fa09325154",
+      "cpu_model": "AMD EPYC 7763 64-Core Processor",
+      "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+      "python": "3.12.3",
+      "pydantic": "2.14.3",
+      "yottadb": "pywr v0.10.0 YottaDB r2.06 Linux x86_64",
+      "journaling": false,
+      "aggregate_save": "physical_node_difference",
+      "warmup_iterations": 5,
+      "rows": [
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 687.13,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 18.0,
+            "get": 60.0,
+            "set": 1.0
+          },
+          "p95_us": 722.54,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 1689.74,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 45.0,
+            "get": 141.0,
+            "set": 1.0
+          },
+          "p95_us": 1718.14,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 11764.06,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 315.0,
+            "get": 951.0,
+            "set": 1.0
+          },
+          "p95_us": 11924.02,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 110840.21,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 3015.0,
+            "get": 9051.0,
+            "set": 1.0
+          },
+          "p95_us": 118408.16,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 1130.0,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 20.0,
+            "delete_tree": 1.0,
+            "get": 81.0,
+            "set": 2.0
+          },
+          "p95_us": 1249.29,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 4808.97,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 65.0,
+            "delete_tree": 1.0,
+            "get": 261.0,
+            "set": 2.0
+          },
+          "p95_us": 4869.73,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 40622.68,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 515.0,
+            "delete_tree": 1.0,
+            "get": 2061.0,
+            "set": 2.0
+          },
+          "p95_us": 47966.81,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 409115.06,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 5015.0,
+            "delete_tree": 1.0,
+            "get": 20061.0,
+            "set": 2.0
+          },
+          "p95_us": 415378.94,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 1144.46,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 20.0,
+            "delete_tree": 2.0,
+            "get": 82.0,
+            "set": 3.0
+          },
+          "p95_us": 1177.69,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 4799.86,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 65.0,
+            "delete_tree": 2.0,
+            "get": 262.0,
+            "set": 3.0
+          },
+          "p95_us": 4890.6,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 40898.44,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 515.0,
+            "delete_tree": 2.0,
+            "get": 2062.0,
+            "set": 3.0
+          },
+          "p95_us": 48735.55,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 411854.47,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 5015.0,
+            "delete_tree": 2.0,
+            "get": 20062.0,
+            "set": 3.0
+          },
+          "p95_us": 421819.98,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 1176.88,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 22.0,
+            "delete_tree": 2.0,
+            "get": 84.0,
+            "set": 5.0
+          },
+          "p95_us": 1270.79,
+          "workload": "reference"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 4872.31,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 67.0,
+            "delete_tree": 2.0,
+            "get": 268.5,
+            "set": 5.0
+          },
+          "p95_us": 4929.16,
+          "workload": "reference"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 40899.06,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 517.0,
+            "delete_tree": 2.0,
+            "get": 2068.5,
+            "set": 5.0
+          },
+          "p95_us": 48155.58,
+          "workload": "reference"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 410239.04,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 5017.0,
+            "delete_tree": 2.0,
+            "get": 20068.5,
+            "set": 5.0
+          },
+          "p95_us": 418326.64,
+          "workload": "reference"
+        }
+      ]
+    },
+    {
+      "source_commit": "97439a87de2efd87996a2f69789de4fa09325154",
+      "cpu_model": "AMD EPYC 7763 64-Core Processor",
+      "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+      "python": "3.12.3",
+      "pydantic": "2.14.3",
+      "yottadb": "pywr v0.10.0 YottaDB r2.06 Linux x86_64",
+      "journaling": true,
+      "aggregate_save": "physical_node_difference",
+      "warmup_iterations": 5,
+      "rows": [
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 983.97,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 18.0,
+            "get": 60.0,
+            "set": 1.0
+          },
+          "p95_us": 1139.93,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 2017.51,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 45.0,
+            "get": 141.0,
+            "set": 1.0
+          },
+          "p95_us": 2210.42,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 12082.82,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 315.0,
+            "get": 951.0,
+            "set": 1.0
+          },
+          "p95_us": 12312.91,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 111683.78,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 3015.0,
+            "get": 9051.0,
+            "set": 1.0
+          },
+          "p95_us": 118740.12,
+          "workload": "unindexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 1430.42,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 20.0,
+            "delete_tree": 1.0,
+            "get": 81.0,
+            "set": 2.0
+          },
+          "p95_us": 1603.05,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 5191.49,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 65.0,
+            "delete_tree": 1.0,
+            "get": 261.0,
+            "set": 2.0
+          },
+          "p95_us": 6794.18,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 41501.21,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 515.0,
+            "delete_tree": 1.0,
+            "get": 2061.0,
+            "set": 2.0
+          },
+          "p95_us": 47664.28,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 409830.94,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 5015.0,
+            "delete_tree": 1.0,
+            "get": 20061.0,
+            "set": 2.0
+          },
+          "p95_us": 416034.12,
+          "workload": "indexed"
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 1472.09,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 20.0,
+            "delete_tree": 2.0,
+            "get": 82.0,
+            "set": 3.0
+          },
+          "p95_us": 1843.44,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 5193.72,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 65.0,
+            "delete_tree": 2.0,
+            "get": 262.0,
+            "set": 3.0
+          },
+          "p95_us": 5397.78,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 41456.47,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 515.0,
+            "delete_tree": 2.0,
+            "get": 2062.0,
+            "set": 3.0
+          },
+          "p95_us": 47508.86,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 411420.06,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 5015.0,
+            "delete_tree": 2.0,
+            "get": 20062.0,
+            "set": 3.0
+          },
+          "p95_us": 422645.33,
+          "workload": "unique"
+        },
+        {
+          "iterations": 40,
+          "lots": 1,
+          "median_us": 1525.41,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 22.0,
+            "delete_tree": 2.0,
+            "get": 84.0,
+            "set": 5.0
+          },
+          "p95_us": 1819.97,
+          "workload": "reference"
+        },
+        {
+          "iterations": 40,
+          "lots": 10,
+          "median_us": 5360.14,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 67.0,
+            "delete_tree": 2.0,
+            "get": 268.5,
+            "set": 5.0
+          },
+          "p95_us": 5715.92,
+          "workload": "reference"
+        },
+        {
+          "iterations": 40,
+          "lots": 100,
+          "median_us": 41590.56,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 517.0,
+            "delete_tree": 2.0,
+            "get": 2068.5,
+            "set": 5.0
+          },
+          "p95_us": 48990.26,
+          "workload": "reference"
+        },
+        {
+          "iterations": 40,
+          "lots": 1000,
+          "median_us": 410936.03,
+          "method": "replace",
+          "operations_per_iteration": {
+            "atomic": 1.0,
+            "attempts": 1.0,
+            "children": 5017.0,
+            "delete_tree": 2.0,
+            "get": 20068.5,
+            "set": 5.0
+          },
+          "p95_us": 418930.53,
+          "workload": "reference"
+        }
+      ]
+    }
+  ]
+}

@@ -1,5 +1,35 @@
 # Native mutation benchmark qualification
 
+## Development-branch save differences
+
+[CI run 42324141174](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42324141174),
+commit 97439a87de2efd87996a2f69789de4fa09325154, ran the full native suite and
+benchmarks on both engines with journaling off and before-image journaling on.
+[Extracted replacement rows](benchmarks/native-save-differences-2026-11-06.json)
+include the runner, runtime, engine, mode, and adapter operation counts.
+
+At 1,000 unindexed lots, whole-aggregate read/change/save used **one set and no tree
+deletion** per measured change. It still used 9,051 gets and 3,015 child enumerations.
+The replacement path now audits physical nodes so raw extras cannot survive a save.
+This retains bounded replacement semantics at additional read/traversal cost.
+
+| Engine | Journaling | Median ms | P95 ms |
+| --- | --- | ---: | ---: |
+| r2.02 | Off | 96.01 | 104.00 |
+| r2.02 | Before-image on | 96.24 | 104.50 |
+| r2.06 | Off | 110.84 | 118.41 |
+| r2.06 | Before-image on | 111.68 | 118.74 |
+
+Each row has five warmups and 40 samples, with no concurrent writers. The counter
+wrapper is included; counters measure API calls, not engine blocks or disk writes.
+The mode order was fixed, and the engine versions used different runners. These
+numbers demonstrate reduced writes, not a replacement-latency improvement or an
+isolated estimate of journaling cost. Historical results below used earlier code
+and environments. A more efficient physical traversal is a measured optimization
+candidate; targeted patch remains preferable when a full aggregate is unnecessary.
+
+## Historical full-rewrite measurements
+
 The historical rows below used full tree deletion and rewrite for save. The
 development branch now applies physical node differences after a bounded audit;
 new benchmark output identifies aggregate_save as physical_node_difference. Older
