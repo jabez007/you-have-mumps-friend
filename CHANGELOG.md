@@ -4,6 +4,11 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Binds descending range cursors to both bounds and their inclusivity. Earlier
+  descending range cursors must restart from the first page. Ascending, descending
+  ordered, and prefix cursor identities remain unchanged. Schema and record bytes
+  are unaffected.
+
 - Revalidates generated M status failures on YottaDB's stable TP attempt, preventing
   false corruption reports after valid concurrent deletions. Participants may restart
   the caller's entire transaction before returning a failure status.

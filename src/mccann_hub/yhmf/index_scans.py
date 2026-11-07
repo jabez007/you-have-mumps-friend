@@ -127,6 +127,13 @@ def identity(spec: ModelSpec, selection: Selection) -> str:
     ]
     if selection.direction == "desc":
         data.append("desc")
+        if selection.kind == "range":
+            data.extend(
+                [
+                    None if selection.lower is None else ordered.value_key(selection.lower).hex(),
+                    selection.include_lower,
+                ]
+            )
     return hashlib.sha256(canonical_json(data)).hexdigest()
 
 

@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
+import json
 from datetime import UTC, date, datetime
 from decimal import Decimal
+from pathlib import Path
 from typing import Literal
 
 import pytest
@@ -78,3 +80,64 @@ def test_descending_cursor_survives_deleted_value_group(store):
     first = selected.occurrences(limit=1)[0]
     db.delete(Row, 2)
     assert [hit.root_key for hit in selected.occurrences(after=first.cursor)] == [1]
+
+
+@pytest.mark.parametrize("projection", ["root", "occurrence"])
+@pytest.mark.parametrize("lower", [{"ge": Decimal(1)}, {"gt": Decimal(0)}, {}])
+def test_descending_range_cursors_bind_lower_value_inclusivity_and_absence(
+    store, projection, lower
+):
+    db = Database(store, Registry(Row))
+    for key in range(1, 5):
+        db.insert(Row(id=key, amount=Decimal(key)))
+    original = db.query(Row).range("amount", ge=Decimal(0), le=Decimal(5))
+    original = original.order_by("amount", direction="desc")
+    changed = db.query(Row).range("amount", **lower, le=Decimal(5))
+    changed = changed.order_by("amount", direction="desc")
+    if projection == "root":
+        cursor = original.page(limit=1).cursor
+        assert [r.id for r in original.page(after=cursor).records] == [3, 2, 1]
+        with pytest.raises(QueryError, match="cursor"):
+            changed.page(after=cursor)
+    else:
+        cursor = original.occurrences(limit=1)[0].cursor
+        assert [r.root_key for r in original.occurrences(after=cursor)] == [3, 2, 1]
+        with pytest.raises(QueryError, match="cursor"):
+            changed.occurrences(after=cursor)
+
+
+def test_legacy_range_tokens_are_rejected_and_other_cursor_bytes_remain_compatible(store):
+    db = Database(store, Registry(Row))
+    for key in range(1, 5):
+        db.insert(Row(id=key, amount=Decimal(key), name=f"name-{key}"))
+    fixture = json.loads(
+        Path(__file__)
+        .with_name("fixtures")
+        .joinpath("ordered-cursors-before-lower-bound-fix.json")
+        .read_text()
+    )
+    queries = {
+        "ascending_range": db.query(Row).range("amount", ge=Decimal(0), le=Decimal(5)),
+        "descending_range": db.query(Row)
+        .range("amount", ge=Decimal(0), le=Decimal(5))
+        .order_by("amount", direction="desc"),
+        "descending_unbounded_lower_range": db.query(Row)
+        .range("amount", le=Decimal(5))
+        .order_by("amount", direction="desc"),
+        "descending_ordered": db.query(Row).order_by("amount", direction="desc"),
+        "descending_prefix": db.query(Row)
+        .prefix("name", "name")
+        .order_by("name", direction="desc"),
+    }
+    for name, query in queries.items():
+        saved = fixture[name]
+        if name in ("descending_range", "descending_unbounded_lower_range"):
+            with pytest.raises(QueryError, match="cursor"):
+                query.page(after=saved["root"])
+            with pytest.raises(QueryError, match="cursor"):
+                query.occurrences(after=saved["occurrence"])
+        else:
+            assert query.page(limit=1).cursor == saved["root"]
+            assert query.occurrences(limit=1)[0].cursor == saved["occurrence"]
+            assert len(query.page(after=saved["root"]).records) == 3
+            assert len(query.occurrences(after=saved["occurrence"])) == 3

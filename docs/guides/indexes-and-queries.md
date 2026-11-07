@@ -162,6 +162,12 @@ are rejected. Store.children(reverse=True) uses YDBPython's
 through the existing native transaction/error wrapper. Custom stores must implement
 the optional reverse keyword to support descending plans.
 
+Descending range cursors bind both bounds and their inclusivity, including an absent
+lower bound. The fix for issue 52 invalidates earlier descending range cursors once;
+restart those queries from their first page. Ascending, descending ordered, and
+prefix cursor identities remain compatible. Installed schema and record data do not
+require migration.
+
 ```python
 ordered_prices = prices.query(PricePoint).order_by("price", direction="desc")
 cursor = None

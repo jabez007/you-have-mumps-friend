@@ -96,9 +96,6 @@ deferred uniqueness is not supported. See [the example](guides/indexes-and-queri
   distinct values, because each value costs two of the 1,000 index visits. Keep the
   limit at 500 or less, or use `page()` and follow its cursor.
   [#51](https://github.com/jabez007/you-have-mumps-friend/issues/51)
-- A descending ordered cursor is accepted by a query with a different lower bound.
-  Results stay inside the receiving query's range. Pass each cursor only to the query
-  that produced it. [#52](https://github.com/jabez007/you-have-mumps-friend/issues/52)
 
 ## Missing features
 

@@ -1434,3 +1434,19 @@ reference exports must remain byte-for-byte identical through this extraction.
 Before reference support, share schema constants and M schema/record-metadata checks
 without changing their validation or stored bytes. This keeps source and referenced
 target bindings on the same implementation, including exact legacy snapshots.
+
+### Bind descending range cursors to both bounds, issue 52
+
+Reuse Selection, index_scans.identity, decode_cursor, and the root query scope built
+from that identity. The descending start position contains the upper bound, leaving
+the lower bound outside the existing scope. Extend only descending range identities
+with the lower value and inclusivity, including an absent lower value. This rejects
+all ambiguous legacy descending range tokens. Ascending, descending ordered, and
+descending prefix identities remain byte-compatible. Stored schemas and records do
+not change. Document the one-time cursor invalidation.
+
+Capture old public cursor tokens before the fix, then test root and occurrence
+projections against changed lower values, inclusivity, and unbounded selections.
+The committed fixture also protects unaffected cursor bytes. Both storage adapters
+exercise the same tests. The configured C901 check passes at ten before this change;
+no threshold changes or unrelated cleanup are needed.
