@@ -84,7 +84,8 @@ metadata nodes:
 
 ## What works today
 
-This table includes unreleased changes on main. See [the changelog](CHANGELOG.md)
+This table includes unreleased changes on main. See
+[the changelog](https://github.com/jabez007/you-have-mumps-friend/blob/main/CHANGELOG.md)
 for release boundaries.
 
 | Area | Works today | Not yet |
