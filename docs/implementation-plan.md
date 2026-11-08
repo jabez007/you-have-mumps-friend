@@ -1951,3 +1951,17 @@ current pin and application version from the owned consumer manifest, then expli
 binds the historical artifact to 0.4.0. Both regression cases and a complete isolated
 0.4.0-to-current exercise pass. This makes future candidate selection repeatable
 without silently retaining a stale requirement; it adds no framework API or dependency.
+
+Final selected source 2579e6a passed manual candidate run 42532447268, including
+both engines and journal modes, installed source/wheel smoke, real independent fresh
+and 0.4.0 upgrade databases, and generated M. Each full native configuration passed
+2,766 tests with 456 intentional skips; native stress passed 25 with four skips;
+offline passed 1,269 and each Pydantic boundary suite passed 839. The final evidence
+job promoted the exact clean-source manifest to passed. Downloaded artifacts in
+ignored dist/qualified-2579 passed hashes/content checks, repeated local isolated
+installs, consumer exercises and standard pip. Local repeated builds with a fixed
+epoch were byte-identical within that environment. Lower-bound Pydantic 2.12.0
+consumer fresh/upgrade cases passed separately. No local privileged engine, restore,
+power-loss or replication qualification is claimed. The report-only commit records
+these results; it does not replace or relabel the qualified source/artifacts. No
+release, tag, public consumer repository or PyPI publication was created.

@@ -74,6 +74,7 @@ New here? Start with [get started](getting-started.md), then read
 - [Native performance](performance.md) and
   [inventory performance](inventory-performance.md)
 - [Benchmark data](benchmarks/)
+- [Independent evaluation report](releases/independent-evaluation.md)
 - [0.5.0 delivery report](releases/0.5.0.md)
 - [Implementation plan](implementation-plan.md): a historical log of the 0.3.1 to 0.5
   work.
