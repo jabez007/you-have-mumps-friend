@@ -551,13 +551,17 @@ Before finalizing the public API, several questions need focused prototypes:
 2. How should numeric and string keys be encoded while preserving native collation?
 3. How are explicit null values, empty children, and presence markers represented?
 4. What transaction API is safest with automatic restarts?
-5. Should indexes be managed exclusively by the mapper, or can YottaDB triggers/AIM safely contribute?
+5. Trigger use is resolved by [ADR 0013](adr/0013-explicit-m-writer-contract.md):
+   the mapper and its generated M routines maintain every index, and the framework
+   installs no triggers. YottaDB AIM has not been evaluated.
 6. Which YottaDB, Python, and Linux versions will CI officially support?
 7. What additional metadata would a native Go implementation need?
 8. Licensing guidance is resolved by [#35](https://github.com/jabez007/you-have-mumps-friend/issues/35):
    publish component license facts and no guidance on downstream deployments.
-9. What should a per-model maintenance gate do at its edges, such as references and
-   multi-model transactions? See [#21](https://github.com/jabez007/you-have-mumps-friend/issues/21).
+9. Per-model maintenance edges are resolved by [ADR 0009](adr/0009-model-scoped-maintenance.md)
+   and [#21](https://github.com/jabez007/you-have-mumps-friend/issues/21): reference
+   checks and multi-model callbacks that need a model under maintenance roll back, and
+   only one maintenance job runs at a time.
 10. Record-value choice is resolved by [ADR 0012](adr/0012-retain-tagged-record-values.md):
     retain tagged records and version ordered indexes independently. Qualify those
     index codecs and bounded query APIs under [#15](https://github.com/jabez007/you-have-mumps-friend/issues/15).
