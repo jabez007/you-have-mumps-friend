@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Adds bounded populated M root/subtree deletion with existing index/reference
+  cleanup and one net stored-total delta per retained ancestor. Retained minimums
+  and root reference restrictions still apply; failures/restarts restore all stages.
+
 - Qualifies M nullable embedded objects with explicit typed nulls and transactional
   object/subtree transitions. Variable record budgets count actual presence, keeping
   fixed-layout fast paths and avoiding both hidden nodes and false capacity failures.

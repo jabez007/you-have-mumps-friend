@@ -40,7 +40,7 @@ def test_empty_nonleaf_insert_and_delete_match_python(
 
 
 @pytest.mark.native
-def test_populated_nonleaf_delete_remains_unsupported_without_writes(store, owned_writer):
+def test_populated_nonleaf_delete_cleans_indexes_references_and_counts(store, owned_writer):
     db, run, _, _ = owned_writer
     db.insert_child(
         Warehouse,
@@ -54,10 +54,14 @@ def test_populated_nonleaf_delete_remains_unsupported_without_writes(store, owne
         ),
     )
     roots = test_m_owned_writers.namespaces()
-    before = dump(store, roots)
-    assert run("emptydelete", {"_scope": "bin", "id": "B1"}) == "operation"
-    assert run("emptydelete", {"_scope": "location", "id": "DOCK"}) == "operation"
-    assert dump(store, roots) == before
+    expected_store = MemoryStore()
+    for path, value in dump(store, roots).items():
+        expected_store.set(path, value)
+    expected = Database(expected_store, Registry(*MODELS))
+    assert run("emptydelete", {"_scope": "bin", "id": "B1"}) == "ok"
+    expected.delete_child(Warehouse, "MAIN", at=("locations", "DOCK", "bins", "B1"))
+    assert dump(store, roots) == dump(expected_store, roots)
+    assert db.check_indexes(Warehouse).issues == ()
 
 
 @pytest.mark.native

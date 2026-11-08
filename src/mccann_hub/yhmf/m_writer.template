@@ -1,5 +1,5 @@
  ; SPDX-License-Identifier: GPL-3.0-or-later
- ; Schema-bound record/owner mutations; qualified scalar inputs only.
+ ; Schema-bound record/owner mutations; qualified declarations only.
  quit
 insert(input)
  quit $$write("insert",.input)
@@ -23,7 +23,7 @@ participate(operation,input)
  set $etrap="if $tlevel trollback"
  set status=$$prepare(operation,.input,.cfg,.values,.key)
  if status'="ok" do stableabort quit status
- set status=$$attempt(operation,key,.values,.cfg)
+ set status=$$apply(operation,key,.values,.cfg)
  if status'="ok" do stableabort
  quit status
 write(operation,input)
@@ -34,10 +34,18 @@ write(operation,input)
  if status'="ok" quit status
  tstart ():serial
  ; All database-derived state is recreated inside attempt after a restart.
- set status=$$attempt(operation,key,.values,.cfg)
+ set status=$$apply(operation,key,.values,.cfg)
  if status'="ok" do stableabort quit status
  tcommit
  quit "ok"
+apply(operation,key,values,cfg)
+ new parts,rootcfg,status
+ if operation="delete",$data(cfg("deletecfg")) do  quit status
+ . merge rootcfg=cfg("deletecfg")
+ . set parts(0)=key
+ . set status=$$hdelete(values(cfg("key")),.parts,"",.rootcfg)
+ quit $$attempt(operation,key,.values,.cfg)
+
 stableabort
  ; Like NativeStore, expose data-dependent failures only from a stable retry.
  if '$tlevel quit
@@ -54,6 +62,7 @@ prepare(operation,input,cfg,values,key)
  . do hconfig(.rootcfg,"",.parts,.cfg)
  . set cfg("dataOverhead")=rootcfg("dataOverhead")
  . kill cfg("recordkey")
+ . if operation="delete",$get(rootcfg("collections")) merge cfg("deletecfg")=rootcfg
  quit $$preflight(operation,.input,.cfg,.values,.key)
 preflight(operation,input,cfg,values,key)
  new status
@@ -281,6 +290,7 @@ scalar(value,field,cfg)
 @SHA256@
 @HIERARCHY@
 @EMBEDDED@
+@TREEDELETE@
 @MAINTENANCE@
 config(cfg)
 @CONFIG@

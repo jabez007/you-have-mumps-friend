@@ -1728,3 +1728,22 @@ deletion will use to apply a retained ancestor's net delta once, rather than exp
 intermediate totals or duplicate the sum/index algorithm. Commit this refactor before
 delete behavior changes. Existing exact-total, unique rollback, and restart cases
 cover it; configured C901 stays at ten.
+
+### Delete populated M subtrees with net ancestor totals, issue 53
+
+Reuse hresolve/hcapacity, old/attempt, embedded cleanup, index/reference transitions,
+and happly. A bounded postorder traversal validates each removed owner, accumulates
+source deltas for retained ancestors, and removes owners with the same delete path.
+Apply each retained ancestor's net delta once after traversal. Sums inside the removed
+subtree keep their original claims until their owner is deleted; they need no transient
+recomputation. This avoids invalid intermediate totals and unique claims.
+
+Check retained parent minimums and root incoming restrictions before writes. Relax
+collection minimums only inside the subtree being removed, and suppress per-leaf sum
+updates during that transaction. Keep original schema bindings and validation rules.
+Validate concrete stored keys and observed child counts, bound traversal by the selected
+subtree's 10,000-node budget, and avoid scanning unrelated branches. No cascade/set-null
+reference policy or new deletion framework is introduced. Public delete/deletechild
+participants retain their transaction/restart contracts. Whole tree replace stays
+rejected. Test Python equivalence, net-zero mixed-sign sources, minimums, unique failure,
+incoming references, concurrent quantity changes, rollback, and restart on native.

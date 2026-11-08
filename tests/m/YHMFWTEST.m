@@ -258,3 +258,18 @@ embeddedchild
  set path(1)="items"
  write $$insertchild^YHMFTAPI("MAIN",.path,.input),!
  quit
+groupdelete
+ new path
+ set path(1)="groups",path(2)=^YHMFTestStorage("writerInput","id")
+ write $$deletechild^YHMFTAPI("MAIN",.path),!
+ quit
+subdeleteworker
+ new path
+ set path(1)="locations",path(2)="DOCK",path(3)="bins",path(4)="B1"
+ write $$deletechild^YHMFTAPI("MAIN",.path),!
+ quit
+subdeletecaught
+ new $etrap
+ set $etrap="write ""error|"",$tlevel,! set $ecode="""" halt"
+ do subdeleteworker
+ quit

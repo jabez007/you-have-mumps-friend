@@ -224,7 +224,7 @@ group's net-zero totals or defer uniqueness across calls. Python patch_many rema
 the grouped mutation interface.
 
 Hierarchical whole insert/replace/delete labels return operation without writes.
-Populated non-leaf deletion, nullable child collections, and custom Python
+Nullable child collections and custom Python
 validators remain unsupported. Supplier still fails export because SupplierProduct
 has a custom model validator. Up to 64 keyed declarations with 16 fields per owner
 are supported. New statuses include operation, invalid_path, collection_limit, and
@@ -405,8 +405,7 @@ Child nodes, collection counts, and descendant totals remain intact. This is a b
 mutation, not a complete aggregate audit. Unsupported validators still fail export.
 
 Normal transaction, maintenance, reference, and uniqueness checks apply on every
-attempt. Replace remains a complete-record operation. Populated tree construction/deletion remains unqualified until its separate
-issue-53 slice. Existing storage bytes and schema identities are unchanged;
+attempt. Replace remains a complete-record operation. Populated tree construction/replacement remains unqualified. Existing storage bytes and schema identities are unchanged;
 regenerate source for these patch interfaces.
 
 ## Empty owned branches
@@ -426,8 +425,7 @@ validation. Supplied collection markers or derived values return invalid.
 
 Delete the empty branch with deletechild/deletechildtx and its concrete path. The
 same transaction maintains parent counts, indexes, references, and any ancestor sums.
-A branch containing children returns operation without writes. This operation does
-not recursively delete populated data. Root construction/deletion and complete tree replacement retain their separate
+Populated branches use the bounded subtree deletion contract below. Root construction/deletion and complete tree replacement retain their separate
 contracts below.
 
 ## Empty hierarchical roots
@@ -448,8 +446,8 @@ native restarts. Caller participants roll back initial metadata along with recor
 and indexes if a later participant fails. This never implicitly adopts existing data.
 
 Delete/deletetx can remove an empty hierarchical root, enforcing incoming reference
-restrictions. A populated root returns operation without writes. Root replacement
-and populated tree construction/deletion remain unqualified. Use explicit child
+restrictions. Populated roots use the bounded subtree deletion contract below. Root replacement
+and populated tree construction remain unqualified. Use explicit child
 inserts to build the hierarchy incrementally. Application defaults/factories are not
 run; supplied collection markers/derived totals are invalid. Existing schemas/data
 need no conversion. Regenerate source for these capabilities.
@@ -591,6 +589,29 @@ incoming child sizes come from validated wire presence. This can require travers
 variable branches during insertion. A null object is not charged for absent child
 fields. The 10,000-node and 1,000-child limits remain unchanged. No schema/layout
 migration is needed; regenerate source to qualify existing nullable declarations.
+
+## Populated subtree deletion
+
+Delete/deletechild and their tx participants can remove populated roots or keyed
+subtrees. The writer validates the selected subtree and removes owners in postorder,
+using the ordinary index/reference transitions and embedded cleanup. Unrelated
+branches are preserved. Concrete keys and observed child counts are checked; unknown
+fields or malformed data fail safely. Traversal is bounded by the selected subtree's
+10,000-node budget and existing declaration/collection limits.
+
+Retained parent collection minimums still apply. Minimums inside an owner being
+removed do not block deletion of that owner. Stored sums in the removed subtree
+retain their original claims until their owner is deleted. Retained ancestors receive
+one net delta per target, avoiding intermediate constraint or unique-value failures.
+A final constraint/unique failure, native error, or restart restores the entire
+operation, including already removed descendants and their edges/counts.
+
+Root deletion retains the conservative incoming-reference restriction. M does not
+perform cascade or set-null policies, and self-references can therefore block root
+deletion. Child deletion preserves the root's incoming reference namespace. Related
+mutations in one caller transaction retain per-call constraints; separate delete
+calls do not coalesce their final states. Complete populated construction/replacement
+remains unqualified. No schema/storage conversion is required; regenerate source.
 
 ## Raw writes from M
 

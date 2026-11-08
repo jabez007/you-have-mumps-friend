@@ -249,7 +249,6 @@ def test_hierarchical_labels_refuse_incomplete_insert_and_unsupported_replace(st
     before = dump(store, namespaces())
     assert run("insert", {"id": "NEW"}) == "invalid"
     assert run("replace", {"id": "MAIN"}) == "operation"
-    assert run("delete", {"id": "MAIN"}) == "operation"
     assert dump(store, namespaces()) == before
 
 

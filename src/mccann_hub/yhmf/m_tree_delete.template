@@ -1,0 +1,82 @@
+ ; SPDX-License-Identifier: GPL-3.0-or-later
+ ; Remove one bounded subtree; retain normal claims/edges and net ancestor sums.
+hstoredkey(value,cfg,raw)
+ new encoded
+ set raw=value
+ if cfg("tag",cfg("key"))="s" do
+ . if $zextract(value,1,2)'="s:" set raw=$char(0) quit
+ . set raw=$zextract(value,3,$zlength(value))
+ set encoded=$$hkey(raw,.cfg)
+ quit (encoded'="invalid")&(encoded=value)
+hinside(node,ancestor)
+ if ancestor="" quit 1
+ quit (node=ancestor)!($extract(node,1,$length(ancestor)+1)=(ancestor_"."))
+hrelax(node,working)
+ new field
+ set field=""
+ for  set field=$order(working("nodes",node,"minchildren",field)) quit:field=""  set working("nodes",node,"minchildren",field)=0
+ quit
+hdelete(rootkey,parts,node,rootcfg)
+ new status,parent,count,depth,path,used,working,name,deltas,ordinal,target,field
+ set depth=$order(parts(""),-1)
+ set status=$$hresolve("delete",rootkey,.parts,.rootcfg,.parent,.count)
+ if status'="ok" quit status
+ if depth=0 set status=$$incoming(rootcfg("global"),parts(0))
+ if status'="ok" quit status
+ set path=$$haddress(rootcfg("global"),.parts,depth),used=$select(depth=0:4,1:1)
+ set status=$$hcapacity(path,node,.rootcfg,10000,.used)
+ if status'="ok" quit status
+ merge working=rootcfg
+ kill working("sumtargets")
+ if node="" do hrelax("",.working)
+ set name=""
+ for  set name=$order(working("nodes",name)) quit:name=""  if $$hinside(name,node) do hrelax(name,.working)
+ set status=$$hremove(rootkey,.parts,node,.rootcfg,.working,depth,.deltas)
+ if status'="ok" quit status
+ ; YHMF subtree checkpoint: deleted owners await net ancestor validation.
+ set ordinal=""
+ for  set ordinal=$order(deltas(ordinal)) quit:ordinal=""  do  quit:status'="ok"
+ . if deltas(ordinal)="0" quit
+ . set target=rootcfg("sumtargets",ordinal,"owner"),field=rootcfg("sumtargets",ordinal,"field")
+ . set status=$$happly(target,field,rootcfg("sumtargets",ordinal,"depth"),.parts,deltas(ordinal),.rootcfg)
+ quit status
+hremove(rootkey,parts,node,original,working,removedepth,deltas)
+ new cfg,path,depth,status,old,raw,field,parent,count,seen,key,childnode,childparts,wire
+ set depth=$order(parts(""),-1),path=$$haddress(original("global"),.parts,depth)
+ do hconfig(.original,node,.parts,.cfg)
+ set status=$$old(path,.cfg,.old)
+ if status'="ok" quit status
+ if '$$hstoredkey(parts(depth),.cfg,.raw) quit "corrupt"
+ if $get(@path@(cfg("key")))'=$$scalar(raw,cfg("key"),.cfg) quit "corrupt"
+ set wire(cfg("key"))=raw
+ set status=$$hcollect(node,.old,removedepth,.original,.deltas)
+ if status'="ok" quit status
+ kill old
+ ; YHMF subtree owner checkpoint: validated source values precede child deletion.
+ set field=""
+ for  set field=$order(cfg("children",field)) quit:field=""  do  quit:status'="ok"
+ . set parent=$name(@path@(field)),status=$$hcount(parent,.cfg,field,.count)
+ . if status'="ok" quit
+ . set key="",seen=0,childnode=cfg("children",field)
+ . for  set key=$order(@parent@(key)) quit:key=""  do  quit:status'="ok"
+ . . set seen=seen+1
+ . . if seen>count set status="corrupt" quit
+ . . kill childparts
+ . . merge childparts=parts
+ . . set childparts(depth+1)=field,childparts(depth+2)=key
+ . . set status=$$hremove(rootkey,.childparts,childnode,.original,.working,removedepth,.deltas)
+ . if seen'=count,status="ok" set status="corrupt"
+ if status'="ok" quit status
+ quit $$hupdate("delete",rootkey,.parts,node,.wire,.working)
+hcollect(node,old,removedepth,cfg,deltas)
+ new ordinal,source,amount,delta,status
+ set ordinal="",status="ok"
+ for  set ordinal=$order(cfg("sumtargets",ordinal)) quit:ordinal=""  do  quit:status'="ok"
+ . if cfg("sumtargets",ordinal,"sourceOwner")'=node quit
+ . if cfg("sumtargets",ordinal,"depth")'<removedepth quit
+ . set source=cfg("sumtargets",ordinal,"sourceField"),amount=$$sourceunits(old(source))
+ . if amount="invalid" set status="corrupt" quit
+ . set delta=$select(amount="0":"0",$extract(amount)="-":$extract(amount,2,$length(amount)),1:"-"_amount)
+ . set deltas(ordinal)=$$dadd($get(deltas(ordinal),"0"),delta)
+ . if deltas(ordinal)="invalid" set status="invalid"
+ quit status

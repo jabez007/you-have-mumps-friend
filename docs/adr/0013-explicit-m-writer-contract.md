@@ -333,3 +333,20 @@ null objects. Node/child budgets remain unchanged. Embedded child collections,
 rollup sources, empty model declarations, and custom validation remain unqualified.
 Native differential, rollback/restart, and near-budget tests protect these invariants.
 No persisted schema or layout conversion is introduced.
+
+
+## Populated subtree deletion, issue 53
+
+Use a bounded postorder traversal and existing per-owner delete transitions. Validate
+concrete stored identities, field shapes, and counts. Relax collection minimums only
+inside the removed subtree; retained parent minimums and root incoming restrictions
+remain. Keep original scalar/schema bindings. Suppress per-leaf sum application,
+collect exact source deltas for retained ancestors, then call happly once per net
+target. Removed sum owners retain their original index claims until deletion.
+
+This prevents intermediate totals or unique values from rejecting a valid final
+subtree deletion. Final failures, restarts, and native errors roll back every stage.
+Scope validation/capacity traversal to the selected subtree rather than unrelated
+branches. Preserve M's restrict-only reference policy and per-call caller-transaction
+constraints. Full tree construction/replacement remains unqualified. No new deletion
+framework, persistence layout, or schema conversion is introduced.

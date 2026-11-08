@@ -105,6 +105,9 @@ haddress(global,parts,depth)
  for index=1:1:depth set root=$name(@root@(parts(index)))
  quit root
 hattempt(operation,rootkey,parts,node,wire,rootcfg)
+ if operation="delete",$data(rootcfg("nodes",node,"children")) quit $$hdelete(rootkey,.parts,node,.rootcfg)
+ quit $$hupdate(operation,rootkey,.parts,node,.wire,.rootcfg)
+hupdate(operation,rootkey,parts,node,wire,rootcfg)
  new cfg,values,previous,status,parent,count,depth,field,internal
  do hconfig(.rootcfg,node,.parts,.cfg)
  merge values=wire
@@ -127,8 +130,8 @@ hattempt(operation,rootkey,parts,node,wire,rootcfg)
  if status'="ok" quit status
  set status=$$hsums(internal,node,.parts,.values,.previous,.cfg,.rootcfg)
  if status'="ok" quit status
- if operation="insert" set @parent="c:"_(count+1)
- if operation="delete" set @parent="c:"_(count-1)
+ if depth>0,operation="insert" set @parent="c:"_(count+1)
+ if depth>0,operation="delete" set @parent="c:"_(count-1)
  ; YHMF owned mutation complete: source, totals, counts, and indexes await commit.
  quit "ok"
 hwhere(parts,depth,field,cfg)

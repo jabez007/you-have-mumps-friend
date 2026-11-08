@@ -26,6 +26,7 @@ def _template(name: str) -> tuple[str, str]:
         ("@SHA256@", "m_sha256.template"),
         ("@HIERARCHY@", "m_hierarchy.template"),
         ("@EMBEDDED@", "m_embedded.template"),
+        ("@TREEDELETE@", "m_tree_delete.template"),
         ("@SCHEMA@", "m_schema.template"),
         ("@REFERENCES@", "m_references.template"),
     ):
