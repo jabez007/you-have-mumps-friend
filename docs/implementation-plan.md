@@ -1944,3 +1944,10 @@ policy, not a new framework barrier or distributed lock. Old binaries, raw write
 generic generated routines remain unfenced and must be drained by the operator. Record
 that limitation and backup/validation/recovery steps in the runbook. Storage and metadata
 formats remain unchanged. C901 remains ten; native tests check refusal with no writes.
+
+Final review found a hard-coded 0.5.0 pin in the historical consumer builder. A minimal
+0.6.0rc1 fixture failed while the 0.5.0 case passed. The builder now derives its
+current pin and application version from the owned consumer manifest, then explicitly
+binds the historical artifact to 0.4.0. Both regression cases and a complete isolated
+0.4.0-to-current exercise pass. This makes future candidate selection repeatable
+without silently retaining a stale requirement; it adds no framework API or dependency.

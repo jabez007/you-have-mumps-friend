@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import tomllib
 from pathlib import Path
 
 # Historical prepared/qualified milestone commit, not a published release artifact.
@@ -24,6 +25,18 @@ def build(project, output, env):
     wheels = list(output.glob("*.whl"))
     assert len(wheels) == 1
     return wheels[0]
+
+
+def legacy_metadata(content: str) -> str:
+    project = tomllib.loads(content)["project"]
+    pin = project["dependencies"][0]
+    if not pin.startswith("mccann-hub-yhmf=="):
+        raise ValueError("The consumer must declare its exact framework pin first")
+    current = project["version"]
+    legacy = current + ("." if "+" in current else "+") + "legacy04"
+    return content.replace(pin, "mccann-hub-yhmf==0.4.0").replace(
+        f'version = "{current}"', f'version = "{legacy}"'
+    )
 
 
 def main():
@@ -69,11 +82,7 @@ def main():
                 source.extractall(historical, filter="data")
             old = build(historical, root / "historical-wheel", env)
             metadata = app / "pyproject.toml"
-            metadata.write_text(
-                metadata.read_text()
-                .replace("mccann-hub-yhmf==0.5.0", "mccann-hub-yhmf==0.4.0")
-                .replace('version = "0.1.0"', 'version = "0.1.0+legacy04"')
-            )
+            metadata.write_text(legacy_metadata(metadata.read_text()))
             old_consumer = build(app, root / "historical-consumer-wheel", env)
             subprocess.run(
                 [
