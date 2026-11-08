@@ -4,7 +4,7 @@ Run from the repository root:
 
 ```sh
 uv sync --locked
-uv run python -m examples.inventory
+uv run python -m examples.inventory.bins
 ```
 
 The memory demo receives 20 widgets, moves seven from DOCK/B1 to STORAGE/B1, and
@@ -15,13 +15,17 @@ it does not erase existing data or overwrite a previous run.
 With YottaDB installed, the native extra installed, and a database configured:
 
 ```sh
-uv run python -m examples.inventory --native
+uv run python -m examples.inventory.bins --native
 ```
 
-This writes the four `^Inventory*` application globals in that database. The test
+This writes the declared `^Inventory*` application globals in that database. The test
 runner qualifies the same workflows in its disposable database. No web server or
 framework is required. These example modules are repository application code;
 the installed library remains `mccann_hub.yhmf`.
+
+The original python -m examples.inventory command and Inventory service retain the
+legacy Warehouse-owned layout for existing applications and historical benchmarks.
+New applications use BinInventory. Existing data needs the explicit stock move below.
 
 ## Ownership and references
 
@@ -29,12 +33,12 @@ the installed library remains `mccann_hub.yhmf`.
 | --- | --- | --- |
 | Product | Independent string key and unique SKU | Catalog identity survives stock movement. |
 | Lot | Independent key; references Product | Balances and history share a stable lot. |
-| Warehouse | Independent key | Owns its physical storage hierarchy. |
-| Location | Warehouse-owned key | Location names are meaningful within a warehouse. |
-| Bin | Location-owned key | The same bin name can occur in different locations. |
-| Balance | Bin-owned lot key; references Lot and Product | Quantities belong at an exact physical position. |
+| Warehouse | Independent key | Coordinate/lifetime parent for locations. |
+| StockLocation | Independent coordinate key; references Warehouse | Location lifetime is protected by bin references. |
+| StockBin | Independent coordinate key; references StockLocation and Warehouse | Owns one bounded stock hierarchy, independently of unrelated bins. |
+| Balance | StockBin-owned lot key; references Lot and Product | Quantities belong at an exact physical position. |
 | Movement | Independent caller-supplied key; references Lot, Product, and positions' Warehouses | History remains addressable independently of current balances. |
-| Position | Embedded warehouse reference and location/bin names | A movement preserves its historical position without creating independently stored bins. |
+| Position | Embedded warehouse reference and location/bin names | A movement preserves its historical position without retaining operational bins through permanent references. |
 | Supplier | Independent key; owns product memberships | Removing a supplier removes its memberships while products remain independent. |
 | SupplierProduct | Supplier-owned product key; references Product | Each supplier/product pair has one native owned link, with a maintained inverse edge. |
 
@@ -55,7 +59,7 @@ Concrete roots still declare their own global, and Position stays an embedded va
 without its own key. This changes no existing schema bytes or stored paths. See
 [the model-reuse decision](../../docs/adr/0007-compile-time-model-reuse.md).
 
-Warehouse.total_on_hand is a virtual sum of that loaded warehouse's balances. It
+In the legacy layout, Warehouse.total_on_hand is a virtual sum of that loaded warehouse's balances. It
 creates no stored rollup nodes and requires no schema migration. It does not query
 fresh data or replace bounded balance queries; load an aggregate only when the
 workflow needs it. The uncached calculation uses its own Decimal precision.
@@ -459,3 +463,8 @@ database configured through the usual YottaDB environment. It seeds the same rec
 transfer and adjustment workflow as the memory example. For example, native stock is
 inspectable at ^InventoryBin("s:4:MAIN4:DOCK2:B1","balances","s:LOT-001","quantity").
 The script does not clear existing application data or adopt unmanaged globals.
+
+The move's per-warehouse transaction must also fit the native database's transaction
+buffers and encoded key/index limits. A native buffer or key-size error rolls back
+that warehouse and retains the previous checkpoint. Stop and resolve that constraint
+before resuming; the mover does not split a warehouse into partially committed copies.

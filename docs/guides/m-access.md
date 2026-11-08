@@ -171,7 +171,7 @@ Raw writes remain outside the managed guarantees and are not an authorization pa
 
 ## Mutate a keyed hierarchy
 
-Warehouse exports a routine for leaf children under an already managed hierarchy:
+Warehouse exports a routine for root and keyed-owner operations:
 
 ```python
 from examples.inventory import MODELS, Warehouse
@@ -181,7 +181,8 @@ warehouse_source = inventory.m_routine(Warehouse, name="WarehouseAPI")
 assert "insertchild(rootkey,path,input)" in warehouse_source
 ```
 
-Create the root, locations, bins, products, and lots through Python first. Paths are
+Create referenced catalog records first. Roots and empty branches can be created
+through Python or the M entry points described below. Paths are
 local M arrays alternating declared collection names and plain child keys. Insert
 addresses a collection; patch/delete address a child. Supply complete inserted leaf
 fields, or only changed scalar/reference fields for a patch:
@@ -223,7 +224,8 @@ Each operation enforces its own immediate constraints; the API does not coalesce
 group's net-zero totals or defer uniqueness across calls. Python patch_many remains
 the grouped mutation interface.
 
-Hierarchical whole insert/replace/delete labels return operation without writes.
+Whole replacement of a declaration containing child collections returns operation.
+Empty hierarchical root insertion and bounded populated deletion are supported below.
 Nullable child collections and custom Python
 validators remain unsupported. Supplier still fails export because SupplierProduct
 has a custom model validator. Up to 64 keyed declarations with 16 fields per owner
@@ -234,8 +236,10 @@ without a TP. Failed operations leave data, metadata, totals, counts, and indexe
 Regenerate source after schema changes; old bindings fail rather than bypass new
 totals. No layout conversion or root metadata installation occurs through child
 operations. M enforces declared model rules, not inventory service rules or ledger
-workflows. The complete inventory ledger still needs unsupported M embedded
-contracts and application business checks. Populated root creation/replacement remains a Python operation.
+workflows. Movement revision 4 uses qualified choices, embedded objects, nullable
+source and ordered timestamps. The [receipt example](../../examples/inventory/README.md#receive-stock-from-m)
+composes stock and ledger participants under application business checks. Populated
+root construction and whole-tree replacement remain Python operations.
 
 New exports memoize SHA-256 of exact serialized locations in the reserved process-local
 %YHMFDigestCache variable. At most 128 entries of at most 4,096 input bytes are retained;

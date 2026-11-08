@@ -237,6 +237,11 @@ db.atomic(adjust_stock)
 
 The [inventory application](../examples/inventory/README.md) demonstrates complete
 receive, transfer, and adjustment commands with exact arithmetic and ledger entries.
+The recommended BinInventory boundary roots bins and locations independently, retaining
+balances as bin-owned children. This removes the warehouse-wide stock budget without
+changing historical Warehouse v3 or Movement identities. An explicit maintenance-window
+copy/clear checkpoints each warehouse atomically; [ADR 0017](adr/0017-inventory-bin-aggregate-boundary.md)
+records lifetime, pagination, compatibility and per-bin limits.
 Detached `save` remains last-writer-wins; read-modify-write safety requires reading
 inside the callback. Native validation errors are revalidated through the final
 stable TP attempt, as described in ADR 0005.
@@ -293,11 +298,12 @@ a root; combined occurrence projection is rejected rather than implying a join.
 Joins, full-text search, complex aggregates, and arbitrary SQL compatibility remain outside the initial scope.
 
 Plain M writers use a schema-bound generated routine for the explicitly supported
-ASCII str/int/Decimal and reference subset. Flat routines own TP or participate in a
-caller TP. Keyed hierarchies expose leaf-child insert/patch/delete beneath existing
-managed roots, maintaining presence markers, collection counts, equality/unique and
-reverse-reference identities, and exact root/owned sums. Python creates and replaces
-whole hierarchies. New exports verify exact metadata and maintenance scope. Status
+UTF-8 str/int/Decimal, temporal, finite-choice and reference subset. Qualified scalar
+and embedded nulls preserve explicit presence semantics. Routines own TP or participate
+in a restartable caller TP. Keyed hierarchies support root/owner scalar patches, empty
+root/branch creation, and bounded populated postorder deletion, maintaining markers,
+counts, equality/ordered/unique and reverse-reference identities, and exact root/owned
+sums. Python constructs populated trees and replaces whole hierarchies. New exports verify exact metadata and maintenance scope. Status
 failures revalidate on a stable TP attempt; participant failure aborts the whole
 caller transaction. Unsupported validation/ownership contracts fail at export;
 raw SET/KILL remain outside mapper guarantees. See [ADR 0013](adr/0013-explicit-m-writer-contract.md).
@@ -363,11 +369,14 @@ Renaming a field or relocating a subtree must be treated as a physical data migr
 
 Direct access to YottaDB globals remains an explicit design goal.
 
-Plain M code must be able to read and write this data. Reads work today. Writes
-currently bypass validation, indexes, and constraints, as the
-[M access guide](guides/m-access.md) shows. The write contract must say which of
-these the framework can maintain for M writers, for example through triggers or a
-generated M interface, and what validation means when Pydantic cannot run. See [#25](https://github.com/jabez007/you-have-mumps-friend/issues/25).
+Plain M reads use the documented native storage encodings. Managed M writes use
+explicit schema-bound generated routines, with qualified validation and transactional
+index/reference/ownership maintenance. Python validators are never silently omitted:
+unsupported declarations fail export. Direct SET/KILL bypass those guarantees. The
+[M access guide](guides/m-access.md) describes supported operations and caller restart
+rules; [ADR 0013](adr/0013-explicit-m-writer-contract.md) records the trigger comparison
+and decisions. Application stock/ledger rules live in the receipt transaction, not
+automatic mutation hooks.
 
 Python callers can resolve managed owner addresses with raw_path inside atomic.
 Raw writes bypass mapper validation and secondary maintenance; see the
