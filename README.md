@@ -4,15 +4,20 @@ Typed Python models for [YottaDB](https://yottadb.com/), stored as ordinary glob
 M code can read.
 
 YHMF aims to give YottaDB what Odoo's ORM gives Postgres: declared models, validation,
-relationships, indexes, and migrations. It does not treat the database as relational. You
-declare models with [Pydantic](https://docs.pydantic.dev/), and a warehouse's bins and lots
-live under the warehouse's own subscripts.
+relationships, indexes, and migrations. You declare models with
+[Pydantic](https://docs.pydantic.dev/). YHMF does not map them to tables. A record's owned
+data lives under that record's own subscripts, so each global keeps the shape of the data.
 
 **This is an early prototype.** These docs describe the
 development branch. The API and storage layout can change. It is not on PyPI yet. See
 [what works today](#what-works-today).
 
 ## Example
+
+The first application built on YHMF is the
+[warehouse inventory example](https://github.com/jabez007/you-have-mumps-friend/blob/main/examples/inventory/README.md),
+which tests the ORM against a stock-keeping workload. This example uses a cut-down version
+of its models.
 
 ```python
 from decimal import Decimal
@@ -73,7 +78,8 @@ metadata nodes:
 ## How it differs from an ORM on SQL
 
 - **Ownership is part of the data model.** Owned records are stored under their parent. A
-  patch to one lot writes that lot's changed nodes, however many other lots exist.
+  patch to one owned record writes only that record's changed nodes, however many siblings
+  it has.
 - **M code can reach the data.** A plain `zwrite` or `$order` loop sees every record. YHMF
   [exports M routines](https://github.com/jabez007/you-have-mumps-friend/blob/main/docs/guides/m-access.md#export-an-explicit-m-writer)
   for flat models and keyed hierarchies. Each routine validates its write and updates
