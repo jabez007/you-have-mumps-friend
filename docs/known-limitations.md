@@ -5,13 +5,14 @@ Each item links to its
 issue in the [issue tracker](https://github.com/jabez007/you-have-mumps-friend/issues).
 
 The development branch fixes swallowed native control signals and outer-handle
-transaction nesting, issues [#1](https://github.com/jabez007/you-have-mumps-friend/issues/1)
-and [#7](https://github.com/jabez007/you-have-mumps-friend/issues/7). The original
-v0.5.0 implementation has those defects. See the current
+transaction nesting, issues
+[#1](https://github.com/jabez007/you-have-mumps-friend/issues/1) and
+[#7](https://github.com/jabez007/you-have-mumps-friend/issues/7). The original v0.5.0
+implementation has those defects. See the current
 [transaction contract](guides/transactions.md).
 
-The development branch also rejects lossy `extra="allow"` declarations on root
-and owned models, issue [#3](https://github.com/jabez007/you-have-mumps-friend/issues/3).
+The development branch also rejects lossy `extra="allow"` declarations on root and owned
+models, issue [#3](https://github.com/jabez007/you-have-mumps-friend/issues/3).
 Supported format-two configuration overrides retain their installed identities.
 
 Equality predicates now apply their owning declaration's configuration and constraints,
@@ -19,15 +20,17 @@ issue [#5](https://github.com/jabez007/you-have-mumps-friend/issues/5). Decorato
 field and model validators do not run for query predicates; `Annotated` metadata does.
 
 Revision, constraint, nullability, and existing-default changes can now execute
-validation-only migrations, issue [#2](https://github.com/jabez007/you-have-mumps-friend/issues/2).
-Existing stored values must remain valid and unchanged.
+validation-only migrations, issue
+[#2](https://github.com/jabez007/you-have-mumps-friend/issues/2). Existing stored values
+must remain valid and unchanged.
 
 Null collection paths now raise `NotFound` for owned reads and mutations, issue
 [#8](https://github.com/jabez007/you-have-mumps-friend/issues/8). Invalid markers or
 descendants under a null marker still raise `StorageError`.
 
 Integers beyond Python's configured decimal conversion limit now raise `StorageError`
-(also a `ValueError`), issue [#10](https://github.com/jabez007/you-have-mumps-friend/issues/10).
+(also a `ValueError`), issue
+[#10](https://github.com/jabez007/you-have-mumps-friend/issues/10).
 
 Native region-size errors now raise a chained `StorageError` naming `record_size`
 or `key_size`, issue [#6](https://github.com/jabez007/you-have-mumps-friend/issues/6).
@@ -49,10 +52,11 @@ issue [#30](https://github.com/jabez007/you-have-mumps-friend/issues/30). See
 [raw addressing](guides/m-access.md#resolve-a-managed-raw-address).
 
 Explicit `resolve`, `resolve_many`, and `get_many` provide bounded transactional target
-reads, issue [#12](https://github.com/jabez007/you-have-mumps-friend/issues/12).
-Indexed `occurrences` read matching owned models directly, issue
-[#16](https://github.com/jabez007/you-have-mumps-friend/issues/16), with scoped occurrence
-cursors and exact location validation. Existing root queries retain their interface.
+reads, issue [#12](https://github.com/jabez007/you-have-mumps-friend/issues/12). Indexed
+`occurrences` read matching owned models directly, issue
+[#16](https://github.com/jabez007/you-have-mumps-friend/issues/16), with scoped
+occurrence cursors and exact location validation. Existing root queries retain their
+interface.
 
 `prune_migration` retires terminal job metadata and uniqueness reservations in bounded
 transactions, issue [#22](https://github.com/jabez007/you-have-mumps-friend/issues/22).
@@ -72,35 +76,37 @@ Database.path selectors infer typed owner reads without casts, and Registry.refe
 infers a key-checked factory returning the existing Reference type. Tuple paths remain
 available. Typed query-field objects provide checked equality values and ordering;
 range/prefix selectors still use the existing string interface. See
-[owned selectors](guides/partial-updates.md) and [reference factories](guides/references.md).
+[owned selectors](guides/partial-updates.md) and
+[reference factories](guides/references.md).
 
-Unique constraints apply immediately to ordinary operations. Use the explicit
-patch_many group to exchange unique values in one validated transition. Callback-wide
-deferred uniqueness is not supported. See [the example](guides/indexes-and-queries.md#exchange-unique-values).
+Unique constraints apply immediately to ordinary operations. Use the explicit patch_many
+group to exchange unique values in one validated transition. Callback-wide deferred
+uniqueness is not supported. See
+[the example](guides/indexes-and-queries.md#exchange-unique-values).
 
 ## Missing features
 
 These features remain outside the current implementation:
 
-- Nested/model/reference lists, arbitrary `dict`, and ambiguous unions
-  other than `| None`. [#44](https://github.com/jabez007/you-have-mumps-friend/issues/44)
+- Nested/model/reference lists, arbitrary `dict`, and ambiguous unions other than `|
+  None`. [#44](https://github.com/jabez007/you-have-mumps-friend/issues/44)
 - General computed callbacks, sums of derived sums, and reference-based dependencies.
-  Root and owned Decimal sums through owned paths and virtual Pydantic fields are supported;
-  see [computed fields](guides/computed-fields.md).
+  Root and owned Decimal sums through owned paths and virtual Pydantic fields are
+  supported; see [computed fields](guides/computed-fields.md).
 - Combined queries reject occurrence projections by design, because independent matches
   can have different owners.
 - Mapper access rules. Apply authorization in the application's trusted service;
-  independent M writers require their own enforcement. Database and raw paths do
-  not provide record isolation. [ADR 0008](adr/0008-application-authorization-boundary.md)
+  independent M writers require their own enforcement. Database and raw paths do not
+  provide record isolation. [ADR 0008](adr/0008-application-authorization-boundary.md)
 - Automatic record transformations. Use an explicit named Transform for renames,
   removals, supported type conversions, deterministic defaults, new ownership, and
   reference changes. Root keys/globals and layouts cannot change. See the
   [transform guide](guides/record-transforms.md).
-- Automatic change tracking and optimistic revisions. save validates and compares
-  the full aggregate, writing only physical node differences. It remains
-  last-writer-wins. [#45](https://github.com/jabez007/you-have-mumps-friend/issues/45)
-  records the separate deferral decisions; [ADR 0003](adr/0003-detached-write-concurrency.md)
-  gives the workload evidence and criteria for reconsidering each feature.
+- Automatic change tracking and optimistic revisions. save validates and compares the
+  full aggregate, writing only physical node differences. It remains last-writer-wins.
+  [#45](https://github.com/jabez007/you-have-mumps-friend/issues/45) records the
+  separate deferral decisions; [ADR 0003](adr/0003-detached-write-concurrency.md) gives
+  the workload evidence and criteria for reconsidering each feature.
 
 ## Operating limits
 
@@ -112,8 +118,8 @@ These features remain outside the current implementation:
 
 - Registries bind references to exact target declarations. After changing a target,
   redefine referring fields against that declaration. Errors now name the source field
-  and missing target. A referrer needs no migration when the target global and key identity
-  are unchanged. See the [migration guide](guides/migrations.md) and
+  and missing target. A referrer needs no migration when the target global and key
+  identity are unchanged. See the [migration guide](guides/migrations.md) and
   [#9](https://github.com/jabez007/you-have-mumps-friend/issues/9).
 
 - A migration or rebuild blocks its affected model and reference validation that
@@ -125,26 +131,26 @@ These features remain outside the current implementation:
   [ADR 0009](adr/0009-model-scoped-maintenance.md).
 - Raw M SET/KILL bypasses validation, indexes, references, and stored sums. Exported
   [schema-bound M routines](guides/m-access.md#export-an-explicit-m-writer) maintain
-  qualified UTF-8 str/int/Decimal, finite str/int choices, dates/UTC datetimes,
-  their nullable scalar forms, references, complete and nullable embedded objects, and
+  qualified UTF-8 str/int/Decimal, finite str/int choices, dates/UTC datetimes, their
+  nullable scalar forms, references, complete and nullable embedded objects, and
   ordered-v1 index writes, with owning or caller-participating transactions. Keyed
   hierarchies support leaf-child operations, root/non-leaf scalar patches, empty
-  root/branch creation, populated subtree deletion, and exact stored sums.
-  Populated tree construction/replacement, nullable child collections, custom validators, embedded rollup sources, and scalar lists
-  remain outside this M contract
+  root/branch creation, populated subtree deletion, and exact stored sums. Populated
+  tree construction/replacement, nullable child collections, custom validators, embedded
+  rollup sources, and scalar lists remain outside this M contract
   ([#53](https://github.com/jabez007/you-have-mumps-friend/issues/53),
   [#54](https://github.com/jabez007/you-have-mumps-friend/issues/54),
-  [#55](https://github.com/jabez007/you-have-mumps-friend/issues/55)).
-  Unsupported declarations stay rejected.
-  Existing values outside the M stored-value domain return unsupported without
-  writes. Normalized stored Decimal scale and Unicode strings are supported; wide
-  integers and Decimals outside the exact unit domain still require Python.
-  Participants require a restartable outer transaction. Bare TSTART is unsupported
-  and can raise TRESTNOT instead of a failure status; the caller's error handler must
-  roll back any active TP. See [the caller contract](guides/m-access.md#compose-writes-in-a-caller-transaction).
-  Read-only GlobalView mappings can project foreign globals without adopting them.
-  Newly generated routines validate maintenance scope;
-  older exported source retains its conservative global-gate check until regenerated.
+  [#55](https://github.com/jabez007/you-have-mumps-friend/issues/55)). Unsupported
+  declarations stay rejected. Existing values outside the M stored-value domain return
+  unsupported without writes. Normalized stored Decimal scale and Unicode strings are
+  supported; wide integers and Decimals outside the exact unit domain still require
+  Python. Participants require a restartable outer transaction. Bare TSTART is
+  unsupported and can raise TRESTNOT instead of a failure status; the caller's error
+  handler must roll back any active TP. See
+  [the caller contract](guides/m-access.md#compose-writes-in-a-caller-transaction).
+  Read-only GlobalView mappings can project foreign globals without adopting them. Newly
+  generated routines validate maintenance scope; older exported source retains its
+  conservative global-gate check until regenerated.
 - New M exports use bounded process-local location digest memoization. Cold/new
   paths still compute pure-M SHA-256, and cache reuse does not eliminate shared
   counters or engine block conflicts. See the controlled

@@ -59,15 +59,15 @@ Concrete roots still declare their own global, and Position stays an embedded va
 without its own key. This changes no existing schema bytes or stored paths. See
 [the model-reuse decision](../../docs/adr/0007-compile-time-model-reuse.md).
 
-In the legacy layout, Warehouse.total_on_hand is a virtual sum of that loaded warehouse's balances. It
-creates no stored rollup nodes and requires no schema migration. It does not query
-fresh data or replace bounded balance queries; load an aggregate only when the
-workflow needs it. The uncached calculation uses its own Decimal precision.
-Warehouse.stored_on_hand is a separate indexed Decimal sum maintained with its
-owned quantities. The demo prints both totals. This stored field requires warehouse
+In the legacy layout, Warehouse.total_on_hand is a virtual sum of that loaded
+warehouse's balances. It creates no stored rollup nodes and requires no schema
+migration. It does not query fresh data or replace bounded balance queries; load an
+aggregate only when the workflow needs it. The uncached calculation uses its own Decimal
+precision. Warehouse.stored_on_hand is a separate indexed Decimal sum maintained with
+its owned quantities. The demo prints both totals. This stored field requires warehouse
 schema revision two. Location.stored_on_hand adds a local indexed total in warehouse
-revision three; existing warehouse data needs the explicit upgrade below. Reading
-one location verifies its total without loading other locations.
+revision three; existing warehouse data needs the explicit upgrade below. Reading one
+location verifies its total without loading other locations.
 
 Owned reads in the service use Database.path selectors, so strict mypy infers Balance,
 Bin, and Location without casts. BinAddress remains the domain address for stock
@@ -125,16 +125,16 @@ when they change persistence semantics, as described in the schema compatibility
 
 ## Upgrade existing warehouses
 
-Warehouse revision three adds indexed Location.stored_on_hand over bins.balances.quantity,
-beside the revision-two warehouse total over locations.bins.balances.quantity.
-Opening existing data does not initialize zero
-or rewrite its schema. The frozen LegacyWarehouse/LegacyLocation/LegacyBin/
-LegacyBalance declarations preserve the original golden contract. WarehouseV2
-preserves the root-only total contract and WAREHOUSE_TOTALS keeps its original v2
-target and transform name for interrupted historical jobs. WAREHOUSE_TOTALS_V3
-uses the normal named-transform lifecycle to derive real totals and build their
-index. Existing quantity bytes and incoming reference identities remain unchanged;
-the transform can reapply unchanged field nodes while rewriting each aggregate.
+Warehouse revision three adds indexed Location.stored_on_hand over
+bins.balances.quantity, beside the revision-two warehouse total over
+locations.bins.balances.quantity. Opening existing data does not initialize zero or
+rewrite its schema. The frozen LegacyWarehouse/LegacyLocation/LegacyBin/ LegacyBalance
+declarations preserve the original golden contract. WarehouseV2 preserves the root-only
+total contract and WAREHOUSE_TOTALS keeps its original v2 target and transform name for
+interrupted historical jobs. WAREHOUSE_TOTALS_V3 uses the normal named-transform
+lifecycle to derive real totals and build their index. Existing quantity bytes and
+incoming reference identities remain unchanged; the transform can reapply unchanged
+field nodes while rewriting each aggregate.
 
 ```python
 from examples.inventory.migrations import LegacyWarehouse, WAREHOUSE_TOTALS_V3
@@ -166,23 +166,23 @@ For an installed revision-two database, use WarehouseV2 as the source binding in
 the same lifecycle with WAREHOUSE_TOTALS_V3. Finish an interrupted v1-to-v2 job with
 its frozen bindings and original WAREHOUSE_TOTALS before starting the next job.
 
-Fresh demo data uses revision three. Keep the job id for restart recovery,
-coordinate raw writers, and use the existing transform abort/resume boundary. The
-virtual total_on_hand remains a loaded-object calculation and is not stored. Whole
-warehouse reads verify the stored total; child mutations do not read sibling balances.
-The warehouse total adds intentional contention for writers affecting one warehouse;
-location totals add shared nodes for writers within each location. They demonstrate
-the reporting tradeoff rather than a recommendation to store totals at every level.
-Generated M writers can create an empty warehouse, patch its scalars, insert, patch,
-and delete locations, bins, and balances, and delete a populated warehouse that no
-movement or independent bin references. Each call
-maintains both totals, counts, indexes, and references in one TP. Python still
-constructs or replaces a populated warehouse in one call. SupplierProduct's custom
-validator keeps Supplier out of the M exporter. Movement exports, and the
-[M receipt](#receive-stock-from-m) applies the receive workflow's business checks;
-move and adjust remain Python services. See the
-[M guide](../../docs/guides/m-access.md#mutate-a-keyed-hierarchy). Raw SET/KILL cannot maintain
-the total or its index. See [computed fields](../../docs/guides/computed-fields.md).
+Fresh demo data uses revision three. Keep the job id for restart recovery, coordinate
+raw writers, and use the existing transform abort/resume boundary. The virtual
+total_on_hand remains a loaded-object calculation and is not stored. Whole warehouse
+reads verify the stored total; child mutations do not read sibling balances. The
+warehouse total adds intentional contention for writers affecting one warehouse;
+location totals add shared nodes for writers within each location. They demonstrate the
+reporting tradeoff rather than a recommendation to store totals at every level.
+Generated M writers can create an empty warehouse, patch its scalars, insert, patch, and
+delete locations, bins, and balances, and delete a populated warehouse that no movement
+or independent bin references. Each call maintains both totals, counts, indexes, and
+references in one TP. Python still constructs or replaces a populated warehouse in one
+call. SupplierProduct's custom validator keeps Supplier out of the M exporter. Movement
+exports, and the [M receipt](#receive-stock-from-m) applies the receive workflow's
+business checks; move and adjust remain Python services. See the
+[M guide](../../docs/guides/m-access.md#mutate-a-keyed-hierarchy). Raw SET/KILL cannot
+maintain the total or its index. See
+[computed fields](../../docs/guides/computed-fields.md).
 
 ## Upgrade an existing ledger
 
@@ -233,18 +233,17 @@ Record/index/reference value bytes remain unchanged; the explicit migration vali
 the finite domain and updates metadata. A plan without the transform is unsupported.
 
 Keep original job bindings when recovering: UTC-v2 uses MovementV2 with
-MOVEMENT_TIMESTAMPS; UTC-ordered-v3 uses frozen MovementV3 with
-MOVEMENT_TIMESTAMPS_V3. Finish that job before starting kinds-v4. A v2-to-v3 ordered
-index migration still uses MovementV2 to MovementV3 without a transform. The v4
-transform can also upgrade v2 after review. No existing transform name was retargeted
-to the new active schema, and opening a database never converts it automatically.
-For an
-existing v1 ledger, retain the job ID and coordinate raw readers/writers before
-starting. Invalid, naive, or out-of-calendar historical timestamps fail the validation
-pass without changing records; early abort remains available. Later committed work
-requires resume or backup restore, as the [transform guide](../../docs/guides/record-transforms.md)
-explains. Migration tests preserve stock data, references, indexes, and ledger IDs
-across interruption, and compare UTC instants after activation.
+MOVEMENT_TIMESTAMPS; UTC-ordered-v3 uses frozen MovementV3 with MOVEMENT_TIMESTAMPS_V3.
+Finish that job before starting kinds-v4. A v2-to-v3 ordered index migration still uses
+MovementV2 to MovementV3 without a transform. The v4 transform can also upgrade v2 after
+review. No existing transform name was retargeted to the new active schema, and opening
+a database never converts it automatically. For an existing v1 ledger, retain the job ID
+and coordinate raw readers/writers before starting. Invalid, naive, or out-of-calendar
+historical timestamps fail the validation pass without changing records; early abort
+remains available. Later committed work requires resume or backup restore, as the
+[transform guide](../../docs/guides/record-transforms.md) explains. Migration tests
+preserve stock data, references, indexes, and ledger IDs across interruption, and
+compare UTC instants after activation.
 
 For a bounded newest-first lot report, use its reference predicate and timestamp
 index. Root pages return each movement once on stable data, including timestamp
@@ -306,7 +305,8 @@ assert query.occurrences(limit=25, after=matches[-1].cursor) == []
 Each result contains a validated Balance, its warehouse `root_key`, and the concrete
 `at` path. This preserves the original `stock_by_product` root-page interface while
 providing a public query alternative that reads only matching balance owners. Its cursor
-pages occurrences rather than warehouses. See the [query contract](../../docs/guides/indexes-and-queries.md).
+pages occurrences rather than warehouses. See the
+[query contract](../../docs/guides/indexes-and-queries.md).
 
 ## Products and suppliers
 
@@ -411,11 +411,12 @@ check the complete stock, totals, indexes, reverse references, and timestamp ind
 
 New applications can run python -m examples.inventory.bins and use BIN_MODELS,
 StockLocation, StockBin, create_bin and BinInventory from the bin_models/bins modules.
-Receipt, move, adjust and history retain the existing service arguments. Stock is
-owned under each StockBin root. Locations reference Warehouse and bins reference both
-parents, so deleting a parent with live bins is restricted. Movement keeps its immutable
-historical coordinates. [ADR 0017](../../docs/adr/0017-inventory-bin-aggregate-boundary.md)
-explains the boundary and the Balance-root alternative.
+Receipt, move, adjust and history retain the existing service arguments. Stock is owned
+under each StockBin root. Locations reference Warehouse and bins reference both parents,
+so deleting a parent with live bins is restricted. Movement keeps its immutable
+historical coordinates.
+[ADR 0017](../../docs/adr/0017-inventory-bin-aggregate-boundary.md) explains the
+boundary and the Balance-root alternative.
 
 A bin can hold at most 1,000 balances and 10,000 nodes. A warehouse can have independent
 bins beyond its former aggregate budget; the regression fixture stores 1,600 balances

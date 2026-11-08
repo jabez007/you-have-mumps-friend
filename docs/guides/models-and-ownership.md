@@ -95,18 +95,19 @@ assert db.children(
 ) == []
 ```
 
-`children` accepts limits from 1 through 1000 and returns complete child models in native
-key order. Pass the last returned child's key as `after`. Cursor types must match the
-child declaration; numeric-looking string keys remain strings. The cursor need not still
-exist. Pages run in separate transactions unless called inside the same `atomic` callback.
-Concurrent inserts before the cursor can be omitted, and inserts after it can appear;
-pages do not share a snapshot. Null collections and absent owners raise `NotFound`;
-empty collections return an empty page and count zero.
+`children` accepts limits from 1 through 1000 and returns complete child models in
+native key order. Pass the last returned child's key as `after`. Cursor types must match
+the child declaration; numeric-looking string keys remain strings. The cursor need not
+still exist. Pages run in separate transactions unless called inside the same `atomic`
+callback. Concurrent inserts before the cursor can be omitted, and inserts after it can
+appear; pages do not share a snapshot. Null collections and absent owners raise
+`NotFound`; empty collections return an empty page and count zero.
 
-`count` reads the transactional c:N marker, without enumerating keys or loading children.
-It is not an audit of raw writes. A page validates the selected children's presence,
-stored values, and identities. It does not run ancestor validators over unselected
-descendants. Use a complete root read when those application checks are required.
+`count` reads the transactional c:N marker, without enumerating keys or loading
+children. It is not an audit of raw writes. A page validates the selected children's
+presence, stored values, and identities. It does not run ancestor validators over
+unselected descendants. Use a complete root read when those application checks are
+required.
 
 To coordinate updates across an aggregate, edit the loaded aggregate and save its root
 inside [`atomic`](transactions.md). For direct changes to existing owned paths, use the
@@ -233,11 +234,11 @@ assert calendar.get(CalendarEntry, "E").instant.tzinfo is UTC
 
 Datetimes store UTC instants with microsecond precision. Naive values and instants
 outside years 0001–9999 after UTC conversion raise StorageError. Equivalent offsets
-share equality and uniqueness values. Reads return UTC, without the original zone
-or fold presentation. Use pure validators that accept this persisted representation.
-Date/datetime defaults and bounds must be representable; datetime bounds need a timezone.
-The new codecs do not change existing schema identities. Converting a stored string
-field requires an explicit named record transform.
+share equality and uniqueness values. Reads return UTC, without the original zone or
+fold presentation. Use pure validators that accept this persisted representation.
+Date/datetime defaults and bounds must be representable; datetime bounds need a
+timezone. The new codecs do not change existing schema identities. Converting a stored
+string field requires an explicit named record transform.
 
 ## UUID values
 

@@ -5,8 +5,8 @@ scanning the global.
 
 ## Declare an index
 
-`index=True` adds an equality index. `unique=True` adds an equality index and a uniqueness
-claim:
+`index=True` adds an equality index. `unique=True` adds an equality index and a
+uniqueness claim:
 
 ```python
 from decimal import Decimal
@@ -85,9 +85,9 @@ assert prices.plan_index_rebuild(PricePoint).to_dict()["indexes"][0]["codec"] ==
 ```
 
 These physical index values support explicit range, literal-prefix, and directional
-ordered queries. M can also walk the value subscripts in native order. Record scalar bytes and
-their precision/scale remain unchanged; unique claims use the same canonical index
-value as equality lookup. Noncanonical aliases cannot make separate valid claims.
+ordered queries. M can also walk the value subscripts in native order. Record scalar
+bytes and their precision/scale remain unchanged; unique claims use the same canonical
+index value as equality lookup. Noncanonical aliases cannot make separate valid claims.
 
 Supported domains are str, int, Decimal, date, aware datetime, and str/int finite
 choices. Integers/Decimals must have at most 18 significant digits; nonzero magnitudes
@@ -165,14 +165,14 @@ Existing equality queries retain their root-key and version-one occurrence curso
 An unsupported plan fails rather than sorting an unbounded scan in Python.
 
 Descending reverses ordered value, root-key, and location-digest traversal. The
-occurrence stream is the exact reverse of ascending, including ties and nulls.
-For roots with several occurrences, the first matching value is the minimum
-ascending and maximum descending, so distinct-root lists need not reverse exactly.
-explain().order_direction reports the direction; cursors from the other direction
-are rejected. Store.children(reverse=True) uses YDBPython's
+occurrence stream is the exact reverse of ascending, including ties and nulls. For roots
+with several occurrences, the first matching value is the minimum ascending and maximum
+descending, so distinct-root lists need not reverse exactly. explain().order_direction
+reports the direction; cursors from the other direction are rejected.
+Store.children(reverse=True) uses YDBPython's
 [subscript_previous](https://docs.yottadb.net/MultiLangProgGuide/pythonprogram.html#python-subscript-previous)
-through the existing native transaction/error wrapper. Custom stores must implement
-the optional reverse keyword to support descending plans.
+through the existing native transaction/error wrapper. Custom stores must implement the
+optional reverse keyword to support descending plans.
 
 Descending range cursors bind both bounds and their inclusivity, including an absent
 lower bound. The fix for issue 52 invalidates earlier descending range cursors once;
@@ -211,7 +211,8 @@ across calls. Cursors survive deletion of their previous owner/value group.
 
 ## General index rules
 
-- A unique field allows several `None` values, and their equality entries stay queryable.
+- A unique field allows several `None` values, and their equality entries stay
+  queryable.
 - Strings compare exactly and case-sensitively.
 - Numerically equal decimals and floating-point zero share index values. Stored decimal
   precision stays unchanged.
@@ -223,10 +224,10 @@ across calls. Cursors survive deletion of their previous owner/value group.
 
 Every insert, replacement, and deletion updates indexes and uniqueness claims in the
 record's transaction. Constraints apply after each write, not at commit. Changing or
-deleting an indexed value releases its old claim.
-Use an explicit [patch group](#exchange-unique-values) to exchange unique values.
-Values are never truncated or hashed to fit. An oversized native index key raises an
-error before any record write. See the [index key lengths](../reference/limits.md#index-values).
+deleting an indexed value releases its old claim. Use an explicit
+[patch group](#exchange-unique-values) to exchange unique values. Values are never
+truncated or hashed to fit. An oversized native index key raises an error before any
+record write. See the [index key lengths](../reference/limits.md#index-values).
 
 Adding an index to a model with data requires a [migration](migrations.md).
 
@@ -250,9 +251,9 @@ including string normalization and strictness. A nested field uses its owned mod
 configuration. A primary-key predicate applies the same rules; `get` continues to use
 an exact stored key. Reference values keep the reference model's own configuration.
 
-Predicates validate one field, including its `Annotated` validation metadata. They do not
-run decorator-based `field_validator` methods or model validators that require a complete
-record. For those transformations, pass the stored value.
+Predicates validate one field, including its `Annotated` validation metadata. They do
+not run decorator-based `field_validator` methods or model validators that require a
+complete record. For those transformations, pass the stored value.
 
 ## Combine indexed predicates
 
@@ -286,12 +287,12 @@ For owned fields, predicates match independently under the root: one child may
 satisfy one predicate while another satisfies the other. Sorting uses the first sort
 occurrence under the matching root, rather than a same-child join.
 
-Combined queries return complete roots through all() or ordered page(). Occurrence projection is
-rejected because independent witnesses can have different owners. Equality-anchor
-queries can continue with the last returned root key; direct-key and ordered-anchor
-queries reject key cursors; ordered page() supplies its own scoped cursor. Returned
-roots and each index witness are validated in the same transaction. These reads
-never enumerate the data global or repair missing/corrupt indexes.
+Combined queries return complete roots through all() or ordered page(). Occurrence
+projection is rejected because independent witnesses can have different owners.
+Equality-anchor queries can continue with the last returned root key; direct-key and
+ordered-anchor queries reject key cursors; ordered page() supplies its own scoped
+cursor. Returned roots and each index witness are validated in the same transaction.
+These reads never enumerate the data global or repair missing/corrupt indexes.
 
 explain().predicates lists each field's operation, index strategy, and visit bound,
 without values. The bounds are shared, not multiplied by the number of predicates.
@@ -301,8 +302,9 @@ materialization retains the existing 10,000-node per-aggregate bound.
 ## Page through results
 
 For equality and key selections, all defaults to 100 root records and accepts limits
-from 1 through 1000. Results use native primary-key order. Pass the last returned key as `after` to continue. Each page
-uses its own transaction, so pages do not share a snapshot.
+from 1 through 1000. Results use native primary-key order. Pass the last returned key as
+`after` to continue. Each page uses its own transaction, so pages do not share a
+snapshot.
 
 To list records without a filter, ask for a bounded page explicitly:
 
@@ -339,9 +341,10 @@ Concurrent insertions before a cursor can be omitted and later insertions can ap
 For a shared snapshot, page inside one `atomic` callback.
 
 Every projection checks the exact location and its digest, owner identity, field value,
-equality entry, and applicable unique claim. A stale entry cannot be justified by another
-matching child under the same root. Root queries also verify their concrete equality
-entries. Corruption raises `StorageError`; neither interface repairs data during a read.
+equality entry, and applicable unique claim. A stale entry cannot be justified by
+another matching child under the same root. Root queries also verify their concrete
+equality entries. Corruption raises `StorageError`; neither interface repairs data
+during a read.
 
 Use dotted declaration paths such as `lines.product`, passed as a dictionary to `where`:
 

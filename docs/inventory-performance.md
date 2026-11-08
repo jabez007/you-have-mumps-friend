@@ -40,15 +40,15 @@ measurements are recorded below.
 ## Qualified owned totals and contention
 
 [CI run 42391564712](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42391564712)
-qualified c51a7eed819ac2f256dcd964335a2342207cd3ac on r2.02 and r2.06, with
-journaling off and before-image journaling on. Each complete suite passed 2,372
-tests (200 skipped); each separate stress run passed 25 (four skipped). The
-[contention report](benchmarks/native-owned-sum-contention-2026-11-07.json) retains
-72 rows and all 4,320 timed commits. The
+qualified c51a7eed819ac2f256dcd964335a2342207cd3ac on r2.02 and r2.06, with journaling
+off and before-image journaling on. Each complete suite passed 2,372 tests (200
+skipped); each separate stress run passed 25 (four skipped). The
+[contention report](benchmarks/native-owned-sum-contention-2026-11-07.json) retains 72
+rows and all 4,320 timed commits. The
 [inventory report](benchmarks/native-inventory-location-totals-2026-11-07.json) retains
-84 rows and 2,520 samples. These workflow measurements use warehouse v3 and movement
-v2; they precede the movement-v3 timestamp index. New benchmark rows identify both
-schema revisions. Do not treat these as measurements of that later ledger index.
+84 rows and 2,520 samples. These workflow measurements use warehouse v3 and movement v2;
+they precede the movement-v3 timestamp index. New benchmark rows identify both schema
+revisions. Do not treat these as measurements of that later ledger index.
 
 The r2.02 runner used an AMD EPYC 9V74 and Python 3.12.12; r2.06 used an Intel Xeon
 Platinum 8370C and Python 3.12.3. Both used Pydantic 2.14.3. Different hosts and load
@@ -142,11 +142,11 @@ measurements do not establish application throughput under contention.
 
 [CI run 42345725275](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42345725275)
 qualified source ce2a4e67da7e0877b783f2bcbff3f0e4dc68e4d2 on both engines, with
-journaling off and before-image journaling on. Each configuration passed 2,150 tests
-(74 skipped), the native demo, and both benchmarks. Separate stress jobs passed
-25 tests per engine (four skipped).
-The [raw report](benchmarks/native-inventory-stored-totals-2026-11-07.json) contains
-all 84 rows, 2,520 timed samples, environment metadata, and node-call counts.
+journaling off and before-image journaling on. Each configuration passed 2,150 tests (74
+skipped), the native demo, and both benchmarks. Separate stress jobs passed 25 tests per
+engine (four skipped). The
+[raw report](benchmarks/native-inventory-stored-totals-2026-11-07.json) contains all 84
+rows, 2,520 timed samples, environment metadata, and node-call counts.
 
 The r2.02 runner used Python 3.12.12 on an AMD EPYC 7763; the r2.06 runner used
 Python 3.12.3 on an AMD EPYC 9V45. Both used Pydantic 2.14.3. Different hosts prevent
@@ -207,11 +207,12 @@ in this fixture, not production throughput or a comparison with other databases.
 ## Historical measurements before node-difference saves
 
 [CI run 42294677787](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42294677787)
-qualified source `3bba6bf0b36f422f23bef1d1261be9c8936082e1` on both engines. Each
-native job passed 970 tests, the native demo, both benchmark runners, and 14 separate
-native stress cases. [Raw samples and environment metadata](benchmarks/native-inventory-2026-11-06.json)
-are committed. The r2.02 runner used Python 3.12.12 on an Intel Xeon Platinum 8573C;
-the r2.06 runner used Python 3.12.3 on an Intel Xeon 6973P-C. Both used Pydantic 2.14.3.
+qualified source `3bba6bf0b36f422f23bef1d1261be9c8936082e1` on both engines. Each native
+job passed 970 tests, the native demo, both benchmark runners, and 14 separate native
+stress cases.
+[Raw samples and environment metadata](benchmarks/native-inventory-2026-11-06.json) are
+committed. The r2.02 runner used Python 3.12.12 on an Intel Xeon Platinum 8573C; the
+r2.06 runner used Python 3.12.3 on an Intel Xeon 6973P-C. Both used Pydantic 2.14.3.
 These host differences prevent attributing latency differences to engine versions.
 
 Transfer latency in milliseconds, with one ledger append per transfer:
@@ -277,12 +278,12 @@ with that bin's balances. The qualified native observations follow.
 
 [CI 42432641592](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42432641592)
 passed on r2.02/Ubuntu 22.04 and r2.06/Ubuntu 24.04, each with journaling off and
-before-image journaling on. Each configuration passed 2,739 tests (435 skipped),
-and each engine's separate stress job passed 25 tests (four skipped). The
+before-image journaling on. Each configuration passed 2,739 tests (435 skipped), and
+each engine's separate stress job passed 25 tests (four skipped). The
 [raw report](benchmarks/native-bin-boundary-2026-11-07.json) contains four environments,
-48 rows and 720 measured samples at source 90e2f3f. Skips include memory fixtures
-that cannot share a database with native workers. Python and Pydantic versions,
-CPU and OS details are included per environment.
+48 rows and 720 measured samples at source 90e2f3f. Skips include memory fixtures that
+cannot share a database with native workers. Python and Pydantic versions, CPU and OS
+details are included per environment.
 
 Values below are median (p95) **milliseconds per insert/delete cycle**. Each cell
 shows 2 bins / 1,000 bins; every case has 15 measured cycles after three warmups.
@@ -321,11 +322,12 @@ as the separate M digest controls demonstrate. The test fixture independently st
 workload. Preserve per-bin budgets and measure application-specific distributions
 before drawing broader conclusions.
 
-The later [application qualification run 42432731997](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42432731997)
+The later
+[application qualification run 42432731997](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42432731997)
 also passed the new bin-layout M receipt, including exact Python node equivalence,
 ordered history lookup, duplicate-ID/invalid-input rollback, forced restart, competing
 receipt recalculation and the move checkpoint. On both engines and journaling modes,
-that complete suite passed 2,752 tests (450 skipped); separate native stress passed
-25 (four skipped). The offline suite passed 1,259, and both Pydantic compatibility
-jobs passed 837. Source 0f2b462 includes the final application code; subsequent changes
-align documentation and publish these observations.
+that complete suite passed 2,752 tests (450 skipped); separate native stress passed 25
+(four skipped). The offline suite passed 1,259, and both Pydantic compatibility jobs
+passed 837. Source 0f2b462 includes the final application code; subsequent changes align
+documentation and publish these observations.

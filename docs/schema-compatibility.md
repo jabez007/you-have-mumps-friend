@@ -13,11 +13,12 @@ string escaping, temporal order, and null sentinel are versioned together. Unkno
 index codecs fail comparison. A codec change on an existing index requires explicit
 review and a named transform initially; merely opening the database changes nothing.
 
-The registry produces sorted, compact ASCII JSON directly from typed declarations.
-The existing properties/hierarchy/reference grammar supports the existing migration
-inspector. Its codec/default markers and exact bound strings are YHMF-specific. Global names and owned field paths identify models. Field names identify
-stored values. Scalar codec names distinguish strings, integers, booleans, floats,
-Decimals, and bytes; key codecs also appear in reference declarations.
+The registry produces sorted, compact ASCII JSON directly from typed declarations. The
+existing properties/hierarchy/reference grammar supports the existing migration
+inspector. Its codec/default markers and exact bound strings are YHMF-specific. Global
+names and owned field paths identify models. Field names identify stored values. Scalar
+codec names distinguish strings, integers, booleans, floats, Decimals, and bytes; key
+codecs also appear in reference declarations.
 
 Required and nullable values, literal defaults, built-in numeric/string constraints,
 secondary/unique indexes, ownership keys, owned revisions, and nondefault string
@@ -99,13 +100,13 @@ those hooks require an application revision too.
 Field reordering that changes a validator or factory's behavior also requires an
 application revision; ordering alone cannot reveal those custom dependencies.
 
-The ordinary migration executor validates every existing record under both bindings
-and rejects transformations of existing fields. A revision does not grant permission
-to overwrite data or make an unsupported migration executable. Validation-only migrations
+The ordinary migration executor validates every existing record under both bindings and
+rejects transformations of existing fields. A revision does not grant permission to
+overwrite data or make an unsupported migration executable. Validation-only migrations
 validate, verify, retag, and activate without changing field or index values. Target
 validation failure during the initial pass rolls back before a separate transaction
-restores source access at the unchanged checkpoint. A concurrent checkpoint change
-or interrupted restoration leaves maintenance held for inspection and recovery. Later
+restores source access at the unchanged checkpoint. A concurrent checkpoint change or
+interrupted restoration leaves maintenance held for inspection and recovery. Later
 storage or execution failures remain resumable under maintenance. See the
 [migration guide](guides/migrations.md).
 
@@ -140,10 +141,10 @@ older clients can continue using their original identities, subject to their own
 legacy runtime checks.
 
 New format-two databases require v0.5 clients. Older clients reject those identities
-without modifying data. A genuine additive/index migration can activate a format-two target using the
-existing bounded maintenance executor. Old jobs resume their exact saved source
-and target snapshots, including a legacy target. Early abort, gate ownership,
-checkpoint integrity, and atomic activation retain their existing behavior.
+without modifying data. A genuine additive/index migration can activate a format-two
+target using the existing bounded maintenance executor. Old jobs resume their exact
+saved source and target snapshots, including a legacy target. Early abort, gate
+ownership, checkpoint integrity, and atomic activation retain their existing behavior.
 
 Pure parse/compatibility caches are bounded to 128 entries and keyed by complete
 immutable inputs. Installed state is never cached: changing, removing, or corrupting

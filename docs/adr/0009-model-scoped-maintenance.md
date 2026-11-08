@@ -1,6 +1,7 @@
 # ADR 0009: Scope ordinary maintenance checks to the affected model
 
-Status: accepted. [CI run 42324520583](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42324520583)
+Status: accepted.
+[CI run 42324520583](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42324520583)
 passed both configured engines before issue 21 was closed.
 
 ## Existing mechanisms and problem

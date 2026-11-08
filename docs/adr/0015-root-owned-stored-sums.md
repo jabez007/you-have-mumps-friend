@@ -1,7 +1,9 @@
 # ADR 0015: Root-owned stored Decimal sums
 
-Status: accepted after [core native CI 42344716067](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42344716067)
-and [inventory upgrade CI 42345725275](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42345725275).
+Status: accepted after
+[core native CI 42344716067](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42344716067)
+and
+[inventory upgrade CI 42345725275](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42345725275).
 
 ## Problem and existing mechanisms
 
@@ -88,6 +90,6 @@ passed both engines and journal modes, including owned-level restarts, concurren
 writers, deletion races, uniqueness rollback, and historical warehouse recovery.
 [Measured comparisons](../inventory-performance.md#qualified-owned-totals-and-contention)
 retain all samples and report substantial native block conflicts even without totals.
-Latency increased with totals in that workload; retry counts were not monotonic.
-This supports explicit, measured placement of sums rather than automatic totals
-at every level. The inventory location total is a reporting example of that choice.
+Latency increased with totals in that workload; retry counts were not monotonic. This
+supports explicit, measured placement of sums rather than automatic totals at every
+level. The inventory location total is a reporting example of that choice.

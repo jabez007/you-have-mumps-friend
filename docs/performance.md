@@ -20,11 +20,11 @@ waiting time. Native results will inform the decision in
 correctness only. Per-model concurrent maintenance is not implemented by this benchmark.
 
 [Native run 42394084555](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42394084555)
-qualified dd3b28a36c30d96e35db579d14b8a36cbe387ed1 on both engines and journal
-modes. The [raw report](benchmarks/native-maintenance-serialization-2026-11-07.json)
-contains 12 controlled jobs. The second target is ^YHMFMaintControl, whose declaration
-and records have no inventory references. The earlier Product probe was connected
-to warehouses and is excluded from this disjoint-job evidence.
+qualified dd3b28a36c30d96e35db579d14b8a36cbe387ed1 on both engines and journal modes.
+The [raw report](benchmarks/native-maintenance-serialization-2026-11-07.json) contains
+12 controlled jobs. The second target is ^YHMFMaintControl, whose declaration and
+records have no inventory references. The earlier Product probe was connected to
+warehouses and is excluded from this disjoint-job evidence.
 
 | Engine | Journal | Remaining job ms, 1 / 10 / 50 warehouses | Refusal ms | Unrelated indexed CRUD ms |
 | --- | --- | ---: | ---: | ---: |
@@ -51,8 +51,8 @@ calls are visible in the report and should be measured before adding new locks.
 [CI run 42324141174](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42324141174),
 commit 97439a87de2efd87996a2f69789de4fa09325154, ran the full native suite and
 benchmarks on both engines with journaling off and before-image journaling on.
-[Extracted replacement rows](benchmarks/native-save-differences-2026-11-06.json)
-include the runner, runtime, engine, mode, and adapter operation counts.
+[Extracted replacement rows](benchmarks/native-save-differences-2026-11-06.json) include
+the runner, runtime, engine, mode, and adapter operation counts.
 
 At 1,000 unindexed lots, whole-aggregate read/change/save used **one set and no tree
 deletion** per measured change. It still used 9,051 gets and 3,015 child enumerations.
@@ -82,9 +82,10 @@ new benchmark output identifies aggregate_save as physical_node_difference. Olde
 timings are not measurements of the new implementation. The change targets write
 amplification, and additional physical reads can increase replacement latency.
 
-Observed on 2026-11-06 in [CI run 42262595757](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42262595757),
-commit `cbe64797753bd1ee6fdee57036674554a3c05b4a`.
-The [machine-readable results](benchmarks/native-mutations-2026-11-06.json) include
+Observed on 2026-11-06 in
+[CI run 42262595757](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42262595757),
+commit `cbe64797753bd1ee6fdee57036674554a3c05b4a`. The
+[machine-readable results](benchmarks/native-mutations-2026-11-06.json) include
 environment details, median/p95 summaries, and operation counts.
 
 ## Workload
@@ -95,7 +96,8 @@ changes one existing quantity. Five warmup iterations precede 40 measured sample
 per method/size. Setup and result assertions are outside the timed interval.
 
 - Direct: one `NativeStore.atomic` transaction with scalar encoding and one node write.
-- Patch: `db.patch` with the deep owned path, metadata checks, and complete leaf validation.
+- Patch: `db.patch` with the deep owned path, metadata checks, and complete leaf
+  validation.
 - Replace: `db.atomic`, full root `get`, change quantity, then whole-root `save`.
 
 Latency includes Python execution and the same adapter counting wrapper in every
@@ -157,12 +159,12 @@ by these measurements alone.
 
 The development benchmark also reports `insertions`: 40 timed insertions after five
 warmups, for 1, 10, 100, and 999 existing flat lots. The final size leaves room for a
-new child under the 1,000-child limit. Patterns grow either the target collection or
-an unrelated collection under the same root. Cleanup is outside timing and counters;
-the final aggregate and indexes are checked independently of the timed interval.
-Methods compare direct node writes, `insert_child`, and atomic root read/save. The
-direct baseline maintains object/count markers but omits mapper validation, metadata,
-limits, and secondary integrity checks. Both supported engines executed these workloads in
+new child under the 1,000-child limit. Patterns grow either the target collection or an
+unrelated collection under the same root. Cleanup is outside timing and counters; the
+final aggregate and indexes are checked independently of the timed interval. Methods
+compare direct node writes, `insert_child`, and atomic root read/save. The direct
+baseline maintains object/count markers but omits mapper validation, metadata, limits,
+and secondary integrity checks. Both supported engines executed these workloads in
 [CI run 42312220389](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42312220389),
 source `73b87d1510aa873ab5c488a2ce445e77f6cec7f4`. The
 [complete insertion results](benchmarks/native-child-insertion-2026-11-06.json) include
@@ -219,12 +221,14 @@ timings are instrumented and must not be substituted for unprofiled latency, and
 nested cumulative times must not be summed. Environment output records CPU model,
 logical CPU count, runtime versions, and the CI source commit.
 
-All these workloads run through the existing disposable native database harness.
-Offline workload tests establish behavior and accounting only. Both native environments executed the expanded workloads in
+All these workloads run through the existing disposable native database harness. Offline
+workload tests establish behavior and accounting only. Both native environments executed
+the expanded workloads in
 [CI run 42278547820](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42278547820),
-commit `37013c13a74b10eacd2b68d84d7034eb6ccb4e55`. Each ran 852 tests successfully before the benchmark.
-The [version-two results](benchmarks/native-followups-2026-11-06.json) preserve the
-complete latency, operation-count, contention, and profile summaries.
+commit `37013c13a74b10eacd2b68d84d7034eb6ccb4e55`. Each ran 852 tests successfully
+before the benchmark. The
+[version-two results](benchmarks/native-followups-2026-11-06.json) preserve the complete
+latency, operation-count, contention, and profile summaries.
 
 ### Indexed serial results
 
@@ -298,12 +302,13 @@ as a before/after speed claim.
 
 ### Guard dispatch optimization
 
-The wrapper-probe simplification is implemented in `3483458be8d4043559038b318f1047bbe26445d1` and qualified
-in [CI run 42279862741](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42279862741).
-Both native environments passed 852 tests and all expanded workloads. Local
-validation passed 443 tests; both dependency compatibility jobs passed 39 cases.
-The [post-change results](benchmarks/native-guard-dispatch-2026-11-06.json) include
-explicit guard call counters.
+The wrapper-probe simplification is implemented in
+`3483458be8d4043559038b318f1047bbe26445d1` and qualified in
+[CI run 42279862741](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42279862741).
+Both native environments passed 852 tests and all expanded workloads. Local validation
+passed 443 tests; both dependency compatibility jobs passed 39 cases. The
+[post-change results](benchmarks/native-guard-dispatch-2026-11-06.json) include explicit
+guard call counters.
 
 Inspection still walks the current model schema on every operation. Wrapper
 recognition is restricted to function nodes and foreign class/ref descriptors;
@@ -376,38 +381,43 @@ concurrent insertion performance. Runner and engine effects are not isolated.
 
 ### Registry compilation results
 
-The registry-owned policy and field adapters in `d19ccacfc18588d039e5c2618822f2a8ec927b2b`
-passed [CI run 42312775930](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42312775930).
+The registry-owned policy and field adapters in
+`d19ccacfc18588d039e5c2618822f2a8ec927b2b` passed
+[CI run 42312775930](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42312775930).
 Both engines executed all mutation, contention, insertion, and profile workloads. The
 [complete output](benchmarks/native-compiled-declarations-2026-11-06.json) records the
 runtime environment and source commit. The profiles report zero `_has_functions` and
-`_nested_model_schema` calls during mutations; registration performs that classification.
-Field-adapter regression tests independently reject any compilation during database work.
+`_nested_model_schema` calls during mutations; registration performs that
+classification. Field-adapter regression tests independently reject any compilation
+during database work.
 
-Median patch latency in microseconds at 1,000 lots, after five warmups and over 40 samples:
+Median patch latency in microseconds at 1,000 lots, after five warmups and over 40
+samples:
 
 | Engine | Unindexed | Equality | Unique | Reference |
 | --- | ---: | ---: | ---: | ---: |
 | r2.02 | 161.09 | 276.81 | 284.82 | 420.09 |
 | r2.06 | 108.16 | 198.26 | 198.93 | 297.75 |
 
-The r2.02 runner reported an AMD EPYC 7763 and the r2.06 runner an AMD EPYC 9V74. Earlier
-runs used different runner assignments. These samples do not isolate the latency effect
-of compilation or differences between engines. The evidence establishes eliminated
-repeated declaration work and preserved integrity, rather than a fixed speedup. Setup and
-registration costs are excluded; applications that recreate registries per request will
-pay those costs repeatedly. Live installed-schema checks still occur on every transaction.
+The r2.02 runner reported an AMD EPYC 7763 and the r2.06 runner an AMD EPYC 9V74.
+Earlier runs used different runner assignments. These samples do not isolate the latency
+effect of compilation or differences between engines. The evidence establishes
+eliminated repeated declaration work and preserved integrity, rather than a fixed
+speedup. Setup and registration costs are excluded; applications that recreate
+registries per request will pay those costs repeatedly. Live installed-schema checks
+still occur on every transaction.
 
 ### Journal-enabled qualification
 
 [CI run 42314303424](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42314303424)
 executed the native suite and benchmark workloads with journaling off, then with
 before-image journaling enabled, at source `f42e0c50b107c0a690d25dfefbf4256af61c6169`.
-The [serial measurements](benchmarks/native-journaling-2026-11-06.json) retain environment,
-mode, median/p95, and operation counts for patches, replacements, and insertion patterns.
-MUPIP reported journal creation with BEFORE_IMAGES in both journal-enabled runs. Each
-engine passed 1,198 tests with one expected non-native skip in each mode, plus a separate
-18-case native adversarial stress pass before the journal-enabled run.
+The [serial measurements](benchmarks/native-journaling-2026-11-06.json) retain
+environment, mode, median/p95, and operation counts for patches, replacements, and
+insertion patterns. MUPIP reported journal creation with BEFORE_IMAGES in both
+journal-enabled runs. Each engine passed 1,198 tests with one expected non-native skip
+in each mode, plus a separate 18-case native adversarial stress pass before the
+journal-enabled run.
 
 For the unindexed patch at 1,000 lots, times in microseconds were:
 
@@ -422,18 +432,19 @@ Each pair ran on the same runner in fresh databases, with the nonjournaled workl
 first. Order and cache effects are not randomized, and 40 samples give coarse tails.
 These measurements demonstrate the workload under both modes; they do not establish a
 universal journaling multiplier, power-loss durability, recovery time, or engine-version
-performance differences. Inventory benchmarks also executed in both modes. Their original
-methodology string still said journaling was off; the structured journaling field and
-harness mode are authoritative, and the string is corrected in subsequent output.
+performance differences. Inventory benchmarks also executed in both modes. Their
+original methodology string still said journaling was off; the structured journaling
+field and harness mode are authoritative, and the string is corrected in subsequent
+output.
 
 ## Native insertion conflict attribution
 
 [CI 42335756704](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42335756704)
 ran the [diagnostics](../tests/test_native_insertion_diagnostics.py) on r2.02/Ubuntu
-22.04 and r2.06/Ubuntu 24.04, with journaling off and before-image journaling on.
-The [committed observations](benchmarks/native-insertion-conflicts-2026-11-06.json)
-contain all 24 experiments, operation/attempt counters, logical address evidence,
-DSE block locations, and native conflict statistics. Source commit: 73704bd.
+22.04 and r2.06/Ubuntu 24.04, with journaling off and before-image journaling on. The
+[committed observations](benchmarks/native-insertion-conflicts-2026-11-06.json) contain
+all 24 experiments, operation/attempt counters, logical address evidence, DSE block
+locations, and native conflict statistics. Source commit: 73704bd.
 
 The workload uses the public insert_child operation after the fixed-width budget
 improvement from issue 4. A Parent has a string key, an unindexed padding scalar,
@@ -474,10 +485,12 @@ count agreed with the independently enumerated child identities. Exact logical
 addresses are retained for the paired interventions; burst address lists are
 summarized after the overlap assertions, with full paths in the linked CI logs.
 
-The engine defines [GVSTAT conflict counters](https://docs.yottadb.com/ProgrammersGuide/commands.html#zshow-information-codes)
-and [DSE FIND block lookup](https://docs.yottadb.com/AdminOpsGuide/dse.html#qualifiers-of-find).
-These experiments used read-only diagnostic commands. Their initial short header
-request omitted the debug counters; the qualified run uses DUMP -FILEHEADER -ALL.
+The engine defines
+[GVSTAT conflict counters](https://docs.yottadb.com/ProgrammersGuide/commands.html#zshow-information-codes)
+and
+[DSE FIND block lookup](https://docs.yottadb.com/AdminOpsGuide/dse.html#qualifiers-of-find).
+These experiments used read-only diagnostic commands. Their initial short header request
+omitted the debug counters; the qualified run uses DUMP -FILEHEADER -ALL.
 
 Keep the direct count safety invariant. These measurements establish a cause for
 this workload, not a mapper correctness defect or a universal tuning prescription.
@@ -486,11 +499,12 @@ case order, shared disposable region reuse, CI scheduling, and different engine/
 hosts prevent general latency, journaling-speed, or production-throughput claims.
 Measure real application block placement and transaction footprints before tuning.
 
-The native writer contract in [issue 25](https://github.com/jabez007/you-have-mumps-friend/issues/25)
-should evaluate any numeric-counter alternative explicitly; no $increment benefit
-was measured here. Stored totals in [issue 17](https://github.com/jabez007/you-have-mumps-friend/issues/17)
-will also introduce intentional shared writes and need their own contention evidence.
-No count format or record-layout change follows from this investigation.
+The native writer contract in
+[issue 25](https://github.com/jabez007/you-have-mumps-friend/issues/25) should evaluate
+any numeric-counter alternative explicitly; no $increment benefit was measured here.
+Stored totals in [issue 17](https://github.com/jabez007/you-have-mumps-friend/issues/17)
+will also introduce intentional shared writes and need their own contention evidence. No
+count format or record-layout change follows from this investigation.
 
 Reproduce only against a disposable configured native environment:
 
@@ -529,14 +543,15 @@ throughput or cross-version conclusions. Offline tests establish no native laten
 
 ### Qualified cache measurements, 2026-11-07
 
-[Raw samples and environments](benchmarks/native-m-location-cache-2026-11-07.json)
-come from [CI run 42420660451](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42420660451),
+[Raw samples and environments](benchmarks/native-m-location-cache-2026-11-07.json) come
+from
+[CI run 42420660451](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42420660451),
 source 4965633: 132 result rows and 6,720 timed operations across both engines and
-journaling modes. Each environment passed 2,516 full-suite tests with 282 skips
-in each journaling mode; its separate native stress job passed 25 with four skips.
-The host used Python 3.12, Pydantic 2.14.3, four logical CPUs, AMD EPYC 7763 on
-r2.02/Ubuntu 22.04, and EPYC 9V74 on r2.06/Ubuntu 24.04. Engine and host changes
-prevent attributing differences between environments to the engine alone.
+journaling modes. Each environment passed 2,516 full-suite tests with 282 skips in each
+journaling mode; its separate native stress job passed 25 with four skips. The host used
+Python 3.12, Pydantic 2.14.3, four logical CPUs, AMD EPYC 7763 on r2.02/Ubuntu 22.04,
+and EPYC 9V74 on r2.06/Ubuntu 24.04. Engine and host changes prevent attributing
+differences between environments to the engine alone.
 
 The following one-worker hot rows each contain 20 measured calls per operation,
 after three warmup cycles. Cells show median / p95 microseconds. Python uses the

@@ -79,9 +79,10 @@ YHMF_JOURNALING=1 YHMF_BENCHMARK=1 ydb_dist=/opt/yottadb/test \
 ```
 
 This exercises journal-enabled CRUD, migrations, rollbacks, and coordinated process
-tests. It does not test power loss, journal recovery, backup restoration, or replication.
-The default-region diagnostic test uses a separate default-sized region. For journal
-administration, see the [upstream guide](https://docs.yottadb.com/AdminOpsGuide/ydbjournal.html).
+tests. It does not test power loss, journal recovery, backup restoration, or
+replication. The default-region diagnostic test uses a separate default-sized region.
+For journal administration, see the
+[upstream guide](https://docs.yottadb.com/AdminOpsGuide/ydbjournal.html).
 
 Existing coordinated workers cover independent children/fields, unique contention,
 parent deletion, references, concurrent initialization, and forced restarts. New
@@ -114,7 +115,8 @@ does not validate external website availability or qualify a package publication
 
 The journal-enabled addition passed both supported engines in
 [CI run 42314303424](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42314303424),
-source `f42e0c50b107c0a690d25dfefbf4256af61c6169`: 1,198 tests per engine per journal mode,
-plus the separate native stress pass. The same run executed 29 Python documentation
-blocks and passed both Pydantic compatibility jobs. Subsequent examples and tests can
-increase these counts. See the [journal measurements](performance.md#journal-enabled-qualification).
+source `f42e0c50b107c0a690d25dfefbf4256af61c6169`: 1,198 tests per engine per journal
+mode, plus the separate native stress pass. The same run executed 29 Python
+documentation blocks and passed both Pydantic compatibility jobs. Subsequent examples
+and tests can increase these counts. See the
+[journal measurements](performance.md#journal-enabled-qualification).

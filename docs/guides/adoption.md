@@ -4,8 +4,8 @@ YHMF installs a schema automatically only when the application global is empty,
 including its root value and all descendants. Raw data at any key prevents installation.
 A failed installation rolls back together with the record write.
 
-If a small global is already encoded exactly in [layout one](../storage-format.md), adopt
-it explicitly from outside `atomic`:
+If a small global is already encoded exactly in [layout one](../storage-format.md),
+adopt it explicitly from outside `atomic`:
 
 ```python
 from mccann_hub.yhmf import Database, Field, MemoryStore, Model, Path, Registry
@@ -34,8 +34,8 @@ Adoption has these requirements:
 Adoption validates fields, child counts, keys, constraints, unique values, and reference
 targets. It rejects unknown nodes, partial metadata, and arbitrary legacy encodings.
 
-Stored field bytes stay as they are. Metadata and secondary structures install atomically,
-so a failed adoption leaves all data and metadata unchanged.
+Stored field bytes stay as they are. Metadata and secondary structures install
+atomically, so a failed adoption leaves all data and metadata unchanged.
 
 Larger exact-layout datasets can use the resumable job below. Differently encoded
 datasets still need an external, explicitly reviewed conversion; a read-only view

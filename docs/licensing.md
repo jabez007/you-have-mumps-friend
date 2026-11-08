@@ -26,11 +26,13 @@ same line.
 ## What YHMF includes
 
 The `mccann-hub-yhmf` wheel and this repository contain no YottaDB or YDBPython code.
-You install YottaDB separately. The `native` extra in [pyproject.toml](../pyproject.toml)
-installs the driver, and MemoryStore does not import it.
+You install YottaDB separately. The `native` extra in
+[pyproject.toml](../pyproject.toml) installs the driver, and MemoryStore does not import
+it.
 
 ## What this page does not cover
 
 The project publishes these license facts and no guidance on distribution, linking,
 proprietary applications, or network-service deployment.
-[Issue 35](https://github.com/jabez007/you-have-mumps-friend/issues/35) records this decision.
+[Issue 35](https://github.com/jabez007/you-have-mumps-friend/issues/35) records this
+decision.

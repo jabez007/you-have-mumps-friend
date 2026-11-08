@@ -1,6 +1,7 @@
 # ADR 0012: Retain tagged records and version ordered indexes separately
 
-Status: accepted after [native CI 42334917767](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42334917767).
+Status: accepted after
+[native CI 42334917767](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42334917767).
 
 ## Existing mechanisms and evidence
 
@@ -31,10 +32,11 @@ on. All four runs passed the same 14 scalar-reader goldens. In every run:
 
 The engine documents its numeric domain in the
 [language guide](https://docs.yottadb.com/ProgrammersGuide/langfeat.html#numeric-accuracy)
-and [numeric considerations](https://docs.yottadb.com/MultiLangProgGuide/programmingnotes.html#numeric-considerations).
-Both tagged and untagged globals can retain arbitrary decimal text. Tags do not
-increase M arithmetic precision. Removing tags cannot make engine arithmetic
-preserve every Python Decimal or integer value.
+and
+[numeric considerations](https://docs.yottadb.com/MultiLangProgGuide/programmingnotes.html#numeric-considerations).
+Both tagged and untagged globals can retain arbitrary decimal text. Tags do not increase
+M arithmetic precision. Removing tags cannot make engine arithmetic preserve every
+Python Decimal or integer value.
 
 ## Decision
 

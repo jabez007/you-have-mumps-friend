@@ -1,8 +1,9 @@
 # ADR 0011: Plan a bounded reference-deletion closure
 
-Status: accepted. [CI run 42334391163](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42334391163)
-passed both configured YottaDB versions, both journaling modes, and native stress
-before issue 13 was closed.
+Status: accepted.
+[CI run 42334391163](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42334391163)
+passed both configured YottaDB versions, both journaling modes, and native stress before
+issue 13 was closed.
 
 ## Existing mechanisms and problem
 

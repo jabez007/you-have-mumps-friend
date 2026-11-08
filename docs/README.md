@@ -30,13 +30,14 @@ New here? Start with [get started](getting-started.md), then read
 - [Known limitations](known-limitations.md)
 - [Storage format](storage-format.md): the byte contract for keys, values, and metadata.
 - [Schema compatibility](schema-compatibility.md): when a schema change is compatible.
-- [Component licenses](licensing.md): the license of each component, with links to its terms.
+- [Component licenses](licensing.md): the license of each component, with links to its
+  terms.
 - [Changelog](../CHANGELOG.md)
 
 ## Understand the design
 
-- [Architecture](yottadb_hierarchical_mapper_architecture.md): the goals, the decisions, and
-  the open questions.
+- [Architecture](yottadb_hierarchical_mapper_architecture.md): the goals, the decisions,
+  and the open questions.
 - Decision records:
   - [0001 Schema installation integrity](adr/0001-schema-installation-integrity.md)
   - [0002 Schema fingerprint compatibility](adr/0002-schema-fingerprint-compatibility.md)
@@ -59,10 +60,12 @@ New here? Start with [get started](getting-started.md), then read
 ## Check the evidence
 
 - [Correctness testing](testing.md)
-- [Native performance](performance.md) and [inventory performance](inventory-performance.md)
+- [Native performance](performance.md) and
+  [inventory performance](inventory-performance.md)
 - [Benchmark data](benchmarks/)
 - [0.5.0 delivery report](releases/0.5.0.md)
-- [Implementation plan](implementation-plan.md): a historical log of the 0.3.1 to 0.5 work.
+- [Implementation plan](implementation-plan.md): a historical log of the 0.3.1 to 0.5
+  work.
 
 ## Contribute
 

@@ -57,9 +57,10 @@ datetimes are unsupported. Reencoding rejects compact dates, alternative offsets
 missing fractional digits, and other noncanonical stored forms.
 
 Within each temporal type, encoded payloads sort chronologically. They are tagged
-strings, not M numeric values; numeric coercion is not date arithmetic. Equality
-indexes normalize equivalent timezone offsets to the same instant. Ordinary equality tokens retain their existing order; range queries require the
-separate opt-in ordered-v1 index codec.
+strings, not M numeric values; numeric coercion is not date arithmetic. Equality indexes
+normalize equivalent timezone offsets to the same instant. Ordinary equality tokens
+retain their existing order; range queries require the separate opt-in ordered-v1 index
+codec.
 
 New temporal fields declare date-v1 or datetime-utc-v1 codecs in schema format two.
 Temporal bounds have temporal_minimum/maximum/exclusiveMinimum/exclusiveMaximum
@@ -151,14 +152,14 @@ global to exactly one top-level model. Save supplies a complete replacement valu
 and writes its physical node differences;
 it does not merge raw nodes or silently overwrite unmanaged records.
 
-CRUD reads both installed metadata nodes on every transaction attempt. Exact
-canonical bytes take the direct path; supported legacy bytes undergo integrity
-and compatibility checks before binding the operation to the stored identity.
-Bounded caches contain only pure results keyed by immutable declarations or full
-snapshot bytes. They never cache installed-state decisions or hide changed nodes.
-Missing or corrupt snapshot bytes fail safely. Automatic installation checks that the entire
-application global is empty in the same transaction as metadata installation.
-A root value counts as data even when there are no descendants.
+CRUD reads both installed metadata nodes on every transaction attempt. Exact canonical
+bytes take the direct path; supported legacy bytes undergo integrity and compatibility
+checks before binding the operation to the stored identity. Bounded caches contain only
+pure results keyed by immutable declarations or full snapshot bytes. They never cache
+installed-state decisions or hide changed nodes. Missing or corrupt snapshot bytes fail
+safely. Automatic installation checks that the entire application global is empty in the
+same transaction as metadata installation. A root value counts as data even when there
+are no descendants.
 
 The inspection interface verifies the canonical bytes and their fingerprint
 before exposing installed metadata. An absent fingerprint with a snapshot, or
@@ -179,17 +180,17 @@ contain no record values and omit literal defaults unless explicitly requested.
 They neither introduce migration-state globals nor change the installed schema.
 This format is a review report, not an executable migration program.
 
-The migration maintenance gate is `^YHMFMigration("gate")`, containing a
-32-character lowercase hexadecimal job identifier. Current mapper data
-operations read this gate inside their transaction, validate the owning checkpoint
-and barrier, and refuse access to that job's model. Unrelated models remain usable;
-maintenance jobs themselves remain serialized. Older clients honoring the global
-gate continue to block conservatively. Schema inspection and planning remain available. The migrating model's
-installed fingerprint is temporarily `migration:` followed by the identifier;
-its source snapshot stays installed for inspection when one exists. This barrier also makes
-older clients reject that model through their existing fingerprint checks.
-Raw YottaDB writers must be coordinated by the operator. No new metadata is needed
-for scoped access; the existing checkpoint already identifies the affected global.
+The migration maintenance gate is `^YHMFMigration("gate")`, containing a 32-character
+lowercase hexadecimal job identifier. Current mapper data operations read this gate
+inside their transaction, validate the owning checkpoint and barrier, and refuse access
+to that job's model. Unrelated models remain usable; maintenance jobs themselves remain
+serialized. Older clients honoring the global gate continue to block conservatively.
+Schema inspection and planning remain available. The migrating model's installed
+fingerprint is temporarily `migration:` followed by the identifier; its source snapshot
+stays installed for inspection when one exists. This barrier also makes older clients
+reject that model through their existing fingerprint checks. Raw YottaDB writers must be
+coordinated by the operator. No new metadata is needed for scoped access; the existing
+checkpoint already identifies the affected global.
 
 Committed migration checkpoints live at `^YHMFMigration("jobs",job_id)` as
 canonical JSON with format version 1, source and target fingerprints, a phase,
@@ -229,32 +230,31 @@ reject jobs of another kind, and selection bytes must match the stored digest.
 Older readers reject rebuild checkpoints rather than treating them as ordinary
 schema changes.
 
-Each job has `"source_snapshot"` and `"target_snapshot"` children containing
-the canonical schema bytes. The checkpoints progress through `validate`,
-`backfill`, `verify`, `retag`, optionally `cleanup`, then `activate` and `complete`. Each bounded pass stores
-its last encoded record key as hexadecimal and resets it at the next phase.
-The counters are `validated`, `backfilled`, `verified`, and `retagged`.
-Normal checkpoints omit `pruning`. Explicit retirement of a terminal job adds
-`pruning: true` to its checkpoint, without changing application metadata. All job
-children are removed in bounded leaf batches, followed by the checkpoint root.
-Executors reject marked jobs even when their manifests have already been removed.
-Older maintenance readers reject the optional field; existing untouched checkpoints
-retain their original shape. No gate is claimed for terminal metadata retirement.
-Activation requires equal counters and publishes the target schema, completes
-the job, and removes the gate in one transaction. Before any update batch or cleanup deletion commits,
-abort can restore the source fingerprint and persist the `aborted` phase.
+Each job has `"source_snapshot"` and `"target_snapshot"` children containing the
+canonical schema bytes. The checkpoints progress through `validate`, `backfill`,
+`verify`, `retag`, optionally `cleanup`, then `activate` and `complete`. Each bounded
+pass stores its last encoded record key as hexadecimal and resets it at the next phase.
+The counters are `validated`, `backfilled`, `verified`, and `retagged`. Normal
+checkpoints omit `pruning`. Explicit retirement of a terminal job adds `pruning: true`
+to its checkpoint, without changing application metadata. All job children are removed
+in bounded leaf batches, followed by the checkpoint root. Executors reject marked jobs
+even when their manifests have already been removed. Older maintenance readers reject
+the optional field; existing untouched checkpoints retain their original shape. No gate
+is claimed for terminal metadata retirement. Activation requires equal counters and
+publishes the target schema, completes the job, and removes the gate in one transaction.
+Before any update batch or cleanup deletion commits, abort can restore the source
+fingerprint and persist the `aborted` phase.
 
-The executor adds scalar nodes and changes equality entries or unique claims at
-root fields and inside existing owned objects and children.
-It can promote existing scalar equality indexes to unique indexes without
-rewriting their equality entries. It rejects occupied backfill paths and nonempty new-index
-namespaces. Existing fields and retained index identities must remain byte-for-byte
-unchanged. A uniqueness downgrade removes claims without rewriting equality
-entries; an index removal retires both equality and claim namespaces for that
-declaration path. Existing expected index nodes, reverse edges,
-and reference target metadata are validated before updates. Verification
-checks expected entries by record; it does not perform a full reverse index
-audit for unrelated orphan entries.
+The executor adds scalar nodes and changes equality entries or unique claims at root
+fields and inside existing owned objects and children. It can promote existing scalar
+equality indexes to unique indexes without rewriting their equality entries. It rejects
+occupied backfill paths and nonempty new-index namespaces. Existing fields and retained
+index identities must remain byte-for-byte unchanged. A uniqueness downgrade removes
+claims without rewriting equality entries; an index removal retires both equality and
+claim namespaces for that declaration path. Existing expected index nodes, reverse
+edges, and reference target metadata are validated before updates. Verification checks
+expected entries by record; it does not perform a full reverse index audit for unrelated
+orphan entries.
 
 After parent metadata updates, retirements enter `cleanup`. Each call removes
 at most its batch limit of leaves under the exact retired namespaces, including
@@ -422,16 +422,16 @@ subscripts, including canonical child keys. Its lowercase hexadecimal SHA-256
 is `location_sha256`. `owner_json` is the compact ASCII JSON array containing
 the encoded owner key and the decoded location array.
 
-For equality-v1, `value_token` is `v:` followed by an ASCII JSON string containing the normalized
-typed value. Ordinary scalar and reference encodings remain unchanged except
-for numeric normalization. Decimal normalization strips trailing coefficient
-zeros and increases the exponent accordingly, without decimal-context rounding.
-Nonzero decimals use `d:` followed by the signed coefficient, `E`, and exponent.
-Every decimal zero maps to `d:0`; both floating-point zeros map to `f:0.0`.
-For example, `12.50` and `12.500` share token `v:"d:125E-1"`.
-String comparison uses exact code points without Unicode or case folding.
-The [index-value fixtures](../tests/fixtures/index-values.json) define literal
-tokens for decimals, negative zero, Unicode, NUL, null, empty strings, and bytes.
+For equality-v1, `value_token` is `v:` followed by an ASCII JSON string containing the
+normalized typed value. Ordinary scalar and reference encodings remain unchanged except
+for numeric normalization. Decimal normalization strips trailing coefficient zeros and
+increases the exponent accordingly, without decimal-context rounding. Nonzero decimals
+use `d:` followed by the signed coefficient, `E`, and exponent. Every decimal zero maps
+to `d:0`; both floating-point zeros map to `f:0.0`. For example, `12.50` and `12.500`
+share token `v:"d:125E-1"`. String comparison uses exact code points without Unicode or
+case folding. The [index-value fixtures](../tests/fixtures/index-values.json) define
+literal tokens for decimals, negative zero, Unicode, NUL, null, empty strings, and
+bytes.
 
 Unique fields also have equality entries. Under equality-v1, null values use the token
 `v:"n:"` and create no unique claim. Every non-null unique field occurrence owns

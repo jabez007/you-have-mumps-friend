@@ -129,15 +129,16 @@ complexity check passed without over-threshold cleanup candidates.
 
 ### Phase 1 qualification
 
-Canonical generation and legacy integration are independently committed in
-`28c5141` and `e24b26d`. [CI run 42288583847](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42288583847)
-passed all five jobs: 883 tests per native r2.02/r2.06 environment, 464 local tests,
-and 138 selected compatibility tests per Pydantic version. Both complete local
-non-native suites also passed under 2.12.0 and 2.14.3. Ruff, formatting, complexity,
-strict mypy, build, isolated wheel smoke, and the existing native benchmark ran.
-The foreign-runtime compatibility regression fails against `268ab73` and passes
-with the new binding. No dependency, record-layout, or application-data conversion
-was introduced. Phase 1 is complete before Phase 2 work begins.
+Canonical generation and legacy integration are independently committed in `28c5141` and
+`e24b26d`.
+[CI run 42288583847](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42288583847)
+passed all five jobs: 883 tests per native r2.02/r2.06 environment, 464 local tests, and
+138 selected compatibility tests per Pydantic version. Both complete local non-native
+suites also passed under 2.12.0 and 2.14.3. Ruff, formatting, complexity, strict mypy,
+build, isolated wheel smoke, and the existing native benchmark ran. The foreign-runtime
+compatibility regression fails against `268ab73` and passes with the new binding. No
+dependency, record-layout, or application-data conversion was introduced. Phase 1 is
+complete before Phase 2 work begins.
 
 ### Phase 2 design note
 
@@ -170,16 +171,16 @@ integer child identities, schema ordering, malformed bytes, and size/depth limit
 
 ### Phase 2 qualification
 
-The codec fix (`c93778e`) and adversarial tests (`0b57ac0`) are independently
-committed. [CI run 42290473930](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42290473930)
-passed all six jobs: 916 tests in each native environment, 14 additional native
-stress cases per environment, 483 local tests, 146 selected tests per Pydantic
-version, and 19 cases in the separate memory adversarial stress job. The longer
-local state-machine run passed in 18.24 seconds; the complete routine local suite
-passed in 5.98 seconds. Ruff/complexity, format, strict mypy, packaging, isolated
-wheel smoke, and native benchmarks passed. No generated mutation integrity defect
-was found; the confirmed codec error boundary received minimal failing regressions.
-Phase 2 is complete before application implementation begins.
+The codec fix (`c93778e`) and adversarial tests (`0b57ac0`) are independently committed.
+[CI run 42290473930](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42290473930)
+passed all six jobs: 916 tests in each native environment, 14 additional native stress
+cases per environment, 483 local tests, 146 selected tests per Pydantic version, and 19
+cases in the separate memory adversarial stress job. The longer local state-machine run
+passed in 18.24 seconds; the complete routine local suite passed in 5.98 seconds.
+Ruff/complexity, format, strict mypy, packaging, isolated wheel smoke, and native
+benchmarks passed. No generated mutation integrity defect was found; the confirmed codec
+error boundary received minimal failing regressions. Phase 2 is complete before
+application implementation begins.
 
 ### Phase 3 design note
 
@@ -223,13 +224,13 @@ failure; both complete local Pydantic suites subsequently passed 514 tests.
 ### Phase 3 completion
 
 [Final contract run 42294677787](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42294677787)
-passed all six jobs: 970 tests per native environment, 14 additional native stress
-cases per engine, 169 compatibility cases per Pydantic version, and the 19-case
-adversarial job. Both complete local Pydantic suites passed 514 tests. Ruff,
-formatting, complexity maximum ten, strict mypy for the library and example,
-packaging, and isolated v0.5.0 wheel smoke passed. Native tests verified double-spend
-prevention, forced workflow restart, and ledger/index rollback; the native demo
-and both benchmark runners completed on r2.02 and r2.06.
+passed all six jobs: 970 tests per native environment, 14 additional native stress cases
+per engine, 169 compatibility cases per Pydantic version, and the 19-case adversarial
+job. Both complete local Pydantic suites passed 514 tests. Ruff, formatting, complexity
+maximum ten, strict mypy for the library and example, packaging, and isolated v0.5.0
+wheel smoke passed. Native tests verified double-spend prevention, forced workflow
+restart, and ledger/index rollback; the native demo and both benchmark runners completed
+on r2.02 and r2.06.
 
 The inventory benchmark's raw samples, node-operation counts, CPU/runtime metadata,
 and source commit are committed with the performance report. The runnable example,
@@ -314,10 +315,10 @@ messages. The configured complexity check still passes at ten.
 
 Transaction slice `22001f6` passed all six jobs in
 [CI run 42309069293](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42309069293).
-Both native engines executed the controlled caught-signal tests and four-process
-counter regressions. Issues 1 and 7 are closed after that qualification. The
-configuration matrix for issue 3 has five failing-before-fix declaration regressions;
-all safe-option, rollback, and fingerprint checks pass under both Pydantic versions.
+Both native engines executed the controlled caught-signal tests and four-process counter
+regressions. Issues 1 and 7 are closed after that qualification. The configuration
+matrix for issue 3 has five failing-before-fix declaration regressions; all safe-option,
+rollback, and fingerprint checks pass under both Pydantic versions.
 
 ### Field validation design, issue 5
 
@@ -1369,16 +1370,16 @@ typed sorting, scoped root pages, and unchanged stock/reference data.
 ### Measure maintenance serialization before changing its lock protocol, issue 46
 
 Reuse the actual WarehouseV2-to-current named-transform upgrade, scoped maintenance
-gate, index-rebuild planner, public job resume APIs, and benchmark counters.
-Measure one attempted unrelated rebuild while a warehouse job is active, unrelated
-control-model CRUD latency, remaining active-job duration, and the second job after release.
-Use 1/10/50 warehouses with two locations and ten lots per location, small committed
+gate, index-rebuild planner, public job resume APIs, and benchmark counters. Measure one
+attempted unrelated rebuild while a warehouse job is active, unrelated control-model
+CRUD latency, remaining active-job duration, and the second job after release. Use
+1/10/50 warehouses with two locations and ten lots per location, small committed
 batches, and both native engine/journal configurations. The API refuses a second job
 immediately; it does not queue it, so remaining job duration is an operator scheduling
-delay bound for this controlled workload, not an observed production waiting time.
-Do not infer a deployment requirement or implement per-model locks from synthetic
-results alone. Update ADR 0009 with the measured decision and the conflict/reference,
-recovery, activation, and older-client requirements of any future concurrency design.
+delay bound for this controlled workload, not an observed production waiting time. Do
+not infer a deployment requirement or implement per-model locks from synthetic results
+alone. Update ADR 0009 with the measured decision and the conflict/reference, recovery,
+activation, and older-client requirements of any future concurrency design.
 
 Use an independent control model with no references to/from the inventory graph.
 Product is connected through balances and is not evidence for disjoint-job behavior;
@@ -1539,10 +1540,11 @@ Bound each exported domain to 256 members and 32,764 encoded bytes. Reject the w
 export for Unicode, wider integers, booleans, nullable choices, unsupported constraints,
 or custom validators until those domains are separately qualified. Membership does not
 call Python Enum fallback hooks. No schema, record, index, or fingerprint bytes change;
-applications regenerate source to use the additional writer capability. Preserve existing
-Python choice behavior. Test byte equality, membership failures, unique rollback, stored
-invalid members, escaping, and export bounds on both native engines. Configured C901
-passes at ten before this change; no threshold increase or unrelated cleanup is needed.
+applications regenerate source to use the additional writer capability. Preserve
+existing Python choice behavior. Test byte equality, membership failures, unique
+rollback, stored invalid members, escaping, and export bounds on both native engines.
+Configured C901 passes at ten before this change; no threshold increase or unrelated
+cleanup is needed.
 
 ### Publish native cache evidence, issue 47
 
@@ -1745,8 +1747,9 @@ Validate concrete stored keys and observed child counts, bound traversal by the 
 subtree's 10,000-node budget, and avoid scanning unrelated branches. No cascade/set-null
 reference policy or new deletion framework is introduced. Public delete/deletechild
 participants retain their transaction/restart contracts. Whole tree replace stays
-rejected. Test Python equivalence, net-zero mixed-sign sources, minimums, unique failure,
-incoming references, concurrent quantity changes, rollback, and restart on native.
+rejected. Test Python equivalence, net-zero mixed-sign sources, minimums, unique
+failure, incoming references, concurrent quantity changes, rollback, and restart on
+native.
 
 ### Freeze movement revision three before choice migration, issue 54
 
@@ -1805,19 +1808,21 @@ legacy layout examples. Read a bounded bin aggregate to validate its coordinates
 that cost may grow with balances in that bin, never unrelated bins.
 
 Keep reporting bounded by bin pages and compute warehouse totals by explicit traversal,
-not a transactional cross-root total. Retain the 1,000-balances-per-bin and 10,000-nodes-
-per-bin limits, removing the warehouse-wide cap. Compare Bin ownership with a Balance
-root in the native benchmark before claiming performance. Document the choice in ADR17.
+not a transactional cross-root total. Retain the 1,000-balances-per-bin and
+10,000-nodes- per-bin limits, removing the warehouse-wide cap. Compare Bin ownership
+with a Balance root in the native benchmark before claiming performance. Document the
+choice in ADR17.
 
 Use a maintenance-window app data move, not a new migration framework: require an
 explicit writers-stopped attestation and initially empty target globals, then copy and
 clear one bounded old warehouse and advance a managed checkpoint in the same atomic
 callback. Crashes/failures cannot expose a half-moved warehouse; retry resumes from
-committed progress. Keep old schema bindings/data representation and Movement identities.
-The new service refuses writes during the move. Old Python/M writers must be drained;
-this is deliberately not an online migration. Test rollback after copying and clearing,
-resume and repeated completion, competing workers, reference lifetime and >old-budget
-stock. C901 remains ten. No process-local data caches or framework layout changes.
+committed progress. Keep old schema bindings/data representation and Movement
+identities. The new service refuses writes during the move. Old Python/M writers must be
+drained; this is deliberately not an online migration. Test rollback after copying and
+clearing, resume and repeated completion, competing workers, reference lifetime
+and >old-budget stock. C901 remains ten. No process-local data caches or framework
+layout changes.
 
 ### Measure native inventory aggregate boundaries, issue 48
 

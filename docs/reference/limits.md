@@ -47,18 +47,18 @@ These limits come from the [storage contract](../storage-format.md#keys-and-path
 [`scripts/test-native.sh`](../../scripts/test-native.sh) creates its region with
 `-key_size=1019 -record_size=32767`. The native test suite is qualified only with these
 settings, plus a default-region diagnostic regression. Smaller regions apply stricter
-limits. `REC2BIG`, `KEY2BIG`, and `GVSUBOFLOW` become `StorageError` naming the setting; the original
-driver exception remains as the cause. Other engine errors propagate. Record limits
-cover combined key and value bytes, not just the value.
+limits. `REC2BIG`, `KEY2BIG`, and `GVSUBOFLOW` become `StorageError` naming the setting;
+the original driver exception remains as the cause. Other engine errors propagate.
+Record limits cover combined key and value bytes, not just the value.
 
 ## Index values
 
-Index subscripts encode values as JSON with non-ASCII escaped, so a character can take much
-more than one byte. Values are never truncated or hashed to fit. An oversized value raises
-an error before any record write.
+Index subscripts encode values as JSON with non-ASCII escaped, so a character can take
+much more than one byte. Values are never truncated or hashed to fit. An oversized value
+raises an error before any record write.
 
-A live r2.06 test used a region with the settings above, model `^Idx`, and field `s`. The
-longest equality-indexed strings were:
+A live r2.06 test used a region with the settings above, model `^Idx`, and field `s`.
+The longest equality-indexed strings were:
 
 | Characters | Longest value |
 | --- | --- |

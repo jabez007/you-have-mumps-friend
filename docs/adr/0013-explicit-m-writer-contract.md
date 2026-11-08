@@ -1,7 +1,9 @@
 # ADR 0013: Schema-bound explicit M writers
 
-Status: accepted after [native prototype CI 42339948201](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42339948201)
-and [generated-writer CI 42341009542](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42341009542).
+Status: accepted after
+[native prototype CI 42339948201](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42339948201)
+and
+[generated-writer CI 42341009542](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42341009542).
 
 ## Existing mechanisms and experiments
 
@@ -11,26 +13,27 @@ obligations. Raw SET/KILL bypass them. Python custom validation cannot be transl
 reliably into M. Stored rollups must not promise correctness for unsupported writers.
 
 The native prototypes in tests/m/YHMFWPROBE.m compare leaf SET/KILL triggers with an
-explicit complete-input M routine. Both engines and both journaling modes passed: trigger
-index changes roll back with the field; a leaf KILL maintains its toy index; parent
-KILL does not invoke the leaf trigger and leaves a stale entry. The creation trigger
-runs before later fields exist. These are semantic observations, not latency data.
-YottaDB documents these [trigger semantics](https://docs.yottadb.com/ProgrammersGuide/triggers.html).
-A broader trigger system could cover ancestor deletes and creation protocols, but
-would need the mapper's schema, migration, validation, index, and ownership rules
-plus a context protocol to cooperate with Python writes. The toy trigger is not a
-complete managed-record implementation.
+explicit complete-input M routine. Both engines and both journaling modes passed:
+trigger index changes roll back with the field; a leaf KILL maintains its toy index;
+parent KILL does not invoke the leaf trigger and leaves a stale entry. The creation
+trigger runs before later fields exist. These are semantic observations, not latency
+data. YottaDB documents these
+[trigger semantics](https://docs.yottadb.com/ProgrammersGuide/triggers.html). A broader
+trigger system could cover ancestor deletes and creation protocols, but would need the
+mapper's schema, migration, validation, index, and ownership rules plus a context
+protocol to cooperate with Python writes. The toy trigger is not a complete
+managed-record implementation.
 
 ## Decision and initial supported contract
 
-Generate an explicit, schema-bound M routine. Exporting source is read-only and
-never installs triggers or metadata. Each insert/replace/delete owns one native TP;
-nested calls to these transaction-owning entry points are rejected. Inputs are complete named field values, not a
-patch or a Python-default invocation. Recompute database-derived state after every
-restart. Check exact installed fingerprint/snapshot and record metadata on each
-attempt; a stale routine fails rather than interpreting another schema. Initial
-installation requires a genuinely empty global, in the same TP as the first insert.
-A failed insert leaves data, metadata, indexes, and claims unchanged.
+Generate an explicit, schema-bound M routine. Exporting source is read-only and never
+installs triggers or metadata. Each insert/replace/delete owns one native TP; nested
+calls to these transaction-owning entry points are rejected. Inputs are complete named
+field values, not a patch or a Python-default invocation. Recompute database-derived
+state after every restart. Check exact installed fingerprint/snapshot and record
+metadata on each attempt; a stale routine fails rather than interpreting another schema.
+Initial installation requires a genuinely empty global, in the same TP as the first
+insert. A failed insert leaves data, metadata, indexes, and claims unchanged.
 
 Start with flat non-null str/int declarations, ordinary equality/unique indexes,
 ASCII string values, canonical signed integers of at most 18 digits, and supported
@@ -50,10 +53,10 @@ state blocks all writes. Earlier exported routines keep the global block until
 regenerated. Unexpected native errors roll back the owned TP and propagate to the
 caller's handler.
 
-Owned trees, ordered indexes, scalar lists, stored rollups,
-custom validators, nullable values, and non-ASCII input remain unsupported by this
-initial generator. Thus supported M writes cannot change rollup inputs. A future extension must implement the complete affected invariants
-before accepting those models.
+Owned trees, ordered indexes, scalar lists, stored rollups, custom validators, nullable
+values, and non-ASCII input remain unsupported by this initial generator. Thus supported
+M writes cannot change rollup inputs. A future extension must implement the complete
+affected invariants before accepting those models.
 
 ## Alternatives and tradeoffs
 

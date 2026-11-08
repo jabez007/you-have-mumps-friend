@@ -34,8 +34,9 @@ The script creates and removes its own temporary database. Setting
 `YHMF_TEST_NATIVE=1` by hand runs the tests against your current database, so use
 it only with disposable data.
 
-Native CI runs this suite with Python 3.12 on YottaDB r2.02 with Ubuntu 22.04 and
-on r2.06 with Ubuntu 24.04. See [`.github/workflows/checks.yml`](.github/workflows/checks.yml).
+Native CI runs this suite with Python 3.12 on YottaDB r2.02 with Ubuntu 22.04 and on
+r2.06 with Ubuntu 24.04. See
+[`.github/workflows/checks.yml`](.github/workflows/checks.yml).
 
 Native qualification covers the following behavior:
 

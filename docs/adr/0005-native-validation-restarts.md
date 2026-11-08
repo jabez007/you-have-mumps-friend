@@ -5,18 +5,19 @@ Status: accepted for v0.4; applies to CRUD and maintenance transactions.
 ## Evidence and problem
 
 [CI run 42260567341](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42260567341)
-failed the existing concurrent nested-index rebuild test on YottaDB r2.06.
-A worker retained its old checkpoint and then saw entries published by its
-competitor. Index validation raised `StorageError` before TP reached commit,
-where the native engine would otherwise validate the read set and restart.
+failed the existing concurrent nested-index rebuild test on YottaDB r2.06. A worker
+retained its old checkpoint and then saw entries published by its competitor. Index
+validation raised `StorageError` before TP reached commit, where the native engine would
+otherwise validate the read set and restart.
 
-YottaDB's [transaction processing documentation](https://docs.yottadb.com/ProgrammersGuide/langfeat.html#transaction-processing)
-describes commit-time read-set validation and the final critical-section attempt.
-Its [TRESTART documentation](https://docs.yottadb.com/ProgrammersGuide/commands.html#trestart)
+YottaDB's
+[transaction processing documentation](https://docs.yottadb.com/ProgrammersGuide/langfeat.html#transaction-processing)
+describes commit-time read-set validation and the final critical-section attempt. Its
+[TRESTART documentation](https://docs.yottadb.com/ProgrammersGuide/commands.html#trestart)
 specifies the transition after three restarts. Native callbacks must account for
-application errors observed before commit-time conflict detection. Python local
-state is already fresh for each `Database.atomic` attempt, so changing the rebuild
-cursor or accepting preexisting index entries would weaken the wrong invariant.
+application errors observed before commit-time conflict detection. Python local state is
+already fresh for each `Database.atomic` attempt, so changing the rebuild cursor or
+accepting preexisting index entries would weaken the wrong invariant.
 
 ## Decision
 
@@ -90,10 +91,11 @@ demonstrates this failure mode and verifies that the existing policy rolls them 
 The migration auto-abort regression also exposed this defect in a framework path;
 restoration now happens only after rollback, in a separate checkpoint-pinned TP.
 
-An error-only fast path would need an engine-supported validate-and-abort operation,
-or a controlled operation whose lack of writes can actually be established. Arbitrary
+An error-only fast path would need an engine-supported validate-and-abort operation, or
+a controlled operation whose lack of writes can actually be established. Arbitrary
 Python callbacks do not meet that condition. Instrumenting only Store is insufficient.
-Do not add a process-local counter, callback classifier, or generic side-effect detector.
+Do not add a process-local counter, callback classifier, or generic side-effect
+detector.
 
 Applications can test a **known boundary** with unittest.mock.Mock configured to raise
 AssertionError when called inside a callback. The transaction guide demonstrates this

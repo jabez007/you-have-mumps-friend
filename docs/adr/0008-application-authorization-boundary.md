@@ -1,6 +1,7 @@
 # ADR 0008: Keep authorization at the application boundary
 
-Status: accepted; resolves the design decision in [issue 19](https://github.com/jabez007/you-have-mumps-friend/issues/19).
+Status: accepted; resolves the design decision in
+[issue 19](https://github.com/jabez007/you-have-mumps-friend/issues/19).
 
 ## Problem and existing mechanisms
 

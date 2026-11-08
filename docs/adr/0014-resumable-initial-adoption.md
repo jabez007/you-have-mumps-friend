@@ -1,6 +1,7 @@
 # ADR 0014: Resumable adoption with an explicitly absent source schema
 
-Status: accepted and qualified by [native CI 42342515333](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42342515333).
+Status: accepted and qualified by
+[native CI 42342515333](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42342515333).
 
 ## Existing mechanisms
 

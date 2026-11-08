@@ -115,12 +115,13 @@ that produces identical output cannot be distinguished, and this is not an arbit
 side-effect detector. Restore the approved declarations/code/configuration to resume
 an interrupted job; changing the name does not rebind an active job.
 
-Unrelated CRUD follows [model-scoped maintenance](migrations.md#stop-other-clients-first).
-Raw writers must stay coordinated. Older clients reject the custom-operation marker
-instead of resuming it through an incompatible executor. Existing v0.3/v0.4 metadata
-can be a source binding; records are converted only through this explicit procedure.
-Direct M readers must honor the affected global's maintenance barrier or be stopped:
-rewritten fields can coexist with source record metadata before retagging. The raw
-storage interface does not automatically hide this maintenance state.
-Use normal terminal [job pruning](migrations.md#retire-job-metadata) after retaining
-the job evidence according to the application's recovery policy.
+Unrelated CRUD follows
+[model-scoped maintenance](migrations.md#stop-other-clients-first). Raw writers must
+stay coordinated. Older clients reject the custom-operation marker instead of resuming
+it through an incompatible executor. Existing v0.3/v0.4 metadata can be a source
+binding; records are converted only through this explicit procedure. Direct M readers
+must honor the affected global's maintenance barrier or be stopped: rewritten fields can
+coexist with source record metadata before retagging. The raw storage interface does not
+automatically hide this maintenance state. Use normal terminal
+[job pruning](migrations.md#retire-job-metadata) after retaining the job evidence
+according to the application's recovery policy.

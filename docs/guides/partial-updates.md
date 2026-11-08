@@ -106,9 +106,9 @@ db.atomic(receive)
 assert db.get(Warehouse, 7, at=("bins", "A01", "lots", "L-001")).quantity == Decimal("26.5")
 ```
 
-The callback may restart, so follow the [callback rules](transactions.md#write-callbacks-that-can-run-again).
-Failed partial mutations make the transaction roll back, even if the callback catches
-the exception.
+The callback may restart, so follow the
+[callback rules](transactions.md#write-callbacks-that-can-run-again). Failed partial
+mutations make the transaction roll back, even if the callback catches the exception.
 
 ## Insert and delete keyed children
 
@@ -156,8 +156,8 @@ Child insertion and deletion share these ancestor restrictions.
 - A patch reads its affected state inside the transaction and writes only changed scalar
   nodes. It maintains only the affected indexes and reference entries, and does not
   rewrite sibling collections.
-- Patches to different fields keep both assignments. Patches to the same field serialize,
-  and the later commit wins.
+- Patches to different fields keep both assignments. Patches to the same field
+  serialize, and the later commit wins.
 - A parent or child deletion that races a nested update causes a restart. If the delete
   wins, the update raises a missing-owner error on retry.
 - Unique-index conflicts allow one claimant.

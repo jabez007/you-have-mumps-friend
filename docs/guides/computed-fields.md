@@ -1,8 +1,8 @@
 # Virtual fields and stored sums
 
 Use a Pydantic computed_field or ordinary property for a value derived from a loaded
-object. It is never stored or indexed and does not fetch missing data. Use a stored
-sum when a root or owned object needs an indexed total maintained with its owned quantities.
+object. It is never stored or indexed and does not fetch missing data. Use a stored sum
+when a root or owned object needs an indexed total maintained with its owned quantities.
 
 ```python
 from decimal import Decimal, localcontext
@@ -82,13 +82,13 @@ writes requires an explicit operator procedure, not a read-time correction.
 ## Transactions, efficiency, and indexes
 
 A partial quantity update reads/writes the affected owner and each affected surviving
-total once. It never loads unrelated sibling quantities. Patch groups combine deltas
-by concrete total path; a net-zero group leaves that total and its index untouched. Child
-insertion/deletion, cascading child deletion, and set_null validators contribute
-through the same secondary transition. Deleted whole roots need no surviving total.
-Normal index/unique-claim maintenance is reused in the transaction; unrelated indexes
-are untouched. Use patch_many for related existing-owner updates and atomic for
-workflows that include reads or child insertions.
+total once. It never loads unrelated sibling quantities. Patch groups combine deltas by
+concrete total path; a net-zero group leaves that total and its index untouched. Child
+insertion/deletion, cascading child deletion, and set_null validators contribute through
+the same secondary transition. Deleted whole roots need no surviving total. Normal
+index/unique-claim maintenance is reused in the transaction; unrelated indexes are
+untouched. Use patch_many for related existing-owner updates and atomic for workflows
+that include reads or child insertions.
 
 Concurrent child mutations update the total in the same TP as their inputs. A shared
 stored total is intentionally a shared conflict point. Restarted transactions

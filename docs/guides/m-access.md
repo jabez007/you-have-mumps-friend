@@ -25,8 +25,8 @@ The outputs below come from a live YottaDB r2.06 database that holds the warehou
 
 ## Read the stored form
 
-The [storage contract](../storage-format.md) defines every encoding. These rules cover most
-reads:
+The [storage contract](../storage-format.md) defines every encoding. These rules cover
+most reads:
 
 - Integer keys are plain subscripts. String keys start with `s:`.
 - Values start with a type tag such as `s:`, `i:`, `d:`, `f:`, `b:`, `x:`, or `n:`.
@@ -122,40 +122,40 @@ full scalar integer domain. An existing record outside the M stored-value domain
 returns unsupported without changes. Use Python for those records.
 
 Export rejects custom Python validators, unsupported constraints or normalization,
-nullable child collections, scalar lists, and more than 16 fields per owner. Keyed trees have the separate operations
-below. The generator does not silently omit rules. Every inserted non-derived scalar field must be supplied even if Python declares a
-default; defaults/factories are not run. Empty-root/branch creation derives zero
-stored totals and creates empty declared collections.
-M does not distinguish Python runtime types, so the declaration determines how each
-canonical textual input is encoded. This is validation of the declared M subset,
-not execution of Pydantic in M.
+nullable child collections, scalar lists, and more than 16 fields per owner. Keyed trees
+have the separate operations below. The generator does not silently omit rules. Every
+inserted non-derived scalar field must be supplied even if Python declares a default;
+defaults/factories are not run. Empty-root/branch creation derives zero stored totals
+and creates empty declared collections. M does not distinguish Python runtime types, so
+the declaration determines how each canonical textual input is encoded. This is
+validation of the declared M subset, not execution of Pydantic in M.
 
-The insert/replace/delete entry points each own one native transaction and reject
-a caller with nonzero tlevel.
-All live schema/record/index checks and derived reads repeat after a restart. Changes
-to data, equality entries, and unique claims commit or roll back together. Existing
-records and expected claim ownership are checked before replacement/deletion. A
-failed uniqueness claim cannot leave released old claims. Delete conservatively
-refuses active inbound references, including sources with cascade/set_null policies;
-Python handles those policies. Invalid count/edge metadata fails closed. A valid
-zero-count namespace is removed when its target is deleted. Newly exported routines validate the live
-maintenance checkpoint and its schema barrier in the write transaction. They block
-the affected model while unrelated writes can proceed. Corrupt or unknown checkpoint
-formats fail closed. Existing exported routines retain their conservative global
-gate check until regenerated; their installed schema bindings do not change.
+The insert/replace/delete entry points each own one native transaction and reject a
+caller with nonzero tlevel. All live schema/record/index checks and derived reads repeat
+after a restart. Changes to data, equality entries, and unique claims commit or roll
+back together. Existing records and expected claim ownership are checked before
+replacement/deletion. A failed uniqueness claim cannot leave released old claims. Delete
+conservatively refuses active inbound references, including sources with
+cascade/set_null policies; Python handles those policies. Invalid count/edge metadata
+fails closed. A valid zero-count namespace is removed when its target is deleted. Newly
+exported routines validate the live maintenance checkpoint and its schema barrier in the
+write transaction. They block the affected model while unrelated writes can proceed.
+Corrupt or unknown checkpoint formats fail closed. Existing exported routines retain
+their conservative global gate check until regenerated; their installed schema bindings
+do not change.
 
 The transaction-owning entry points return ok, exists, missing, invalid, invalid_key,
-key_size, schema,
-unmanaged, maintenance, corrupt, unsupported, unique, references, or nested. Their failure
-statuses leave the call's database state unchanged. Unexpected engine errors roll back the
-owned transaction and propagate to the caller's error handler. They are not
-reported as success or silently converted into a validation failure.
+key_size, schema, unmanaged, maintenance, corrupt, unsupported, unique, references, or
+nested. Their failure statuses leave the call's database state unchanged. Unexpected
+engine errors roll back the owned transaction and propagate to the caller's error
+handler. They are not reported as success or silently converted into a validation
+failure.
 
-unsupported means an existing value has a recognized storage shape but M cannot
-validate or manipulate it within its qualified domain. It does not certify that
-Python would accept the record. For example, an existing integer over 18 digits, or a Decimal outside the fixed-unit domain is refused without writes.
-Invalid tags, markers, identities, malformed scalar text, and enforceable constraint
-violations still return corrupt.
+unsupported means an existing value has a recognized storage shape but M cannot validate
+or manipulate it within its qualified domain. It does not certify that Python would
+accept the record. For example, an existing integer over 18 digits, or a Decimal outside
+the fixed-unit domain is refused without writes. Invalid tags, markers, identities,
+malformed scalar text, and enforceable constraint violations still return corrupt.
 
 Stored Decimal precision checks remove trailing zeros and treat every signed or
 scaled zero as zero. Python-written 1.5000000, 0E-7, and 0E+18 are therefore readable
@@ -202,14 +202,14 @@ fields, or only changed scalar/reference fields for a patch:
 ```
 
 These calls check live root schema/metadata, ancestor identities and markers, then
-operate on that leaf and its affected bookkeeping. Insertion bounds collection
-counts and root nodes using fixed-width c:N counts; only variable-width structural
-branches require traversal. Patches do not load sibling quantities. Index names,
-concrete locations, reverse entries/counts, and every affected stored ancestor sum
-use the existing Python storage identities in one TP. Unchanged references are not
-resolved during scalar patches. A numerically unchanged quantity leaves total/index
-nodes untouched. Decimal wire limits, including raw precision constraints, also apply
-to generated sum values; exact fixed-unit arithmetic never rounds to M's numeric precision.
+operate on that leaf and its affected bookkeeping. Insertion bounds collection counts
+and root nodes using fixed-width c:N counts; only variable-width structural branches
+require traversal. Patches do not load sibling quantities. Index names, concrete
+locations, reverse entries/counts, and every affected stored ancestor sum use the
+existing Python storage identities in one TP. Unchanged references are not resolved
+during scalar patches. A numerically unchanged quantity leaves total/index nodes
+untouched. Decimal wire limits, including raw precision constraints, also apply to
+generated sum values; exact fixed-unit arithmetic never rounds to M's numeric precision.
 
 insertchildtx, patchchildtx, and deletechildtx participate in an existing caller TP.
 The outermost TP must permit restarts, as described under
@@ -224,42 +224,44 @@ Each operation enforces its own immediate constraints; the API does not coalesce
 group's net-zero totals or defer uniqueness across calls. Python patch_many remains
 the grouped mutation interface.
 
-Whole replacement of a declaration containing child collections returns operation.
-Empty hierarchical root insertion and bounded populated deletion are supported below.
-Nullable child collections and custom Python
-validators remain unsupported. Supplier still fails export because SupplierProduct
-has a custom model validator. Up to 64 keyed declarations with 16 fields per owner
-are supported. New statuses include operation, invalid_path, collection_limit, and
-node_budget, alongside the ordinary statuses above and transaction for a participant
-without a TP. Failed operations leave data, metadata, totals, counts, and indexes intact.
+Whole replacement of a declaration containing child collections returns operation. Empty
+hierarchical root insertion and bounded populated deletion are supported below. Nullable
+child collections and custom Python validators remain unsupported. Supplier still fails
+export because SupplierProduct has a custom model validator. Up to 64 keyed declarations
+with 16 fields per owner are supported. New statuses include operation, invalid_path,
+collection_limit, and node_budget, alongside the ordinary statuses above and transaction
+for a participant without a TP. Failed operations leave data, metadata, totals, counts,
+and indexes intact.
 
-Regenerate source after schema changes; old bindings fail rather than bypass new
-totals. No layout conversion or root metadata installation occurs through child
-operations. M enforces declared model rules, not inventory service rules or ledger
-workflows. Movement revision 4 uses qualified choices, embedded objects, nullable
-source and ordered timestamps. The [receipt example](../../examples/inventory/README.md#receive-stock-from-m)
-composes stock and ledger participants under application business checks. Populated
-root construction and whole-tree replacement remain Python operations.
+Regenerate source after schema changes; old bindings fail rather than bypass new totals.
+No layout conversion or root metadata installation occurs through child operations. M
+enforces declared model rules, not inventory service rules or ledger workflows. Movement
+revision 4 uses qualified choices, embedded objects, nullable source and ordered
+timestamps. The
+[receipt example](../../examples/inventory/README.md#receive-stock-from-m) composes
+stock and ledger participants under application business checks. Populated root
+construction and whole-tree replacement remain Python operations.
 
 New exports memoize SHA-256 of exact serialized locations in the reserved process-local
-%YHMFDigestCache variable. At most 128 entries of at most 4,096 input bytes are retained;
-the entries are cleared at capacity. This caches a pure function, never schema,
-record, index, reference, count, or transaction state. Normal M NEW/KILL and TP local
-variable restoration determine cache lifetime. A reused entry remains valid across
-restarts because its answer depends only on its exact input bytes. KILL of this
-reserved variable clears only the cache. Regenerate older routines to obtain it.
+%YHMFDigestCache variable. At most 128 entries of at most 4,096 input bytes are
+retained; the entries are cleared at capacity. This caches a pure function, never
+schema, record, index, reference, count, or transaction state. Normal M NEW/KILL and TP
+local variable restoration determine cache lifetime. A reused entry remains valid across
+restarts because its answer depends only on its exact input bytes. KILL of this reserved
+variable clears only the cache. Regenerate older routines to obtain it.
 
 ## Compose writes in a caller transaction
 
 Newly exported routines also provide inserttx(input), replacetx(input), and
-deletetx(key). These participants require an existing transaction and return transaction if none is active. A successful
-participant leaves the caller's transaction level unchanged and never commits it.
+deletetx(key). These participants require an existing transaction and return transaction
+if none is active. A successful participant leaves the caller's transaction level
+unchanged and never commits it.
 
-The outermost transaction must enable restarts. Use TSTART (), a saved-variable
-list, or TSTART *. SERIAL is optional. A nested TSTART () does not enable restarts
-for a bare outer TSTART. This requirement applies even to failures detected before
-database writes, because participants revalidate failure statuses with TRESTART.
-See the [YottaDB TSTART contract](https://docs.yottadb.com/ProgrammersGuide/commands.html#tstart).
+The outermost transaction must enable restarts. Use TSTART (), a saved-variable list, or
+TSTART *. SERIAL is optional. A nested TSTART () does not enable restarts for a bare
+outer TSTART. This requirement applies even to failures detected before database writes,
+because participants revalidate failure statuses with TRESTART. See the
+[YottaDB TSTART contract](https://docs.yottadb.com/ProgrammersGuide/commands.html#tstart).
 
 ```m
  tstart ()
@@ -275,11 +277,12 @@ with its own input/error reporting. The two participants may come from different
 exported models. Index and schema changes commit with both records.
 
 Within this restartable caller contract, every participant failure status aborts the
-entire active transaction, including all nesting levels and earlier successful operations. Unexpected errors also roll
-back before propagating to the caller's handler. After failure, tlevel is zero.
-The caller must stop the workflow instead of proceeding as though earlier writes
-survived. An attempted commit of that failed transaction cannot commit partial data.
-Existing insert/replace/delete still return nested without rolling back the caller.
+entire active transaction, including all nesting levels and earlier successful
+operations. Unexpected errors also roll back before propagating to the caller's handler.
+After failure, tlevel is zero. The caller must stop the workflow instead of proceeding
+as though earlier writes survived. An attempted commit of that failed transaction cannot
+commit partial data. Existing insert/replace/delete still return nested without rolling
+back the caller.
 
 Bare TSTART is unsupported. A successful call under a bare TSTART does not qualify
 that caller for failure handling or concurrency. A failure can raise TRESTNOT and
@@ -409,8 +412,9 @@ Child nodes, collection counts, and descendant totals remain intact. This is a b
 mutation, not a complete aggregate audit. Unsupported validators still fail export.
 
 Normal transaction, maintenance, reference, and uniqueness checks apply on every
-attempt. Replace remains a complete-record operation. Populated tree construction/replacement remains unqualified. Existing storage bytes and schema identities are unchanged;
-regenerate source for these patch interfaces.
+attempt. Replace remains a complete-record operation. Populated tree
+construction/replacement remains unqualified. Existing storage bytes and schema
+identities are unchanged; regenerate source for these patch interfaces.
 
 ## Empty owned branches
 
@@ -427,10 +431,11 @@ validation. Supplied collection markers or derived values return invalid.
  set status=$$insertchild^WarehouseAPI("MAIN",.path,.input)
 ```
 
-Delete the empty branch with deletechild/deletechildtx and its concrete path. The
-same transaction maintains parent counts, indexes, references, and any ancestor sums.
-Populated branches use the bounded subtree deletion contract below. Root construction/deletion and complete tree replacement retain their separate
-contracts below.
+Delete the empty branch with deletechild/deletechildtx and its concrete path. The same
+transaction maintains parent counts, indexes, references, and any ancestor sums.
+Populated branches use the bounded subtree deletion contract below. Root
+construction/deletion and complete tree replacement retain their separate contracts
+below.
 
 ## Empty hierarchical roots
 
@@ -450,11 +455,11 @@ native restarts. Caller participants roll back initial metadata along with recor
 and indexes if a later participant fails. This never implicitly adopts existing data.
 
 Delete/deletetx can remove an empty hierarchical root, enforcing incoming reference
-restrictions. Populated roots use the bounded subtree deletion contract below. Root replacement
-and populated tree construction remain unqualified. Use explicit child
+restrictions. Populated roots use the bounded subtree deletion contract below. Root
+replacement and populated tree construction remain unqualified. Use explicit child
 inserts to build the hierarchy incrementally. Application defaults/factories are not
-run; supplied collection markers/derived totals are invalid. Existing schemas/data
-need no conversion. Regenerate source for these capabilities.
+run; supplied collection markers/derived totals are invalid. Existing schemas/data need
+no conversion. Regenerate source for these capabilities.
 
 ## Finite string and integer choices
 
@@ -466,10 +471,11 @@ out-of-domain stored members return corrupt; failed calls leave all state intact
 The same rules apply to owned-child insert/patch/delete.
 
 Each exported domain is limited to 256 distinct members and 32,764 bytes of escaped
-scalar JSON. All members must fit the UTF-8 string or canonical signed 18-digit
-integer domain; unsupported members reject the entire export. Controls and long
-options are escaped and chunked in generated source. Boolean choices remain unqualified. Custom validators, Enum core-schema validation
-hooks, and unsupported constraints still fail export. Python Enum fallback hooks are not run.
+scalar JSON. All members must fit the UTF-8 string or canonical signed 18-digit integer
+domain; unsupported members reject the entire export. Controls and long options are
+escaped and chunked in generated source. Boolean choices remain unqualified. Custom
+validators, Enum core-schema validation hooks, and unsupported constraints still fail
+export. Python Enum fallback hooks are not run.
 
 Regenerate source to use this capability. Existing choice schemas and record/index
 bytes are unchanged. Changing an application's plain string field to a finite choice
@@ -485,11 +491,12 @@ Python still accepts representable aware offsets and stores their canonical UTC
 instant; M requires that canonical text as input. For example, use
 input("occurred_at")="2026-11-07T12:30:00.000000Z".
 
-Calendar/UTC bounds use exact lexical comparisons of canonical text. Equality and
-unique indexes use the existing temporal-v1 bytes, D: for dates and T: for instants.
-Existing Python temporal values can be replaced or deleted without conversion;
-invalid calendar/UTC stored text returns corrupt. Custom validators remain separately unqualified. Regenerate source for the new writer
-capability; schema snapshots and record/index layouts do not change.
+Calendar/UTC bounds use exact lexical comparisons of canonical text. Equality and unique
+indexes use the existing temporal-v1 bytes, D: for dates and T: for instants. Existing
+Python temporal values can be replaced or deleted without conversion; invalid
+calendar/UTC stored text returns corrupt. Custom validators remain separately
+unqualified. Regenerate source for the new writer capability; schema snapshots and
+record/index layouts do not change.
 
 ## Explicit nullable scalar inputs
 
@@ -619,9 +626,9 @@ remains unqualified. No schema/storage conversion is required; regenerate source
 
 ## Raw writes from M
 
-Wrap related changes in a YottaDB transaction (`tstart` and `tcommit`), so mapper clients
-never see a partial change. The table shows what each kind of write does to later mapper
-operations.
+Wrap related changes in a YottaDB transaction (`tstart` and `tcommit`), so mapper
+clients never see a partial change. The table shows what each kind of write does to
+later mapper operations.
 
 | M write | Mapper result |
 | --- | --- |
@@ -632,15 +639,17 @@ operations.
 | A new child without updating the collection's `c:N` | `get` raises `StorageError`. |
 | A new child with the complete subtree and the updated `c:N` | Works for an unindexed child with no references or stored dependencies. |
 
-The mapper refuses to read a bad write and does not repair it. Until you restore the value,
-that record is unreadable through the mapper.
+The mapper refuses to read a bad write and does not repair it. Until you restore the
+value, that record is unreadable through the mapper.
 
 M writes bypass the following:
 
 - Pydantic validation, including custom validators.
 - Equality indexes and unique claims. A [rebuild](index-rebuilds.md) restores these.
-- Reference existence checks, reverse entries, and inbound counts. No tool repairs these.
-- Stored sums and their declared dependencies. Incremental updates assume managed inputs.
+- Reference existence checks, reverse entries, and inbound counts. No tool repairs
+  these.
+- Stored sums and their declared dependencies. Incremental updates assume managed
+  inputs.
 
 Stop raw writers during [migrations](migrations.md#stop-other-clients-first) and
 [index rebuilds](index-rebuilds.md).
@@ -651,7 +660,8 @@ The public `Store` and `Path` are the byte-level interface. Inside `atomic`, use
 `tx.raw_path(Model, key, at=...)` to resolve a managed root or owned object without
 loading its aggregate. Global names come from registered application declarations;
 caller-supplied keys become encoded subscripts. The helper checks the live installed
-schema, record metadata, and owned markers. It never installs metadata or adopts raw data.
+schema, record metadata, and owned markers. It never installs metadata or adopts raw
+data.
 
 ```python
 from decimal import Decimal

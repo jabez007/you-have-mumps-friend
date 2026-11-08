@@ -1,7 +1,8 @@
 # Get started
 
-In this tutorial, you store a warehouse with bins and lots, change it safely, and query it.
-You need Python 3.12 or later. It uses the in-memory store, so you do not need YottaDB.
+In this tutorial, you store a warehouse with bins and lots, change it safely, and query
+it. You need Python 3.12 or later. It uses the in-memory store, so you do not need
+YottaDB.
 
 ## Install YHMF
 
@@ -76,8 +77,8 @@ It now also prints `rejected: greater_than_equal` and `12.50`.
 
 ## Change a value in a transaction
 
-Read inside the callback, so a conflicting writer makes the callback run again with fresh
-data:
+Read inside the callback, so a conflicting writer makes the callback run again with
+fresh data:
 
 ```python
 def receive(tx):
@@ -93,8 +94,8 @@ It now also prints `13.50`.
 
 ## Query an index
 
-`name` has `index=True`, so you can filter on it. Filtering on a field with no index raises
-an error and never scans:
+`name` has `index=True`, so you can filter on it. Filtering on a field with no index
+raises an error and never scans:
 
 ```python
 print([warehouse.id for warehouse in db.query(Warehouse).where(name="Main").all()])

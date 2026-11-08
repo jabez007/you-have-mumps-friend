@@ -74,11 +74,12 @@ assert [product.id for product in db.resolve_many([lot.product, lot.product])] =
 assert [product.id for product in db.get_many(Product, ["P42", "P42"])] == ["P42", "P42"]
 ```
 
-`resolve(Reference[T])` returns `T`. `resolve_many` and `get_many` accept finite sequences
-of at most 1000 items, preserve order and duplicate positions, and read each distinct
-target once per call. A batch is one transaction; a native restart rebuilds its cache.
-For a shared snapshot with source reads or later writes, call these methods inside
-`atomic`. There is no cache across calls and no implicit loading on attribute access.
+`resolve(Reference[T])` returns `T`. `resolve_many` and `get_many` accept finite
+sequences of at most 1000 items, preserve order and duplicate positions, and read each
+distinct target once per call. A batch is one transaction; a native restart rebuilds its
+cache. For a shared snapshot with source reads or later writes, call these methods
+inside `atomic`. There is no cache across calls and no implicit loading on attribute
+access.
 
 Results are detached models. Duplicate positions share the fetched Python instance
 within that result, so copy it explicitly if independent mutable values are needed.
@@ -111,7 +112,8 @@ it does not audit missing reverse entries by scanning every source record.
 
 For many-to-many relationships, store keyed owned links containing References. Removing
 a link releases its reference; the independent target keeps its lifecycle. The inventory
-example demonstrates [products and suppliers](../../examples/inventory/README.md#products-and-suppliers).
+example demonstrates
+[products and suppliers](../../examples/inventory/README.md#products-and-suppliers).
 
 ## Understand deletion
 
