@@ -1769,3 +1769,16 @@ original bindings before further upgrades. Record/index/reference value bytes re
 unchanged for valid v3 rows; metadata evolution remains explicit and resumable.
 Test old golden stability, distinct v4 output, every recovery phase, preserved values,
 old timestamp recovery, and successful M export. C901 remains ten.
+
+### Commit an inventory receipt from M, issue 54
+
+Reuse schema-bound WarehouseAPI/MovementAPI participants, their exact Decimal helpers,
+reference checks, embedded inputs, and ordered timestamp writes. Add an application
+routine, not a generic mutation hook: it checks the lot/product and existing balance
+identity, computes an exact positive receipt, then writes stock and history under one
+restartable outer transaction. Native direct reads are explicit schema-coupled reads;
+generated participants validate the managed record before writes. All derived locals
+are recreated per attempt. Invalid input, duplicate ledger IDs, and native errors roll
+back stock, totals, indexes and references. Keep identifiers/timestamps caller-stable.
+Test exact Python equivalence, lookup through the ordered index, duplicate/validation
+rollback, forced restart, and a coordinated competing receipt. No storage change.

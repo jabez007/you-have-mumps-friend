@@ -296,3 +296,5 @@ and index reconstruction workflow, and native rollback, restart, process-death, 
 concurrency suites. The native CI matrix uses Python 3.12 with YottaDB r2.02 on
 Ubuntu 22.04 and r2.06 on Ubuntu 24.04. These results apply to those tested
 environments, not every accepted runtime or dependency version.
+- Add a schema-coupled M inventory receipt example composing stock and movement
+  participants in one restartable transaction, with duplicate-ID and validation rollback.

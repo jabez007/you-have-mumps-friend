@@ -368,3 +368,34 @@ competes to move 15 units twice from a balance of 20: only one command may commi
 
 See [inventory performance](../../docs/inventory-performance.md) for equivalent
 workflow benchmarks, the direct native lower bound, and measurement limitations.
+
+### Receive stock from M
+
+After explicitly upgrading Movement to revision 4, export WarehouseAPI and MovementAPI
+with db.m_routine using the inventory registry. Put both generated sources and
+[YHMFRECEIPT.m](YHMFRECEIPT.m) on the M routine path. This application routine owns a
+restartable TSTART() and composes insertchildtx/patchchildtx with inserttx. It checks
+lot/product identity and recomputes stock on every retry. Supply stable request IDs
+and UTC timestamps before calling it:
+
+```mumps
+ set input("id")="receipt-001",input("lot")="LOT-001",input("product")="WIDGET"
+ set input("warehouse")="MAIN",input("location")="DOCK",input("bin")="B1"
+ set input("quantity")="2.5",input("reason")="delivery"
+ set input("occurred_at")="2026-11-07T10:00:00.000000Z"
+ write $$receive^YHMFRECEIPT(.input),!
+```
+
+All six identifiers must be nonempty UTF-8 strings of at most 64 bytes without NUL.
+The quantity is positive and satisfies Quantity's Decimal constraints. A duplicate
+movement returns exists and rolls back the stock update; it does not silently treat
+a different request as a replay. Other validation/participant failures also roll back.
+An engine error propagates after rollback. Nested invocation returns nested.
+
+This example intentionally reads the documented tagged stock/lot nodes directly.
+It uses exact arithmetic labels from these generated sources; regenerate the pair
+and requalify the application together after framework/schema upgrades. Those helper
+labels are not a new framework public arithmetic API. Generic M stock mutations do
+not automatically create audit history: use this application transaction when a
+receipt must have a ledger entry. Forced-restart and competing-receipt native tests
+check the complete stock, totals, indexes, reverse references, and timestamp index.

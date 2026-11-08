@@ -273,3 +273,8 @@ subdeletecaught
  set $etrap="write ""error|"",$tlevel,! set $ecode="""" halt"
  do subdeleteworker
  quit
+inventoryreceipt
+ new input
+ merge input=^YHMFTestStorage("writerInput")
+ write $$receive^YHMFRECEIPT(.input),!
+ quit
