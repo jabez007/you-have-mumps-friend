@@ -47,9 +47,9 @@ per page, not an automatically maintained cross-root total.
 ## Compatibility and data move
 
 Do not open an existing warehouse using the new workflow without an explicit copy and
-clear. A maintenance-window application data move will checkpoint each warehouse in the
+clear. A maintenance-window application data move checkpoints each warehouse in the
 same transaction as copying its locations/bins and clearing its legacy children. Old
 Python and M writers must be stopped; the application must not claim online conversion.
 Framework Transform intentionally cannot split one root across multiple globals. Keep
-existing named transforms and frozen bindings unchanged. Until that move is installed,
-existing populated databases continue to use the legacy service.
+existing named transforms and frozen bindings unchanged. The explicit bin_migration entry points implement that copy/clear checkpoint.
+Populated databases continue to use the legacy service until operators run it.

@@ -301,3 +301,5 @@ environments, not every accepted runtime or dependency version.
 - Add independently rooted inventory locations/bins and BinInventory, reusing existing
   ledger transactions with paginated stock reports and per-bin stock budgets. Keep
   the legacy warehouse service and storage metadata compatible.
+- Add an explicit resumable maintenance-window copy/clear for legacy warehouse stock,
+  preserving original schemas and ledger identities with per-warehouse rollback.

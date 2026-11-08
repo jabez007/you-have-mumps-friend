@@ -425,3 +425,23 @@ The legacy Warehouse.stored_on_hand reports only legacy owned stock. Do not use 
 a cross-root total. The original Inventory service and historical benchmark retain
 their original warehouse layout. Existing populated databases require an explicit
 maintenance-window move before using the new layout; no automatic conversion occurs.
+
+### Explicit stock layout move
+
+Back up the database and stop **all** legacy Python/M stock and setup writers for the
+whole procedure. This is a maintenance-window application data move; it does not stop
+external processes for you. Register BIN_MODELS, then call begin_bin_move(db,
+writers_stopped=True) from examples.inventory.bin_migration. It rejects initially
+nonempty destination globals. Repeat advance_bin_move(db, writers_stopped=True) until
+state.status == "complete". Do not resume legacy writers between calls.
+
+Each call copies one warehouse's locations/bins and balances, clears that warehouse's
+old children, and advances the checkpoint in one native transaction. Existing warehouse,
+product, lot and movement identities remain unchanged. A failed call rolls back both
+layouts and its checkpoint. After a process restart, reconstruct Database with the same
+registry and continue. Concurrent cooperating workers serialize through the checkpoint.
+Repeated completion is idempotent. Once a warehouse commits, finish the move or restore
+your backup; no reverse conversion is promised. Only then enable BinInventory/new M
+writers and retire the old stock writers. BinInventory refuses stock reads/writes while
+the move is incomplete. History remains readable. No schema snapshot, fingerprint,
+original named transform, or application record outside the moved ownership changes.
