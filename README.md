@@ -76,8 +76,8 @@ metadata nodes:
   patch to one lot writes that lot's changed nodes, however many other lots exist.
 - **M code can reach the data.** A plain `zwrite` or `$order` loop sees every record. YHMF
   [exports M routines](https://github.com/jabez007/you-have-mumps-friend/blob/main/docs/guides/m-access.md#export-an-explicit-m-writer)
-  for flat models and for the leaf children of keyed hierarchies. Each routine validates
-  its write and updates indexes, references, counts, and stored sums in one transaction.
+  for flat models and keyed hierarchies. Each routine validates its write and updates
+  indexes, references, counts, and stored sums in one transaction.
   [Raw writes](https://github.com/jabez007/you-have-mumps-friend/blob/main/docs/guides/m-access.md#raw-writes-from-m)
   bypass those checks.
 - **Queries have bounded plans.** A filter on an unindexed field raises `QueryError`, and
@@ -98,7 +98,7 @@ for release boundaries.
 | Queries | Indexed equality, bounded predicate intersections, ordered range/prefix reads in either direction, ordered root cursors, typed query fields, unique indexes, root and child paging, occurrence projections, collection counts | Filters on unindexed fields, by design |
 | Writes | Whole-record `save`, scalar `patch`, explicit `patch_many` groups, child insert and delete, restart-safe transactions | Change tracking, callback-wide deferred unique checks |
 | Migrations | Scalar defaults, index changes, validation-only revisions, explicit record transforms, resume after interruption, model-scoped access | Root identity/layout changes; only one maintenance job at a time |
-| M access | Read every node, generated writer routines for flat models with ASCII `str`, `int`, `Decimal`, and reference fields, leaf-child insert/patch/delete in keyed hierarchies, caller-transaction participants | Root and non-leaf hierarchy writes, other scalar types, embedded objects |
+| M access | Read every node, generated writer routines for UTF-8 `str`, `int`, `Decimal`, choices, dates, UTC datetimes, nullable scalars, references, and embedded objects, with equality, unique, and ordered indexes; root and child insert, patch, and delete, including populated subtree deletion; caller-transaction participants | Populated tree construction and whole-tree replacement, nullable child collections, scalar lists, custom validators |
 
 [Known limitations](https://github.com/jabez007/you-have-mumps-friend/blob/main/docs/known-limitations.md) lists current defects and their workarounds.
 Read it before you build on this project.

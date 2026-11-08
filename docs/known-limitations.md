@@ -126,9 +126,10 @@ These features remain outside the current implementation:
 - Raw M SET/KILL bypasses validation, indexes, references, and stored sums. Exported
   [schema-bound M routines](guides/m-access.md#export-an-explicit-m-writer) maintain
   qualified UTF-8 str/int/Decimal, finite str/int choices, dates/UTC datetimes,
-  their nullable scalar forms, and references, with owning or caller-participating
-  transactions. Keyed hierarchies support leaf-child operations and root/non-leaf
-  scalar patches, empty root/branch creation/deletion, and exact stored sums.
+  their nullable scalar forms, references, complete and nullable embedded objects, and
+  ordered-v1 index writes, with owning or caller-participating transactions. Keyed
+  hierarchies support leaf-child operations, root/non-leaf scalar patches, empty
+  root/branch creation, populated subtree deletion, and exact stored sums.
   Populated tree construction/replacement, nullable child collections, custom validators, embedded rollup sources, and scalar lists
   remain outside this M contract
   ([#53](https://github.com/jabez007/you-have-mumps-friend/issues/53),
@@ -148,11 +149,13 @@ These features remain outside the current implementation:
   paths still compute pure-M SHA-256, and cache reuse does not eliminate shared
   counters or engine block conflicts. See the controlled
   [M writer workload](performance.md#generated-m-location-digest-workload).
-- The inventory example stores every bin and balance under its warehouse root. Each
-  child insert walks the warehouse's locations and bins to check the 10,000-node root
-  budget, in Python and in M, so insert cost grows with the number of bins. By count of
-  declared nodes, a warehouse with 1,000 bins has room for about 1,380 balances.
-  [#48](https://github.com/jabez007/you-have-mumps-friend/issues/48)
+- The legacy inventory layout stores every bin and balance under its warehouse root.
+  Each child insert there walks the warehouse's locations and bins to check the
+  10,000-node root budget, so insert cost grows with the number of bins. New
+  applications use BinInventory, which roots each bin separately; each bin holds at
+  most 1,000 balances. Existing warehouses need the explicit, writers-stopped data move.
+  See [ADR 0017](adr/0017-inventory-bin-aggregate-boundary.md) and
+  [#48](https://github.com/jabez007/you-have-mumps-friend/issues/48).
 - Equality index tokens preserve typed equality, not numeric order. Opt-in ordered-v1
   indexes provide native numeric/temporal and escaped string ordering within their
   declared domains. M readers must follow the selected index codec; see

@@ -54,6 +54,7 @@ New here? Start with [get started](getting-started.md), then read
   - [0014 Resumable adoption with an explicitly absent source schema](adr/0014-resumable-initial-adoption.md)
   - [0015 Root-owned stored Decimal sums](adr/0015-root-owned-stored-sums.md)
   - [0016 Constrained scalar lists and explicit owned containers](adr/0016-container-field-decisions.md)
+  - [0017 Inventory stock belongs to independently rooted bins](adr/0017-inventory-bin-aggregate-boundary.md)
 
 ## Check the evidence
 
