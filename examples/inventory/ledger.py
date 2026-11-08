@@ -133,7 +133,7 @@ def _change(tx: Database, address: BinAddress, lot: Lot, delta: Decimal) -> Bala
     return BalanceChange(address, value, current is not None)
 
 
-class Inventory:
+class InventoryTransactions:
     _change = staticmethod(_change)
 
     def __init__(self, db: Database) -> None:
@@ -260,6 +260,13 @@ class Inventory:
         tx.insert(value)
         return value
 
+    def history(self, lot: str, *, limit: int = 100, after: str | None = None) -> list[Movement]:
+        return (
+            self.db.query(Movement).where(lot=Reference[Lot](key=lot)).all(limit=limit, after=after)
+        )
+
+
+class Inventory(InventoryTransactions):
     def stock_at(self, address: BinAddress) -> tuple[StockRow, ...]:
         path = self.db.path(Warehouse, lambda w: w.locations[address.location].bins[address.bin])
         bin_ = self.db.get(Warehouse, address.warehouse, at=path)
@@ -291,11 +298,6 @@ class Inventory:
         )
         cursor = warehouses[-1].id if len(warehouses) == warehouse_limit else None
         return StockPage(rows, cursor)
-
-    def history(self, lot: str, *, limit: int = 100, after: str | None = None) -> list[Movement]:
-        return (
-            self.db.query(Movement).where(lot=Reference[Lot](key=lot)).all(limit=limit, after=after)
-        )
 
 
 def _rows(warehouse: str, locations: Iterable[Location]) -> Iterator[StockRow]:
