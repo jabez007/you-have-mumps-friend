@@ -17,7 +17,7 @@ def test_inventory_benchmark_workflows_verify_balances_ledger_indexes_and_refere
     result = measure(store, 3, method, workflow, 2)
     assert result["iterations"] == 2
     assert result["warehouse_schema_version"] == 3
-    assert result["movement_schema_version"] == 3
+    assert result["movement_schema_version"] == 4
     assert len(result["samples_us"]) == 2
     assert result["operations_per_iteration"]["atomic"] == 1
     cleanup(store)

@@ -3,13 +3,14 @@
 
 from datetime import datetime
 from decimal import Decimal, localcontext
-from typing import Annotated, Self
+from typing import Annotated, Literal, Self
 
 from pydantic import ConfigDict, computed_field, model_validator
 
 from mccann_hub.yhmf import ChildField, Children, Field, Model, Reference
 
 Quantity = Annotated[Decimal, Field(max_digits=18, decimal_places=6)]
+MovementKind = Literal["receive", "move", "adjust"]
 
 
 class Identified(Model):
@@ -95,9 +96,9 @@ class Position(Model):
 
 class Movement(Identified):
     __global__ = "^InventoryMovement"
-    __schema_version__ = 3
+    __schema_version__ = 4
     model_config = ConfigDict(frozen=True)
-    kind: str = Field(pattern=r"^(receive|move|adjust)$")
+    kind: MovementKind
     product: Reference[Product] = Field(index=True)
     lot: Reference[Lot] = Field(index=True)
     quantity: Quantity

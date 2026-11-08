@@ -141,7 +141,8 @@ def test_subtree_uses_net_sum_and_relaxes_only_removed_owner_minimums(store, m_w
 def test_incoming_ledger_reference_blocks_populated_root_delete_before_changes(
     store, variant_writer
 ):
-    from examples.inventory import MODELS, Movement, Position
+    from examples.inventory import MODELS, Movement
+    from examples.inventory.models import Position
 
     _, run, _, _ = variant_writer(
         Warehouse, test_m_owned_writers.warehouse_values({"LOT-001": "2"}, {"LOT-001": "3"})

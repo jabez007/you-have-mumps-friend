@@ -1757,3 +1757,15 @@ model under both supported Pydantic versions. Do not retarget existing transform
 change the active model in this prerequisite slice. The next slice will introduce
 Literal kinds as revision four with a separately named transform, preserving old-job
 recovery. Configured C901 remains at ten.
+
+### Activate movement kind choices as revision four, issue 54
+
+Reuse the frozen MovementV3 contract, finite choices, and named Transform planner/
+recovery. Change the active kind field to Literal[receive, move, adjust] and advance
+only the application's movement revision. Preserve the original UTC-v2 and ordered-v3
+transforms and their frozen targets. Add a separate kinds-v4 transform and a separately
+named direct v1-to-v4 timestamp/choice transform. Old jobs must finish against their
+original bindings before further upgrades. Record/index/reference value bytes remain
+unchanged for valid v3 rows; metadata evolution remains explicit and resumable.
+Test old golden stability, distinct v4 output, every recovery phase, preserved values,
+old timestamp recovery, and successful M export. C901 remains ten.

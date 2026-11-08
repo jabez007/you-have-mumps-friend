@@ -91,11 +91,25 @@ def _timestamp(record: LegacyMovement) -> MovementV2:
 MOVEMENT_TIMESTAMPS = Transform("inventory.movement.utc.v2", _timestamp)
 
 
-def _ordered_timestamp(record: LegacyMovement) -> Movement:
-    return Movement.model_validate(_timestamp(record).model_dump())
+def _ordered_timestamp(record: LegacyMovement) -> MovementV3:
+    return MovementV3.model_validate(_timestamp(record).model_dump())
 
 
 MOVEMENT_TIMESTAMPS_V3 = Transform("inventory.movement.utc-ordered.v3", _ordered_timestamp)
+
+
+def _movement_kinds(record: MovementV2 | MovementV3) -> Movement:
+    return Movement.model_validate(record.model_dump())
+
+
+MOVEMENT_KINDS_V4 = Transform("inventory.movement.kinds.v4", _movement_kinds)
+
+
+def _timestamp_and_kinds(record: LegacyMovement) -> Movement:
+    return _movement_kinds(_timestamp(record))
+
+
+MOVEMENT_TIMESTAMPS_V4 = Transform("inventory.movement.utc-ordered-kinds.v4", _timestamp_and_kinds)
 
 
 class LegacyWarehouseIdentity(Model):

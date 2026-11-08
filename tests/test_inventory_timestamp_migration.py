@@ -17,7 +17,7 @@ from examples.inventory import (
 )
 from examples.inventory.__main__ import seed
 from examples.inventory.migrations import (
-    MOVEMENT_TIMESTAMPS_V3 as MOVEMENT_TIMESTAMPS,
+    MOVEMENT_TIMESTAMPS_V4 as MOVEMENT_TIMESTAMPS,
 )
 from examples.inventory.migrations import (
     LegacyMovement,

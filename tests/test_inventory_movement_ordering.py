@@ -20,7 +20,10 @@ from tests.test_inventory_timestamp_migration import legacy_database
 
 def test_movement_timestamp_ordering_has_independent_golden():
     fixture = FilePath(__file__).with_name("fixtures") / "inventory-movement-ordered-v3.json"
-    assert Registry(*MODELS).spec(Movement).snapshot == fixture.read_bytes().rstrip(b"\n")
+    models = tuple(model for model in MODELS if model is not Movement)
+    assert Registry(*models, MovementV3).spec(MovementV3).snapshot == fixture.read_bytes().rstrip(
+        b"\n"
+    )
 
 
 @pytest.mark.parametrize("pause", ["backfill", "retag", "activate"])
@@ -59,27 +62,28 @@ def test_old_timestamp_transform_resumes_before_additive_ordering_upgrade(store,
         )
     assert status.phase == "complete"
     before = dump(store, ("^InventoryMovement", "^YHMFRef", "^InventoryWarehouse"))
-    db = Database(store, Registry(*MODELS))
+    models3 = tuple(model for model in MODELS if model is not Movement) + (MovementV3,)
+    db = Database(store, Registry(*models3))
     with pytest.raises(SchemaMismatch):
-        db.get(Movement, "0")
-    plan = db.plan_migration(Movement)
+        db.get(MovementV3, "0")
+    plan = db.plan_migration(MovementV3)
     assert plan.execution_supported
-    status = db.begin_migration(MovementV2, Movement, plan=plan)
+    status = db.begin_migration(MovementV2, MovementV3, plan=plan)
     for _ in range(100):
         if status.phase == "complete":
             break
-        db = Database(store, Registry(*MODELS))
-        status = db.advance_migration(status.migration_id, MovementV2, Movement, batch_size=1)
+        db = Database(store, Registry(*models3))
+        status = db.advance_migration(status.migration_id, MovementV2, MovementV3, batch_size=1)
     assert status.phase == "complete"
     after = dump(store, ("^InventoryMovement", "^YHMFRef", "^InventoryWarehouse"))
     assert {path: value for path, value in before.items() if b"%m" not in path.subscripts} == {
         path: value for path, value in after.items() if b"%m" not in path.subscripts
     }
-    query = db.query(Movement).order_by("occurred_at", direction="desc")
+    query = db.query(MovementV3).order_by("occurred_at", direction="desc")
     first = query.page(limit=1)
     assert first.records[0].id == "1"
     assert [m.id for m in query.all(after=first.cursor)] == ["0"]
-    assert db.check_indexes(Movement).issues == ()
+    assert db.check_indexes(MovementV3).issues == ()
     assert db.get(Warehouse, "MAIN").stored_on_hand == 2
 
 
@@ -111,4 +115,4 @@ def test_frozen_movement_v3_preserves_the_original_golden_and_active_contract():
     models = tuple(model for model in MODELS if model is not Movement)
     frozen = Registry(*models, MovementV3).spec(MovementV3)
     assert frozen.snapshot == fixture.read_bytes().rstrip(b"\n")
-    assert frozen.snapshot == Registry(*MODELS).spec(Movement).snapshot
+    assert frozen.snapshot != Registry(*MODELS).spec(Movement).snapshot

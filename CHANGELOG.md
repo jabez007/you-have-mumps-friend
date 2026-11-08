@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Advances the inventory movement example to schema four with finite movement kinds.
+  Frozen v3 bindings and original timestamp transforms preserve recovery; separately
+  named v4 transforms require an explicit reviewed upgrade without value rewrites.
+
 - Adds bounded populated M root/subtree deletion with existing index/reference
   cleanup and one net stored-total delta per retained ancestor. Retained minimums
   and root reference restrictions still apply; failures/restarts restore all stages.

@@ -12,7 +12,17 @@ from pydantic import TypeAdapter, ValidationError
 from mccann_hub.yhmf import Database, Patch, Reference
 from mccann_hub.yhmf.errors import NotFound
 
-from .models import Balance, Location, Lot, Movement, Position, Product, Quantity, Warehouse
+from .models import (
+    Balance,
+    Location,
+    Lot,
+    Movement,
+    MovementKind,
+    Position,
+    Product,
+    Quantity,
+    Warehouse,
+)
 
 _QUANTITY = TypeAdapter(Quantity)
 
@@ -228,7 +238,7 @@ class Inventory:
         movement_id: str,
         lot: Lot,
         quantity: Decimal,
-        kind: str,
+        kind: MovementKind,
         destination: BinAddress,
         reason: str,
         timestamp: datetime,
