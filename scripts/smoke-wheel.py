@@ -1,8 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Run with an isolated Python from an environment containing the built wheel."""
 
+import argparse
+import json
+import os
+import sys
 from decimal import Decimal
 from importlib.metadata import version
+from pathlib import Path as FilePath
 
 import mccann_hub
 from mccann_hub.yhmf import (
@@ -12,6 +17,7 @@ from mccann_hub.yhmf import (
     Field,
     MemoryStore,
     Model,
+    NativeStore,
     Patch,
     Path,
     Registry,
@@ -139,9 +145,31 @@ def smoke_adoption(store):
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--native", action="store_true")
+    args = parser.parse_args()
+    from importlib.metadata import distribution
+
+    import mccann_hub.yhmf as installed
+
+    assert FilePath(installed.__file__).resolve().is_relative_to(FilePath(sys.prefix).resolve())
+    direct = distribution("mccann-hub-yhmf").read_text("direct_url.json")
+    assert not direct or not json.loads(direct).get("dir_info", {}).get("editable", False)
     assert mccann_hub.__file__ is None
     assert version("mccann-hub-yhmf") == __version__
-    store = MemoryStore()
+    if args.native and os.environ.get("YHMF_TEST_NATIVE") != "1":
+        parser.error("Native smoke requires the disposable native qualification harness")
+    store = NativeStore() if args.native else MemoryStore()
+    globals_ = (
+        "^YHMFWheelProduct",
+        "^YHMFWheelWarehouse",
+        "^YHMFWheelMExport",
+        "^YHMFWheelAdoption",
+    )
+    for name in globals_:
+        store.delete_tree(Path(name))
+        for namespace in ("^YHMFSchema", "^YHMFIndex", "^YHMFUnique", "^YHMFRef"):
+            store.delete_tree(Path(namespace, (name[1:].encode(),)))
     smoke_m_export(store)
     smoke_adoption(store)
     old = Database(store, Registry(Before))
@@ -181,7 +209,8 @@ def main():
     assert db.check_indexes(After).issues == ()
     smoke_transform(store)
     print(
-        "Installed wheel: migration, rebuild, hierarchical mutations, and namespace checks passed"
+        f"Installed artifact: native={args.native}; "
+        "migration, rebuild, mutations, namespace checks passed"
     )
 
 

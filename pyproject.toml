@@ -10,6 +10,12 @@ readme = "README.md"
 license = "GPL-3.0-or-later"
 license-files = ["LICENSE"]
 requires-python = ">=3.12"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: POSIX :: Linux",
+]
 dependencies = ["pydantic>=2.12,<3"]
 
 [project.optional-dependencies]
@@ -17,9 +23,14 @@ native = ["yottadb>=2.0,<3"]
 
 [project.urls]
 Source = "https://github.com/jabez007/you-have-mumps-friend"
+Documentation = "https://github.com/jabez007/you-have-mumps-friend/blob/main/docs/README.md"
+Issues = "https://github.com/jabez007/you-have-mumps-friend/issues"
 
 [dependency-groups]
 dev = ["pytest>=8,<9", "ruff>=0.14,<0.15", "mypy>=1.18,<2", "hypothesis>=6,<7"]
+
+[tool.hatch.build.targets.sdist]
+include = ["/src", "/tests", "/docs", "/examples", "/scripts", "/consumers", "/README.md", "/LICENSE", "/CHANGELOG.md", "/CONTRIBUTING.md", "/pyproject.toml", "/uv.lock"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mccann_hub"]

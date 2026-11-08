@@ -32,6 +32,13 @@ fi
 "$project_dir/.venv/bin/python" -c 'import yottadb; print(yottadb.release())'
 "$project_dir/.venv/bin/pytest" "$project_dir/tests" "$@"
 
+if [[ -n "${YHMF_ARTIFACT_DIR:-}" ]]; then
+    artifact_dir=$(cd -- "$YHMF_ARTIFACT_DIR" && pwd)
+    (cd "$artifact_dir" && sha256sum -c SHA256SUMS)
+    "$project_dir/.venv/bin/python" "$project_dir/scripts/qualify_install.py" "$artifact_dir"/*.whl --native
+    "$project_dir/.venv/bin/python" "$project_dir/scripts/qualify_install.py" "$artifact_dir"/*.tar.gz --native
+fi
+
 if [[ "${YHMF_BENCHMARK:-0}" == "1" ]]; then
     "$project_dir/.venv/bin/python" "$project_dir/scripts/benchmark-mutations.py"
     (cd "$project_dir" && "$project_dir/.venv/bin/python" -m examples.inventory --native)

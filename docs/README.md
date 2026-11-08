@@ -59,7 +59,8 @@ New here? Start with [get started](getting-started.md), then read
 
 ## Check the evidence
 
-- [Release qualification](release-qualification.md) and [compatibility policy](compatibility.md)
+- [Release qualification](release-qualification.md), [compatibility policy](compatibility.md),
+  and [candidate preparation](releasing.md)
 - [Correctness testing](testing.md)
 - [Native performance](performance.md) and
   [inventory performance](inventory-performance.md)

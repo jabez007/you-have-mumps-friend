@@ -1,0 +1,56 @@
+name: Qualify release candidate
+on:
+  workflow_dispatch:
+    inputs:
+      expected_version:
+        description: Exact version already committed in pyproject.toml
+        required: true
+        default: "0.5.0"
+permissions:
+  contents: read
+jobs:
+  version:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Check the selected candidate version
+        env:
+          EXPECTED_VERSION: ${{ inputs.expected_version }}
+        run: |
+          python3 - <<'PY'
+          import os, pathlib, tomllib
+          project = tomllib.loads(pathlib.Path("pyproject.toml").read_text())["project"]
+          assert project["version"] == os.environ["EXPECTED_VERSION"]
+          assert "## Unreleased" in pathlib.Path("CHANGELOG.md").read_text()
+          PY
+  qualification:
+    needs: version
+    uses: ./.github/workflows/checks.yml
+  evidence:
+    needs: qualification
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v8.0.2
+        with:
+          name: candidate-distributions
+          path: candidate
+      - name: Verify the qualified artifact identity
+        env:
+          EXPECTED_VERSION: ${{ inputs.expected_version }}
+        run: |
+          cd candidate
+          sha256sum -c SHA256SUMS
+          python3 - <<'PY'
+          import json, os, pathlib
+          evidence = json.loads(pathlib.Path("qualification.json").read_text())
+          assert evidence["version"] == os.environ["EXPECTED_VERSION"]
+          assert evidence["source_commit"] == os.environ["GITHUB_SHA"]
+          assert evidence["source_tree_clean"] is True
+          print(json.dumps(evidence, indent=2))
+          PY
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: qualified-candidate
+          path: candidate/
+          if-no-files-found: error
+          retention-days: 90

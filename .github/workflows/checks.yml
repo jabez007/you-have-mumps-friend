@@ -20,12 +20,18 @@ jobs:
       - run: uv run mypy
       - run: uv run pytest -m 'not native'
       - run: uv run python -m scripts.check_doc_examples
-      - run: uv build
-      - name: Smoke test the installed wheel
+      - run: uv build --out-dir dist/candidate
+      - run: uv run python scripts/check_artifacts.py dist/candidate
+      - name: Install wheel and source outside the checkout
         run: |
-          uv venv /tmp/yhmf-wheel --python 3.12
-          uv pip install --python /tmp/yhmf-wheel/bin/python dist/*.whl
-          /tmp/yhmf-wheel/bin/python -I scripts/smoke-wheel.py
+          uv run python scripts/qualify_install.py dist/candidate/mccann_hub_yhmf-*.whl
+          uv run python scripts/qualify_install.py dist/candidate/mccann_hub_yhmf-*.tar.gz
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: candidate-distributions
+          path: dist/candidate/
+          if-no-files-found: error
+          retention-days: 90
   pydantic-compatibility:
     runs-on: ubuntu-24.04
     strategy:
@@ -82,6 +88,7 @@ jobs:
           YHMF_HYPOTHESIS_PROFILE: stress
           PYTHONHASHSEED: "0"
   native:
+    needs: python
     strategy:
       fail-fast: false
       matrix:
@@ -113,9 +120,14 @@ jobs:
       - run: uv sync --locked --extra native --python 3.12
         env:
           ydb_dist: /opt/yottadb/test
+      - uses: actions/download-artifact@v8.0.2
+        with:
+          name: candidate-distributions
+          path: dist/candidate
       - run: bash scripts/test-native.sh -q
         env:
           ydb_dist: /opt/yottadb/test
+          YHMF_ARTIFACT_DIR: dist/candidate
           YHMF_BENCHMARK: ${{ github.event_name != 'pull_request' && '1' || '0' }}
       - name: Run bounded native adversarial stress separately
         if: github.event_name != 'pull_request'
@@ -129,4 +141,5 @@ jobs:
         env:
           ydb_dist: /opt/yottadb/test
           YHMF_JOURNALING: "1"
+          YHMF_ARTIFACT_DIR: dist/candidate
           YHMF_BENCHMARK: ${{ github.event_name != 'pull_request' && '1' || '0' }}

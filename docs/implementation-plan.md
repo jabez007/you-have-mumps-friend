@@ -1899,3 +1899,17 @@ operations/evidence. Each phase is a separate verified commit. Required gates bl
 candidate qualification; stress and benchmark timing provide additional evidence,
 not latency thresholds. No unsupported runtime is newly promised. No dependency
 or public framework API expansion is planned. Keep complexity at ten.
+
+Artifact audit confirmed a defect: the default sdist contained the untracked .serena
+project files and binary caches. A source include list now excludes that state. The
+new audit failed on the old artifact and passed on rebuilt source/wheel files. It
+also checks exact M templates, GPL license, typed namespace, metadata/dependencies,
+version equality and unsafe archive paths. A clean-tree flag distinguishes local
+dirty experiments from committed candidate evidence. Four negative regression tests
+cover local state, traversal and missing generated M code. Both fresh isolated
+wheel and sdist installations executed the existing public migration/rebuild/mutation
+smoke successfully, with Pydantic 2.14.3, outside the checkout. No runtime dependency
+or storage change was required. Native isolated runs are wired into the disposable
+CI database, using the same uploaded artifacts. Local engine files remain user-owned
+755 rather than a privileged gtmsecshr installation; native qualification is delegated
+to the existing two-engine CI, not claimed from those unpacked binaries.

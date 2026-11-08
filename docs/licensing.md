@@ -1,7 +1,7 @@
 # Component licenses
 
 Checked against repository declarations, installed package metadata, and upstream
-notices on 2026-11-07. This page records sources. The project has had no legal review,
+notices on 2026-11-08. This page records sources. The project has had no legal review,
 and this page gives no legal advice.
 
 | Component | License information | Terms |
@@ -36,3 +36,24 @@ The project publishes these license facts and no guidance on distribution, linki
 proprietary applications, or network-service deployment.
 [Issue 35](https://github.com/jabez007/you-have-mumps-friend/issues/35) records this
 decision.
+
+
+## Candidate distribution review
+
+Candidate artifact checks compare the bundled GPL LICENSE byte-for-byte with this
+repository. Generated M templates retain their SPDX declarations. Source distributions
+exclude developer state; neither artifact bundles the YottaDB engine or YDBPython.
+The consumer fixture uses GPL-3.0-or-later original code as well.
+
+The installed runtime notices checked on 2026-11-08 agree with the table above,
+including YDBPython 2.0.1's AGPLv3 metadata and both its COPYING and LICENSE files.
+The public YottaDB license notice was checked again on that date. Runtime extra
+installation changes which components an evaluator must review; it does not replace
+the engine's installation or license obligations. Development/build tools are not
+runtime dependencies and are not bundled into the wheel.
+
+Before distributing an application or exposing a service, the maintainer must review
+the exact driver/engine notices, generated-code obligations, application licensing
+and deployment facts. This project does not establish proprietary compatibility or
+answer application-specific linking or network-service questions. Those remain
+maintainer/legal review decisions, separate from technical candidate qualification.
