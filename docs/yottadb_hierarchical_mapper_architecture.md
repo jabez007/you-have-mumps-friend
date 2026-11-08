@@ -296,17 +296,6 @@ a root; combined occurrence projection is rejected rather than implying a join.
 
 Joins, full-text search, complex aggregates, and arbitrary SQL compatibility remain outside the initial scope.
 
-Plain M writers use a schema-bound generated routine for the explicitly supported
-UTF-8 str/int/Decimal, temporal, finite-choice and reference subset. Qualified scalar
-and embedded nulls preserve explicit presence semantics. Routines own TP or participate
-in a restartable caller TP. Keyed hierarchies support root/owner scalar patches, empty
-root/branch creation, and bounded populated postorder deletion, maintaining markers,
-counts, equality/ordered/unique and reverse-reference identities, and exact root/owned
-sums. Python constructs populated trees and replaces whole hierarchies. New exports verify exact metadata and maintenance scope. Status
-failures revalidate on a stable TP attempt; participant failure aborts the whole
-caller transaction. Unsupported validation/ownership contracts fail at export;
-raw SET/KILL remain outside mapper guarantees. See [ADR 0013](adr/0013-explicit-m-writer-contract.md).
-
 Foreign layouts can be read through explicit GlobalView/MappedField projections.
 These use native paths and pure decoders, validate complete flat scalar models, and
 never install metadata, indexes, or rewrite the source. They provide no managed
@@ -369,11 +358,25 @@ Renaming a field or relocating a subtree must be treated as a physical data migr
 Direct access to YottaDB globals remains an explicit design goal.
 
 Plain M reads use the documented native storage encodings. Managed M writes use
-explicit schema-bound generated routines, with qualified validation and transactional
-index/reference/ownership maintenance. Python validators are never silently omitted:
-unsupported declarations fail export. Direct SET/KILL bypass those guarantees. The
+explicit schema-bound generated routines. A routine supports UTF-8 `str`, `int`,
+`Decimal`, dates, UTC datetimes, finite choices, references, embedded objects, and
+their nullable forms. It validates its input, then updates markers, counts, equality,
+ordered, and unique indexes, reverse references, and stored sums in the same
+transaction as the record.
+
+Each routine owns its transaction or joins a restartable caller transaction. A
+participant failure aborts the whole caller transaction. A routine rechecks a failure
+status on a stable transaction attempt before it returns the status.
+
+In keyed hierarchies, M routines patch root and owner scalars, create empty roots and
+branches, and delete populated subtrees in bounded postorder. Python builds populated
+trees and replaces whole hierarchies.
+
+New exports check the exact installed metadata and maintenance scope. Python
+validators are never silently omitted, because export fails for any declaration the
+M contract cannot enforce. Direct SET/KILL bypass those guarantees. The
 [M access guide](guides/m-access.md) describes supported operations and caller restart
-rules; [ADR 0013](adr/0013-explicit-m-writer-contract.md) records the trigger comparison
+rules. [ADR 0013](adr/0013-explicit-m-writer-contract.md) records the trigger comparison
 and decisions. Application rules belong in the application's own M transaction, not
 in automatic mutation hooks. The inventory example's receipt routine updates stock and
 the ledger this way.
