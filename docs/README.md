@@ -59,6 +59,8 @@ New here? Start with [get started](getting-started.md), then read
 
 ## Check the evidence
 
+- [Independent packaged consumer](../consumers/inventory-ledger/README.md)
+
 - [Release qualification](release-qualification.md), [compatibility policy](compatibility.md),
   and [candidate preparation](releasing.md)
 - [Correctness testing](testing.md)

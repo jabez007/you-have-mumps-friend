@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
       - uses: astral-sh/setup-uv@v10.3.3
         with:
           version: "0.9.5"
@@ -26,6 +28,10 @@ jobs:
         run: |
           uv run python scripts/qualify_install.py dist/candidate/mccann_hub_yhmf-*.whl
           uv run python scripts/qualify_install.py dist/candidate/mccann_hub_yhmf-*.tar.gz
+      - name: Qualify the independent packaged application and historical upgrade
+        run: |
+          uv run python scripts/qualify_consumer.py dist/candidate/mccann_hub_yhmf-*.whl
+          uv run python scripts/qualify_consumer.py dist/candidate/mccann_hub_yhmf-*.whl --mode upgrade
       - uses: actions/upload-artifact@v7.0.2
         with:
           name: candidate-distributions
@@ -39,6 +45,8 @@ jobs:
         pydantic: ["2.12.0", "2.14.3"]
     steps:
       - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
       - uses: astral-sh/setup-uv@v10.3.3
         with:
           version: "0.9.5"
@@ -79,6 +87,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
       - uses: astral-sh/setup-uv@v10.3.3
         with:
           version: "0.9.5"
@@ -104,6 +114,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
       - uses: astral-sh/setup-uv@v10.3.3
         with:
           version: "0.9.5"
@@ -127,6 +139,7 @@ jobs:
       - run: bash scripts/test-native.sh -q
         env:
           ydb_dist: /opt/yottadb/test
+          YHMF_CONSUMER: "1"
           YHMF_ARTIFACT_DIR: dist/candidate
           YHMF_BENCHMARK: ${{ github.event_name != 'pull_request' && '1' || '0' }}
       - name: Run bounded native adversarial stress separately
@@ -141,5 +154,6 @@ jobs:
         env:
           ydb_dist: /opt/yottadb/test
           YHMF_JOURNALING: "1"
+          YHMF_CONSUMER: "1"
           YHMF_ARTIFACT_DIR: dist/candidate
           YHMF_BENCHMARK: ${{ github.event_name != 'pull_request' && '1' || '0' }}

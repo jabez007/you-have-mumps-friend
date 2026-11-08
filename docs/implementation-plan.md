@@ -1913,3 +1913,21 @@ or storage change was required. Native isolated runs are wired into the disposab
 CI database, using the same uploaded artifacts. Local engine files remain user-owned
 755 rather than a privileged gtmsecshr installation; native qualification is delegated
 to the existing two-engine CI, not claimed from those unpacked binaries.
+
+The independent consumer is a separately packaged mccann_hub.inventory_ledger project,
+pinned to the selected YHMF version and installed outside the checkout. It exercises
+warehouse/location creation, receipts, transfers, adjustments, product/location/lot
+queries, rollback, history and reference restrictions. A public-import regression
+prevents reliance on private modules. Strict mypy now covers its source as well.
+Fresh and source-built 0.4.0-to-candidate offline exercises passed; dependency checks
+run before and after installation, raw metadata stays unchanged on reopen, and an
+explicit additive Location migration resumes through new Database instances. Native
+fresh/upgrade runs get separate databases through the existing harness, avoiding
+newer framework checkpoints contaminating the older client's environment. Generated M
+is exported/executed only after installing the current package. The 0.4.0 milestone
+is pinned by full commit identity and is not represented as a published release.
+
+Observed ergonomics: tuple-owned reads require a cast on the legacy public interface;
+current typed selectors are read-only, so the consumer keeps the common tuple path.
+Queries return root aggregates and must document their page units. No framework API
+expansion was needed. Keep native/upgrade findings distinct from offline node fixtures.

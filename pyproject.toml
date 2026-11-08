@@ -54,6 +54,6 @@ max-complexity = 10
 [tool.mypy]
 python_version = "3.12"
 strict = true
-files = ["src", "examples"]
+files = ["src", "examples", "consumers/inventory-ledger/src"]
 explicit_package_bases = true
-mypy_path = "$MYPY_CONFIG_FILE_DIR/src"
+mypy_path = ["$MYPY_CONFIG_FILE_DIR/src", "$MYPY_CONFIG_FILE_DIR/consumers/inventory-ledger/src"]
