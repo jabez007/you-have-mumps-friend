@@ -1718,3 +1718,13 @@ objects. No metadata/data conversion or additional persistence layer is introduc
 Retain nonempty object, depth, child-collection, rollup, and validator restrictions.
 Native tests cover exact nodes/indexes/edges, null/unique transitions, malformed
 shapes, forced restarts, and variable-capacity boundaries. C901 stays at ten.
+
+### Centralize exact stored-sum delta application, issue 53
+
+Reuse hsums, decimal units, hwhere, and ordinary index transitions. Extract the
+existing target read/validate/update block into happly, leaving source delta selection
+and per-call behavior unchanged. This is the single seam that populated subtree
+deletion will use to apply a retained ancestor's net delta once, rather than expose
+intermediate totals or duplicate the sum/index algorithm. Commit this refactor before
+delete behavior changes. Existing exact-total, unique rollback, and restart cases
+cover it; configured C901 stays at ten.

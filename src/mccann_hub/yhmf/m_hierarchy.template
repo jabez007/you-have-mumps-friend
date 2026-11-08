@@ -204,7 +204,7 @@ hcapacity(root,node,cfg,allowance,used)
  . if seen'=count,status="ok" set status="corrupt"
  quit status
 hsums(operation,node,parts,values,previous,cfg,rootcfg)
- new ordinal,target,field,source,old,new,delta,total,raw,path,status,local,before,after,depth
+ new ordinal,target,field,source,old,new,delta,status,depth
  set ordinal="",status="ok"
  for  set ordinal=$order(rootcfg("sumtargets",ordinal)) quit:ordinal=""  do  quit:status'="ok"
  . if rootcfg("sumtargets",ordinal,"sourceOwner")'=node quit
@@ -217,24 +217,27 @@ hsums(operation,node,parts,values,previous,cfg,rootcfg)
  . set delta=$$dadd(new,$select(old="0":"0",$extract(old)="-":$extract(old,2,$length(old)),1:"-"_old))
  . if delta="0" quit
  . set target=rootcfg("sumtargets",ordinal,"owner"),field=rootcfg("sumtargets",ordinal,"field"),depth=rootcfg("sumtargets",ordinal,"depth")
- . set path=$name(@($$haddress(rootcfg("global"),.parts,depth))@(field)),raw=$get(@path)
- . if $data(@path)'=1!($extract(raw,1,2)'="d:") set status="corrupt" quit
- . kill local,before,after merge local=rootcfg("nodes",target)
- . set local("global")=rootcfg("global"),before(field)=$extract(raw,3,$length(raw))
- . if '$$dvalid(before(field),field,.local,1) set status="corrupt" quit
- . new number
- . if '$$decimal(before(field),.number) set status="corrupt" quit
- . set total=$$dadd(number("units"),delta)
- . if total="invalid" set status="invalid" quit
- . set after(field)=$$fromunits(total)
- . if '$$dvalid(after(field),field,.local) set status="invalid" quit
- . kill local("index")
- . if $data(rootcfg("nodes",target,"index",field)) set local("index",field)=1
- . set status=$$hwhere(.parts,depth,field,.local)
- . if status'="ok" quit
- . set status=$$indexbefore("replace",parts(0),.after,.before,.local)
- . if status'="ok" quit
- . set status=$$indexafter("replace",parts(0),.after,.before,.local)
- . if status'="ok" quit
- . set @path="d:"_after(field)
+ . set status=$$happly(target,field,depth,.parts,delta,.rootcfg)
  quit status
+happly(node,field,depth,parts,delta,rootcfg)
+ new total,raw,path,status,local,before,after,number
+ set path=$name(@($$haddress(rootcfg("global"),.parts,depth))@(field)),raw=$get(@path)
+ if $data(@path)'=1!($extract(raw,1,2)'="d:") quit "corrupt"
+ merge local=rootcfg("nodes",node)
+ set local("global")=rootcfg("global"),before(field)=$extract(raw,3,$length(raw))
+ if '$$dvalid(before(field),field,.local,1) quit "corrupt"
+ if '$$decimal(before(field),.number) quit "corrupt"
+ set total=$$dadd(number("units"),delta)
+ if total="invalid" quit "invalid"
+ set after(field)=$$fromunits(total)
+ if '$$dvalid(after(field),field,.local) quit "invalid"
+ kill local("index")
+ if $data(rootcfg("nodes",node,"index",field)) set local("index",field)=1
+ set status=$$hwhere(.parts,depth,field,.local)
+ if status'="ok" quit status
+ set status=$$indexbefore("replace",parts(0),.after,.before,.local)
+ if status'="ok" quit status
+ set status=$$indexafter("replace",parts(0),.after,.before,.local)
+ if status'="ok" quit status
+ set @path="d:"_after(field)
+ quit "ok"
