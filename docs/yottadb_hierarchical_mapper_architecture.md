@@ -44,13 +44,12 @@ Developers should be able to define typed Python models with fields, validation,
 
 The framework will not initially recreate Odoo's record rules or application framework.
 
-Computed fields and model inheritance are in scope, because the inventory application
-needs them, but the framework will not copy their relational designs. Each one needs a
-design that fits globals, such as embedding or delegation in place of table-per-class
-inheritance.
+Computed fields and model inheritance are in scope, but the framework will not copy
+their relational designs. Each one needs a design that fits globals, such as embedding
+or delegation in place of table-per-class inheritance.
 
-The inventory example reuses its id declaration through ordinary Python field
-inheritance, preserving each concrete global and owned path. Embedding and References
+Ordinary Python field inheritance reuses declarations, such as a shared id field, and
+keeps each concrete model's global and owned paths. Embedding and References
 remain the choices for shared data with different lifecycles. Shared-global variants
 need a concrete workflow and a separate storage design. See
 [ADR 0007](adr/0007-compile-time-model-reuse.md).
@@ -73,7 +72,9 @@ Runtime dependencies will undergo license compatibility review. Inspiration from
 
 ## 4. Developer model API
 
-The implemented declarations use this API:
+The implemented declarations use this API. These models are a cut-down version of the
+[inventory example](../examples/inventory/README.md), the first proof of concept (see
+D-012), and later sections reuse them as examples:
 
 ```python illustrative
 from decimal import Decimal
@@ -235,13 +236,11 @@ def adjust_stock(tx):
 db.atomic(adjust_stock)
 ```
 
-The [inventory application](../examples/inventory/README.md) demonstrates complete
-receive, transfer, and adjustment commands with exact arithmetic and ledger entries.
-The recommended BinInventory boundary roots bins and locations independently, retaining
-balances as bin-owned children. This removes the warehouse-wide stock budget without
-changing historical Warehouse v3 or Movement identities. An explicit maintenance-window
-copy/clear checkpoints each warehouse atomically; [ADR 0017](adr/0017-inventory-bin-aggregate-boundary.md)
-records lifetime, pagination, compatibility and per-bin limits.
+The [inventory application](../examples/inventory/README.md) uses this API for receive,
+transfer, and adjustment commands with exact arithmetic and ledger entries. Aggregate
+boundaries are the application's choice. [ADR 0017](adr/0017-inventory-bin-aggregate-boundary.md)
+records how the example chose them: it roots each bin separately, so stock in one
+warehouse does not count against a single root's node budget.
 Detached `save` remains last-writer-wins; read-modify-write safety requires reading
 inside the callback. Native validation errors are revalidated through the final
 stable TP attempt, as described in ADR 0005.
@@ -375,8 +374,9 @@ index/reference/ownership maintenance. Python validators are never silently omit
 unsupported declarations fail export. Direct SET/KILL bypass those guarantees. The
 [M access guide](guides/m-access.md) describes supported operations and caller restart
 rules; [ADR 0013](adr/0013-explicit-m-writer-contract.md) records the trigger comparison
-and decisions. Application stock/ledger rules live in the receipt transaction, not
-automatic mutation hooks.
+and decisions. Application rules belong in the application's own M transaction, not
+in automatic mutation hooks. The inventory example's receipt routine updates stock and
+the ledger this way.
 
 Python callers can resolve managed owner addresses with raw_path inside atomic.
 Raw writes bypass mapper validation and secondary maintenance; see the
@@ -415,8 +415,8 @@ Diagnostic output must avoid exposing sensitive values by default.
 
 Authorization belongs to the application's trusted service boundary for now.
 Database, Store, and raw paths do not authenticate or authorize principals. Python
-policies cannot constrain an independent M process with database access. Inventory
-business invariants do not supply access control. [ADR 0008](adr/0008-application-authorization-boundary.md)
+policies cannot constrain an independent M process with database access. Business
+rules that an application enforces are not access control. [ADR 0008](adr/0008-application-authorization-boundary.md)
 records the decision, deployment limits, and requirements for reconsidering scoped handles.
 
 Framework-owned global names and paths must be validated, and applications must not be allowed to turn untrusted user input into arbitrary global write operations.
