@@ -1,5 +1,11 @@
 name: Checks
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+permissions:
+  contents: read
 jobs:
   python:
     runs-on: ubuntu-24.04
@@ -63,6 +69,7 @@ jobs:
         env:
           PYTHONPATH: src
   adversarial:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7.0.1
@@ -109,8 +116,9 @@ jobs:
       - run: bash scripts/test-native.sh -q
         env:
           ydb_dist: /opt/yottadb/test
-          YHMF_BENCHMARK: "1"
+          YHMF_BENCHMARK: ${{ github.event_name != 'pull_request' && '1' || '0' }}
       - name: Run bounded native adversarial stress separately
+        if: github.event_name != 'pull_request'
         run: bash scripts/test-native.sh -m 'adversarial and native' -q --hypothesis-show-statistics
         env:
           ydb_dist: /opt/yottadb/test
@@ -121,4 +129,4 @@ jobs:
         env:
           ydb_dist: /opt/yottadb/test
           YHMF_JOURNALING: "1"
-          YHMF_BENCHMARK: "1"
+          YHMF_BENCHMARK: ${{ github.event_name != 'pull_request' && '1' || '0' }}

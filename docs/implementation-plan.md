@@ -1855,3 +1855,47 @@ worker test to its actual NativeStore and seed positions incrementally without r
 the dataset or assertions. Separately, a failing counted regression shows _page reading
 the same location once per returned balance. Resolve the coordinate once per loaded bin
 and reuse it for rows, validating even empty bins. No contract change; C901 ten.
+
+## Independent pre-release qualification
+
+Baseline cf3d826fe8fec5f6810943c072a5cdead18af713, package 0.5.0. The checkout
+contains only the pre-existing untracked .serena directory. No tags or GitHub
+releases exist. Current Checks CI passed for that baseline. Reuse its Python 3.12,
+Pydantic 2.12.0/2.14.3 and r2.02/Ubuntu 22.04, r2.06/Ubuntu 24.04 matrix, existing
+canonical/legacy fixtures, migration fault tests, coordinated workers and native M
+physical-equivalence tests. Ruff C901 currently passes at ten.
+
+Confirmed gaps: qualification and compatibility policy are scattered; every PR also
+runs extended benchmarks; installed-wheel smoke uses MemoryStore only; no isolated
+sdist/native consumer or release-artifact manifest exists; getting started installs
+unversioned main. Existing inventory migration's writers_stopped boolean is an
+operator assertion and must not be presented as fencing external writers.
+
+1. Qualification policy and compatibility contract. Document blocking PR/candidate
+   gates and informational benchmark evidence, including permanent Python/M
+   conformance obligations. Keep all routine native tests; move extended profiles
+   and timings out of PRs. Expose the existing matrix as a reusable workflow.
+2. Artifact qualification. Reuse hatchling, uv, smoke-wheel and native setup. Audit
+   metadata/templates/licenses and version equality; build source/wheel, install
+   each outside the checkout, reject source/editable imports and hash artifacts.
+   Add a manual nonpublishing candidate workflow using the same mandatory checks.
+3. Independent adoption fixture. Workspace permissions permit a separately packaged
+   consumer under consumers, copied/built/installed in a temporary directory. Pin
+   the exact candidate artifact, use public APIs only, and exercise real stock,
+   history, migrations, Python/M and a historical source-built artifact upgrade.
+   There are no published historical versions, so label that limitation explicitly.
+4. Operations and cutover. Consolidate native installation, backup/recovery,
+   process/retry and measured scale guidance. Document operator assertions, scoped
+   framework barriers and unfenced raw/old writers. Add safeguards only where an
+   executable downstream case demonstrates a gap. Run all available gates and
+   native CI; record unavailable local runtime qualification separately.
+
+The artifact installer and downstream app are clients of the existing public
+interface, not new persistence adapters. Keep storage/schema/job formats unchanged.
+No engine installation is implied by pip, and no version/tag/publication action
+is authorized by candidate preparation. Preserve GPL-3.0-or-later; review exact
+runtime dependency notices. The dependency order is policy, artifacts, consumer,
+operations/evidence. Each phase is a separate verified commit. Required gates block
+candidate qualification; stress and benchmark timing provide additional evidence,
+not latency thresholds. No unsupported runtime is newly promised. No dependency
+or public framework API expansion is planned. Keep complexity at ten.
