@@ -5,7 +5,12 @@ from pathlib import Path as FilePath
 import pytest
 
 from examples.inventory import MODELS, Inventory, Movement, Warehouse
-from examples.inventory.migrations import MOVEMENT_TIMESTAMPS, LegacyMovement, MovementV2
+from examples.inventory.migrations import (
+    MOVEMENT_TIMESTAMPS,
+    LegacyMovement,
+    MovementV2,
+    MovementV3,
+)
 from mccann_hub.yhmf import Database, Reference, Registry
 from mccann_hub.yhmf.errors import SchemaMismatch
 from tests.adversarial_support import dump
@@ -99,3 +104,11 @@ def test_latest_inventory_movements_use_timestamp_then_reverse_key_ties(store):
     assert query.explain().order_direction == "desc"
     assert query.explain().maximum_index_visits == 1000
     assert db.check_indexes(Movement).issues == ()
+
+
+def test_frozen_movement_v3_preserves_the_original_golden_and_active_contract():
+    fixture = FilePath(__file__).with_name("fixtures") / "inventory-movement-ordered-v3.json"
+    models = tuple(model for model in MODELS if model is not Movement)
+    frozen = Registry(*models, MovementV3).spec(MovementV3)
+    assert frozen.snapshot == fixture.read_bytes().rstrip(b"\n")
+    assert frozen.snapshot == Registry(*MODELS).spec(Movement).snapshot

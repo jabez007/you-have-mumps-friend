@@ -1747,3 +1747,13 @@ reference policy or new deletion framework is introduced. Public delete/deletech
 participants retain their transaction/restart contracts. Whole tree replace stays
 rejected. Test Python equivalence, net-zero mixed-sign sources, minimums, unique failure,
 incoming references, concurrent quantity changes, rollback, and restart on native.
+
+### Freeze movement revision three before choice migration, issue 54
+
+Reuse the existing frozen v1/v2 declarations, canonical schema fixtures, and named
+Transform lifecycle. Add an independent MovementV3 binding with the current ordered
+string-kind contract; verify its bytes against the committed v3 golden and active
+model under both supported Pydantic versions. Do not retarget existing transforms or
+change the active model in this prerequisite slice. The next slice will introduce
+Literal kinds as revision four with a separately named transform, preserving old-job
+recovery. Configured C901 remains at ten.

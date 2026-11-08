@@ -54,6 +54,23 @@ class MovementV2(Model):
     occurred_at: datetime
 
 
+class MovementV3(Model):
+    """Frozen ordered timestamp/string-kind contract before finite choices."""
+
+    __global__ = "^InventoryMovement"
+    __schema_version__ = 3
+    model_config = ConfigDict(frozen=True)
+    id: str = Field(primary_key=True, min_length=1)
+    kind: str = Field(pattern=r"^(receive|move|adjust)$")
+    product: Reference[Product] = Field(index=True)
+    lot: Reference[Lot] = Field(index=True)
+    quantity: Annotated[Decimal, Field(max_digits=18, decimal_places=6)]
+    source: LegacyPosition | None = None
+    destination: LegacyPosition
+    reason: str = Field(min_length=1)
+    occurred_at: datetime = Field(ordered=True)
+
+
 def _timestamp(record: LegacyMovement) -> MovementV2:
     # Conversion deliberately accepts only historical ISO strings, independently
     # of future service input conveniences or the wall clock.
