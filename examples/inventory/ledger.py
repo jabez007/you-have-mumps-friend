@@ -134,6 +134,8 @@ def _change(tx: Database, address: BinAddress, lot: Lot, delta: Decimal) -> Bala
 
 
 class Inventory:
+    _change = staticmethod(_change)
+
     def __init__(self, db: Database) -> None:
         self.db = db
 
@@ -174,7 +176,7 @@ class Inventory:
 
         def apply(tx: Database) -> Movement:
             lot = tx.get(Lot, lot_id)
-            self._apply_balances(tx, (_change(tx, destination, lot, amount),))
+            self._apply_balances(tx, (self._change(tx, destination, lot, amount),))
             return self._record(
                 tx, movement_id, lot, amount, "receive", destination, reason, timestamp
             )
@@ -199,8 +201,8 @@ class Inventory:
         def apply(tx: Database) -> Movement:
             lot = tx.get(Lot, lot_id)
             changes = (
-                _change(tx, source, lot, amount.copy_negate()),
-                _change(tx, destination, lot, amount),
+                self._change(tx, source, lot, amount.copy_negate()),
+                self._change(tx, destination, lot, amount),
             )
             self._apply_balances(tx, changes)
             return self._record(
@@ -225,7 +227,7 @@ class Inventory:
 
         def apply(tx: Database) -> Movement:
             lot = tx.get(Lot, lot_id)
-            self._apply_balances(tx, (_change(tx, destination, lot, amount),))
+            self._apply_balances(tx, (self._change(tx, destination, lot, amount),))
             return self._record(
                 tx, movement_id, lot, amount, "adjust", destination, reason, timestamp
             )

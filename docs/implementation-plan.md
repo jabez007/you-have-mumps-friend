@@ -1782,3 +1782,11 @@ are recreated per attempt. Invalid input, duplicate ledger IDs, and native error
 back stock, totals, indexes and references. Keep identifiers/timestamps caller-stable.
 Test exact Python equivalence, lookup through the ordered index, duplicate/validation
 rollback, forced restart, and a coordinated competing receipt. No storage change.
+
+### Reuse the inventory transaction workflow, issue 48 prerequisite
+
+Inventory already owns quantity/time validation, atomic receive/move/adjust, ledger
+construction and history queries. Give its existing balance lookup a private _change
+method seam, matching _apply_balances, so another aggregate boundary can reuse those
+business transactions without duplicating them. Preserve every current behavior and
+model binding in this refactor. Existing inventory workflow tests cover it; C901 ten.
