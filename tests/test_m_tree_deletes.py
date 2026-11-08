@@ -171,8 +171,10 @@ def test_corrupt_concrete_child_key_cannot_be_hidden_by_subtree_delete(store, va
     db, run, _, _ = variant_writer(
         Warehouse, test_m_owned_writers.warehouse_values({"LOT-001": "2"}, {"LOT-001": "3"})
     )
-    old = db.raw_path(
-        Warehouse, "MAIN", at=("locations", "DOCK", "bins", "B1", "balances", "LOT-001")
+    old = db.atomic(
+        lambda tx: tx.raw_path(
+            Warehouse, "MAIN", at=("locations", "DOCK", "bins", "B1", "balances", "LOT-001")
+        )
     )
     new = Path(old.global_name, old.subscripts[:-1] + (b"raw",))
     for path, value in dump(store, (Warehouse.__global__,)).items():
