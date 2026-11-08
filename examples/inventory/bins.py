@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Inventory with independently rooted bins. Run python -m examples.inventory.bins."""
 
+import argparse
 from dataclasses import dataclass
 from decimal import Decimal, localcontext
 from typing import cast
 
-from mccann_hub.yhmf import Database, MemoryStore, Patch, Reference, Registry
+from mccann_hub.yhmf import Database, MemoryStore, NativeStore, Patch, Reference, Registry
 from mccann_hub.yhmf.errors import NotFound
 
 from .bin_models import BIN_MODELS, StockBin, StockLocation, StockMoveState, coordinate_key
@@ -181,7 +182,10 @@ class BinInventory(InventoryTransactions):
 
 
 def main() -> None:
-    db = Database(MemoryStore(), Registry(*BIN_MODELS))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--native", action="store_true")
+    args = parser.parse_args()
+    db = Database(NativeStore() if args.native else MemoryStore(), Registry(*BIN_MODELS))
     db.insert(Product(id="WIDGET", sku="WDG-001", name="Widget"))
     db.insert(Lot(id="LOT-001", product=Reference[Product](key="WIDGET")))
     db.insert(Warehouse(id="MAIN", name="Main warehouse"))

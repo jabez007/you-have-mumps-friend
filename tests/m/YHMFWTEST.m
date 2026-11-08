@@ -278,3 +278,8 @@ inventoryreceipt
  merge input=^YHMFTestStorage("writerInput")
  write $$receive^YHMFRECEIPT(.input),!
  quit
+inventorybinreceipt
+ new input
+ merge input=^YHMFTestStorage("writerInput")
+ write $$receivebin^YHMFRECEIPT(.input),!
+ quit

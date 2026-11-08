@@ -445,3 +445,17 @@ your backup; no reverse conversion is promised. Only then enable BinInventory/ne
 writers and retire the old stock writers. BinInventory refuses stock reads/writes while
 the move is incomplete. History remains readable. No schema snapshot, fingerprint,
 original named transform, or application record outside the moved ownership changes.
+
+After the bin move, also export StockBin as BinAPI and StockMoveState as StockMoveAPI
+from BIN_MODELS. Keep WarehouseAPI/MovementAPI alongside them, and call
+$$receivebin^YHMFRECEIPT(.input) with the same request fields. It uses length-prefixed
+coordinate keys and bin participants, validates the managed move checkpoint, and
+returns maintenance while that checkpoint is incomplete. The receive entry retains
+the original warehouse-owned addressing and must be retired after the move.
+Requalify/regenerate all four application bindings together after schema upgrades.
+
+Use python -m examples.inventory.bins --native only with a fresh disposable native
+database configured through the usual YottaDB environment. It seeds the same receipt,
+transfer and adjustment workflow as the memory example. For example, native stock is
+inspectable at ^InventoryBin("s:4:MAIN4:DOCK2:B1","balances","s:LOT-001","quantity").
+The script does not clear existing application data or adopt unmanaged globals.

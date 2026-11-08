@@ -39,5 +39,6 @@ if [[ "${YHMF_BENCHMARK:-0}" == "1" ]]; then
     (cd "$project_dir" && "$project_dir/.venv/bin/python" -m scripts.benchmark_rollups)
     (cd "$project_dir" && "$project_dir/.venv/bin/python" -m scripts.benchmark_maintenance)
     (cd "$project_dir" && "$project_dir/.venv/bin/python" -m scripts.benchmark_m_writers)
+    (cd "$project_dir" && "$project_dir/.venv/bin/python" -m examples.inventory.bins --native)
     (cd "$project_dir" && "$project_dir/.venv/bin/python" -m scripts.benchmark_bin_boundary)
 fi
