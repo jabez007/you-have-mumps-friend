@@ -272,4 +272,60 @@ Warehouse and Bin instead maintain their own declared stored sums. Those are dif
 bookkeeping contracts, so absolute timings are not equivalent application workflows.
 This control isolates growth from unrelated bins, not receive/move/adjust throughput.
 The new service also validates its selected bin contents, so its own cost can grow
-with that bin's balances. Native observations will be linked after CI completes.
+with that bin's balances. The qualified native observations follow.
+
+
+[CI 42432641592](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42432641592)
+passed on r2.02/Ubuntu 22.04 and r2.06/Ubuntu 24.04, each with journaling off and
+before-image journaling on. Each configuration passed 2,739 tests (435 skipped),
+and each engine's separate stress job passed 25 tests (four skipped). The
+[raw report](benchmarks/native-bin-boundary-2026-11-07.json) contains four environments,
+48 rows and 720 measured samples at source 90e2f3f. Skips include memory fixtures
+that cannot share a database with native workers. Python and Pydantic versions,
+CPU and OS details are included per environment.
+
+Values below are median (p95) **milliseconds per insert/delete cycle**. Each cell
+shows 2 bins / 1,000 bins; every case has 15 measured cycles after three warmups.
+
+| Engine | Journal | Client | Warehouse 2 / 1000 | Bin 2 / 1000 | Balance 2 / 1000 |
+| --- | --- | --- | --- | --- | --- |
+| r2.02 | off | python | 0.888 (0.913) / 13.010 (13.356) | 0.646 (0.684) / 0.628 (0.650) | 0.656 (0.664) / 0.646 (0.672) |
+| r2.02 | off | m | 0.855 (0.903) / 19.409 (20.158) | 0.599 (0.644) / 0.613 (0.645) | 0.270 (0.319) / 0.292 (0.329) |
+| r2.02 | on | python | 1.803 (2.145) / 13.909 (14.389) | 1.375 (1.755) / 1.562 (1.714) | 1.476 (1.691) / 1.507 (1.878) |
+| r2.02 | on | m | 1.730 (1.959) / 19.616 (20.230) | 1.406 (1.649) / 1.524 (1.704) | 1.056 (1.789) / 0.990 (1.284) |
+| r2.06 | off | python | 1.070 (1.165) / 16.329 (17.655) | 0.862 (0.940) / 0.769 (0.796) | 0.822 (0.882) / 0.899 (1.010) |
+| r2.06 | off | m | 0.897 (0.943) / 20.286 (21.873) | 0.666 (0.709) / 0.693 (0.729) | 0.329 (0.440) / 0.359 (0.437) |
+| r2.06 | on | python | 1.919 (2.070) / 16.910 (18.509) | 1.510 (1.675) / 1.582 (1.740) | 1.575 (2.572) / 1.563 (1.738) |
+| r2.06 | on | m | 1.729 (2.030) / 20.641 (21.294) | 1.318 (1.449) / 1.513 (1.763) | 0.945 (1.077) / 1.035 (1.116) |
+
+The Python bin cycle uses exactly two transactions/attempts, 64 gets, five children
+calls, 19 sets and seven delete_tree calls at both sizes in all four environments.
+This is measured native adapter work, not a memory-only timing inference. Both
+clients avoid the legacy warehouse-wide structural traversal. Journaled bin medians
+vary more despite identical node work; do not interpret small timing differences as
+an asymptotic change.
+
+The Balance-root M alternative is faster in this workload, but does not maintain a
+bin-owned collection count and local stored total. Its Python costs are similar to
+Bin ownership here. Bin ownership retains direct hierarchical inspection/enumeration
+and local sum maintenance, which the application needs. No claim is made about a
+Balance-root design with equivalent cross-root totals, or about Odoo/PostgreSQL.
+
+These are short, single-worker runs in fixed workload order on shared CI runners.
+p95 with only 15 samples is the largest observation, not a robust tail estimate.
+The workload has empty unrelated bins, warm location digests, no contention and one
+balance per timed cycle. It does not measure saturated bins, ledger workflows or
+multiple-process throughput. Reference-count and native block contention remain,
+as the separate M digest controls demonstrate. The test fixture independently stores
+1,600 balances across two bins; that capacity evidence is distinct from this timing
+workload. Preserve per-bin budgets and measure application-specific distributions
+before drawing broader conclusions.
+
+The later [application qualification run 42432731997](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42432731997)
+also passed the new bin-layout M receipt, including exact Python node equivalence,
+ordered history lookup, duplicate-ID/invalid-input rollback, forced restart, competing
+receipt recalculation and the move checkpoint. On both engines and journaling modes,
+that complete suite passed 2,752 tests (450 skipped); separate native stress passed
+25 (four skipped). The offline suite passed 1,259, and both Pydantic compatibility
+jobs passed 837. Source 0f2b462 includes the final application code; subsequent changes
+align documentation and publish these observations.

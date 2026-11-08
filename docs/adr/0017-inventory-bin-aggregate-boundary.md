@@ -1,6 +1,6 @@
 # ADR 0017: inventory stock belongs to independently rooted bins
 
-Status: accepted; native timing qualification accompanies the benchmark slice.
+Status: accepted; qualified by [native CI 42432641592](https://github.com/jabez007/you-have-mumps-friend/actions/runs/42432641592).
 
 ## Problem and existing mechanisms
 
@@ -53,3 +53,14 @@ Python and M writers must be stopped; the application must not claim online conv
 Framework Transform intentionally cannot split one root across multiple globals. Keep
 existing named transforms and frozen bindings unchanged. The explicit bin_migration entry points implement that copy/clear checkpoint.
 Populated databases continue to use the legacy service until operators run it.
+
+
+## Native evidence
+
+The [boundary report](../inventory-performance.md#bin-aggregate-boundary-control)
+compares both engines and journaling modes, including the Balance-root alternative.
+Bin ownership has constant measured node work at 2/1,000 unrelated bins. Warehouse
+ownership grows materially. The faster Balance-root M cycle omits bin-local count/
+total work; choose Bin for its local ownership/enumeration contract, not as a claim
+that it is the fastest representation for every workload. Short single-worker samples
+do not establish contention or saturated-bin behavior.
