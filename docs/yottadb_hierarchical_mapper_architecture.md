@@ -430,19 +430,19 @@ Backup, recovery, journaling, and replication remain primarily YottaDB responsib
 
 ## 13. Milestones
 
-### v0.1 — Hierarchical persistence
+### v0.1: Hierarchical persistence
 
 Implement declarative models, registry, typed codecs, native paths, CRUD, embedded objects, child collections, and explicit transactions.
 
 Acceptance requires real YottaDB integration tests, storage-format fixtures, rollback testing, and concurrent process tests.
 
-### v0.2 — Indexes and queries
+### v0.2: Indexes and queries
 
 Implement references, equality and unique indexes, indexed queries, bounded iteration, query planning, and index consistency diagnostics.
 
 Acceptance requires verified atomic index maintenance and concurrency-safe uniqueness.
 
-### v0.3 — Schema evolution
+### v0.3: Schema evolution
 
 Implement schema snapshots, schema comparisons, migration generation, migration execution, index rebuilds, and recovery procedures.
 
@@ -458,7 +458,7 @@ compatibility, and installed-wheel tests. New owned containers, destructive
 record changes, reference migrations, and full reverse-reference repair belong
 to later milestones.
 
-### v0.3.1 — Integrity hardening
+### v0.3.1: Integrity hardening
 
 Protect initial installation from unmanaged globals, verify installed snapshot
 integrity, qualify fingerprint compatibility, and document detached-write
@@ -466,7 +466,7 @@ concurrency. Complete native qualification before starting v0.4. See
 [implementation order](implementation-plan.md) and
 [ADR 0001](adr/0001-schema-installation-integrity.md).
 
-### v0.4 — Fine-grained hierarchical mutations
+### v0.4: Fine-grained hierarchical mutations
 
 Add transactional scalar patches and keyed owned-child insertion, updates, and
 deletion with direct node addressing. Preserve Pydantic validation, affected
