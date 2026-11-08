@@ -1701,3 +1701,20 @@ public input wrapper retains its original reference. Preserve all flat/owned sca
 and typed-null validation. This creates one traversal seam for nested validation
 without copying an unvalidated subtree. Commit this behavior-preserving change before
 embedded support, retaining the existing input API and wire values.
+
+### Qualify nullable embedded object transitions, issue 54
+
+Reuse nullable-rule normalization, typed-null input, embedded owner attempts, and
+presence markers. Null objects accept the same exact %null child flag and persist
+n: without nested indexes/edges. Object/null transitions delete or create the same
+embedded owner within the outer transaction; failures/restarts restore both shapes.
+Reject n: markers with descendants and missing physical fields.
+
+Account for variable object presence exactly. Keep fixed-width leaf fast paths for
+fixed declarations; variable owners traverse only structural object/count markers.
+Compute incoming child width from validated wire presence rather than maximum width.
+This prevents both over-capacity writes and false budget failures for mostly-null
+objects. No metadata/data conversion or additional persistence layer is introduced.
+Retain nonempty object, depth, child-collection, rollup, and validator restrictions.
+Native tests cover exact nodes/indexes/edges, null/unique transitions, malformed
+shapes, forced restarts, and variable-capacity boundaries. C901 stays at ten.

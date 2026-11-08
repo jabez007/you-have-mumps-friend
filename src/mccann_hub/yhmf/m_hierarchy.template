@@ -120,7 +120,7 @@ hattempt(operation,rootkey,parts,node,wire,rootcfg)
  if status'="ok" quit status
  if operation="insert" do  quit:status'="ok" status
  . new used
- . set used=4,status=$$hcapacity($$haddress(rootcfg("global"),.parts,0),"",.rootcfg,10000-cfg("width")-1,.used)
+ . set used=4,status=$$hcapacity($$haddress(rootcfg("global"),.parts,0),"",.rootcfg,10000-$$ewidth(.wire,.cfg)-1,.used)
  ; YHMF owned checkpoint: ancestry is resolved before leaf/index updates.
  set internal=$select(operation="patch":"replace",1:operation)
  set status=$$attempt(internal,parts(depth),.values,.cfg,.previous)
@@ -179,8 +179,16 @@ hresolve(operation,rootkey,parts,cfg,parent,count)
 hcapacity(root,node,cfg,allowance,used)
  new field,local,parent,count,status,key,seen,child,next
  merge local=cfg("nodes",node)
- set used=used+local("width"),status="ok",field=""
+ set used=used+$select($get(local("variable")):local("basewidth"),1:local("width")),status="ok",field=""
  if used>allowance quit "node_budget"
+ if $get(local("variable")) do
+ . for  set field=$order(local("embedded",field)) quit:field=""  do  quit:status'="ok"
+ . . set parent=$name(@root@(field)),status=$$eshape(parent,$get(local("nullobject",field)))
+ . . if status'="ok" quit
+ . . if $get(@parent)="n:" quit
+ . . set status=$$hcapacity(parent,local("embedded",field),.cfg,allowance,.used)
+ if status'="ok" quit status
+ set field=""
  for  set field=$order(local("children",field)) quit:field=""  do  quit:status'="ok"
  . set parent=$name(@root@(field)),status=$$hcount(parent,.local,field,.count)
  . if status'="ok" quit

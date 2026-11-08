@@ -180,7 +180,7 @@ def test_embedded_unique_failure_rolls_back_root_and_reference_changes(store, em
     assert db.check_indexes(Envelope).issues == ()
 
 
-def test_embedded_custom_validation_and_nullable_objects_remain_rejected(store):
+def test_embedded_custom_validation_remains_rejected(store):
     class Custom(Position):
         @model_validator(mode="after")
         def validate_position(self):
@@ -189,10 +189,7 @@ def test_embedded_custom_validation_and_nullable_objects_remain_rejected(store):
     class Customized(Envelope):
         position: Custom
 
-    class Nullable(Envelope):
-        position: Position | None = None
-
-    for model in (Customized, Nullable):
+    for model in (Customized,):
         with pytest.raises(SchemaError, match="M writer|M owned|M embedded"):
             Database(store, Registry(Product, model)).m_routine(model, name="EmbeddedAPI")
 

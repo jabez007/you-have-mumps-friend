@@ -316,3 +316,20 @@ bounds. Include fixed embedded widths in record capacity. Reject embedded rollup
 sources until their delta composition is qualified. Nullable embedded objects are
 a separate step. Differential, malformed-data, rollback, restart, and near-budget
 native tests qualify this subset. Schema/layout bytes remain unchanged.
+
+
+## Nullable embedded presence, issue 54
+
+Reuse the exact typed-null input predicate and n: marker. Complete object/null
+transitions invoke existing embedded owner insert/delete attempts, maintaining
+nested claims and references in the outer transaction. Missing inputs remain invalid;
+n: with descendants remains corrupt. Scalar partial writes preserve object presence.
+
+Compile maximum/fixed width, base width, and structural variability. Fixed leaf
+layouts keep constant-time count multiplication. Variable owners inspect object and
+collection markers, charging only present descendants; incoming width uses validated
+wire presence. This prevents both hidden-node writes and false rejection of small
+null objects. Node/child budgets remain unchanged. Embedded child collections,
+rollup sources, empty model declarations, and custom validation remain unqualified.
+Native differential, rollback/restart, and near-budget tests protect these invariants.
+No persisted schema or layout conversion is introduced.

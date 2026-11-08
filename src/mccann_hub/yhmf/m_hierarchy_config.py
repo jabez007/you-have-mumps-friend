@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from .errors import SchemaError
-from .m_writer_config import _field_config, _literal, _overhead, _set
+from .m_writer_config import _field_config, _literal, _nullable_rule, _overhead, _set
 from .registry import FieldSpec, ModelSpec, NodeSpec
 
 
@@ -35,9 +35,10 @@ def _owners(
                 raise SchemaError("M writers require nonnullable Children outside embedded objects")
             child, child_keyed = rule["additionalProperties"], True
         else:
+            rule, _ = _nullable_rule(field, rule)
             if rule.get("type") != "object" or len(path) >= 14 or not field.node.fields:
                 raise SchemaError(
-                    "M embedded objects require nonempty nonnullable declarations at depth <=14"
+                    "M embedded objects require nonempty object declarations at depth <=14"
                 )
             child, child_keyed = rule, False
         yield from _owners(field.node, child, path + (field.name,), keyed=child_keyed)
@@ -74,6 +75,7 @@ def _collection(owner: _Owner, field: FieldSpec, rule: dict[str, Any]) -> list[s
 def _container(owner: _Owner, field: FieldSpec, rule: dict[str, Any]) -> list[str]:
     if field.kind == "children":
         return _collection(owner, field, rule)
+    rule, nullable = _nullable_rule(field, rule)
     allowed = {
         "type",
         "properties",
@@ -86,7 +88,10 @@ def _container(owner: _Owner, field: FieldSpec, rule: dict[str, Any]) -> list[st
     }
     if rule.keys() - allowed:
         raise SchemaError("M writer cannot enforce the embedded declaration")
-    return [_set("embedded", field.name, value=".".join(owner.path + (field.name,)))]
+    result = [_set("embedded", field.name, value=".".join(owner.path + (field.name,)))]
+    if nullable:
+        result.append(_set("nullobject", field.name, value="1"))
+    return result
 
 
 def _width(node: NodeSpec) -> int:
@@ -95,6 +100,16 @@ def _width(node: NodeSpec) -> int:
         for field in node.fields
         if field.kind == "embedded" and field.node is not None
     )
+
+
+def _variable(node: NodeSpec, declaration: dict[str, Any]) -> bool:
+    for field in node.fields:
+        if field.kind != "embedded" or field.node is None:
+            continue
+        rule, nullable = _nullable_rule(field, declaration["properties"][field.name])
+        if nullable or _variable(field.node, rule):
+            return True
+    return False
 
 
 def _node_config(owner: _Owner, spec: ModelSpec, targets: dict[type, ModelSpec]) -> list[str]:
@@ -110,10 +125,16 @@ def _node_config(owner: _Owner, spec: ModelSpec, targets: dict[type, ModelSpec])
     policy = declaration.get("validation_policy", {})
     if policy.keys() - {"str_min_length", "str_max_length"}:
         raise SchemaError("M writer does not support this owner's validation policy")
+    variable = _variable(node, declaration)
     result = [
         _set("key", value=node.key_field or ""),
         _set("width", value=str(_width(node))),
-        _set("leaf", value=str(int(all(field.kind != "children" for field in node.fields)))),
+        _set("basewidth", value=str(len(node.fields))),
+        _set("variable", value=str(int(variable))),
+        _set(
+            "leaf",
+            value=str(int(not variable and all(field.kind != "children" for field in node.fields))),
+        ),
     ]
     for field in node.fields:
         rule = declaration["properties"][field.name]

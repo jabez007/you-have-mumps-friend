@@ -122,7 +122,7 @@ full scalar integer domain. An existing record outside the M stored-value domain
 returns unsupported without changes. Use Python for those records.
 
 Export rejects custom Python validators, unsupported constraints or normalization,
-nullable embedded objects, scalar lists, and more than 16 fields per owner. Keyed trees have the separate operations
+nullable child collections, scalar lists, and more than 16 fields per owner. Keyed trees have the separate operations
 below. The generator does not silently omit rules. Every inserted non-derived scalar field must be supplied even if Python declares a
 default; defaults/factories are not run. Empty-root/branch creation derives zero
 stored totals and creates empty declared collections.
@@ -224,7 +224,7 @@ group's net-zero totals or defer uniqueness across calls. Python patch_many rema
 the grouped mutation interface.
 
 Hierarchical whole insert/replace/delete labels return operation without writes.
-Populated non-leaf deletion, nullable containers, and custom Python
+Populated non-leaf deletion, nullable child collections, and custom Python
 validators remain unsupported. Supplier still fails export because SupplierProduct
 has a custom model validator. Up to 64 keyed declarations with 16 fields per owner
 are supported. New statuses include operation, invalid_path, collection_limit, and
@@ -547,9 +547,9 @@ Root/owned patches touch only the affected ordered indexes. Whole replacements,
 unique failures, rollback, and restarts use the same index transition code as equality
 indexes. Regenerate source to enable this capability on existing ordered schemas.
 
-## Complete non-null embedded objects
+## Complete embedded objects
 
-Complete insert/replace operations accept nested M arrays for non-null embedded
+Complete insert/replace operations accept nested M arrays for embedded
 models. Their ordinary o:1 markers, scalar tags, dotted indexes, concrete location
 digests, and reverse references match Python. For example, a declared Position with
 warehouse/location/bin fields takes input("destination","warehouse")="MAIN",
@@ -565,10 +565,32 @@ A model containing Children still cannot use complete tree replace.
 This qualification covers nonempty embedded models without child collections inside
 them, to 14 declared ownership segments, 64 declarations, and 16 fields per owner.
 Custom validators and unsupported field/container constraints remain rejected.
-Embedded rollup sources and nullable embedded containers remain separate work.
-Fixed embedded node widths participate in the ordinary 10,000-node record budget,
+Embedded rollup sources remain separate work. Fixed embedded node widths participate
+in the ordinary 10,000-node record budget,
 including keyed-child insertion. No schema/data conversion is required; regenerate
 source for these capabilities.
+
+## Nullable embedded objects
+
+A nullable embedded object uses the same explicit null input as a scalar:
+input("source","%null")=1, with no scalar value or other descendants. A non-null
+object uses its complete nested array. Missing input remains invalid even when
+Python declares a None default. A null object persists as n: and has no descendant
+index entries or reference edges; it differs from a populated object containing
+nullable scalar fields.
+
+Complete replacements maintain object/null transitions, indexes, unique claims,
+and reverse edges in the same transaction. Multiple null objects do not claim a
+nested unique value. A failed claim restores the old marker/subtree and parent fields.
+A stored n: marker with descendants is corrupt, and deletion cannot hide that damage.
+Partial scalar patches preserve untouched object presence.
+
+Capacity checks charge the nodes actually present. Fixed layouts retain their leaf
+count shortcut. Nullable-object layouts inspect structural presence/count markers;
+incoming child sizes come from validated wire presence. This can require traversing
+variable branches during insertion. A null object is not charged for absent child
+fields. The 10,000-node and 1,000-child limits remain unchanged. No schema/layout
+migration is needed; regenerate source to qualify existing nullable declarations.
 
 ## Raw writes from M
 

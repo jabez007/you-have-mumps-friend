@@ -74,7 +74,9 @@ inputnode(operation,source,cfg,values)
  for  set field=$order(@source@(field)) quit:field=""  do  quit:status'="ok"
  . if operation="delete",field'=cfg("key") set status="invalid" quit
  . if $data(cfg("embedded",field)) do  quit
- . . if operation="patch"!($data(@source@(field))'=10) set status="invalid" quit
+ . . if operation="patch" set status="invalid" quit
+ . . if $get(cfg("nullobject",field)),$$ninput($name(@source@(field))) set values(field)="n:" quit
+ . . if $data(@source@(field))'=10 set status="invalid" quit
  . . kill childcfg,childvalues
  . . merge childcfg=cfg("nodes",cfg("embedded",field)),childcfg("nodes")=cfg("nodes"),childcfg("targets")=cfg("targets")
  . . set status=$$inputnode(operation,$name(@source@(field)),.childcfg,.childvalues)
@@ -83,9 +85,7 @@ inputnode(operation,source,cfg,values)
  . if operation="patch",field=cfg("key") set status="invalid" quit
  . if $data(cfg("derived",field)) set status="invalid" quit
  . if $data(@source@(field))'=1 do  quit
- . . if '$get(cfg("nullable",field))!($data(@source@(field))'=10) set status="invalid" quit
- . . if $data(@source@(field,"%null"))'=1!(($get(@source@(field,"%null"))_"x")'="1x") set status="invalid" quit
- . . if $order(@source@(field,""))'="%null"!($order(@source@(field,"%null"))'="") set status="invalid" quit
+ . . if '$get(cfg("nullable",field))!'$$ninput($name(@source@(field))) set status="invalid" quit
  . . set values(field)="n:"
  . if '$$valid(@source@(field),field,.cfg) set status="invalid" quit
  . set values(field)=$select($get(cfg("nullable",field)):"v:",1:"")_@source@(field)
@@ -220,7 +220,7 @@ old(root,cfg,values)
  for  set field=$order(@root@(field)) quit:field=""  do  quit:status'="ok"
  . if field="%m",'$get(cfg("owned")) quit
  . if $data(cfg("tag",field)) quit
- . if $data(cfg("embedded",field)) set status=$$eshape($name(@root@(field))) quit
+ . if $data(cfg("embedded",field)) set status=$$eshape($name(@root@(field)),$get(cfg("nullobject",field))) quit
  . if '$data(cfg("children",field)) set status="corrupt" quit
  . set status=$$hcount($name(@root@(field)),.cfg,field,.count)
  . if status="ok",(count>0)'=($order(@root@(field,""))'="") set status="corrupt"

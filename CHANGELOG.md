@@ -4,6 +4,10 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Qualifies M nullable embedded objects with explicit typed nulls and transactional
+  object/subtree transitions. Variable record budgets count actual presence, keeping
+  fixed-layout fast paths and avoiding both hidden nodes and false capacity failures.
+
 - Qualifies complete M writes of non-null embedded objects using existing owner
   validation/index/reference transitions. Nested failures and restarts remain atomic,
   scalar patches preserve embedded subtrees, and fixed widths count toward capacity.

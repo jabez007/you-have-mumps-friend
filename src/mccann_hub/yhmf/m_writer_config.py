@@ -181,7 +181,11 @@ def _reference_config(
 
 def _nullable_rule(field: FieldSpec, rule: dict[str, Any]) -> tuple[dict[str, Any], bool]:
     options = rule.get("anyOf", [])
-    nullable = field.kind == "scalar" and len(options) == 2 and options[1] == {"type": "null"}
+    nullable = (
+        field.kind in {"scalar", "embedded"}
+        and len(options) == 2
+        and options[1] == {"type": "null"}
+    )
     if not nullable:
         return rule, False
     return {**options[0], **{key: value for key, value in rule.items() if key != "anyOf"}}, True
