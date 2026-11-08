@@ -399,7 +399,9 @@ declaration-bound ModelPath values. get infers the selected owner type and check
 binding at runtime. Registry.reference infers a primary-key constructor while keeping
 the existing Reference[Target] object and storage contract. No type-checker plugin or
 query language is required. Tuple paths and explicit Reference construction remain
-supported; query-field objects are still deferred.
+supported. Database.field builds typed query fields for equality predicates and for
+order_by on declared ordered indexes. Range and prefix predicates still take string
+field names. See [typed equality fields](guides/indexes-and-queries.md#typed-equality-fields).
 
 Explicit patch_many groups prepare 1–100 scalar/reference owner changes using the
 ordinary partial-validation policy, then apply the union of normal index/reference
