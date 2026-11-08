@@ -1830,3 +1830,23 @@ for Python and the same cycle from persistent plain M. Keep audit traversal pagi
 The alternatives have different local total/reference work; report that limitation.
 No comparison with relational systems or claims from memory timings. Existing stock
 workflows and historical benchmark baselines remain intact. C901 remains ten.
+
+### Keep M receipts usable after the bin data move, issues 48 and 54
+
+Reuse the existing receipt transaction, Decimal arithmetic and Movement inputs. Add a
+receivebin entry that selects StockBin addressing/participants while receive retains
+its historical binding. Validate coordinate roots and the managed stock-move checkpoint
+before stock writes. Keep the same explicit 64-byte identifier domain and exact node
+checks. Export BinAPI and StockMoveAPI alongside the existing schema-bound sources;
+these are application bindings, not another framework persistence API. Parameterize
+the native equivalence/rollback/restart/competition tests over both layouts. Neither
+entry point silently migrates data. C901 remains ten; no new generic abstractions.
+
+### Qualify native stock fixtures and avoid repeated coordinate reads
+
+CI exposed that the process worker test also ran against a memory-only fixture, and
+that seeding all 1,600 lots/balances in one TP exceeded native buffers. Restrict the
+worker test to its actual NativeStore and seed positions incrementally without reducing
+the dataset or assertions. Separately, a failing counted regression shows _page reading
+the same location once per returned balance. Resolve the coordinate once per loaded bin
+and reuse it for rows, validating even empty bins. No contract change; C901 ten.

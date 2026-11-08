@@ -11,7 +11,7 @@ from examples.inventory.bin_migration import advance_bin_move, begin_bin_move
 from examples.inventory.bin_models import BIN_MODELS, StockBin, StockLocation
 from examples.inventory.bins import BinInventory, create_bin
 from examples.inventory.ledger import InventoryError
-from mccann_hub.yhmf import Database, Registry
+from mccann_hub.yhmf import Database, NativeStore, Registry
 from tests.adversarial_support import dump
 from tests.test_inventory_bins import ROOTS
 
@@ -108,6 +108,8 @@ def test_competing_workers_advance_each_warehouse_once(store):
 
     from tests.test_native_schema_safety import ready
 
+    if not isinstance(store, NativeStore):
+        pytest.skip("Requires a native database shared by both processes")
     db = setup(store)
     db.insert(Warehouse(id="SECOND", name="Second"))
     begin_bin_move(db, writers_stopped=True)

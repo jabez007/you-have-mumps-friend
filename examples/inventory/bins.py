@@ -167,13 +167,15 @@ class BinInventory(InventoryTransactions):
         def read(tx: Database) -> BinStockPage:
             require_ready(tx)
             bins = tx.query(StockBin).where(**predicates).all(limit=limit, after=after)
-            rows = tuple(
-                _row(_address(tx, bin_), balance)
-                for bin_ in bins
-                for balance in bin_.balances.values()
-                if product is None or balance.product.key == product
-            )
-            return BinStockPage(rows, bins[-1].id if len(bins) == limit else None)
+            rows: list[StockRow] = []
+            for bin_ in bins:
+                address = _address(tx, bin_)
+                rows.extend(
+                    _row(address, balance)
+                    for balance in bin_.balances.values()
+                    if product is None or balance.product.key == product
+                )
+            return BinStockPage(tuple(rows), bins[-1].id if len(bins) == limit else None)
 
         return self.db.atomic(read)
 

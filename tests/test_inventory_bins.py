@@ -102,24 +102,43 @@ def test_insert_and_delete_work_does_not_grow_with_unrelated_bins():
 def test_warehouse_stock_can_exceed_the_old_aggregate_budget(store):
     db, inventory = setup(store)
 
-    def fill(tx):
-        for i in range(1600):
-            tx.insert(Lot(id=f"LOT-{i}", product=Reference[Product](key="P")))
-        for start, address in ((0, DOCK), (800, STORAGE)):
-            key = coordinate_key(address.warehouse, address.location, address.bin)
-            bin_ = tx.get(StockBin, key)
-            balances = {
-                f"LOT-{i}": Balance(
+    # Seed independent positions in small transactions, as an application would.
+    # Warehouse capacity is the assertion; native transaction buffers are a separate limit.
+    for i in range(1600):
+        db.insert(Lot(id=f"LOT-{i}", product=Reference[Product](key="P")))
+    for start, address in ((0, DOCK), (800, STORAGE)):
+        key = coordinate_key(address.warehouse, address.location, address.bin)
+        for i in range(start, start + 800):
+            db.insert_child(
+                StockBin,
+                key,
+                collection=("balances",),
+                record=Balance(
                     id=f"LOT-{i}",
                     lot=Reference[Lot](key=f"LOT-{i}"),
                     product=Reference[Product](key="P"),
                     quantity=Decimal(1),
-                )
-                for i in range(start, start + 800)
-            }
-            tx.save(bin_.model_copy(update={"balances": balances}))
-
-    db.atomic(fill)
+                ),
+            )
     assert len(inventory.stock_in_warehouse("MAIN").rows) == 1600
     assert sum(r.quantity for r in inventory.stock_by_product("P").rows) == 1600
     assert db.check_indexes(StockBin).issues == ()
+
+
+def test_stock_page_validates_coordinates_once_per_bin(store, monkeypatch):
+    from examples.inventory import bins
+
+    db, inventory = setup(store)
+    db.insert(Lot(id="NEXT", product=Reference[Product](key="P")))
+    for key, lot in (("ONE", "LOT"), ("TWO", "NEXT")):
+        inventory.receive(key, lot, DOCK, Decimal(1), occurred_at=STAMP)
+    seen = []
+    original = bins._address
+
+    def observe(tx, value):
+        seen.append(value.id)
+        return original(tx, value)
+
+    monkeypatch.setattr(bins, "_address", observe)
+    assert len(inventory.stock_by_product("P").rows) == 2
+    assert seen == [coordinate_key("MAIN", "DOCK", "B1")]
