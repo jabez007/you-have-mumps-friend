@@ -1818,3 +1818,15 @@ The new service refuses writes during the move. Old Python/M writers must be dra
 this is deliberately not an online migration. Test rollback after copying and clearing,
 resume and repeated completion, competing workers, reference lifetime and >old-budget
 stock. C901 remains ten. No process-local data caches or framework layout changes.
+
+### Measure native inventory aggregate boundaries, issue 48
+
+Reuse the disposable native harness, CountedStore, environment/latency reporting,
+explicit source export, and reference/index audits. Compare warehouse v3, StockBin
+ownership, and a script-only Balance-root alternative at 2 and 1,000 bins. Time an
+insert/delete cycle with product/lot references, after three untimed warmup cycles;
+exclude seeding, process startup and compilation. Emit all samples and node operations
+for Python and the same cycle from persistent plain M. Keep audit traversal paginated.
+The alternatives have different local total/reference work; report that limitation.
+No comparison with relational systems or claims from memory timings. Existing stock
+workflows and historical benchmark baselines remain intact. C901 remains ten.

@@ -253,3 +253,23 @@ within this workload. They also show substantial fixed Python/validation/ledger
 cost above a direct assignment. They do not establish production throughput,
 journal durability cost, query-projection performance, or performance against Odoo,
 PostgreSQL, or any other database.
+
+## Bin aggregate boundary control
+
+The legacy warehouse layout's structural capacity walk grows with unrelated bins.
+The independently rooted BinInventory example uses per-bin capacity and stock instead.
+Run python -m scripts.benchmark_bin_boundary inside the disposable native harness; it
+is included in both native CI versions and journaling modes. The report prefix is
+YHMF_BIN_BOUNDARY_BENCHMARK. It contains every sample, median/p95, runtime/library
+versions, and Python node calls per insert/delete cycle at 2 and 1,000 bins.
+
+The workload inserts one positive balance with lot/product references into an empty
+selected bin, then deletes it in a separate transaction. All other bins are empty.
+Three untimed cycles warm source loading and the digest cache; seeding, compilation,
+process launch, and independent paginated index/reference audits are outside timings.
+The Balance-root alternative is script-only. It indexes a reference to its position;
+Warehouse and Bin instead maintain their own declared stored sums. Those are different
+bookkeeping contracts, so absolute timings are not equivalent application workflows.
+This control isolates growth from unrelated bins, not receive/move/adjust throughput.
+The new service also validates its selected bin contents, so its own cost can grow
+with that bin's balances. Native observations will be linked after CI completes.
