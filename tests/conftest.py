@@ -54,6 +54,9 @@ def store(request):
         Path("^InventoryWarehouse"),
         Path("^InventoryMovement"),
         Path("^InventorySupplier"),
+        Path("^InventoryLocation"),
+        Path("^InventoryBin"),
+        Path("^InventoryStockMove"),
     ]
     for root in roots:
         result.delete_tree(root)

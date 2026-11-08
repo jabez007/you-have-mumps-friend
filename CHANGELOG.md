@@ -298,3 +298,6 @@ Ubuntu 22.04 and r2.06 on Ubuntu 24.04. These results apply to those tested
 environments, not every accepted runtime or dependency version.
 - Add a schema-coupled M inventory receipt example composing stock and movement
   participants in one restartable transaction, with duplicate-ID and validation rollback.
+- Add independently rooted inventory locations/bins and BinInventory, reusing existing
+  ledger transactions with paginated stock reports and per-bin stock budgets. Keep
+  the legacy warehouse service and storage metadata compatible.

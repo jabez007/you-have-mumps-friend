@@ -1790,3 +1790,31 @@ construction and history queries. Give its existing balance lookup a private _ch
 method seam, matching _apply_balances, so another aggregate boundary can reuse those
 business transactions without duplicating them. Preserve every current behavior and
 model binding in this refactor. Existing inventory workflow tests cover it; C901 ten.
+
+### Move the inventory aggregate boundary to Bin, issue 48
+
+Reuse Balance, catalog/lot identities, Movement v4, Inventory's transaction seam,
+patch_many, equality-index pagination and schema-bound M participants. Add independently
+addressable StockLocation and StockBin roots; Bin owns balances and its local stored
+sum. Location references Warehouse and Bin references both, enforcing lifetimes with
+existing reverse indexes. Length-prefixed coordinate identities avoid hash collisions;
+normal encoded-key limits still apply. Warehouse v3 remains a historical compatible
+shell; no metadata conversion or automatic adoption occurs. New BinInventory is the
+recommended application API; old Inventory and historical benchmarks remain explicit
+legacy layout examples. Read a bounded bin aggregate to validate its coordinates;
+that cost may grow with balances in that bin, never unrelated bins.
+
+Keep reporting bounded by bin pages and compute warehouse totals by explicit traversal,
+not a transactional cross-root total. Retain the 1,000-balances-per-bin and 10,000-nodes-
+per-bin limits, removing the warehouse-wide cap. Compare Bin ownership with a Balance
+root in the native benchmark before claiming performance. Document the choice in ADR17.
+
+Use a maintenance-window app data move, not a new migration framework: require an
+explicit writers-stopped attestation and initially empty target globals, then copy and
+clear one bounded old warehouse and advance a managed checkpoint in the same atomic
+callback. Crashes/failures cannot expose a half-moved warehouse; retry resumes from
+committed progress. Keep old schema bindings/data representation and Movement identities.
+The new service refuses writes during the move. Old Python/M writers must be drained;
+this is deliberately not an online migration. Test rollback after copying and clearing,
+resume and repeated completion, competing workers, reference lifetime and >old-budget
+stock. C901 remains ten. No process-local data caches or framework layout changes.

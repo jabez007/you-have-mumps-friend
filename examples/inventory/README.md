@@ -399,3 +399,29 @@ labels are not a new framework public arithmetic API. Generic M stock mutations 
 not automatically create audit history: use this application transaction when a
 receipt must have a ledger entry. Forced-restart and competing-receipt native tests
 check the complete stock, totals, indexes, reverse references, and timestamp index.
+
+## Independently rooted bins
+
+New applications can run python -m examples.inventory.bins and use BIN_MODELS,
+StockLocation, StockBin, create_bin and BinInventory from the bin_models/bins modules.
+Receipt, move, adjust and history retain the existing service arguments. Stock is
+owned under each StockBin root. Locations reference Warehouse and bins reference both
+parents, so deleting a parent with live bins is restricted. Movement keeps its immutable
+historical coordinates. [ADR 0017](../../docs/adr/0017-inventory-bin-aggregate-boundary.md)
+explains the boundary and the Balance-root alternative.
+
+A bin can hold at most 1,000 balances and 10,000 nodes. A warehouse can have independent
+bins beyond its former aggregate budget; the regression fixture stores 1,600 balances
+across two bins. Stock writes inspect their selected bin and location, so their work
+can grow with balances in that bin, but does not grow with unrelated warehouse bins.
+Coordinate keys are inspectable length-prefixed UTF-8 strings; normal native key and
+index size limits still apply. There is no automatic key hashing or truncation.
+
+stock_in_warehouse and stock_by_product now return BinStockPage in this new service.
+Pass bin_limit and then after=page.next_bin until next_bin is None. A page visits at
+most bin_limit bins and can return at most bin_limit times 1,000 stock rows. Sum pages
+explicitly for warehouse/location reports; concurrent changes between pages are visible.
+The legacy Warehouse.stored_on_hand reports only legacy owned stock. Do not use it as
+a cross-root total. The original Inventory service and historical benchmark retain
+their original warehouse layout. Existing populated databases require an explicit
+maintenance-window move before using the new layout; no automatic conversion occurs.
