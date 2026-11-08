@@ -17,7 +17,8 @@ write(input,mode)
  quit "ok"
 attempt(request,mode)
  new key,field,lot,product,warehouse,location,bin,root,raw,old,amount,total,path,balance,movement,status
- if mode set status=$$ready() if status'="ok" quit status
+ set status=$$ready(mode)
+ if status'="ok" quit status
  ; Keep this example's direct addresses within a small, documented input domain.
  if $data(request)#2 quit "invalid"
  set field=""
@@ -58,9 +59,10 @@ attempt(request,mode)
  set movement("quantity")=$get(request("quantity")),movement("reason")=$get(request("reason")),movement("occurred_at")=$get(request("occurred_at"))
  set movement("source","%null")=1,movement("destination","warehouse")=warehouse,movement("destination","location")=location,movement("destination","bin")=bin
  quit $$inserttx^MovementAPI(.movement)
-ready()
+ready(mode)
  new cfg,values,status,root
  if '$data(^InventoryStockMove) quit "ok"
+ if 'mode quit "maintenance"
  if '$$available^StockMoveAPI("InventoryStockMove") quit "maintenance"
  do config^StockMoveAPI(.cfg)
  if '$$schema^StockMoveAPI(cfg("global"),cfg("fingerprint"),cfg("snapshot")) quit "schema"

@@ -9,9 +9,10 @@ from typing import cast
 
 from pydantic import TypeAdapter, ValidationError
 
-from mccann_hub.yhmf import Database, Patch, Reference
+from mccann_hub.yhmf import Database, Patch, Path, Reference
 from mccann_hub.yhmf.errors import NotFound
 
+from .bin_models import StockMoveState
 from .models import (
     Balance,
     Location,
@@ -110,6 +111,10 @@ def _time(value: str | datetime | None) -> datetime:
 
 
 def _change(tx: Database, address: BinAddress, lot: Lot, delta: Decimal) -> BalanceChange:
+    # Legacy registries need not register the new checkpoint. Any presence fails closed.
+    checkpoint = Path(StockMoveState.__global__)
+    if tx.store.get(checkpoint) is not None or tx.store.children(checkpoint, limit=1):
+        raise InventoryError("Legacy stock writes are disabled once the bin move begins")
     try:
         path = tx.path(
             Warehouse,

@@ -9,8 +9,10 @@ relationships, indexes, and migrations. You declare models with
 owned data lives under that record's own subscripts, so each global keeps the shape of
 the data.
 
-**This is an early prototype.** These docs describe the
-development branch. The API and storage layout can change. It is not on PyPI yet. See
+**This is a pre-1.0 development candidate.** These docs describe the development
+branch. Qualified artifacts have an exact commit and tested environment matrix.
+[Compatibility](https://github.com/jabez007/you-have-mumps-friend/blob/main/docs/compatibility.md)
+requires explicit notes and upgrade paths for breaking changes. It is not on PyPI yet. See
 [what works today](#what-works-today).
 
 ## Example

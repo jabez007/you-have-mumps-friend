@@ -1931,3 +1931,16 @@ Observed ergonomics: tuple-owned reads require a cast on the legacy public inter
 current typed selectors are read-only, so the consumer keeps the common tuple path.
 Queries return root aggregates and must document their page units. No framework API
 expansion was needed. Keep native/upgrade findings distinct from offline node fixtures.
+
+### Fence cooperating legacy inventory entry points during cutover
+
+A failing regression confirms that current legacy Inventory.receive still commits after
+begin_bin_move despite the new service's checkpoint guard. Reuse the existing StockMove
+checkpoint and transaction seam: any checkpoint presence disables current legacy Python
+stock mutations, including after completion, without requiring old registries to register
+a new model. The current application M receive entry likewise refuses checkpoint
+presence; receivebin keeps its existing trusted-complete check. This is application
+policy, not a new framework barrier or distributed lock. Old binaries, raw writers and
+generic generated routines remain unfenced and must be drained by the operator. Record
+that limitation and backup/validation/recovery steps in the runbook. Storage and metadata
+formats remain unchanged. C901 remains ten; native tests check refusal with no writes.

@@ -6,11 +6,13 @@ import ast
 import hashlib
 import json
 import os
+import platform
 import subprocess
 import tarfile
 import tomllib
 import zipfile
 from email import message_from_bytes
+from importlib.metadata import version
 from pathlib import Path, PurePosixPath
 
 FORBIDDEN = {".serena", ".git", ".codex", ".agents", ".aws", ".env", ".venv", "__pycache__"}
@@ -136,6 +138,13 @@ def main():
         "source_commit": commit,
         "source_tree_clean": clean,
         "qualification_run": os.environ.get("GITHUB_RUN_ID"),
+        "qualification_status": "pending",
+        "build_environment": {
+            "python": platform.python_version(),
+            "pydantic": version("pydantic"),
+            "uv": subprocess.check_output(["uv", "--version"], text=True).strip(),
+        },
+        "lock_sha256": hashlib.sha256((root / "uv.lock").read_bytes()).hexdigest(),
         "artifacts": rows,
     }
     (args.directory / "qualification.json").write_text(json.dumps(manifest, indent=2) + "\n")

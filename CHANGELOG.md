@@ -4,6 +4,17 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Establish candidate qualification/compatibility policy, isolated source/wheel/native
+  installations, hashed artifacts and a manual nonpublishing preparation workflow.
+- Exclude developer state from source distributions and audit exact generated-M
+  templates, license, namespace, dependency and version metadata.
+- Add a separately packaged public-API inventory consumer and source-built 0.4.0
+  upgrade qualification, including actual native persistence and M execution in CI.
+- Fence current legacy inventory Python/M service writes once the bin move begins.
+  External and older writers still require a maintenance-window operator shutdown.
+- Document deployment, recovery, cutover and measured scaling boundaries without
+  claiming production or disaster-recovery qualification.
+
 - Add a schema-coupled M inventory receipt example composing stock and movement
   participants in one restartable transaction, with duplicate-ID and validation
   rollback.

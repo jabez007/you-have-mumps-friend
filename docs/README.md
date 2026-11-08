@@ -24,6 +24,13 @@ New here? Start with [get started](getting-started.md), then read
 - [Set up a YottaDB database](guides/native-setup.md)
 - [Read and write the data from M](guides/m-access.md)
 
+## Operate an application
+
+- [Deployment and performance boundaries](operations.md)
+- [Migration cutover runbook](guides/migration-cutover.md)
+- [Qualification](release-qualification.md), [compatibility](compatibility.md), and
+  [candidate preparation](releasing.md)
+
 ## Look something up
 
 - [Limits](reference/limits.md)

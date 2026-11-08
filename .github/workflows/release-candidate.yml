@@ -46,6 +46,9 @@ jobs:
           assert evidence["version"] == os.environ["EXPECTED_VERSION"]
           assert evidence["source_commit"] == os.environ["GITHUB_SHA"]
           assert evidence["source_tree_clean"] is True
+          evidence["qualification_status"] = "passed"
+          evidence["qualified_run"] = f"https://github.com/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}"
+          pathlib.Path("qualification.json").write_text(json.dumps(evidence, indent=2) + "\n")
           print(json.dumps(evidence, indent=2))
           PY
       - uses: actions/upload-artifact@v7.0.2

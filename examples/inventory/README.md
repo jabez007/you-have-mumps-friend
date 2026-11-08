@@ -472,3 +472,10 @@ The move's per-warehouse transaction must also fit the native database's transac
 buffers and encoded key/index limits. A native buffer or key-size error rolls back
 that warehouse and retains the previous checkpoint. Stop and resolve that constraint
 before resuming; the mover does not split a warehouse into partially committed copies.
+
+
+Current legacy Inventory mutations and the current M receive entry refuse any stock
+move checkpoint, including a completed one. These cooperating guards prevent accidental
+reuse of the legacy workflow. Older binaries/routines, generic Database/generated-M
+calls and raw writers still require explicit shutdown. writers_stopped=True remains
+an operator assertion. Follow the [cutover runbook](../../docs/guides/migration-cutover.md).

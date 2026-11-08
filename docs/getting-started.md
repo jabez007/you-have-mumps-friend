@@ -1,15 +1,23 @@
 # Get started
 
 In this tutorial, you store a warehouse with bins and lots, change it safely, and query
-it. You need Python 3.12 or later. It uses the in-memory store, so you do not need
+it. Use the qualified CPython 3.12 environment. It uses the in-memory store, so you do not need
 YottaDB.
 
 ## Install YHMF
 
+Obtain the exact candidate wheel and SHA256SUMS from the maintainer or a completed
+[qualification run](releasing.md). There is no PyPI release yet. Download both source
+and wheel when checking the full checksum file. GitHub Actions artifacts can require
+GitHub authentication; a maintainer can also share the exact checksummed files.
+No source checkout or editable install is needed. Run these commands in the download
+directory. Use the candidate's actual filename if the version changes.
+
 ```sh
 python -m venv .venv
 . .venv/bin/activate
-pip install "git+https://github.com/jabez007/you-have-mumps-friend"
+sha256sum -c SHA256SUMS
+pip install ./mccann_hub_yhmf-0.5.0-py3-none-any.whl
 ```
 
 Create a file called `demo.py`. Add each block below to the end of the file.
@@ -108,6 +116,7 @@ It now also prints `[7]` and `equality_index`.
 
 - [Set up a YottaDB database](guides/native-setup.md) to store data durably.
 - [Read the data from M](guides/m-access.md) to see how this record looks in globals.
-- Run the [warehouse inventory example](../examples/inventory/README.md) for a larger
+- Install the [independent consumer](../consumers/inventory-ledger/README.md) or run the
+  [warehouse inventory example](../examples/inventory/README.md) for a larger
   application.
 - See the [documentation map](README.md) for every guide.

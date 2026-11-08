@@ -204,3 +204,15 @@ def test_bin_receipt_respects_the_stock_move_checkpoint(store, receipt):
     before = dump(store, ROOTS)
     assert run() == "maintenance"
     assert dump(store, ROOTS) == before
+
+
+@pytest.mark.native
+@pytest.mark.parametrize("status", ["copying", "complete"])
+def test_current_legacy_m_receipt_is_fenced_once_the_move_begins(store, receipt, status):
+    db, run, _, _, layout = receipt
+    if layout != "warehouse":
+        pytest.skip("This assertion qualifies the legacy receipt entry")
+    db.insert(StockMoveState(id="bins-v1", status=status))
+    before = dump(store, ROOTS)
+    assert run() == "maintenance"
+    assert dump(store, ROOTS) == before

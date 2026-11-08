@@ -19,7 +19,9 @@ alongside this procedure.
 3. Run the manual Qualify release candidate Actions workflow on that revision with its
    exact expected_version. It calls the same mandatory matrix as Checks, including
    installed native source/wheel tests on both engines and journal modes. Its final
-   evidence job verifies version, commit, clean source tree and SHA256SUMS. No write
+   evidence job verifies version, commit, clean source tree and SHA256SUMS, then marks
+   qualification_status as passed. The initial build manifest stays pending until
+   the mandatory qualification has actually succeeded. No write
    permission to releases or OIDC publishing token is granted.
 4. Download candidate-distributions and qualified-candidate before their 90-day expiry.
    Retain qualification.json, SHA256SUMS, lockfile, test logs and environment information.

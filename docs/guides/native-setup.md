@@ -10,10 +10,11 @@ steps to store data durably with `NativeStore`.
    unpacked binary archive is not enough, because YottaDB needs a correctly installed
    `gtmsecshr` helper.
 2. Set `ydb_dist` to the installation directory.
-3. Install YHMF with the `native` extra, which adds YDBPython:
+3. Obtain the checksummed candidate artifact as in getting started. Install it with
+   the `native` extra, which adds YDBPython but does not install/configure the engine:
 
    ```sh
-   pip install "mccann-hub-yhmf[native] @ git+https://github.com/jabez007/you-have-mumps-friend"
+   pip install "./mccann_hub_yhmf-0.5.0-py3-none-any.whl[native]"
    ```
 
 ## Create a database
@@ -79,3 +80,6 @@ Never run the test suite against this database. See
 [CONTRIBUTING](../../CONTRIBUTING.md).
 
 Next, [read and write the data from M](m-access.md).
+
+See [operations](../operations.md) and the [cutover runbook](migration-cutover.md)
+for process, durability, backup and migration responsibilities.

@@ -140,3 +140,15 @@ def test_competing_workers_advance_each_warehouse_once(store):
                 worker.kill()
             worker.wait(timeout=5)
     assert finish(store).get(Warehouse, "MAIN").locations == {}
+
+
+@pytest.mark.parametrize("completed", [False, True])
+def test_current_legacy_service_is_fenced_once_the_stock_move_begins(store, completed):
+    db = setup(store)
+    begin_bin_move(db, writers_stopped=True)
+    if completed:
+        db = finish(store)
+    before = dump(store, ROOTS)
+    with pytest.raises(InventoryError, match="Legacy stock writes"):
+        Inventory(db).receive("ACCIDENTAL", "LOT-001", BinAddress("MAIN", "DOCK", "B1"), Decimal(1))
+    assert dump(store, ROOTS) == before

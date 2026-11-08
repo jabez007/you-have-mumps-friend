@@ -1,5 +1,11 @@
 # Contributing
 
+See [release qualification](docs/release-qualification.md) for blocking gates,
+[candidate preparation](docs/releasing.md) for isolated artifact/native checks, and
+[the independent consumer](consumers/inventory-ledger/README.md) for downstream tests.
+PRs keep routine native/concurrency/conformance tests. Longer stress profiles and
+benchmark timings run on pushes and explicit candidate qualification.
+
 ## Run the routine checks
 
 Install [uv](https://docs.astral.sh/uv/), then run these commands:
