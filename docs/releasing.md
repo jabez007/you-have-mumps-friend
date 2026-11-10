@@ -53,4 +53,55 @@ for the authorized repository, workflow and environment. Use OIDC instead of a s
 upload token. A pending publisher can create a first project but does not reserve its
 name. Follow the [PyPI instructions](https://docs.pypi.org/trusted-publishers/creating-a-project-through-oidc/)
 and the [packaging workflow guide](https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/).
-No publisher, project reservation, upload or release action is performed by this work.
+The candidate qualification workflow performs no publisher registration, distribution
+upload or public release. TestPyPI publication is a separate manual choice below.
+
+## Manually test publication on TestPyPI
+
+The separate publish-test.yml workflow matches the pending Trusted Publisher's workflow
+filename and environment testpypi. It is workflow_dispatch-only. It does not publish
+on pushes, PRs or tags. A future production publish.yml can be tag-triggered and must
+check that its tag matches the package version before qualification and upload.
+
+Run a validation first:
+
+```sh
+gh workflow run publish-test.yml --ref main -f expected_version=0.5.0 -f publish=false
+```
+
+The run calls the full candidate workflow, then verifies the passed manifest's version,
+commit, run ID, clean source and hashes. A fresh staging directory gets only the exact
+qualified wheel and source distribution. Evidence sidecars and stale/unexpected files
+are refused. The build/qualification jobs receive no OIDC permission. No file is rebuilt
+between qualification and publication.
+
+After explicit authorization to make the TestPyPI upload, use:
+
+```sh
+gh workflow run publish-test.yml --ref main -f expected_version=0.5.0 -f publish=true
+```
+
+That choice enables the final job, bound to the GitHub environment testpypi, with
+id-token: write. The official PyPA action uses Trusted Publishing, attestations and the
+fixed https://test.pypi.org/legacy/ endpoint; no stored PyPI password/token is required.
+The publishing job downloads staged artifacts only and does not check out or build
+application code. Uploads from branches other than main fail preflight. Concurrent
+uploads for the same ref do not run together; existing distributions cause a failure
+rather than being silently accepted. TestPyPI does not permit replacing a published file with changed
+bytes, so choose a new version if a previous upload must change.
+
+The pending publisher must name distribution mccann-hub-yhmf, repository
+jabez007/you-have-mumps-friend, workflow publish-test.yml and environment testpypi.
+A TestPyPI publisher registration is separate from GitHub's environment configuration.
+GitHub can create the referenced environment when a workflow uses it; configure its
+branch/reviewer protections in repository Settings as appropriate before an upload.
+This workflow does not change those protection settings. See the
+[PyPA action documentation](https://github.com/pypa/gh-action-pypi-publish) for current
+Trusted Publishing support. Uploading to production PyPI, creating release tags and
+creating public GitHub releases remain separate, unauthorized actions.
+
+TestPyPI is a separate index and may not contain the application's dependencies. After
+a successful upload, install the selected framework without resolving dependencies from
+that index, then install its qualified dependencies from production PyPI separately.
+Do not treat a validation-only run as proof of the publisher/OIDC exchange or index
+installation; those occur only after an actual upload.

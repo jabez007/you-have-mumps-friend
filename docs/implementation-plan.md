@@ -1965,3 +1965,25 @@ consumer fresh/upgrade cases passed separately. No local privileged engine, rest
 power-loss or replication qualification is claimed. The report-only commit records
 these results; it does not replace or relabel the qualified source/artifacts. No
 release, tag, public consumer repository or PyPI publication was created.
+
+## TestPyPI Trusted Publishing
+
+Reuse the existing candidate workflow, immutable qualified-candidate artifact and
+artifact audit module. Add workflow_call to candidate qualification, then add the
+user-specified publish-test.yml with workflow_dispatch only and environment testpypi.
+A manual publish boolean defaults false so the whole chain can be validated without
+an upload. Actual uploads require main. Keep id-token: write confined to the final
+TestPyPI upload job; qualification and staging remain read-only. Publish the same
+verified wheel/source bytes, never rebuilt files or evidence sidecars. Use the pinned
+official PyPA action and a fixed TestPyPI endpoint, with no password/token secrets.
+
+Extend check_artifacts with read-only qualified-manifest verification and staging,
+reusing existing identity/hash conventions. Reject pending/foreign-run manifests,
+wrong versions/commits, altered files, stale output directories and unexpected files.
+Existing metadata audit writes pending evidence and must not be used to rewrite
+passed evidence during publishing. Regression tests cover those failure boundaries.
+Ruff C901 passes at ten before this change; retain the threshold. No version, storage,
+runtime API, production publisher, tag or GitHub release change is planned. A future
+publish.yml can be tag-triggered with a tag/version check and the same qualification.
+GitHub currently has no testpypi environment; the workflow targets that exact name,
+without changing repository environment protection settings in this task.

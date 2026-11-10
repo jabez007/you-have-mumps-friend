@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Audit an exact source/wheel pair and write its qualification manifest and hashes."""
+"""Audit release artifacts or stage an unchanged qualified pair for publishing."""
 
 import argparse
 import ast
@@ -115,11 +115,75 @@ def audit_metadata(content, wheel, project, root):
         raise ValueError("Artifact must contain the project's exact GPL license")
 
 
+def qualified_manifest(directory, expected_version, expected_commit, expected_run):
+    document = json.loads((directory / "qualification.json").read_text())
+    if type(document.get("format_version")) is not int or document["format_version"] != 1:
+        raise ValueError("Unknown qualification manifest format")
+    for field, wanted in (
+        ("version", expected_version),
+        ("source_commit", expected_commit),
+        ("qualification_run", expected_run),
+        ("qualification_status", "passed"),
+    ):
+        if document.get(field) != wanted:
+            raise ValueError(f"Qualified manifest {field} differs from the selected run")
+    if document.get("source_tree_clean") is not True:
+        raise ValueError("Qualified source tree must be clean")
+    rows = document["artifacts"]
+    names = {
+        f"mccann_hub_yhmf-{expected_version}-py3-none-any.whl",
+        f"mccann_hub_yhmf-{expected_version}.tar.gz",
+    }
+    if len(rows) != 2 or {row["file"] for row in rows} != names:
+        raise ValueError("Expected exactly the qualified wheel and source distribution")
+    if {path.name for path in directory.iterdir()} != names | {"qualification.json", "SHA256SUMS"}:
+        raise ValueError("Qualified directory contains missing or unexpected files")
+    sums = "".join(f"{row['sha256']}  {row['file']}\n" for row in rows)
+    if (directory / "SHA256SUMS").read_text() != sums:
+        raise ValueError("Qualified checksums differ from the manifest")
+    return rows
+
+
+def stage_qualified(directory, destination, expected_version, expected_commit, expected_run):
+    rows = qualified_manifest(directory, expected_version, expected_commit, expected_run)
+    payloads = {}
+    for row in rows:
+        path = directory / row["file"]
+        if path.is_symlink() or not path.is_file():
+            raise ValueError("Qualified distributions must be regular files")
+        raw = path.read_bytes()
+        if len(raw) != row["bytes"] or hashlib.sha256(raw).hexdigest() != row["sha256"]:
+            raise ValueError("Qualified distribution checksum or size mismatch")
+        payloads[row["file"]] = raw
+    # Validate every input before writing. Copy precisely the bytes that were hashed.
+    destination.mkdir(parents=True, exist_ok=False)
+    for name, raw in payloads.items():
+        (destination / name).write_bytes(raw)
+    print("Staged qualified distributions: " + ", ".join(sorted(payloads)))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("directory", type=Path)
     parser.add_argument("--expected-version")
+    parser.add_argument("--verify-qualified", action="store_true")
+    parser.add_argument("--expected-commit")
+    parser.add_argument("--expected-run")
+    parser.add_argument("--stage", type=Path)
     args = parser.parse_args()
+    if args.verify_qualified:
+        if not all((args.expected_version, args.expected_commit, args.expected_run, args.stage)):
+            parser.error("Qualified staging requires expected version, commit, run and stage")
+        stage_qualified(
+            args.directory,
+            args.stage,
+            args.expected_version,
+            args.expected_commit,
+            args.expected_run,
+        )
+        return
+    if args.stage:
+        parser.error("--stage requires --verify-qualified")
     root = Path(__file__).resolve().parents[1]
     project = tomllib.loads((root / "pyproject.toml").read_text())["project"]
     if args.expected_version and args.expected_version != project["version"]:
