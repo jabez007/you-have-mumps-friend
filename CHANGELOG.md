@@ -4,6 +4,8 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+## 0.5.0
+
 - Add production publish.yml with tag/version/main-ancestry/release-notes guards,
   full qualification, exact-artifact staging and PyPI Trusted Publishing through
   environment pypi. Manual dispatch qualifies and stages without uploading.
@@ -262,8 +264,6 @@ This file records what each release added and what it left out.
   existing schema identities. They cannot declare mapper storage or index metadata.
 - Adds an uncached virtual total to the inventory warehouse example, alongside
   its explicitly maintained stored sum.
-
-## 0.5.0
 
 - Adds canonical schema format 2, compatible legacy bindings, generated mutation
   and integrity testing, and a runnable inventory ledger.
