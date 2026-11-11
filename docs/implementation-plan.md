@@ -1987,3 +1987,22 @@ runtime API, production publisher, tag or GitHub release change is planned. A fu
 publish.yml can be tag-triggered with a tag/version check and the same qualification.
 GitHub currently has no testpypi environment; the workflow targets that exact name,
 without changing repository environment protection settings in this task.
+
+### Native setup failure handling
+
+Both attempts of publishing run 43041742087 failed while APT resolved Ubuntu's
+mirror hosts, before native tests or publication. Reuse the shared native setup
+step in checks.yml so ordinary checks and candidate qualification use one policy.
+Add explicit APT retries and transport timeouts, strict update errors and a
+ten-minute setup deadline. A failure-only diagnostic step checks the four public
+download hostnames with bounded DNS lookups. It preserves the original failure.
+The public workflow interface, qualification gates and publisher remain unchanged.
+
+Runner images already provide Ubuntu fallback mirrors. Keep that configuration
+rather than add mirror rewriting or custom DNS servers without evidence that those
+changes address the failure. Bounded retries help transient failures; persistent
+runner DNS problems still prevent qualification and upload. Verify strict APT
+failure handling against a deliberately unresolvable temporary repository, then
+validate workflow syntax and rerun the full publishing workflow. Ruff C901 passes
+at the existing threshold of ten before the change; no Python functions change.
+No unrelated cleanup is included in the workflow file.
