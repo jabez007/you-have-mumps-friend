@@ -2,8 +2,10 @@
 
 A qualified candidate is an exact source commit and its tested artifacts. Qualification
 permits downstream evaluation. It does not establish production readiness or authorize
-publication. Package version 0.5.0 remains unpublished until a maintainer authorizes a
-release. The implementation baseline is recorded in the implementation plan.
+publication. Version 0.5.0 was published to TestPyPI after
+[qualification run 43052804973](https://github.com/jabez007/you-have-mumps-friend/actions/runs/43052804973).
+Production PyPI publication requires a separately authorized version-tag push.
+The implementation baseline is recorded in the implementation plan.
 
 ## Qualified environments
 
@@ -78,6 +80,8 @@ and Python must agree. No candidate is qualified when a mandatory job is missing
 cancelled, skipped or failed. Keep release notes separate from historical delivery notes.
 
 The preparation workflow must build/test/upload artifacts only. Tags, GitHub releases
-and PyPI publication are intentional maintainer actions after review. A future PyPI
-publisher should use a protected environment and Trusted Publishing rather than a
-stored upload token. See the release procedure for commands and authorization points.
+and PyPI publication are intentional maintainer actions after review. Production
+publish.yml uses version-tag pushes, full candidate qualification, exact-artifact
+staging and Trusted Publishing through environment pypi. Manual dispatch exercises
+qualification and staging without uploading. See the release procedure for commands,
+environment setup and authorization points.

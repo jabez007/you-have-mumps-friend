@@ -1,8 +1,11 @@
-# Prepare a candidate
+# Qualify and publish packages
 
-This process builds and qualifies artifacts. It does not publish them, create a Git tag
-or create a GitHub release. Use the qualification policy and compatibility contract
-alongside this procedure.
+Qualify exact artifacts before publishing them. Use the qualification policy and
+compatibility contract alongside this procedure. The workflows build and test packages;
+the publishing jobs upload only after their event and qualification checks pass.
+Creating release tags and GitHub releases remains a separate maintainer action.
+
+## Prepare a candidate
 
 1. Select a clean committed revision and its package version. Keep pyproject.toml and
    mccann_hub.yhmf.__version__ equal. Review Unreleased notes and the supported upgrade
@@ -60,8 +63,8 @@ upload or public release. TestPyPI publication is a separate manual choice below
 
 The separate publish-test.yml workflow matches the pending Trusted Publisher's workflow
 filename and environment testpypi. It is workflow_dispatch-only. It does not publish
-on pushes, PRs or tags. A future production publish.yml can be tag-triggered and must
-check that its tag matches the package version before qualification and upload.
+on pushes, PRs or tags. Production publish.yml uses version-tag pushes for upload,
+as described below.
 
 Run a validation first:
 
@@ -105,3 +108,47 @@ a successful upload, install the selected framework without resolving dependenci
 that index, then install its qualified dependencies from production PyPI separately.
 Do not treat a validation-only run as proof of the publisher/OIDC exchange or index
 installation; those occur only after an actual upload.
+
+## Publish an authorized version tag to PyPI
+
+Production publish.yml uploads only on pushes of v* tags, such as v0.5.0. Its guard
+requires the tag to match pyproject.toml and mccann_hub.yhmf.__version__ exactly. It
+also requires a ## <version> changelog heading and a tagged commit reachable from
+fetched origin/main. Prerelease versions use their exact Python packaging spelling,
+for example v0.6.0rc1. Review and move applicable Unreleased notes before tagging;
+the heading check does not establish that release notes are complete.
+
+Before the first upload, configure a production PyPI Trusted Publisher or pending
+publisher for distribution mccann-hub-yhmf with these exact values:
+
+| Setting | Value |
+| --- | --- |
+| Repository owner | jabez007 |
+| Repository | you-have-mumps-friend |
+| Workflow filename | publish.yml |
+| Environment | pypi |
+
+Configure the GitHub environment pypi with release-tag restrictions and reviewer
+protections appropriate to the repository. Production PyPI registration is separate
+from the successful TestPyPI registration. See the
+[Trusted Publishing guide](https://docs.pypi.org/trusted-publishers/using-a-publisher/).
+
+To validate the workflow without creating a tag or uploading, run:
+
+```sh
+gh workflow run publish.yml --ref main
+```
+
+Manual dispatch checks the two package version declarations, calls full candidate
+qualification and stages the exact verified wheel/source pair as pypi-distributions.
+It always skips the upload job, even when manually dispatched on a tag. It does not
+test a tag-push event, production OIDC authentication or a production installation.
+
+After explicit release authorization and review of the final committed revision,
+create and push its annotated version tag. That event runs the tag guard, repeats
+full qualification and stages distributions verified against the current commit,
+run ID, version and hashes. The upload job downloads only pypi-distributions and uses
+the pinned PyPA action, the fixed https://upload.pypi.org/legacy/ endpoint and
+attestations. Only this job receives id-token: write and uses environment pypi.
+No artifacts are rebuilt after qualification; duplicate files fail rather than
+being silently skipped. The workflow does not create or move tags or GitHub releases.

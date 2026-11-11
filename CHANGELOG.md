@@ -4,9 +4,12 @@ This file records what each release added and what it left out.
 
 ## Unreleased
 
+- Add production publish.yml with tag/version/main-ancestry/release-notes guards,
+  full qualification, exact-artifact staging and PyPI Trusted Publishing through
+  environment pypi. Manual dispatch qualifies and stages without uploading.
 - Add manual TestPyPI Trusted Publishing through publish-test.yml and environment
   testpypi. Reuse full candidate qualification, verify exact artifact identity/hashes,
-  and limit OIDC permission to an opt-in upload job. Production publishing stays deferred.
+  and limit OIDC permission to an opt-in upload job.
 
 - Establish candidate qualification/compatibility policy, isolated source/wheel/native
   installations, hashed artifacts and a manual nonpublishing preparation workflow.

@@ -2031,3 +2031,28 @@ The private APT test returned 100 for the unavailable original mirror and zero
 after adding the preferred mirror for both jammy and noble. Each successful update
 verified signed metadata with the system Ubuntu archive keyring and the expected
 suite codename. This local result does not qualify hosted-runner DNS or native tests.
+
+### Production PyPI workflow
+
+Reuse release-candidate.yml for full qualification, check_artifacts.package_version
+for static Python version extraction, and the qualified staging verifier for exact
+run/commit/version/hash checks. Add publish.yml with v* tag pushes and a manual
+qualification-only dispatch. Only a tag push can reach its upload job. Keep the
+configured publisher in this top-level workflow, with the pypi environment and
+OIDC permission confined to that job. Local staging steps remain visible beside
+each publisher; the shared verifier owns the integrity policy.
+
+A small check_release script checks the two committed version declarations. Tag
+pushes must exactly match v<version>, have an existing ## <version> changelog
+section, and point to a commit reachable from fetched origin/main. Manual dispatch
+checks versions and exercises qualification/staging without uploading, including
+when dispatched on a tag. Test the release guard against temporary Git repositories
+and malformed/mismatched identities. A manual hosted run validates the pipeline
+without creating a release tag or uploading to production PyPI.
+
+No package version, storage contract or application interface changes. Production
+Trusted Publisher registration and GitHub environment protections remain maintainer
+configuration, separate from the tested TestPyPI publisher. Actual tags, production
+uploads and GitHub releases still require explicit authorization. Ruff C901 passes
+at ten before implementation. Existing release docs contain deferred-publisher and
+unpublished-version wording; update those statements as part of this change.
