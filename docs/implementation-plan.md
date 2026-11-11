@@ -2006,3 +2006,28 @@ failure handling against a deliberately unresolvable temporary repository, then
 validate workflow syntax and rerun the full publishing workflow. Ruff C901 passes
 at the existing threshold of ten before the change; no Python functions change.
 No unrelated cleanup is included in the workflow file.
+
+### Ubuntu mirror diversity for native qualification
+
+Run 43045732482 confirmed that both runner images could resolve github.com but
+failed or timed out resolving all three existing Ubuntu mirror hostnames. The
+fallbacks share the ubuntu.com domain. Reuse APT's existing mirror-list interface
+and add https://mirrors.kernel.org/ubuntu/ with priority zero on the disposable
+runners, ahead of the original entries. Ubuntu lists this mirror on its package
+download pages. Both supported release suites and their security pockets serve
+signed InRelease metadata there. Keep the original fallback entries and APT's
+signature and freshness checks. No custom DNS servers, pinned IP addresses or
+package-verification exceptions are needed.
+
+First test a private APT configuration with an unavailable primary mirror, then
+the additional preferred mirror, against the system Ubuntu archive keyring. The
+live native matrix must still pass before qualification and publication. The only
+implementation change is runner-local mirror selection in the existing setup
+step. There is no public interface, runtime dependency or storage change. Changing
+the runner resolver is broader than this demonstrated package-download problem;
+omitting documented YottaDB prerequisites would change the qualified environment.
+Ruff C901 remains at ten; no Python functions change and no cleanup is included.
+The private APT test returned 100 for the unavailable original mirror and zero
+after adding the preferred mirror for both jammy and noble. Each successful update
+verified signed metadata with the system Ubuntu archive keyring and the expected
+suite codename. This local result does not qualify hosted-runner DNS or native tests.

@@ -128,6 +128,9 @@ jobs:
             -o Acquire::http::Timeout=15
             -o Acquire::https::Timeout=15
           )
+          # Keep the original fallbacks; prefer an Ubuntu-listed mirror outside ubuntu.com.
+          printf 'https://mirrors.kernel.org/ubuntu/\tpriority:0\n' \
+            | sudo tee -a /etc/apt/apt-mirrors.txt
           sudo apt-get "${apt_options[@]}" --error-on=any update
           sudo apt-get "${apt_options[@]}" install -y --no-install-recommends libelf-dev libicu-dev
           curl --fail --location --retry 3 -o /tmp/yottadb.tgz \
@@ -140,7 +143,11 @@ jobs:
         if: ${{ failure() && steps.native-setup.outcome == 'failure' }}
         timeout-minutes: 1
         run: |
-          for host in azure.archive.ubuntu.com archive.ubuntu.com security.ubuntu.com github.com; do
+          hosts=(
+            mirrors.kernel.org mirrors.edge.kernel.org
+            azure.archive.ubuntu.com archive.ubuntu.com security.ubuntu.com github.com
+          )
+          for host in "${hosts[@]}"; do
             echo "::group::DNS lookup for $host"
             if ! timeout 5s getent ahosts "$host"; then
               echo "::warning::DNS lookup failed or timed out for $host"
